@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2328e0ff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ET%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Project name</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: #141416; color: #e8e8e2; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: #96968e; font-size: 13px; text-decoration: none; z-index: 2; }
+  a.back:hover { color: #e8e8e2; }
+  canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+</style>
+<meta property="og:title" content="Project name">
+<meta property="og:description" content="One line saying what it is.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/FOLDER/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/FOLDER/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="One line saying what it is.">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="game"></canvas>
+<script>
+'use strict';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0;
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+addEventListener('resize', resize);
+resize();
+
+let best = 0;
+try { best = +(localStorage.getItem('tpl_best') || 0); } catch (e) { }
+function saveBest(v) {
+  best = Math.max(best, v);
+  try { localStorage.setItem('tpl_best', best); } catch (e) { }
+}
+
+// keyboard and touch feed the same input state
+const input = { left: false, right: false };
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') input.left = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') input.right = true;
+});
+addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') input.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') input.right = false;
+});
+canvas.addEventListener('pointerdown', e => {
+  if (e.clientX < W / 2) input.left = true; else input.right = true;
+});
+addEventListener('pointerup', () => { input.left = input.right = false; });
+
+const player = { x: 0.5 };
+let time = 0;
+
+function update(dt) {
+  time += dt;
+  if (input.left) player.x -= dt * 0.6;
+  if (input.right) player.x += dt * 0.6;
+  player.x = Math.max(0.05, Math.min(0.95, player.x));
+  saveBest(Math.floor(time));
+}
+
+function draw() {
+  ctx.fillStyle = '#141416';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#28e0ff';
+  ctx.fillRect(player.x * W - 20, H * 0.7, 40, 40);
+  ctx.fillStyle = '#96968e';
+  ctx.font = '14px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Arrow keys or tap the left/right half. Best: ' + best + 's', W / 2, H * 0.9);
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.033, (now - last) / 1000);
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

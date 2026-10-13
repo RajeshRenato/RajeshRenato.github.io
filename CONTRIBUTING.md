@@ -12,6 +12,16 @@ python3 -m http.server 8742
 
 Then open http://localhost:8742.
 
+## Tests
+
+Needs Node 18 or newer, no packages:
+
+```bash
+node --test
+```
+
+The tests check that every project is complete and linked from the hub, that all scripts compile, and they play through the bigger games headlessly. They also run on every pull request.
+
 ## Rules
 
 - Plain HTML/CSS/JS. No frameworks, npm packages, build step, or CDN scripts.
@@ -28,12 +38,11 @@ Include the project, your browser and device, and steps to reproduce. For the pu
 
 ## Adding a project
 
-- New folder, lowercase-hyphenated, named after what it is.
-- `index.html`, `README.md`, and a 1200×630 `og.png`.
-- A back link to `../` and og tags, with `og:url` set to `https://rajeshrenato.github.io/playground/<folder>/`.
+- Copy `template/` to a new folder, lowercase-hyphenated and named after what it is. The template's README lists what to rename.
+- Add a 1200×630 `og.png`.
 - Prefix localStorage keys with something short and unique to the project, and wrap access in try/catch.
 - Add a card to the root `index.html`, and a thumbnail function to `TH` keyed by the card's `data-t`. It gets `(g, w, h, c, t)` and draws a full frame; `t` is 0 for the still image and counts up on hover.
-- Add it to the README table and update the counts.
+- Add it to the README table and update the counts. `node --test` will tell you if anything is missing.
 
 ## Open tasks
 
