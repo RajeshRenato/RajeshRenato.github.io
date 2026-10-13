@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff4fa3'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Rajesh's Playground</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -80,6 +82,10 @@
   .list .txt { padding: 10px 13px 13px; }
   .list strong { font-weight: 600; font-size: 16.5px; display: block; }
   .list span { color: var(--muted); font-size: 13.5px; line-height: 1.45; display: block; margin-top: 2px; }
+  ul.list.big { grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 30px 26px; }
+  .list.big strong { font-size: 20px; }
+  .list.big span { font-size: 15px; margin-top: 4px; }
+  .list.big .txt { padding: 14px 16px 16px; }
   footer {
     margin-top: 68px; padding-top: 18px;
     border-top: 1px solid var(--rule);
@@ -112,24 +118,20 @@
   <p class="lede">Every thumbnail below is drawn live by the page. Hover one and it moves. The source is <a href="https://github.com/RajeshRenato/playground">on GitHub</a> and pull requests are welcome.</p>
 </header>
 
-<h2>Games<small>25</small></h2>
+<h2>Highlights</h2>
+<ul class="list big">
+  <li><a href="vicecity/" style="--c:#ff4fa3" data-t="vice"><canvas width="304" height="171"></canvas><div class="txt"><strong>Vice City</strong><span>Open-world driving in a procedural city with traffic, police chases, and delivery jobs. Street-level 3D camera drawn on a plain 2D canvas.</span></div></a></li>
+  <li><a href="breach/" style="--c:#9f7bff" data-t="breach"><canvas width="304" height="171"></canvas><div class="txt"><strong>Breach</strong><span>First-person shooter on a raycasting engine written from scratch. Every wall texture, sprite, and sound is generated in code.</span></div></a></li>
+  <li><a href="road-rash/" style="--c:#ffd166" data-t="rash"><canvas width="304" height="171"></canvas><div class="txt"><strong>Road Rash</strong><span>Motorcycle combat racing on a pseudo-3D road: punch and kick rivals, steal their clubs, dodge two-way traffic, buy faster bikes.</span></div></a></li>
+  <li><a href="arrow-flux/" style="--c:#28e0ff" data-t="arrow"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arrow Flux</strong><span>Slide tangled arrows off a packed board. The generator builds every board in solution order, so each one is provably solvable.</span></div></a></li>
+</ul>
+
+<h2>Games<small>13</small></h2>
 <ul class="list">
-  <li><a href="vicecity/" style="--c:#ff4fa3" data-t="vice"><canvas width="304" height="171"></canvas><div class="txt"><strong>Vice City</strong><span>Open-world driving in a procedural city, street-level chase camera or top-down.</span></div></a></li>
-  <li><a href="breach/" style="--c:#9f7bff" data-t="breach"><canvas width="304" height="171"></canvas><div class="txt"><strong>Breach</strong><span>First-person shooter on a raycasting engine written from scratch.</span></div></a></li>
-  <li><a href="road-rash/" style="--c:#ffd166" data-t="rash"><canvas width="304" height="171"></canvas><div class="txt"><strong>Road Rash</strong><span>Motorcycle combat racing with rival riders, two-way traffic, and a bike shop.</span></div></a></li>
   <li><a href="dune-drift/" style="--c:#ff8a5c" data-t="drift"><canvas width="304" height="171"></canvas><div class="txt"><strong>Dune Drift</strong><span>One-button endless ride over rolling dunes; backflips at sunset.</span></div></a></li>
-  <li><a href="coil/" style="--c:#39ff9c" data-t="snake"><canvas width="304" height="171"></canvas><div class="txt"><strong>Coil</strong><span>Snake. Speeds up as you grow; swipe to steer on a phone.</span></div></a></li>
-  <li><a href="brickfall/" style="--c:#4f8aff" data-t="breakout"><canvas width="304" height="171"></canvas><div class="txt"><strong>Brickfall</strong><span>Brick-breaker with eight levels and angle-based paddle physics.</span></div></a></li>
-  <li><a href="slide-2048/" style="--c:#ff6fb0" data-t="g2048"><canvas width="304" height="171"></canvas><div class="txt"><strong>Slide 2048</strong><span>The sliding-tile game, by keyboard or swipe.</span></div></a></li>
-  <li><a href="stackfall/" style="--c:#28e0ff" data-t="blocks"><canvas width="304" height="171"></canvas><div class="txt"><strong>Stackfall</strong><span>Falling tetrominoes with hold, ghost piece, and a 7-bag randomizer.</span></div></a></li>
-  <li><a href="rockblaster/" style="--c:#9f7bff" data-t="rock"><canvas width="304" height="171"></canvas><div class="txt"><strong>Rock Blaster</strong><span>Asteroids-style shooter with splitting rocks and screen wrap.</span></div></a></li>
-  <li><a href="minefield/" style="--c:#ff8a5c" data-t="mines"><canvas width="304" height="171"></canvas><div class="txt"><strong>Minefield</strong><span>Minesweeper with three difficulties, safe first click, and best times.</span></div></a></li>
-  <li><a href="penta/" style="--c:#39ff9c" data-t="penta"><canvas width="304" height="171"></canvas><div class="txt"><strong>Penta</strong><span>A five-letter word game with win streaks and emoji sharing.</span></div></a></li>
-  <li><a href="sudoku/" style="--c:#7f8cff" data-t="sudoku"><canvas width="304" height="171"></canvas><div class="txt"><strong>Sudoku</strong><span>Sudoku from a generator that guarantees exactly one solution.</span></div></a></li>
   <li><a href="pixel-logic/" style="--c:#ffd166" data-t="pixlog"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pixel Logic</strong><span>Nonograms, solver-verified so pure deduction always wins.</span></div></a></li>
   <li><a href="glow-out/" style="--c:#39ff9c" data-t="glowout"><canvas width="304" height="171"></canvas><div class="txt"><strong>Glow Out</strong><span>Lights Out with hints computed from a live solution set.</span></div></a></li>
   <li><a href="flood-rush/" style="--c:#ff4fa3" data-t="flood"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flood Rush</strong><span>Flood-fill the grid and beat a greedy bot's par.</span></div></a></li>
-  <li><a href="arrow-flux/" style="--c:#28e0ff" data-t="arrow"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arrow Flux</strong><span>Slide tangled arrows off a packed board; every puzzle is provably solvable.</span></div></a></li>
   <li><a href="labyrinth/" style="--c:#ffd166" data-t="laby"><canvas width="304" height="171"></canvas><div class="txt"><strong>Labyrinth</strong><span>Escape procedural mazes through fog of war.</span></div></a></li>
   <li><a href="grid-defense/" style="--c:#ff5a7a" data-t="defense"><canvas width="304" height="171"></canvas><div class="txt"><strong>Grid Defense</strong><span>Small tower defense against waves that keep scaling.</span></div></a></li>
   <li><a href="orbit-golf/" style="--c:#64ffb4" data-t="golf"><canvas width="304" height="171"></canvas><div class="txt"><strong>Orbit Golf</strong><span>Nine holes of golf bent by gravity wells and repulsors.</span></div></a></li>
@@ -139,6 +141,18 @@
   <li><a href="flag-dash/" style="--c:#39ff9c" data-t="flag"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flag Dash</strong><span>A sixty-second flag quiz built entirely from emoji.</span></div></a></li>
   <li><a href="type-velocity/" style="--c:#ffd166" data-t="typev"><canvas width="304" height="171"></canvas><div class="txt"><strong>Type Velocity</strong><span>Typing test with live WPM and per-character feedback.</span></div></a></li>
   <li><a href="reflex-lab/" style="--c:#ff6fb0" data-t="reflex"><canvas width="304" height="171"></canvas><div class="txt"><strong>Reflex Lab</strong><span>Reaction, aim, and choice-speed tests with ratings and bests.</span></div></a></li>
+</ul>
+
+<h2>Classics<small>8</small></h2>
+<ul class="list">
+  <li><a href="coil/" style="--c:#39ff9c" data-t="snake"><canvas width="304" height="171"></canvas><div class="txt"><strong>Coil</strong><span>Snake. Speeds up as you grow; swipe to steer on a phone.</span></div></a></li>
+  <li><a href="brickfall/" style="--c:#4f8aff" data-t="breakout"><canvas width="304" height="171"></canvas><div class="txt"><strong>Brickfall</strong><span>Brick-breaker with eight levels and angle-based paddle physics.</span></div></a></li>
+  <li><a href="slide-2048/" style="--c:#ff6fb0" data-t="g2048"><canvas width="304" height="171"></canvas><div class="txt"><strong>Slide 2048</strong><span>The sliding-tile game, by keyboard or swipe.</span></div></a></li>
+  <li><a href="stackfall/" style="--c:#28e0ff" data-t="blocks"><canvas width="304" height="171"></canvas><div class="txt"><strong>Stackfall</strong><span>Falling tetrominoes with hold, ghost piece, and a 7-bag randomizer.</span></div></a></li>
+  <li><a href="rockblaster/" style="--c:#9f7bff" data-t="rock"><canvas width="304" height="171"></canvas><div class="txt"><strong>Rock Blaster</strong><span>Asteroids-style shooter with splitting rocks and screen wrap.</span></div></a></li>
+  <li><a href="minefield/" style="--c:#ff8a5c" data-t="mines"><canvas width="304" height="171"></canvas><div class="txt"><strong>Minefield</strong><span>Minesweeper with three difficulties, safe first click, and best times.</span></div></a></li>
+  <li><a href="sudoku/" style="--c:#7f8cff" data-t="sudoku"><canvas width="304" height="171"></canvas><div class="txt"><strong>Sudoku</strong><span>Sudoku from a generator that guarantees exactly one solution.</span></div></a></li>
+  <li><a href="penta/" style="--c:#39ff9c" data-t="penta"><canvas width="304" height="171"></canvas><div class="txt"><strong>Penta</strong><span>A five-letter word game with win streaks and emoji sharing.</span></div></a></li>
 </ul>
 
 <h2>Tools<small>17</small></h2>
@@ -1144,8 +1158,12 @@ document.querySelectorAll('.list a[data-t]').forEach(a => {
   const cv = a.querySelector('canvas');
   const g = cv.getContext('2d');
   const c = getComputedStyle(a).getPropertyValue('--c').trim() || '#28e0ff';
-  const state = { fn, g, w: cv.width, h: cv.height, c };
-  try { fn.call(state, g, cv.width, cv.height, c, 0); } catch (e) { }
+  // drawers work in a 304x171 space; scale the backing store to the shown size
+  const k = Math.max(1, Math.min(3, Math.round(cv.getBoundingClientRect().width * (devicePixelRatio || 1) / 304)));
+  cv.width = 304 * k; cv.height = 171 * k;
+  g.setTransform(k, 0, 0, k, 0, 0);
+  const state = { fn, g, w: 304, h: 171, c };
+  try { fn.call(state, g, state.w, state.h, c, 0); } catch (e) { }
   if (reduceMotion) return;
   a.addEventListener('pointerenter', () => { hovered = state; if (!rafId) rafId = requestAnimationFrame(tick); });
   a.addEventListener('pointerleave', () => {
