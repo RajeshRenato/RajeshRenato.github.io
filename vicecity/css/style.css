@@ -7,3 +7,8 @@ html, body {
   cursor: crosshair;
 }
 canvas { display: block; touch-action: none; }
+a.back {
+  position: fixed; top: 12px; left: 14px; z-index: 5;
+  color: #ff6fb0; font: 12px 'Courier New', monospace; text-decoration: none; opacity: 0.75;
+}
+a.back:hover { opacity: 1; }

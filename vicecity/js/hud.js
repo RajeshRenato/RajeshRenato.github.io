@@ -129,7 +129,7 @@ function drawHUD(ctx) {
   ctx.shadowColor = '#0faf7d';
   ctx.shadowBlur = 8;
   ctx.fillStyle = '#7dffc9';
-  ctx.fillText('$' + Game.money, 16, 14);
+  ctx.fillText('$' + Game.money, 16, 36);
   ctx.shadowBlur = 0;
 
   // wanted stars (left-to-right fill, anchored to the right edge)
@@ -145,13 +145,13 @@ function drawHUD(ctx) {
   if (Player.inCar) {
     const hp = Player.car.hp / 100;
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.fillRect(16, 48, 120, 7);
+    ctx.fillRect(16, 70, 120, 7);
     ctx.fillStyle = hp > 0.5 ? '#7dffc9' : hp > 0.25 ? '#ffd166' : '#ff4356';
-    ctx.fillRect(16, 48, 120 * hp, 7);
+    ctx.fillRect(16, 70, 120 * hp, 7);
     if (Player.car.wrecked) {
       ctx.font = '13px monospace';
       ctx.fillStyle = '#ff6b6b';
-      ctx.fillText('This ride is cooked — find another (E)', 16, 62);
+      ctx.fillText('This car is wrecked. Find another (E)', 16, 84);
     }
   }
 
