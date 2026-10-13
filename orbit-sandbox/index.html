@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orbit Sandbox — n-body gravity</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; overflow:hidden; background:#060410; }
+  canvas { display:block; cursor:crosshair; }
+  #ui { position:fixed; left:14px; bottom:12px; color:rgba(230,230,250,.55);
+        font:12px ui-monospace,'Courier New',monospace; pointer-events:none; text-shadow:0 1px 3px #000; }
+  a.back { position:fixed; top:12px; left:14px; color:#9f7bff; font:12px ui-monospace,monospace;
+           text-decoration:none; opacity:.7; z-index:2; }
+</style>
+<meta property="og:title" content="ORBIT SANDBOX — browser game">
+<meta property="og:description" content="N-body gravity sim. Slingshot planets around a star, watch them merge, trail, and escape.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/orbit-sandbox/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/orbit-sandbox/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="N-body gravity sim. Slingshot planets around a star, watch them merge, trail, and escape.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="c"></canvas>
+<div id="ui">drag &amp; release — slingshot a planet · 1/2/3 planet size · G toggle star · P pause · C clear · S save PNG</div>
+<script>
+'use strict';
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W, H;
+const G = 1400, SOFT = 500;
+
+let bodies = [];
+let star = null;
+let paused = false;
+let nextMass = 10;
+const SIZES = { 1: 4, 2: 10, 3: 30 };
+
+function radiusFor(m) { return Math.max(2.5, 2.1 * Math.cbrt(m)); }
+
+function makeStar() {
+  return { x: W / 2, y: H / 2, vx: 0, vy: 0, m: 3000, r: 16, hue: 48, fixed: true };
+}
+
+function addBody(x, y, vx, vy, m) {
+  bodies.push({ x, y, vx, vy, m, r: radiusFor(m), hue: 180 + Math.random() * 160, fixed: false });
+}
+
+function allBodies() { return star ? [star].concat(bodies) : bodies; }
+
+function step(dt) {
+  const all = allBodies();
+  // accumulate accelerations (pairwise, softened)
+  const ax = new Array(all.length).fill(0), ay = new Array(all.length).fill(0);
+  for (let i = 0; i < all.length; i++) {
+    for (let j = i + 1; j < all.length; j++) {
+      const a = all[i], b = all[j];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d2 = dx * dx + dy * dy + SOFT;
+      const inv = 1 / (d2 * Math.sqrt(d2));
+      const f = G * inv;
+      ax[i] += f * b.m * dx; ay[i] += f * b.m * dy;
+      ax[j] -= f * a.m * dx; ay[j] -= f * a.m * dy;
+    }
+  }
+  for (let i = 0; i < all.length; i++) {
+    const p = all[i];
+    if (p.fixed) continue;
+    p.vx += ax[i] * dt; p.vy += ay[i] * dt;
+    p.x += p.vx * dt; p.y += p.vy * dt;
+  }
+  // merge collisions (iterate until stable this frame)
+  for (let i = 0; i < all.length; i++) {
+    for (let j = i + 1; j < all.length; j++) {
+      const a = all[i], b = all[j];
+      if (a.dead || b.dead) continue;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const rr = (a.r + b.r) * 0.8;
+      if (dx * dx + dy * dy < rr * rr) {
+        const [big, small] = a.m >= b.m ? [a, b] : [b, a];
+        const m = big.m + small.m;
+        if (!big.fixed) {
+          big.vx = (big.vx * big.m + small.vx * small.m) / m;
+          big.vy = (big.vy * big.m + small.vy * small.m) / m;
+          big.x = (big.x * big.m + small.x * small.m) / m;
+          big.y = (big.y * big.m + small.y * small.m) / m;
+        }
+        big.m = m;
+        big.r = big.fixed ? big.r : radiusFor(m);
+        small.dead = true;
+      }
+    }
+  }
+  bodies = bodies.filter(b => !b.dead &&
+    b.x > -2000 && b.x < W + 2000 && b.y > -2000 && b.y < H + 2000);
+}
+
+// input: drag to slingshot
+const drag = { on: false, x: 0, y: 0, cx: 0, cy: 0 };
+cv.addEventListener('pointerdown', e => {
+  drag.on = true;
+  drag.x = drag.cx = e.clientX;
+  drag.y = drag.cy = e.clientY;
+});
+cv.addEventListener('pointermove', e => {
+  if (drag.on) { drag.cx = e.clientX; drag.cy = e.clientY; }
+});
+addEventListener('pointerup', e => {
+  if (!drag.on) return;
+  drag.on = false;
+  addBody(drag.x, drag.y, (drag.x - e.clientX) * 1.6, (drag.y - e.clientY) * 1.6, nextMass);
+});
+
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'p') paused = !paused;
+  else if (k === 'c') { bodies = []; paint(true); }
+  else if (k === 'g') { star = star ? null : makeStar(); }
+  else if (k === 's') {
+    const a = document.createElement('a');
+    a.download = 'orbits.png';
+    a.href = cv.toDataURL('image/png');
+    a.click();
+  } else if (SIZES[k]) nextMass = SIZES[k];
+});
+
+function resize() {
+  W = cv.width = window.innerWidth;
+  H = cv.height = window.innerHeight;
+  if (star) { star.x = W / 2; star.y = H / 2; }
+  paint(true);
+}
+addEventListener('resize', resize);
+
+function paint(full) {
+  ctx.globalAlpha = full ? 1 : 0.08;   // low alpha leaves orbital trails
+  ctx.fillStyle = '#060410';
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+}
+
+function draw() {
+  paint(false);
+  for (const b of allBodies()) {
+    ctx.fillStyle = b.fixed ? '#ffd166' : 'hsl(' + b.hue + ',85%,62%)';
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = b.fixed ? 30 : 10;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  if (drag.on) {
+    ctx.strokeStyle = 'rgba(159,123,255,.8)';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(drag.x, drag.y);
+    ctx.lineTo(2 * drag.x - drag.cx, 2 * drag.y - drag.cy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(drag.x, drag.y, radiusFor(nextMass), 0, 7); ctx.stroke();
+  }
+}
+
+function frame() {
+  if (!paused) {
+    // substeps keep tight orbits stable
+    for (let i = 0; i < 3; i++) step(1 / 180);
+  }
+  draw();
+  requestAnimationFrame(frame);
+}
+
+resize();
+star = makeStar();
+// starter bodies so the page doesn't open empty
+addBody(W / 2 + 180, H / 2, 0, -150, 10);
+addBody(W / 2 - 300, H / 2, 0, 118, 4);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

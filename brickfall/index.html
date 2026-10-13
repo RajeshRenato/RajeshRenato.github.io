@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BRICKFALL</title>
+<style>
+  :root { --bg:#0a0618; --cyan:#4f8aff; --pink:#ff2d95; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1200px 800px at 50% -10%, #101b3d, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; }
+  h1 { margin:0 0 10px; font-style:italic; letter-spacing:5px; color:var(--cyan); text-shadow:0 0 18px var(--cyan); }
+  canvas { background:#0d0a1f; border:2px solid #2a3a6e; border-radius:8px;
+           box-shadow:0 0 30px rgba(79,138,255,.25); max-width:92vw; max-height:78vh; touch-action:none; }
+  p.hint { opacity:.55; font-size:12px; margin-top:10px; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--pink); font-size:12px; text-decoration:none; opacity:.7; }
+</style>
+<meta property="og:title" content="BRICKFALL — browser game">
+<meta property="og:description" content="Brick-breaker with eight levels and angle-based paddle physics.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/brickfall/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/brickfall/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Brick-breaker with eight levels and angle-based paddle physics.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>BRICKFALL</h1>
+<canvas id="c" width="480" height="600"></canvas>
+<p class="hint">mouse / arrows — paddle · click / SPACE — launch · R — restart</p>
+<script>
+'use strict';
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+let best = +(localStorage.getItem('nb_best') || 0);
+
+let state, score, lives, level, ball, paddle, bricks, parts, keys = {};
+
+function buildLevel(n) {
+  bricks = [];
+  const rows = Math.min(4 + n, 8), cols = 10;
+  const bw = (W - 40) / cols, bh = 20;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    // deterministic-ish gaps per level
+    const gap = Math.sin(n * 37.3 + r * 13.7 + c * 7.1) > 0.82;
+    if (gap) continue;
+    bricks.push({ x: 20 + c * bw + 2, y: 60 + r * (bh + 6), w: bw - 4, h: bh,
+                  hue: 190 + r * 22, alive: true });
+  }
+}
+
+function ballSpeed() { return 300 + level * 28; }
+
+function resetBall() {
+  ball = { x: paddle.x, y: paddle.y - 18, dx: 0, dy: 0, r: 7, stuck: true };
+}
+
+function reset() {
+  score = 0; lives = 3; level = 1;
+  paddle = { x: W / 2, y: H - 28, w: 90, h: 12 };
+  buildLevel(level);
+  resetBall();
+  parts = [];
+  state = 'menu';
+}
+
+function launch() {
+  if (state === 'menu') state = 'play';
+  if (state === 'over' || state === 'win') { reset(); state = 'play'; return; }
+  if (!ball.stuck) return;
+  ball.stuck = false;
+  const a = (Math.random() * 0.8 - 0.4);
+  ball.dx = Math.sin(a) * ballSpeed();
+  ball.dy = -Math.cos(a) * ballSpeed();
+}
+
+function burst(bx, by, hue) {
+  for (let i = 0; i < 8; i++) {
+    parts.push({ x: bx, y: by, vx: (Math.random() - .5) * 260, vy: (Math.random() - .5) * 260,
+                 life: 0.4 + Math.random() * 0.2, hue });
+  }
+}
+
+function step(dt) {
+  const pv = (keys.ArrowRight || keys.d ? 1 : 0) - (keys.ArrowLeft || keys.a ? 1 : 0);
+  paddle.x = clamp(paddle.x + pv * 460 * dt, paddle.w / 2, W - paddle.w / 2);
+
+  if (ball.stuck) { ball.x = paddle.x; ball.y = paddle.y - 18; return; }
+  ball.x += ball.dx * dt;
+  ball.y += ball.dy * dt;
+
+  if (ball.x < ball.r) { ball.x = ball.r; ball.dx = Math.abs(ball.dx); }
+  if (ball.x > W - ball.r) { ball.x = W - ball.r; ball.dx = -Math.abs(ball.dx); }
+  if (ball.y < ball.r) { ball.y = ball.r; ball.dy = Math.abs(ball.dy); }
+
+  // paddle bounce: exit angle depends on where you hit
+  if (ball.dy > 0 &&
+      ball.y + ball.r >= paddle.y - paddle.h / 2 && ball.y < paddle.y + paddle.h &&
+      Math.abs(ball.x - paddle.x) <= paddle.w / 2 + ball.r) {
+    const rel = clamp((ball.x - paddle.x) / (paddle.w / 2), -1, 1);
+    const a = rel * 1.05; // max ~60deg from vertical
+    const sp = ballSpeed();
+    ball.dx = Math.sin(a) * sp;
+    ball.dy = -Math.cos(a) * sp;
+    ball.y = paddle.y - paddle.h / 2 - ball.r;
+  }
+
+  for (const b of bricks) {
+    if (!b.alive) continue;
+    const cx = clamp(ball.x, b.x, b.x + b.w), cy = clamp(ball.y, b.y, b.y + b.h);
+    const dx2 = ball.x - cx, dy2 = ball.y - cy;
+    if (dx2 * dx2 + dy2 * dy2 <= ball.r * ball.r) {
+      b.alive = false;
+      score += 10;
+      burst(cx, cy, b.hue);
+      if (Math.abs(dx2) > Math.abs(dy2)) ball.dx = Math.sign(dx2 || 1) * Math.abs(ball.dx);
+      else ball.dy = Math.sign(dy2 || -1) * Math.abs(ball.dy);
+      break;
+    }
+  }
+
+  if (!bricks.some(b => b.alive)) {
+    level++;
+    if (level > 8) { state = 'win'; saveBest(); return; }
+    buildLevel(level);
+    resetBall();
+  }
+
+  if (ball.y > H + ball.r) {
+    lives--;
+    if (lives <= 0) { state = 'over'; saveBest(); }
+    else resetBall();
+  }
+}
+
+function saveBest() {
+  if (score > best) { best = score; localStorage.setItem('nb_best', best); }
+}
+
+function overlay(title, sub, color) {
+  x.fillStyle = 'rgba(10,6,24,0.68)';
+  x.fillRect(0, 0, W, H);
+  x.textAlign = 'center';
+  x.font = 'italic bold 40px "Courier New",monospace';
+  x.fillStyle = color; x.shadowColor = color; x.shadowBlur = 20;
+  x.fillText(title, W / 2, H / 2 - 8);
+  x.shadowBlur = 0;
+  x.font = '15px "Courier New",monospace';
+  x.fillStyle = '#e8e6f5';
+  x.fillText(sub, W / 2, H / 2 + 26);
+}
+
+function draw(dt) {
+  x.fillStyle = '#0d0a1f';
+  x.fillRect(0, 0, W, H);
+
+  for (const b of bricks) {
+    if (!b.alive) continue;
+    x.fillStyle = 'hsl(' + b.hue + ',85%,55%)';
+    x.shadowColor = x.fillStyle; x.shadowBlur = 8;
+    x.fillRect(b.x, b.y, b.w, b.h);
+  }
+  x.shadowBlur = 0;
+
+  x.fillStyle = '#4f8aff'; x.shadowColor = '#4f8aff'; x.shadowBlur = 14;
+  x.fillRect(paddle.x - paddle.w / 2, paddle.y - paddle.h / 2, paddle.w, paddle.h);
+
+  x.fillStyle = '#ffffff'; x.shadowColor = '#fff'; x.shadowBlur = 12;
+  x.beginPath(); x.arc(ball.x, ball.y, ball.r, 0, 7); x.fill();
+  x.shadowBlur = 0;
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    x.globalAlpha = clamp(p.life * 2.5, 0, 1);
+    x.fillStyle = 'hsl(' + p.hue + ',90%,65%)';
+    x.fillRect(p.x - 2, p.y - 2, 4, 4);
+  }
+  x.globalAlpha = 1;
+
+  x.font = '14px "Courier New",monospace';
+  x.textAlign = 'left'; x.fillStyle = '#8affc9';
+  x.fillText('SCORE ' + score, 14, 26);
+  x.textAlign = 'center'; x.fillStyle = '#ffd166';
+  x.fillText('LVL ' + level, W / 2, 26);
+  x.textAlign = 'right'; x.fillStyle = '#ff6fb0';
+  x.fillText('♥'.repeat(Math.max(0, lives)) + '  BEST ' + best, W - 14, 26);
+
+  if (state === 'menu') overlay('BRICKFALL', 'click or SPACE to launch', '#4f8aff');
+  else if (state === 'over') overlay('GAME OVER', 'score ' + score + ' — R to retry', '#ff2d95');
+  else if (state === 'win') overlay('YOU CLEARED IT ALL', 'score ' + score + ' — R to replay', '#8affc9');
+}
+
+addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === ' ') { e.preventDefault(); launch(); }
+  if (e.key.toLowerCase() === 'r' && (state === 'over' || state === 'win')) { reset(); state = 'play'; }
+  if (e.key.startsWith('Arrow')) e.preventDefault();
+});
+addEventListener('keyup', e => { keys[e.key] = false; });
+cv.addEventListener('pointermove', e => {
+  const r = cv.getBoundingClientRect();
+  paddle.x = clamp((e.clientX - r.left) * (W / r.width), paddle.w / 2, W - paddle.w / 2);
+});
+cv.addEventListener('pointerdown', launch);
+
+let last = 0;
+function loop(t) {
+  if (!last) last = t;
+  const dt = Math.min(0.03, (t - last) / 1000);
+  last = t;
+  if (state === 'play') step(dt);
+  draw(dt);
+  requestAnimationFrame(loop);
+}
+reset();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

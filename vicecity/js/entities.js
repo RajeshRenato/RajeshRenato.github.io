@@ -1,0 +1,327 @@
+'use strict';
+// cars (player physics + AI), pedestrians
+
+class Car {
+  constructor(x, y, angle, color, kind = 'civ') {
+    this.x = x; this.y = y; this.angle = angle;
+    this.vx = 0; this.vy = 0;
+    this.color = color; this.kind = kind;
+    this.hp = 100; this.wrecked = false;
+    this.len = 40; this.wid = 21;
+    this.throttle = 0; this.steer = 0; this.hand = false; this.braking = false;
+    this.hasDriver = false;
+    this.ai = null;          // {dir, target} for traffic
+    this.aiSpeed = 0;        // kinematic speed used by AI cars
+    this.panic = 0;
+    this.stuck = 0;
+    this._px = x; this._py = y;
+  }
+
+  get speed() { return Math.hypot(this.vx, this.vy); }
+
+  // full physics, used for the player's car and for
+  // driverless cars still rolling after an exit or bump
+  physics(dt) {
+    const MAX = 330;
+    const fx = Math.cos(this.angle), fy = Math.sin(this.angle);
+    let f = this.vx * fx + this.vy * fy;
+    let latx = this.vx - fx * f, laty = this.vy - fy * f;
+
+    if (!this.wrecked) {
+      if (this.throttle > 0 && f < MAX) f += 280 * this.throttle * dt;
+      else if (this.throttle < 0) {
+        f += (f > 10 ? 550 : 160) * this.throttle * dt;
+        if (f < -130) f = -130;
+      }
+    }
+    this.braking = this.throttle < 0 && f > 10;
+
+    f -= f * 0.35 * dt;                                   // drag
+    const grip = this.hand ? 1.6 : 6.5;                   // handbrake = drift
+    const g = Math.max(0, 1 - grip * dt);
+    latx *= g; laty *= g;
+
+    const sr = (this.hand ? 3.3 : 2.5) * clamp(f / MAX, -1, 1);
+    this.angle += this.steer * sr * dt;
+
+    const nfx = Math.cos(this.angle), nfy = Math.sin(this.angle);
+    this.vx = nfx * f + latx;
+    this.vy = nfy * f + laty;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+
+    const impact = collideCarWorld(this);
+    if (impact > 140) {
+      this.damage((impact - 140) * 0.07);
+      AudioMan.thud(impact / 800);
+      Particles.sparks(this.x, this.y, 3);
+    }
+  }
+
+  damage(d) {
+    if (this.wrecked) return;
+    this.hp -= d;
+    if (this.hp <= 0) { this.hp = 0; this.wrecked = true; }
+  }
+
+  draw(ctx, time) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    const L = this.len, W = this.wid;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    rr(ctx, -L / 2 + 3, -W / 2 + 3, L, W, 6); ctx.fill();
+    ctx.fillStyle = '#14161c';
+    for (const sx of [-L / 2 + 6, L / 2 - 14])
+      for (const sy of [-W / 2 - 1, W / 2 - 3])
+        ctx.fillRect(sx, sy, 8, 4);
+    ctx.fillStyle = this.wrecked ? '#4a4a4f' : this.color;
+    rr(ctx, -L / 2, -W / 2, L, W, 6); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 1.5;
+    rr(ctx, -L / 2, -W / 2, L, W, 6); ctx.stroke();
+    ctx.fillStyle = 'rgba(10,20,35,0.8)';
+    rr(ctx, L * 0.08, -W / 2 + 3, L * 0.2, W - 6, 3); ctx.fill();
+    rr(ctx, -L * 0.33, -W / 2 + 3, L * 0.16, W - 6, 3); ctx.fill();
+    if (this.kind === 'police' && !this.wrecked) {
+      const ph = Math.floor(time * 6) % 2 === 0;
+      ctx.fillStyle = ph ? '#ff4356' : '#3b6cff';
+      ctx.fillRect(-5, -W / 2 + 4, 5, W - 8);
+      ctx.fillStyle = ph ? '#3b6cff' : '#ff4356';
+      ctx.fillRect(0, -W / 2 + 4, 5, W - 8);
+    }
+    if (!this.wrecked) {
+      ctx.fillStyle = '#ffe9a8';
+      ctx.fillRect(L / 2 - 3, -W / 2 + 3, 3, 4);
+      ctx.fillRect(L / 2 - 3, W / 2 - 7, 3, 4);
+    }
+    ctx.fillStyle = this.braking ? '#ff2038' : '#7a1420';
+    ctx.fillRect(-L / 2, -W / 2 + 3, 3, 4);
+    ctx.fillRect(-L / 2, W / 2 - 7, 3, 4);
+    if (this.wrecked) {
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(L * 0.1, -W / 2 + 2, L * 0.3, W - 4);
+    }
+    ctx.restore();
+  }
+}
+
+function drawHeadlights(ctx, car) {
+  if (car.wrecked) return;
+  ctx.save();
+  ctx.translate(car.x, car.y);
+  ctx.rotate(car.angle);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = 'rgba(255,240,180,0.07)';
+  for (const side of [-6, 6]) {
+    ctx.beginPath();
+    ctx.moveTo(car.len / 2 - 2, side);
+    ctx.lineTo(car.len / 2 + 85, side - 20);
+    ctx.lineTo(car.len / 2 + 85, side + 20);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// traffic AI: lane-following over the road grid
+
+function nextAITarget(car) {
+  const tx = Math.floor(car.x / TILE), ty = Math.floor(car.y / TILE);
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const cur = car.ai.dir;
+  const cands = [];
+  for (const [dx, dy] of dirs) {
+    if (cur && dx === -cur.x && dy === -cur.y) continue;      // no U-turns
+    const nx = tx + dx, ny = ty + dy;
+    if (!isRoad(nx, ny)) continue;
+    const ld = laneDir(nx, ny);
+    if (ld && (ld.x !== dx || ld.y !== dy)) continue;          // stay in lane
+    cands.push({ dx, dy, w: (cur && dx === cur.x && dy === cur.y) ? 4 : 1 });
+  }
+  if (!cands.length) {
+    if (cur) {
+      const nx = tx - cur.x, ny = ty - cur.y;                  // dead end: turn back
+      if (isRoad(nx, ny)) {
+        car.ai.dir = { x: -cur.x, y: -cur.y };
+        return { x: (nx + 0.5) * TILE, y: (ny + 0.5) * TILE };
+      }
+    }
+    return null;
+  }
+  let tot = 0;
+  for (const c of cands) tot += c.w;
+  let r = Math.random() * tot, sel = cands[0];
+  for (const c of cands) { r -= c.w; if (r <= 0) { sel = c; break; } }
+  car.ai.dir = { x: sel.dx, y: sel.dy };
+  return { x: (tx + sel.dx + 0.5) * TILE, y: (ty + sel.dy + 0.5) * TILE };
+}
+
+// AI cars use simplified kinematics (reliable cornering); world collision still applies
+function aiMove(car, dt, allCars, player) {
+  if (car.wrecked) { car.vx = 0; car.vy = 0; return; }
+  const ai = car.ai;
+  if (!ai.target) { ai.target = nextAITarget(car); if (!ai.target) return; }
+  let dx = ai.target.x - car.x, dy = ai.target.y - car.y;
+  if (dx * dx + dy * dy < (TILE * 0.3) * (TILE * 0.3)) {
+    const t = nextAITarget(car);
+    if (!t) return;
+    ai.target = t;
+    dx = ai.target.x - car.x; dy = ai.target.y - car.y;
+  }
+  const ta = Math.atan2(dy, dx);
+  const ad = angleNorm(ta - car.angle);
+  const mt = 3.0 * dt;
+  car.angle += clamp(ad, -mt, mt);
+
+  const fx = Math.cos(car.angle), fy = Math.sin(car.angle);
+  const ax = car.x + fx * 52, ay = car.y + fy * 52;
+  let blocked = false;
+  for (const o of allCars) {
+    if (o === car) continue;
+    if (dist2(o.x, o.y, ax, ay) < 36 * 36) { blocked = true; break; }
+  }
+  if (!blocked && !player.inCar && dist2(player.x, player.y, ax, ay) < 30 * 30) blocked = true;
+  if (car.panic > 0) { car.panic -= dt; blocked = true; }
+
+  const want = blocked ? 0 : (Math.abs(ad) > 0.5 ? 42 : 118);
+  car.aiSpeed += clamp(want - car.aiSpeed, -320 * dt, 95 * dt);
+  car.vx = fx * car.aiSpeed;
+  car.vy = fy * car.aiSpeed;
+  car.x += car.vx * dt;
+  car.y += car.vy * dt;
+  collideCarWorld(car);
+  car.braking = blocked && car.aiSpeed > 5;
+}
+
+// police pursuit
+
+function policeMove(cop, dt, player) {
+  if (cop.wrecked) { cop.vx = 0; cop.vy = 0; return; }
+  const tx = player.fx(), ty = player.fy();
+  const dx = tx - cop.x, dy = ty - cop.y;
+  const d = Math.hypot(dx, dy);
+  const ta = Math.atan2(dy, dx);
+  const ad = angleNorm(ta - cop.angle);
+  const mt = 2.6 * dt;
+  cop.angle += clamp(ad, -mt, mt);
+
+  let want;
+  if (Math.abs(ad) > 1.6 && d < 160) want = -70;   // back up to turn around
+  else if (d > 400) want = 300;
+  else if (d > 120) want = 250;
+  else want = 170;
+  cop.aiSpeed += clamp(want - cop.aiSpeed, -380 * dt, 160 * dt);
+
+  const fx = Math.cos(cop.angle), fy = Math.sin(cop.angle);
+  cop.vx = fx * cop.aiSpeed;
+  cop.vy = fy * cop.aiSpeed;
+  cop.x += cop.vx * dt;
+  cop.y += cop.vy * dt;
+  collideCarWorld(cop);
+
+  const moved = distp(cop.x, cop.y, cop._px, cop._py);
+  if (Math.abs(cop.aiSpeed) > 40 && moved / dt < 30) cop.stuck += dt;
+  else cop.stuck = Math.max(0, cop.stuck - dt);
+  cop._px = cop.x; cop._py = cop.y;
+}
+
+// car vs car (circle approximation)
+
+function collideCars(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const d2 = dx * dx + dy * dy, R = 30;
+  if (d2 >= R * R || d2 === 0) return 0;
+  const d = Math.sqrt(d2);
+  const nx = dx / d, ny = dy / d;
+  const overlap = R - d;
+  a.x -= nx * overlap / 2; a.y -= ny * overlap / 2;
+  b.x += nx * overlap / 2; b.y += ny * overlap / 2;
+  const rvx = b.vx - a.vx, rvy = b.vy - a.vy;
+  const vn = rvx * nx + rvy * ny;
+  if (vn < 0) {
+    const j = -vn * 0.6;
+    a.vx -= nx * j; a.vy -= ny * j;
+    b.vx += nx * j; b.vy += ny * j;
+    return -vn;
+  }
+  return 0;
+}
+
+// pedestrians
+
+class Ped {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.state = 'walk';
+    this.dir = Math.random() * 7;
+    this.walkSpeed = 28 + Math.random() * 20;
+    this.timer = 0;
+    this.deadTime = 0;
+    this.shirt = pick(['#ff8ab0', '#7fd8ff', '#ffe08a', '#9effc0', '#d6a4ff', '#ffffff', '#ffb37f']);
+    this.target = null;
+  }
+
+  update(dt, cars, player) {
+    if (this.state === 'dead') { this.deadTime += dt; return; }
+    let threat = null;
+    for (const c of cars) {
+      if (c.speed > 150 && dist2(c.x, c.y, this.x, this.y) < 160 * 160) { threat = c; break; }
+    }
+    if (threat) {
+      this.state = 'flee';
+      this.timer = 1.2;
+      this.dir = Math.atan2(this.y - threat.y, this.x - threat.x) + (Math.random() - 0.5);
+    } else if (this.state === 'flee') {
+      this.timer -= dt;
+      if (this.timer <= 0) this.state = 'walk';
+    }
+    if (this.state === 'walk') {
+      if (!this.target || dist2(this.x, this.y, this.target.x, this.target.y) < 16) {
+        this.target = this.pickTarget();
+      }
+      if (this.target) this.dir = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+    }
+    const sp = this.state === 'flee' ? 110 : this.walkSpeed;
+    const nx = this.x + Math.cos(this.dir) * sp * dt;
+    const ny = this.y + Math.sin(this.dir) * sp * dt;
+    if (!isSolid(Math.floor(nx / TILE), Math.floor(ny / TILE))) { this.x = nx; this.y = ny; }
+    else this.target = null;
+  }
+
+  pickTarget() {
+    const tx = Math.floor(this.x / TILE), ty = Math.floor(this.y / TILE);
+    const opts = [];
+    for (const d of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const t = tileType(tx + d[0], ty + d[1]);
+      if (t === T_SIDEWALK || t === T_GRASS || t === T_SAND) opts.push(d);
+    }
+    if (!opts.length) {
+      for (const d of [[1, 0], [-1, 0], [0, 1], [0, -1]])
+        if (!isSolid(tx + d[0], ty + d[1])) opts.push(d);
+    }
+    if (!opts.length) return null;
+    const d = pick(opts);
+    return { x: (tx + d[0] + 0.5) * TILE, y: (ty + d[1] + 0.5) * TILE };
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.dir);
+    if (this.state === 'dead') {
+      ctx.fillStyle = this.shirt;
+      ctx.fillRect(-7, -3, 12, 6);
+      ctx.fillStyle = '#d9a06b';
+      ctx.beginPath(); ctx.arc(8, 0, 3.4, 0, 7); ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath(); ctx.arc(1, 1, 5.5, 0, 7); ctx.fill();
+      ctx.fillStyle = this.shirt;
+      ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill();
+      ctx.fillStyle = '#d9a06b';
+      ctx.beginPath(); ctx.arc(1.5, 0, 3, 0, 7); ctx.fill();
+    }
+    ctx.restore();
+  }
+}

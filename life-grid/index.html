@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Life Grid — Conway's Game of Life</title>
+<style>
+  :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --green:#8affc9; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1100px 700px at 50% -10%, #0f2b22, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:14px; }
+  a.back { position:fixed; top:12px; left:14px; color:#ff6fb0; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 10px; font-style:italic; letter-spacing:5px; color:var(--green); text-shadow:0 0 18px var(--green); }
+  #bar { display:flex; gap:8px; align-items:center; margin-bottom:12px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+  #bar button, #bar select { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:6px;
+                padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  #bar button#play { color:var(--green); border-color:var(--green); min-width:80px; }
+  #bar input[type=range] { width:110px; accent-color:#8affc9; }
+  #bar .stat { color:#7684a8; } #bar .stat b { color:#ffd166; }
+  canvas { background:#070512; border:2px solid var(--line); border-radius:8px;
+           box-shadow:0 0 30px rgba(138,255,201,.18); max-width:94vw; cursor:crosshair; touch-action:none; }
+  p.hint { opacity:.55; font-size:12px; margin-top:10px; text-align:center; }
+</style>
+<meta property="og:title" content="LIFE GRID — browser game">
+<meta property="og:description" content="Conway&#x27;s Game of Life — draw cells, drop in a glider gun, and watch the colony glow.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/life-grid/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/life-grid/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Conway&#x27;s Game of Life — draw cells, drop in a glider gun, and watch the colony glow.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>LIFE GRID</h1>
+<div id="bar">
+  <button id="play">▶ play</button>
+  <button id="stepBtn">step</button>
+  <button id="rand">random</button>
+  <button id="clear">clear</button>
+  <select id="preset">
+    <option value="">presets…</option>
+    <option value="glider">glider</option>
+    <option value="pulsar">pulsar</option>
+    <option value="gun">glider gun</option>
+  </select>
+  <label>speed <input type="range" id="speed" min="2" max="40" value="12"></label>
+  <span class="stat">gen <b id="gen">0</b></span>
+  <span class="stat">pop <b id="pop">0</b></span>
+</div>
+<canvas id="c" width="768" height="480"></canvas>
+<p class="hint">draw with the mouse · SPACE play/pause · edges wrap around</p>
+<script>
+'use strict';
+const COLS = 96, ROWS = 60, CELL = 8;
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+
+let grid = new Uint8Array(COLS * ROWS);
+let heat = new Float32Array(COLS * ROWS);   // fading trails for recently dead cells
+let running = false, gen = 0, acc = 0, last = 0;
+
+function stepGrid(g) {
+  const out = new Uint8Array(COLS * ROWS);
+  for (let r = 0; r < ROWS; r++) {
+    const up = (r - 1 + ROWS) % ROWS, dn = (r + 1) % ROWS;
+    for (let c = 0; c < COLS; c++) {
+      const lf = (c - 1 + COLS) % COLS, rt = (c + 1) % COLS;
+      const n =
+        g[up * COLS + lf] + g[up * COLS + c] + g[up * COLS + rt] +
+        g[r * COLS + lf] + g[r * COLS + rt] +
+        g[dn * COLS + lf] + g[dn * COLS + c] + g[dn * COLS + rt];
+      const alive = g[r * COLS + c];
+      out[r * COLS + c] = (alive && (n === 2 || n === 3)) || (!alive && n === 3) ? 1 : 0;
+    }
+  }
+  return out;
+}
+
+function tick() {
+  const next = stepGrid(grid);
+  for (let i = 0; i < grid.length; i++) {
+    if (grid[i] && !next[i]) heat[i] = 1;      // just died → glow
+  }
+  grid = next;
+  gen++;
+}
+
+function population() { return grid.reduce((a, b) => a + b, 0); }
+
+function stamp(coords, cr, cc) {
+  for (const [r, c] of coords) {
+    const rr = (cr + r + ROWS) % ROWS, cc2 = (cc + c + COLS) % COLS;
+    grid[rr * COLS + cc2] = 1;
+  }
+}
+
+const PRESETS = {
+  glider: [[0,1],[1,2],[2,0],[2,1],[2,2]],
+  pulsar: (() => {
+    const seg = [[0,2],[0,3],[0,4],[2,0],[3,0],[4,0],[2,5],[3,5],[4,5],[5,2],[5,3],[5,4]];
+    const out = [];
+    for (const [sr, sc] of [[-6,-6],[-6,1],[1,-6],[1,1]])
+      for (const [r, c] of seg)
+        out.push([sr + r, sc + c]);
+    return out;
+  })(),
+  gun: [[0,24],[1,22],[1,24],[2,12],[2,13],[2,20],[2,21],[2,34],[2,35],[3,11],[3,15],[3,20],[3,21],[3,34],[3,35],[4,0],[4,1],[4,10],[4,16],[4,20],[4,21],[5,0],[5,1],[5,10],[5,14],[5,16],[5,17],[5,22],[5,24],[6,10],[6,16],[6,24],[7,11],[7,15],[8,12],[8,13]]
+};
+
+function reset() {
+  grid = new Uint8Array(COLS * ROWS);
+  heat = new Float32Array(COLS * ROWS);
+  gen = 0;
+  hud();
+}
+
+function randomize() {
+  reset();
+  for (let i = 0; i < grid.length; i++) grid[i] = Math.random() < 0.22 ? 1 : 0;
+  hud();
+}
+
+function hud() {
+  $('gen').textContent = gen;
+  $('pop').textContent = population();
+  $('play').textContent = running ? '❚❚ pause' : '▶ play';
+}
+
+function draw() {
+  x.fillStyle = '#070512';
+  x.fillRect(0, 0, cv.width, cv.height);
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const i = r * COLS + c;
+    if (grid[i]) {
+      x.fillStyle = '#8affc9';
+      x.fillRect(c * CELL, r * CELL, CELL - 1, CELL - 1);
+    } else if (heat[i] > 0.02) {
+      x.fillStyle = 'rgba(40,120,200,' + (heat[i] * 0.45).toFixed(3) + ')';
+      x.fillRect(c * CELL, r * CELL, CELL - 1, CELL - 1);
+      heat[i] *= 0.92;
+    }
+  }
+}
+
+// painting
+let painting = false, paintVal = 1;
+function cellAt(e) {
+  const rect = cv.getBoundingClientRect();
+  const c = Math.floor((e.clientX - rect.left) * (cv.width / rect.width) / CELL);
+  const r = Math.floor((e.clientY - rect.top) * (cv.height / rect.height) / CELL);
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return -1;
+  return r * COLS + c;
+}
+cv.addEventListener('pointerdown', e => {
+  const i = cellAt(e);
+  if (i < 0) return;
+  painting = true;
+  paintVal = grid[i] ? 0 : 1;
+  grid[i] = paintVal;
+  hud();
+});
+cv.addEventListener('pointermove', e => {
+  if (!painting) return;
+  const i = cellAt(e);
+  if (i >= 0) grid[i] = paintVal;
+  hud();
+});
+addEventListener('pointerup', () => { painting = false; });
+
+$('play').addEventListener('click', () => { running = !running; hud(); });
+$('stepBtn').addEventListener('click', () => { tick(); hud(); });
+$('rand').addEventListener('click', randomize);
+$('clear').addEventListener('click', () => { running = false; reset(); });
+$('preset').addEventListener('change', e => {
+  if (!e.target.value) return;
+  reset();
+  stamp(PRESETS[e.target.value], e.target.value === 'gun' ? 10 : (ROWS / 2) | 0, e.target.value === 'gun' ? 10 : (COLS / 2) | 0);
+  hud();
+  e.target.value = '';
+});
+addEventListener('keydown', e => {
+  if (e.key === ' ' && e.target.tagName !== 'SELECT') { e.preventDefault(); running = !running; hud(); }
+});
+
+function loop(t) {
+  if (!last) last = t;
+  const dt = t - last; last = t;
+  if (running) {
+    acc += dt;
+    const ms = 1000 / +$('speed').value;
+    while (acc >= ms) { acc -= ms; tick(); }
+    hud();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+randomize();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

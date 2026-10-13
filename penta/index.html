@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PENTA — five letters, six tries</title>
+<style>
+  :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --green:#39ff9c; --yellow:#ffd166; --gray:#3a3550; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #142b2b, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:14px; }
+  a.back { position:fixed; top:12px; left:14px; color:#28e0ff; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 4px; font-style:italic; letter-spacing:8px; color:var(--green); text-shadow:0 0 18px var(--green); }
+  #stats { font-size:12px; color:#7684a8; margin-bottom:14px; }
+  #stats b { color:#ffd166; }
+  #modeTabs { display:flex; gap:8px; margin-bottom:10px; }
+  #modeTabs button { background:var(--panel); color:#7684a8; border:1px solid var(--line); border-radius:16px;
+                     padding:6px 16px; font:inherit; font-size:12px; cursor:pointer; }
+  #modeTabs button.active { color:var(--green); border-color:var(--green); }
+  #grid { display:grid; grid-template-rows:repeat(6,1fr); gap:6px; margin-bottom:18px; }
+  .row { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+  .tile { width:56px; height:56px; display:flex; align-items:center; justify-content:center;
+          border:2px solid var(--line); border-radius:6px; font-size:26px; font-weight:700; text-transform:uppercase;
+          background:var(--panel); transition:transform .08s; }
+  .tile.filled { border-color:#4a4370; transform:scale(1.04); }
+  .tile.correct { background:#0f5134; border-color:var(--green); color:var(--green); box-shadow:0 0 10px rgba(57,255,156,.4); }
+  .tile.present { background:#54431a; border-color:var(--yellow); color:var(--yellow); }
+  .tile.absent { background:var(--gray); border-color:var(--gray); color:#8d87a8; }
+  #kb { display:flex; flex-direction:column; gap:6px; align-items:center; }
+  .krow { display:flex; gap:5px; }
+  .key { min-width:32px; height:44px; padding:0 8px; display:flex; align-items:center; justify-content:center;
+         background:#2a2448; border:none; border-radius:5px; color:#e8e6f5; font:inherit; font-size:13px;
+         font-weight:700; cursor:pointer; text-transform:uppercase; }
+  .key.wide { min-width:58px; font-size:11px; }
+  .key.correct { background:#0f5134; color:var(--green); }
+  .key.present { background:#54431a; color:var(--yellow); }
+  .key.absent { background:#1b1730; color:#5b5578; }
+  #msg { height:24px; margin:12px 0 2px; font-size:14px; letter-spacing:2px; color:var(--yellow); }
+  #actions { display:flex; gap:10px; margin-top:6px; }
+  #actions button { background:var(--panel); color:var(--green); border:1px solid var(--green); border-radius:6px;
+                    padding:8px 16px; font:inherit; cursor:pointer; }
+</style>
+<meta property="og:title" content="PENTA — browser game">
+<meta property="og:description" content="Five letters, six tries. On-screen keyboard, emoji sharing, and win-streak stats.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/penta/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/penta/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Five letters, six tries. On-screen keyboard, emoji sharing, and win-streak stats.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>PENTA</h1>
+<div id="modeTabs">
+  <button id="mDaily" class="active">daily</button>
+  <button id="mFree">free play</button>
+</div>
+<div id="stats">played <b id="sPlayed">0</b> · won <b id="sWon">0</b> · streak <b id="sStreak">0</b> · daily 🔥 <b id="sDaily">0</b></div>
+<div id="grid"></div>
+<div id="msg"></div>
+<div id="kb"></div>
+<div id="actions">
+  <button id="shareBtn" style="display:none">share result</button>
+  <button id="newBtn">new word</button>
+</div>
+<script>
+'use strict';
+const ANSWERS = ('about above actor acute admit adopt adult agent agree ahead alarm album alert alike alive allow alone along alter anger angle angry apart apple apply arena argue arise armor array aside asset audio audit avoid awake award aware badge baker basic batch beach began begin being below bench birth black blame blank blast blind block blood board bonus boost booth bound brain brand brave bread break breed brick bride brief bring broad broke brown build built buyer cabin cable candy cargo carry catch cause chain chair chalk charm chart chase cheap check chess chest chief child chill chose civil claim class clean clear click cliff climb clock close cloud coach coast could count court cover crack craft crash crazy cream crime cross crowd crown cycle daily dance dealt death debut delay depth dirty dozen draft drama drawn dream dress drill drink drive drove dying eager early earth eight elect elite empty enemy enjoy enter entry equal error event every exact exist extra faith false fancy fault fiber field fifth fifty fight final first flame flash fleet floor fluid focus force forge forth forty forum found frame frank fraud fresh front fruit fully funny ghost giant given glass globe glory goods grace grade grain grand grant grass grave great green greet group grown guard guess guest guide habit happy harsh heart heavy hello hence horse hotel house human humor ideal image index inner input issue joint judge juice knife knock known label large laser later laugh layer learn lease least leave legal lemon level light limit local logic loose lover lower loyal lucky lunch magic major maker march match maybe mayor meant medal media mercy metal meter might minor minus mixed model money month moral motor mount mouse mouth movie music naval nerve never newly night noble noise north noted novel nurse occur ocean offer often olive onion orbit order other ought outer owner paint panel panic paper party patch pause peace pearl phase phone photo piano piece pilot pitch place plain plane plant plate point pound power press price pride prime print prior prize proof proud prove pulse punch pupil queen quick quiet quite radio raise rally range rapid ratio reach ready realm rebel refer relax reply rider ridge rifle right rigid risky rival river robin robot rocky rough round route royal rural salad sauce scale scene scope score sense serve seven shade shake shall shape share sharp sheep sheet shelf shell shift shine shirt shock shoot shore short shown sight silly since sixty skill slate sleep slice slide small smart smile smoke snake solar solid solve sorry sound south space spare speak speed spend spice spike spine split sport staff stage stake stand start state steam steel stick still stock stone stood store storm story stove strip study style sugar suite sunny super sweet swift table taken taste teach thank theme there these thick thing think third those three throw thumb tiger tight timer title toast today token topic total touch tough tower trace track trade trail train treat trend trial tribe trick troop truck truly trust truth twice uncle under union unity until upper upset urban usage usual valid value video virus visit vital vocal voice waste watch water whale wheat wheel where which while white whole whose woman world worry worth would wound write wrong wrote young youth').split(' ');
+
+const $ = id => document.getElementById(id);
+let answer, guesses, cur, done, resultRows;
+let mode = 'daily';
+
+// daily puzzle: same word for everyone, seeded by the date
+const DAY0 = Date.UTC(2026, 0, 1);
+function dayNumber(now) {
+  return Math.floor(((now === undefined ? Date.now() : now) - DAY0) / 86400000);
+}
+function dailyAnswer(day) {
+  let h = (day * 2654435761) >>> 0;
+  h = (h ^ (h >>> 13)) >>> 0;
+  h = Math.imul(h, 1274126177) >>> 0;
+  h = (h ^ (h >>> 16)) >>> 0;    // keep unsigned; a signed XOR can make the index negative
+  return ANSWERS[h % ANSWERS.length];
+}
+function dailyState() {
+  try { return JSON.parse(localStorage.getItem('penta_day_' + dayNumber()) || 'null'); }
+  catch (e) { return null; }
+}
+function saveDaily() {
+  try {
+    localStorage.setItem('penta_day_' + dayNumber(),
+      JSON.stringify({ words: guesses.map(g2 => g2.word), done }));
+  } catch (e) { }
+}
+function bumpDailyStreak(wonFlag) {
+  let d = { last: -2, streak: 0 };
+  try { Object.assign(d, JSON.parse(localStorage.getItem('penta_dstreak') || '{}')); } catch (e) { }
+  const day = dayNumber();
+  if (d.last !== day) {   // only the first finish of the day counts
+    d.streak = wonFlag ? (d.last === day - 1 ? d.streak + 1 : 1) : 0;
+    d.last = day;
+    try { localStorage.setItem('penta_dstreak', JSON.stringify(d)); } catch (e) { }
+  }
+  renderDaily();
+}
+function renderDaily() {
+  let d = { streak: 0 };
+  try { Object.assign(d, JSON.parse(localStorage.getItem('penta_dstreak') || '{}')); } catch (e) { }
+  $('sDaily').textContent = d.streak;
+}
+
+function scoreGuess(guess, ans) {
+  const res = Array(5).fill('absent');
+  const counts = {};
+  for (let i = 0; i < 5; i++) {
+    if (guess[i] === ans[i]) res[i] = 'correct';
+    else counts[ans[i]] = (counts[ans[i]] || 0) + 1;
+  }
+  for (let i = 0; i < 5; i++) {
+    if (res[i] !== 'correct' && counts[guess[i]] > 0) {
+      res[i] = 'present';
+      counts[guess[i]]--;
+    }
+  }
+  return res;
+}
+
+function stats() {
+  let s = { played: 0, won: 0, streak: 0 };
+  try { Object.assign(s, JSON.parse(localStorage.getItem('penta_stats') || '{}')); } catch (e) { }
+  return s;
+}
+function saveStats(s) { try { localStorage.setItem('penta_stats', JSON.stringify(s)); } catch (e) { } }
+function renderStats() {
+  const s = stats();
+  $('sPlayed').textContent = s.played;
+  $('sWon').textContent = s.won;
+  $('sStreak').textContent = s.streak;
+}
+
+function newGame() {
+  guesses = []; cur = ''; done = false; resultRows = [];
+  $('shareBtn').style.display = 'none';
+  buildGrid(); buildKB();
+  if (mode === 'daily') {
+    const day = dayNumber();
+    answer = dailyAnswer(day);
+    $('newBtn').style.display = 'none';
+    const saved = dailyState();
+    if (saved && Array.isArray(saved.words)) {
+      for (const w of saved.words) { cur = w; submit(true); }
+    }
+    if (!done) $('msg').textContent = 'daily #' + day + ' — same word for everyone';
+  } else {
+    answer = ANSWERS[(Math.random() * ANSWERS.length) | 0];
+    $('newBtn').style.display = '';
+    $('msg').textContent = '';
+  }
+  paint();
+}
+
+function buildGrid() {
+  $('grid').innerHTML = '';
+  for (let r = 0; r < 6; r++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    for (let c = 0; c < 5; c++) {
+      const t = document.createElement('div');
+      t.className = 'tile';
+      t.id = 't' + r + c;
+      row.appendChild(t);
+    }
+    $('grid').appendChild(row);
+  }
+}
+
+const KROWS = ['qwertyuiop', 'asdfghjkl', '⏎zxcvbnm⌫'];
+function buildKB() {
+  $('kb').innerHTML = '';
+  for (const kr of KROWS) {
+    const row = document.createElement('div');
+    row.className = 'krow';
+    for (const ch of kr) {
+      const k = document.createElement('button');
+      k.className = 'key' + (ch === '⏎' || ch === '⌫' ? ' wide' : '');
+      k.textContent = ch === '⏎' ? 'enter' : ch === '⌫' ? 'del' : ch;
+      k.id = 'k' + ch;
+      k.addEventListener('click', () => press(ch));
+      row.appendChild(k);
+    }
+    $('kb').appendChild(row);
+  }
+}
+
+function press(ch) {
+  if (done) return;
+  if (ch === '⏎') return submit();
+  if (ch === '⌫') { cur = cur.slice(0, -1); paint(); return; }
+  if (/^[a-z]$/.test(ch) && cur.length < 5) { cur += ch; paint(); }
+}
+
+function submit(restoring) {
+  if (cur.length < 5) { flash('need 5 letters'); return; }
+  const res = scoreGuess(cur, answer);
+  guesses.push({ word: cur, res });
+  resultRows.push(res.map(r => r === 'correct' ? '🟩' : r === 'present' ? '🟨' : '⬛').join(''));
+  // key coloring: best-known state wins
+  const RANK = { absent: 1, present: 2, correct: 3 };
+  for (let i = 0; i < 5; i++) {
+    const k = $('k' + cur[i]);
+    if (!k) continue;
+    const prev = k.dataset.s;
+    if (!prev || RANK[res[i]] > RANK[prev]) {
+      k.dataset.s = res[i];
+      k.className = 'key ' + res[i];
+    }
+  }
+  const won = cur === answer;
+  cur = '';
+  paint();
+  if (won) {
+    done = true;
+    flash('✦ GOT IT IN ' + guesses.length + ' ✦');
+    if (!restoring) {
+      const s = stats(); s.played++; s.won++; s.streak++; saveStats(s); renderStats();
+      if (mode === 'daily') { bumpDailyStreak(true); saveDaily(); }
+    }
+    $('shareBtn').style.display = '';
+  } else if (guesses.length === 6) {
+    done = true;
+    flash('it was “' + answer.toUpperCase() + '”');
+    if (!restoring) {
+      const s = stats(); s.played++; s.streak = 0; saveStats(s); renderStats();
+      if (mode === 'daily') { bumpDailyStreak(false); saveDaily(); }
+    }
+    $('shareBtn').style.display = '';
+  } else if (!restoring && mode === 'daily') {
+    saveDaily();
+  }
+}
+
+function flash(m) { $('msg').textContent = m; }
+
+function paint() {
+  for (let r = 0; r < 6; r++) for (let c = 0; c < 5; c++) {
+    const t = $('t' + r + c);
+    t.className = 'tile';
+    t.textContent = '';
+    if (r < guesses.length) {
+      t.textContent = guesses[r].word[c];
+      t.classList.add(guesses[r].res[c]);
+    } else if (r === guesses.length && c < cur.length) {
+      t.textContent = cur[c];
+      t.classList.add('filled');
+    }
+  }
+}
+
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'enter') press('⏎');
+  else if (k === 'backspace') press('⌫');
+  else if (/^[a-z]$/.test(k)) press(k);
+});
+
+$('shareBtn').addEventListener('click', async () => {
+  const txt = 'PENTA ' + (mode === 'daily' ? '#' + dayNumber() + ' ' : '') +
+    (guesses[guesses.length - 1].word === answer ? guesses.length : 'X') + '/6\n' + resultRows.join('\n');
+  try { await navigator.clipboard.writeText(txt); flash('copied to clipboard'); }
+  catch (e) { flash('copy blocked by browser'); }
+});
+$('newBtn').addEventListener('click', newGame);
+$('mDaily').addEventListener('click', () => {
+  mode = 'daily';
+  $('mDaily').classList.add('active');
+  $('mFree').classList.remove('active');
+  newGame();
+});
+$('mFree').addEventListener('click', () => {
+  mode = 'free';
+  $('mFree').classList.add('active');
+  $('mDaily').classList.remove('active');
+  newGame();
+});
+
+renderStats();
+renderDaily();
+newGame();
+</script>
+</body>
+</html>

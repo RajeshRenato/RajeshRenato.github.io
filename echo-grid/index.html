@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ECHO GRID — repeat the pattern</title>
+<style>
+  :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --violet:#c77bff; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #1d1038, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; }
+  a.back { position:fixed; top:12px; left:14px; color:#39ff9c; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 6px; font-style:italic; letter-spacing:6px; color:var(--violet); text-shadow:0 0 18px var(--violet); }
+  #bar { display:flex; gap:16px; margin-bottom:20px; font-size:14px; align-items:center; }
+  #bar b { color:#ffd166; }
+  #bar label { color:#7684a8; font-size:12px; display:flex; gap:6px; align-items:center; cursor:pointer; }
+  #pads { display:grid; grid-template-columns:repeat(2,140px); gap:14px; }
+  .pad { height:140px; border-radius:16px; border:2px solid var(--line); cursor:pointer;
+         opacity:.45; transition:opacity .08s, box-shadow .08s, transform .08s; }
+  .pad.lit { opacity:1; transform:scale(1.03); }
+  #p0 { background:#0f5134; } #p0.lit { box-shadow:0 0 34px #39ff9c; }
+  #p1 { background:#54102c; } #p1.lit { box-shadow:0 0 34px #ff2d95; }
+  #p2 { background:#103a54; } #p2.lit { box-shadow:0 0 34px #28e0ff; }
+  #p3 { background:#544310; } #p3.lit { box-shadow:0 0 34px #ffd166; }
+  #msg { height:26px; margin-top:20px; font-size:15px; letter-spacing:3px; color:#7684a8; }
+  #msg.go { color:#39ff9c; }
+  #msg.fail { color:#ff5a7a; }
+  button#startBtn { margin-top:10px; background:var(--panel); color:var(--violet); border:1px solid var(--violet);
+                    border-radius:8px; padding:10px 26px; font:inherit; font-size:15px; cursor:pointer; }
+</style>
+<meta property="og:title" content="ECHO GRID — browser game">
+<meta property="og:description" content="Simon-style memory: watch the pattern, echo it back. WebAudio tones, strict mode.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/echo-grid/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/echo-grid/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Simon-style memory: watch the pattern, echo it back. WebAudio tones, strict mode.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>ECHO GRID</h1>
+<div id="bar">
+  round <b id="round">0</b> · best <b id="best">0</b>
+  <label><input type="checkbox" id="strict" checked> strict (one mistake = game over)</label>
+</div>
+<div id="pads">
+  <div class="pad" id="p0"></div>
+  <div class="pad" id="p1"></div>
+  <div class="pad" id="p2"></div>
+  <div class="pad" id="p3"></div>
+</div>
+<div id="msg">press start, then echo the pattern back</div>
+<button id="startBtn">start</button>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const FREQS = [329.63, 220, 277.18, 164.81];
+let seq = [], pos = 0, phase = 'idle'; // idle | playing | input | over
+let best = +(localStorage.getItem('eg_best') || 0);
+$('best').textContent = best;
+
+let audioCtx = null;
+function tone(i, dur) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = FREQS[i];
+    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur + 0.05);
+  } catch (e) { }
+}
+
+function flashPad(i, dur) {
+  const p = $('p' + i);
+  p.classList.add('lit');
+  tone(i, (dur || 350) / 1000);
+  setTimeout(() => p.classList.remove('lit'), (dur || 350) * 0.8);
+}
+
+function extend() { seq.push((Math.random() * 4) | 0); }
+
+// returns 'fail' | 'next' (sequence complete) | 'ok' (more to go)
+function checkPress(i) {
+  if (seq[pos] !== i) return 'fail';
+  pos++;
+  return pos >= seq.length ? 'next' : 'ok';
+}
+
+function playback() {
+  phase = 'playing';
+  setMsg('watch…', '');
+  const speed = Math.max(220, 560 - seq.length * 18);
+  seq.forEach((p, k) => setTimeout(() => flashPad(p, speed * 0.9), 500 + k * speed));
+  setTimeout(() => {
+    phase = 'input';
+    pos = 0;
+    setMsg('your turn — ' + seq.length + ' step' + (seq.length > 1 ? 's' : ''), 'go');
+  }, 500 + seq.length * speed);
+}
+
+function nextRound() {
+  extend();
+  $('round').textContent = seq.length;
+  if (seq.length - 1 > best) {
+    best = seq.length - 1;
+    try { localStorage.setItem('eg_best', best); } catch (e) { }
+    $('best').textContent = best;
+  }
+  playback();
+}
+
+function setMsg(t, cls) { $('msg').textContent = t; $('msg').className = cls || ''; }
+
+function press(i) {
+  if (phase !== 'input') return;
+  flashPad(i, 240);
+  const r = checkPress(i);
+  if (r === 'fail') {
+    tone(3, 0.6);
+    if ($('strict').checked) {
+      phase = 'over';
+      setMsg('wrong! you reached round ' + seq.length + ' — press start', 'fail');
+      if (seq.length - 1 > best) {
+        best = seq.length - 1;
+        try { localStorage.setItem('eg_best', best); } catch (e) { }
+        $('best').textContent = best;
+      }
+    } else {
+      setMsg('oops — watch again', 'fail');
+      setTimeout(playback, 900);
+    }
+  } else if (r === 'next') {
+    phase = 'playing';
+    setMsg('nice!', 'go');
+    setTimeout(nextRound, 800);
+  }
+}
+
+for (let i = 0; i < 4; i++) {
+  $('p' + i).addEventListener('pointerdown', () => press(i));
+}
+const KEYPAD = { q: 0, w: 1, a: 2, s: 3, 1: 0, 2: 1, 3: 2, 4: 3 };
+addEventListener('keydown', e => {
+  const i = KEYPAD[e.key.toLowerCase()];
+  if (i !== undefined) press(i);
+});
+
+$('startBtn').addEventListener('click', () => {
+  seq = [];
+  $('round').textContent = 0;
+  phase = 'idle';
+  nextRound();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JSON Studio — format · validate · explore</title>
+<style>
+  :root {
+    --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8;
+    --accent:#22d9ff; --ok:#39ff9c; --err:#ff5a7a; --key:#7f8cff; --str:#39ff9c;
+    --num:#ffd166; --bool:#ff8a5c;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; height:100vh; display:flex; flex-direction:column; background:var(--bg); color:var(--text); font-family:ui-monospace,'Cascadia Code','Courier New',monospace; }
+  header { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header h1 { font-size:16px; margin:0 14px 0 0; color:var(--accent); letter-spacing:2px; font-weight:600; }
+  header a.back { color:var(--dim); font-size:12px; text-decoration:none; margin-right:8px; }
+  button, .tab {
+    background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px;
+    padding:6px 12px; font:inherit; font-size:13px; cursor:pointer;
+  }
+  button:hover { border-color:var(--accent); color:var(--accent); }
+  .tab.active { border-color:var(--accent); color:var(--accent); box-shadow:0 0 10px rgba(34,217,255,.25); }
+  #status { margin-left:auto; font-size:13px; }
+  #status.ok { color:var(--ok); } #status.err { color:var(--err); }
+  main { flex:1; display:flex; min-height:0; }
+  .pane { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .pane + .pane { border-left:1px solid var(--line); }
+  .pane h2 { font-size:11px; letter-spacing:2px; color:var(--dim); margin:0; padding:8px 14px 4px; font-weight:400; }
+  textarea {
+    flex:1; resize:none; border:0; outline:0; background:transparent; color:var(--text);
+    font:inherit; font-size:13px; line-height:1.5; padding:8px 14px; tab-size:2;
+  }
+  #out { flex:1; overflow:auto; padding:8px 14px; font-size:13px; line-height:1.5; white-space:pre; }
+  #out.dim { opacity:.35; }
+  #stats { padding:6px 14px; border-top:1px solid var(--line); color:var(--dim); font-size:12px; min-height:28px; }
+  .k { color:var(--key); } .s { color:var(--str); } .n { color:var(--num); }
+  .b { color:var(--bool); } .z { color:var(--dim); }
+  details { margin-left:16px; } #out > details { margin-left:0; }
+  summary { cursor:pointer; list-style-position:outside; }
+  .leaf { margin-left:16px; }
+  @media (max-width:800px){ main { flex-direction:column; } .pane + .pane { border-left:0; border-top:1px solid var(--line);} }
+</style>
+<meta property="og:title" content="JSON STUDIO — browser game">
+<meta property="og:description" content="Format, minify, validate (with line/col errors), and explore JSON in a collapsible tree. Fully offline.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/json-studio/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/json-studio/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Format, minify, validate (with line/col errors), and explore JSON in a collapsible tree. Fully offline.">
+</head>
+<body>
+<header>
+  <a class="back" href="../">&larr;</a>
+  <h1>JSON STUDIO</h1>
+  <button id="bFormat">Format</button>
+  <button id="bMinify">Minify</button>
+  <span class="tab active" data-t="pretty">Pretty</span>
+  <span class="tab" data-t="tree">Tree</span>
+  <button id="bCopy">Copy</button>
+  <button id="bDownload">Download</button>
+  <button id="bSample">Sample</button>
+  <button id="bClear">Clear</button>
+  <span id="status"></span>
+</header>
+<main>
+  <div class="pane">
+    <h2>INPUT</h2>
+    <textarea id="in" spellcheck="false" placeholder='paste JSON here…'></textarea>
+  </div>
+  <div class="pane">
+    <h2>OUTPUT</h2>
+    <div id="out"></div>
+    <div id="stats"></div>
+  </div>
+</main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const inEl = $('in'), outEl = $('out'), statusEl = $('status'), statsEl = $('stats');
+let parsed, valid = false, view = 'pretty', minified = false, debounce;
+
+const SAMPLE = {
+  app: "JSON Studio", version: 2, tags: ["format", "validate", "tree"],
+  nested: { ok: true, pi: 3.14159, nothing: null,
+    deep: { list: [1, 2, { three: [4, 5] }] } },
+  author: { name: "you", awesome: true }
+};
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function posToLineCol(text, pos) {
+  const upto = text.slice(0, pos);
+  const line = (upto.match(/\n/g) || []).length + 1;
+  const col = pos - upto.lastIndexOf('\n');
+  return { line, col };
+}
+
+function analyze(v, depth) {
+  // returns {keys, depth}
+  if (v === null || typeof v !== 'object') return { keys: 0, depth };
+  let keys = 0, mx = depth;
+  for (const k in v) {
+    keys++;
+    const r = analyze(v[k], depth + 1);
+    keys += r.keys;
+    if (r.depth > mx) mx = r.depth;
+  }
+  return { keys, depth: mx };
+}
+
+let nodeBudget;
+function treeHTML(val, key, depth) {
+  if (nodeBudget-- <= 0) return '';
+  const kh = key === undefined ? '' : '<span class="k">' + esc(key) + '</span>: ';
+  if (val === null) return '<div class="leaf">' + kh + '<span class="z">null</span></div>';
+  const t = typeof val;
+  if (t === 'string') return '<div class="leaf">' + kh + '<span class="s">"' + esc(val) + '"</span></div>';
+  if (t === 'number') return '<div class="leaf">' + kh + '<span class="n">' + val + '</span></div>';
+  if (t === 'boolean') return '<div class="leaf">' + kh + '<span class="b">' + val + '</span></div>';
+  const isArr = Array.isArray(val);
+  const entries = isArr ? val.map((v2, i) => [i, v2]) : Object.entries(val);
+  let inner = '';
+  for (const [k2, v2] of entries) {
+    inner += treeHTML(v2, k2, depth + 1);
+    if (nodeBudget <= 0) { inner += '<div class="leaf z">… truncated</div>'; break; }
+  }
+  const label = kh + '<span class="z">' + (isArr ? '[' + entries.length + ']' : '{' + entries.length + '}') + '</span>';
+  return '<details' + (depth < 2 ? ' open' : '') + '><summary>' + label + '</summary>' + inner + '</details>';
+}
+
+function syntaxColorPretty(json) {
+  // token-level coloring of a JSON.stringify output
+  return esc(json).replace(
+    /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
+    (m, str, colon, bool) => {
+      if (str) return colon ? '<span class="k">' + str + '</span>' + colon : '<span class="s">' + str + '</span>';
+      if (bool) return '<span class="b">' + bool + '</span>';
+      if (m === 'null') return '<span class="z">null</span>';
+      return '<span class="n">' + m + '</span>';
+    }
+  );
+}
+
+function refresh() {
+  const text = inEl.value;
+  if (!text.trim()) {
+    valid = false;
+    statusEl.textContent = '';
+    statusEl.className = '';
+    outEl.innerHTML = '<span class="z">output appears here</span>';
+    statsEl.textContent = '';
+    return;
+  }
+  try {
+    parsed = JSON.parse(text);
+    valid = true;
+    statusEl.textContent = '✓ valid JSON';
+    statusEl.className = 'ok';
+    outEl.classList.remove('dim');
+    renderOut();
+    const a = analyze(parsed, 1);
+    const pretty = JSON.stringify(parsed, null, 2);
+    const mini = JSON.stringify(parsed);
+    statsEl.textContent =
+      'keys: ' + a.keys + ' · depth: ' + a.depth +
+      ' · pretty: ' + pretty.length.toLocaleString() + ' chars' +
+      ' · minified: ' + mini.length.toLocaleString() + ' chars';
+  } catch (e) {
+    valid = false;
+    let where = '';
+    let m = /line (\d+) column (\d+)/.exec(e.message);
+    if (m) {
+      where = ' (line ' + m[1] + ', col ' + m[2] + ')';
+    } else if ((m = /position (\d+)/.exec(e.message))) {
+      const lc = posToLineCol(text, +m[1]);
+      where = ' (line ' + lc.line + ', col ' + lc.col + ')';
+    }
+    statusEl.textContent = '✗ ' + e.message.split('\n')[0].replace(/ \(line \d+ column \d+\)/, '') + where;
+    statusEl.className = 'err';
+    outEl.classList.add('dim');
+    statsEl.textContent = '';
+  }
+}
+
+function renderOut() {
+  if (!valid) return;
+  if (view === 'tree') {
+    nodeBudget = 4000;
+    outEl.style.whiteSpace = 'normal';
+    outEl.innerHTML = treeHTML(parsed, undefined, 0);
+  } else {
+    outEl.style.whiteSpace = 'pre';
+    outEl.innerHTML = syntaxColorPretty(
+      minified ? JSON.stringify(parsed) : JSON.stringify(parsed, null, 2)
+    );
+  }
+}
+
+inEl.addEventListener('input', () => {
+  clearTimeout(debounce);
+  debounce = setTimeout(refresh, 250);
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    view = tab.dataset.t;
+    renderOut();
+  });
+});
+
+$('bFormat').addEventListener('click', () => {
+  if (!valid) return;
+  minified = false;
+  inEl.value = JSON.stringify(parsed, null, 2);
+  refresh();
+});
+$('bMinify').addEventListener('click', () => {
+  if (!valid) return;
+  minified = true;
+  renderOut();
+});
+$('bCopy').addEventListener('click', async () => {
+  if (!valid) return;
+  const text = minified ? JSON.stringify(parsed) : JSON.stringify(parsed, null, 2);
+  try { await navigator.clipboard.writeText(text); statusEl.textContent = '✓ copied'; }
+  catch (e) { statusEl.textContent = 'copy blocked by browser'; }
+});
+$('bDownload').addEventListener('click', () => {
+  if (!valid) return;
+  const blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'data.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+$('bSample').addEventListener('click', () => {
+  inEl.value = JSON.stringify(SAMPLE, null, 2);
+  refresh();
+});
+$('bClear').addEventListener('click', () => {
+  inEl.value = '';
+  refresh();
+  inEl.focus();
+});
+
+refresh();
+</script>
+</body>
+</html>

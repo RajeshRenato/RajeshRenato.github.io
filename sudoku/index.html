@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SUDOKU</title>
+<style>
+  :root { --bg:#0a0618; --blue:#7f8cff; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #14133, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:14px; }
+  a.back { position:fixed; top:12px; left:14px; color:#39ff9c; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 8px; font-style:italic; letter-spacing:5px; color:var(--blue); text-shadow:0 0 18px var(--blue); }
+  #bar { display:flex; gap:8px; margin-bottom:12px; font-size:13px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #bar button { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:6px;
+                padding:6px 12px; font:inherit; cursor:pointer; }
+  #bar button.active { border-color:var(--blue); color:var(--blue); }
+  #bar .stat b { color:#ffd166; }
+  #board { display:grid; grid-template-columns:repeat(9,42px); grid-template-rows:repeat(9,42px);
+           border:2px solid var(--blue); border-radius:6px; overflow:hidden;
+           box-shadow:0 0 26px rgba(127,140,255,.3); }
+  .cell { display:flex; align-items:center; justify-content:center; font-size:21px; background:#100c22;
+          border-right:1px solid #221c40; border-bottom:1px solid #221c40; cursor:pointer; user-select:none; }
+  .cell.bR { border-right:2px solid var(--blue); }
+  .cell.bB { border-bottom:2px solid var(--blue); }
+  .cell.given { color:#9aa3c7; font-weight:700; }
+  .cell.user { color:#39ff9c; }
+  .cell.sel { background:#232054; }
+  .cell.peer { background:#181438; }
+  .cell.conflict { color:#ff5a7a !important; }
+  #pad { display:flex; gap:6px; margin-top:12px; }
+  #pad button { width:40px; height:40px; background:var(--panel); color:#e8e6f5; border:1px solid var(--line);
+                border-radius:6px; font:inherit; font-size:17px; cursor:pointer; }
+  #pad button:hover { border-color:var(--blue); }
+  #msg { height:26px; margin-top:10px; font-size:15px; letter-spacing:2px; color:#39ff9c; }
+  p.hint { opacity:.55; font-size:12px; margin-top:4px; }
+</style>
+<meta property="og:title" content="SUDOKU — browser game">
+<meta property="og:description" content="Sudoku from a generator that guarantees exactly one solution.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/sudoku/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/sudoku/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Sudoku from a generator that guarantees exactly one solution.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>SUDOKU</h1>
+<div id="bar">
+  <button data-d="easy" class="active">easy</button>
+  <button data-d="medium">medium</button>
+  <button data-d="hard">hard</button>
+  <button data-d="daily">📅 daily</button>
+  <span class="stat">⏱ <b id="time">0:00</b></span>
+  <span class="stat">mistakes <b id="mist">0</b></span>
+  <button id="newBtn">new</button>
+</div>
+<div id="board"></div>
+<div id="pad"></div>
+<div id="msg"></div>
+<p class="hint">click a cell, type 1-9 · 0 / backspace clears · every puzzle has exactly one solution</p>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+// pluggable RNG so the daily puzzle is identical for everyone
+let rng = Math.random;
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function setSeed(s) { rng = mulberry32(s >>> 0); }
+function clearSeed() { rng = Math.random; }
+
+const DAY0 = Date.UTC(2026, 0, 1);
+function dayNumber() { return Math.floor((Date.now() - DAY0) / 86400000); }
+
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = (rng() * (i + 1)) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function validPlace(b, r, c, v) {
+  for (let i = 0; i < 9; i++) {
+    if (b[r * 9 + i] === v || b[i * 9 + c] === v) return false;
+  }
+  const br = r - r % 3, bc = c - c % 3;
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++)
+    if (b[(br + i) * 9 + bc + j] === v) return false;
+  return true;
+}
+
+function solveBoard(b) {   // fills b in place, returns true if solved
+  for (let i = 0; i < 81; i++) {
+    if (b[i]) continue;
+    const r = (i / 9) | 0, c = i % 9;
+    for (const v of shuffled([1, 2, 3, 4, 5, 6, 7, 8, 9])) {
+      if (validPlace(b, r, c, v)) {
+        b[i] = v;
+        if (solveBoard(b)) return true;
+        b[i] = 0;
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
+function countSolutions(b, limit) {
+  let count = 0;
+  function rec() {
+    if (count >= limit) return;
+    let i = b.indexOf(0);
+    if (i === -1) { count++; return; }
+    const r = (i / 9) | 0, c = i % 9;
+    for (let v = 1; v <= 9; v++) {
+      if (validPlace(b, r, c, v)) {
+        b[i] = v;
+        rec();
+        b[i] = 0;
+        if (count >= limit) return;
+      }
+    }
+  }
+  rec();
+  return count;
+}
+
+function makePuzzle(clues) {
+  const full = Array(81).fill(0);
+  solveBoard(full);
+  const puzzle = full.slice();
+  let filled = 81;
+  for (const i of shuffled([...Array(81).keys()])) {
+    if (filled <= clues) break;
+    const keep = puzzle[i];
+    puzzle[i] = 0;
+    const copy = puzzle.slice();
+    if (countSolutions(copy, 2) !== 1) puzzle[i] = keep;
+    else filled--;
+  }
+  return { puzzle, solution: full };
+}
+
+const CLUES = { easy: 40, medium: 32, hard: 27, daily: 32 };
+let board, solution, givens, sel = -1, mistakes, diff = 'easy', startT, timer, done;
+let cellEls = [];
+
+function newGame() {
+  if (diff === 'daily') setSeed(dayNumber() * 2654435761 + 7);
+  const { puzzle, solution: sol } = makePuzzle(CLUES[diff]);
+  clearSeed();
+  board = puzzle.slice();
+  solution = sol;
+  givens = puzzle.map(v => v !== 0);
+  sel = -1; mistakes = 0; done = false;
+  $('mist').textContent = 0;
+  $('msg').textContent = diff === 'daily' ? 'DAILY #' + dayNumber() + ' — same puzzle for everyone' : '';
+  startT = Date.now();
+  clearInterval(timer);
+  timer = setInterval(() => {
+    const s = ((Date.now() - startT) / 1000) | 0;
+    $('time').textContent = ((s / 60) | 0) + ':' + String(s % 60).padStart(2, '0');
+  }, 500);
+  paint();
+}
+
+function conflicts() {
+  const bad = new Set();
+  for (let i = 0; i < 81; i++) {
+    const v = board[i];
+    if (!v) continue;
+    const r = (i / 9) | 0, c = i % 9;
+    board[i] = 0;
+    if (!validPlace(board, r, c, v)) bad.add(i);
+    board[i] = v;
+  }
+  return bad;
+}
+
+function place(v) {
+  if (done || sel < 0 || givens[sel]) return;
+  if (v && board[sel] !== v && solution[sel] !== v) {
+    mistakes++;
+    $('mist').textContent = mistakes;
+  }
+  board[sel] = v;
+  paint();
+  if (!board.includes(0) && conflicts().size === 0) {
+    done = true;
+    clearInterval(timer);
+    if (diff === 'daily') {
+      $('msg').textContent = '✦ DAILY #' + dayNumber() + ' solved in ' + $('time').textContent + ' ✦';
+      try {
+        navigator.clipboard.writeText('SUDOKU daily #' + dayNumber() + ' — ' +
+          $('time').textContent + ', ' + mistakes + ' mistakes');
+      } catch (e) { }
+      try { localStorage.setItem('sud_day_' + dayNumber(), $('time').textContent); } catch (e) { }
+    } else {
+      $('msg').textContent = '✦ SOLVED in ' + $('time').textContent + ' ✦';
+    }
+  }
+}
+
+function buildDOM() {
+  const bd = $('board');
+  bd.innerHTML = '';
+  cellEls = [];
+  for (let i = 0; i < 81; i++) {
+    const r = (i / 9) | 0, c = i % 9;
+    const d = document.createElement('div');
+    d.className = 'cell' + (c % 3 === 2 && c !== 8 ? ' bR' : '') + (r % 3 === 2 && r !== 8 ? ' bB' : '');
+    d.addEventListener('click', () => { sel = i; paint(); });
+    bd.appendChild(d);
+    cellEls.push(d);
+  }
+}
+
+function paint() {
+  const bad = conflicts();
+  const sr = sel >= 0 ? (sel / 9) | 0 : -1, sc = sel >= 0 ? sel % 9 : -1;
+  for (let i = 0; i < 81; i++) {
+    const r = (i / 9) | 0, c = i % 9;
+    const d = cellEls[i];
+    d.textContent = board[i] || '';
+    d.className = d.className.replace(/ (given|user|sel|peer|conflict)/g, '');
+    if (givens[i]) d.className += ' given';
+    else if (board[i]) d.className += ' user';
+    if (i === sel) d.className += ' sel';
+    else if (sel >= 0 && (r === sr || c === sc ||
+      ((r - r % 3) === (sr - sr % 3) && (c - c % 3) === (sc - sc % 3)))) d.className += ' peer';
+    if (bad.has(i)) d.className += ' conflict';
+  }
+}
+
+addEventListener('keydown', e => {
+  if (e.key >= '1' && e.key <= '9') place(+e.key);
+  else if (e.key === '0' || e.key === 'Backspace' || e.key === 'Delete') place(0);
+  else if (sel >= 0 && e.key.startsWith('Arrow')) {
+    e.preventDefault();
+    const r = (sel / 9) | 0, c = sel % 9;
+    if (e.key === 'ArrowUp' && r > 0) sel -= 9;
+    if (e.key === 'ArrowDown' && r < 8) sel += 9;
+    if (e.key === 'ArrowLeft' && c > 0) sel -= 1;
+    if (e.key === 'ArrowRight' && c < 8) sel += 1;
+    paint();
+  }
+});
+
+for (let v = 1; v <= 9; v++) {
+  const b = document.createElement('button');
+  b.textContent = v;
+  b.addEventListener('click', () => place(v));
+  $('pad').appendChild(b);
+}
+const del = document.createElement('button');
+del.textContent = '⌫';
+del.addEventListener('click', () => place(0));
+$('pad').appendChild(del);
+
+document.querySelectorAll('#bar button[data-d]').forEach(b =>
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#bar button[data-d]').forEach(o => o.classList.remove('active'));
+    b.classList.add('active');
+    diff = b.dataset.d;
+    newGame();
+  }));
+$('newBtn').addEventListener('click', newGame);
+
+buildDOM();
+newGame();
+</script>
+</body>
+</html>

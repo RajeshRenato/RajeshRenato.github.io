@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ORBIT GOLF — gravity golf</title>
+<style>
+  :root { --bg:#060410; --green:#64ffb4; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #0e1a2b, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; }
+  a.back { position:fixed; top:12px; left:14px; color:#ff6fb0; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 8px; font-style:italic; letter-spacing:5px; color:var(--green); text-shadow:0 0 18px var(--green); }
+  #bar { display:flex; gap:22px; margin-bottom:10px; font-size:14px; }
+  #bar b { color:#ffd166; }
+  canvas { background:#05030e; border:2px solid #1e3448; border-radius:8px;
+           box-shadow:0 0 30px rgba(100,255,180,.2); max-width:94vw; cursor:crosshair; touch-action:none; }
+  p.hint { opacity:.55; font-size:12px; margin-top:10px; text-align:center; }
+</style>
+<meta property="og:title" content="ORBIT GOLF — browser game">
+<meta property="og:description" content="Golf through gravity wells: 9 holes where planets bend your shot and repulsors ruin it.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/orbit-golf/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/orbit-golf/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Golf through gravity wells: 9 holes where planets bend your shot and repulsors ruin it.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>ORBIT GOLF</h1>
+<div id="bar">hole <b id="lvl">1</b>/9 · strokes <b id="str">0</b> (par <b id="par">2</b>) · total <b id="tot">0</b></div>
+<canvas id="c" width="640" height="480"></canvas>
+<p class="hint">drag back from the ball and release to shoot · gold wells pull, red ones push · sink it in the green ring</p>
+<script>
+'use strict';
+const W = 640, H = 480;
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const G = 15000, SOFT = 700;
+
+// wells: [x, y, mass]; negative mass repels
+const LEVELS = [
+  { ball: [80, 400], hole: [560, 80], wells: [], par: 1 },
+  { ball: [80, 240], hole: [560, 240], wells: [[320, 240, 1000]], par: 2 },
+  { ball: [80, 400], hole: [560, 400], wells: [[320, 250, 800]], par: 2 },
+  { ball: [80, 240], hole: [560, 240], wells: [[250, 150, 700], [400, 330, 700]], par: 3 },
+  { ball: [320, 440], hole: [320, 60], wells: [[320, 250, 900]], par: 3 },
+  { ball: [80, 80], hole: [560, 400], wells: [[320, 240, 1200], [480, 120, 500]], par: 3 },
+  { ball: [80, 440], hole: [560, 60], wells: [[200, 200, 600], [440, 300, 600]], par: 3 },
+  { ball: [80, 240], hole: [560, 240], wells: [[220, 240, 500], [320, 240, -800], [430, 240, 500]], par: 3 },
+  { ball: [320, 420], hole: [320, 80], wells: [[200, 250, 700], [440, 250, 700], [320, 160, -500]], par: 4 },
+];
+
+function wellR(m) { return 10 + Math.abs(m) / 70; }
+
+function accelAt(px, py, wells) {
+  let ax = 0, ay = 0;
+  for (const [wx, wy, m] of wells) {
+    const dx = wx - px, dy = wy - py;
+    const d2 = dx * dx + dy * dy + SOFT;
+    const f = G * m / (d2 * Math.sqrt(d2));
+    ax += f * dx;
+    ay += f * dy;
+  }
+  return { ax, ay };
+}
+
+let lvl = 0, strokes = 0, total = 0, ball, flying = false, flyT = 0, won = false, allDone = false;
+let trail = [];
+const drag = { on: false, x: 0, y: 0 };
+
+function loadLevel(n) {
+  lvl = n;
+  const L = LEVELS[lvl];
+  ball = { x: L.ball[0], y: L.ball[1], vx: 0, vy: 0 };
+  strokes = 0; flying = false; won = false;
+  trail = [];
+  hud();
+}
+
+function hud() {
+  $('lvl').textContent = lvl + 1;
+  $('str').textContent = strokes;
+  $('par').textContent = LEVELS[lvl].par;
+  $('tot').textContent = total;
+}
+
+function resetBall(stroke) {
+  const L = LEVELS[lvl];
+  ball = { x: L.ball[0], y: L.ball[1], vx: 0, vy: 0 };
+  flying = false;
+  trail = [];
+  if (stroke) { strokes++; hud(); }
+}
+
+function shoot(vx, vy) {
+  if (flying || won || allDone) return;
+  ball.vx = vx; ball.vy = vy;
+  flying = true;
+  flyT = 0;
+  strokes++;
+  hud();
+}
+
+function step(dt) {
+  if (!flying) return;
+  flyT += dt;
+  const L = LEVELS[lvl];
+  const sub = 4;
+  for (let s = 0; s < sub; s++) {
+    const h2 = dt / sub;
+    const { ax, ay } = accelAt(ball.x, ball.y, L.wells);
+    ball.vx += ax * h2; ball.vy += ay * h2;
+    ball.x += ball.vx * h2; ball.y += ball.vy * h2;
+  }
+  trail.push({ x: ball.x, y: ball.y });
+  if (trail.length > 160) trail.shift();
+  // sunk?
+  const [hx, hy] = L.hole;
+  if (Math.hypot(ball.x - hx, ball.y - hy) < 14) { sink(); return; }
+  // crashed into an attracting well?
+  for (const wl of L.wells) {
+    if (wl[2] > 0 && Math.hypot(ball.x - wl[0], ball.y - wl[1]) < wellR(wl[2]) + 6) {
+      resetBall(true);
+      return;
+    }
+  }
+  // lost in space / drifting too long
+  if (ball.x < -60 || ball.x > W + 60 || ball.y < -60 || ball.y > H + 60 || flyT > 11) {
+    resetBall(true);
+  }
+}
+
+function sink() {
+  flying = false;
+  won = true;
+  total += strokes;
+  hud();
+  setTimeout(() => {
+    if (lvl + 1 < LEVELS.length) loadLevel(lvl + 1);
+    else allDone = true;
+  }, 1300);
+}
+
+cv.addEventListener('pointerdown', e => {
+  if (flying || won) return;
+  if (allDone) { total = 0; allDone = false; loadLevel(0); return; }
+  drag.on = true;
+  updDrag(e);
+});
+cv.addEventListener('pointermove', updDrag);
+addEventListener('pointerup', e => {
+  if (!drag.on) return;
+  drag.on = false;
+  const k = 2.4;
+  const vx = (ball.x - drag.x) * k, vy = (ball.y - drag.y) * k;
+  if (Math.hypot(vx, vy) > 20) shoot(vx, vy);
+});
+function updDrag(e) {
+  if (!drag.on) return;
+  const r = cv.getBoundingClientRect();
+  drag.x = (e.clientX - r.left) * (W / r.width);
+  drag.y = (e.clientY - r.top) * (H / r.height);
+}
+addEventListener('keydown', e => {
+  if (e.key.toLowerCase() === 'r' && flying) resetBall(true);
+});
+
+function draw(t) {
+  x.fillStyle = '#05030e';
+  x.fillRect(0, 0, W, H);
+  // starfield
+  for (let i = 0; i < 40; i++) {
+    x.fillStyle = 'rgba(255,255,255,' + (0.1 + (i * 37 % 10) / 40) + ')';
+    x.fillRect((i * 97) % W, (i * 211) % H, 2, 2);
+  }
+  const L = LEVELS[lvl];
+  // hole
+  const [hx, hy] = L.hole;
+  x.strokeStyle = '#64ffb4';
+  x.lineWidth = 2.5;
+  x.shadowColor = '#64ffb4'; x.shadowBlur = 12;
+  x.beginPath(); x.arc(hx, hy, 14 + Math.sin(t / 220) * 2, 0, 7); x.stroke();
+  x.shadowBlur = 0;
+  // wells
+  for (const [wx, wy, m] of L.wells) {
+    const col = m > 0 ? '#ffd166' : '#ff5a7a';
+    x.fillStyle = col;
+    x.shadowColor = col; x.shadowBlur = 18;
+    x.beginPath(); x.arc(wx, wy, wellR(m), 0, 7); x.fill();
+    x.shadowBlur = 0;
+    x.strokeStyle = m > 0 ? 'rgba(255,209,102,.2)' : 'rgba(255,90,122,.2)';
+    x.beginPath(); x.arc(wx, wy, wellR(m) + 16, 0, 7); x.stroke();
+  }
+  // trail
+  x.strokeStyle = 'rgba(100,255,180,.35)';
+  x.lineWidth = 1.5;
+  x.beginPath();
+  trail.forEach((p, i) => i ? x.lineTo(p.x, p.y) : x.moveTo(p.x, p.y));
+  x.stroke();
+  // aim line
+  if (drag.on) {
+    x.strokeStyle = 'rgba(255,255,255,.7)';
+    x.setLineDash([5, 5]);
+    x.beginPath();
+    x.moveTo(ball.x, ball.y);
+    x.lineTo(2 * ball.x - drag.x, 2 * ball.y - drag.y);
+    x.stroke();
+    x.setLineDash([]);
+  }
+  // ball
+  x.fillStyle = '#ffffff';
+  x.shadowColor = '#fff'; x.shadowBlur = 10;
+  x.beginPath(); x.arc(ball.x, ball.y, 6, 0, 7); x.fill();
+  x.shadowBlur = 0;
+  if (won && !allDone) {
+    x.textAlign = 'center';
+    x.font = 'italic bold 30px "Courier New",monospace';
+    x.fillStyle = '#64ffb4'; x.shadowColor = '#64ffb4'; x.shadowBlur = 16;
+    const diff = strokes - L.par;
+    x.fillText(diff <= -2 ? 'EAGLE!' : diff === -1 ? 'BIRDIE!' : diff === 0 ? 'PAR' : diff + ' over', W / 2, H / 2);
+    x.shadowBlur = 0;
+  }
+  if (allDone) {
+    x.fillStyle = 'rgba(5,3,14,.75)';
+    x.fillRect(0, 0, W, H);
+    x.textAlign = 'center';
+    x.font = 'italic bold 36px "Courier New",monospace';
+    x.fillStyle = '#64ffb4'; x.shadowColor = '#64ffb4'; x.shadowBlur = 18;
+    x.fillText('COURSE COMPLETE', W / 2, H / 2 - 16);
+    x.shadowBlur = 0;
+    x.font = '16px "Courier New",monospace';
+    x.fillStyle = '#e8e6f5';
+    const par = LEVELS.reduce((a, l) => a + l.par, 0);
+    x.fillText('total ' + total + ' strokes (par ' + par + ') — click to replay', W / 2, H / 2 + 22);
+  }
+}
+
+let last = 0;
+function loop(t) {
+  if (!last) last = t;
+  const dt = Math.min(0.03, (t - last) / 1000);
+  last = t;
+  step(dt);
+  draw(t);
+  requestAnimationFrame(loop);
+}
+loadLevel(0);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

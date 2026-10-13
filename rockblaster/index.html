@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROCK BLASTER</title>
+<style>
+  :root { --bg:#0a0618; --violet:#9f7bff; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1200px 800px at 50% -10%, #171040, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; }
+  a.back { position:fixed; top:12px; left:14px; color:#39ff9c; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 10px; font-style:italic; letter-spacing:5px; color:var(--violet); text-shadow:0 0 18px var(--violet); }
+  canvas { background:#07051a; border:2px solid #322a6e; border-radius:8px;
+           box-shadow:0 0 30px rgba(159,123,255,.25); max-width:94vw; }
+  p.hint { opacity:.55; font-size:12px; margin-top:10px; }
+</style>
+<meta property="og:title" content="ROCK BLASTER — browser game">
+<meta property="og:description" content="Vector-style space shooter. Thrust, drift, wrap the screen, split the rocks to dust.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/rockblaster/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/rockblaster/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Vector-style space shooter. Thrust, drift, wrap the screen, split the rocks to dust.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>ROCK BLASTER</h1>
+<canvas id="c" width="640" height="480"></canvas>
+<p class="hint">←→ rotate · ↑ thrust · SPACE fire · R restart</p>
+<script>
+'use strict';
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const TAU = Math.PI * 2;
+let best = +(localStorage.getItem('rb_best') || 0);
+
+let ship, rocks, bullets, parts, score, lives, level, state, keys = {};
+
+function wrap(o, r) {
+  if (o.x < -r) o.x = W + r;
+  if (o.x > W + r) o.x = -r;
+  if (o.y < -r) o.y = H + r;
+  if (o.y > H + r) o.y = -r;
+}
+
+const SIZE_R = { 3: 44, 2: 25, 1: 13 };
+const SIZE_PTS = { 3: 20, 2: 50, 1: 100 };
+
+function makeRock(size, px, py) {
+  const a = Math.random() * TAU;
+  const sp = (4 - size) * 28 + Math.random() * 30;
+  const verts = [];
+  const n = 9 + (Math.random() * 4 | 0);
+  for (let i = 0; i < n; i++) verts.push(0.72 + Math.random() * 0.4);
+  return {
+    x: px !== undefined ? px : Math.random() * W,
+    y: py !== undefined ? py : Math.random() * H,
+    vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+    r: SIZE_R[size], size, verts,
+    a: Math.random() * TAU, spin: (Math.random() - 0.5) * 1.4
+  };
+}
+
+function splitRock(rock) {
+  const out = [];
+  if (rock.size > 1) {
+    out.push(makeRock(rock.size - 1, rock.x, rock.y));
+    out.push(makeRock(rock.size - 1, rock.x, rock.y));
+  }
+  return out;
+}
+
+function spawnLevel(n) {
+  rocks = [];
+  for (let i = 0; i < 2 + n; i++) {
+    let rk;
+    do { rk = makeRock(3); }
+    while (Math.hypot(rk.x - ship.x, rk.y - ship.y) < 160);
+    rocks.push(rk);
+  }
+}
+
+function resetShip() {
+  ship = { x: W / 2, y: H / 2, a: -Math.PI / 2, vx: 0, vy: 0, inv: 2.4 };
+}
+
+function reset() {
+  score = 0; lives = 3; level = 1;
+  bullets = []; parts = [];
+  resetShip();
+  spawnLevel(level);
+  state = 'menu';
+}
+
+function fire() {
+  if (bullets.length >= 5 || state !== 'play') return;
+  bullets.push({
+    x: ship.x + Math.cos(ship.a) * 14,
+    y: ship.y + Math.sin(ship.a) * 14,
+    vx: Math.cos(ship.a) * 430 + ship.vx,
+    vy: Math.sin(ship.a) * 430 + ship.vy,
+    life: 1.1
+  });
+}
+
+function burst(bx, by, n, hue) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * TAU, sp = 40 + Math.random() * 160;
+    parts.push({ x: bx, y: by, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                 life: 0.3 + Math.random() * 0.4, hue });
+  }
+}
+
+function saveBest() {
+  if (score > best) { best = score; try { localStorage.setItem('rb_best', best); } catch (e) { } }
+}
+
+function step(dt) {
+  if (keys.ArrowLeft || keys.a) ship.a -= 4.2 * dt;
+  if (keys.ArrowRight || keys.d) ship.a += 4.2 * dt;
+  const thrusting = keys.ArrowUp || keys.w;
+  if (thrusting) {
+    ship.vx += Math.cos(ship.a) * 260 * dt;
+    ship.vy += Math.sin(ship.a) * 260 * dt;
+  }
+  const drag = Math.max(0, 1 - 0.45 * dt);
+  ship.vx *= drag; ship.vy *= drag;
+  ship.x += ship.vx * dt; ship.y += ship.vy * dt;
+  wrap(ship, 14);
+  if (ship.inv > 0) ship.inv -= dt;
+
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.life -= dt;
+    if (b.life <= 0) { bullets.splice(i, 1); continue; }
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    wrap(b, 2);
+  }
+
+  const newRocks = [];
+  for (let i = rocks.length - 1; i >= 0; i--) {
+    const rk = rocks[i];
+    rk.x += rk.vx * dt; rk.y += rk.vy * dt;
+    rk.a += rk.spin * dt;
+    wrap(rk, rk.r);
+    // bullet hits
+    let hit = false;
+    for (let j = bullets.length - 1; j >= 0; j--) {
+      const b = bullets[j];
+      const dx = b.x - rk.x, dy = b.y - rk.y;
+      if (dx * dx + dy * dy < rk.r * rk.r) {
+        bullets.splice(j, 1);
+        hit = true;
+        break;
+      }
+    }
+    if (hit) {
+      score += SIZE_PTS[rk.size];
+      burst(rk.x, rk.y, 10, 265 + Math.random() * 40);
+      newRocks.push(...splitRock(rk));
+      rocks.splice(i, 1);
+      continue;
+    }
+    // ship hit
+    if (ship.inv <= 0) {
+      const dx = ship.x - rk.x, dy = ship.y - rk.y;
+      const rr = rk.r + 10;
+      if (dx * dx + dy * dy < rr * rr) {
+        lives--;
+        burst(ship.x, ship.y, 24, 320);
+        if (lives <= 0) { state = 'over'; saveBest(); }
+        else resetShip();
+      }
+    }
+  }
+  rocks.push(...newRocks);
+
+  if (!rocks.length) {
+    level++;
+    spawnLevel(level);
+    ship.inv = Math.max(ship.inv, 1.5);
+  }
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.life -= dt;
+    if (p.life <= 0) { parts.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+  }
+}
+
+function drawShip() {
+  if (ship.inv > 0 && Math.floor(ship.inv * 10) % 2) return; // blink
+  x.save();
+  x.translate(ship.x, ship.y);
+  x.rotate(ship.a);
+  x.strokeStyle = '#e8e6f5';
+  x.shadowColor = '#9f7bff'; x.shadowBlur = 10;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.moveTo(14, 0); x.lineTo(-10, -9); x.lineTo(-5, 0); x.lineTo(-10, 9);
+  x.closePath(); x.stroke();
+  if ((keys.ArrowUp || keys.w) && state === 'play') {
+    x.strokeStyle = '#ffd166';
+    x.beginPath(); x.moveTo(-7, -4); x.lineTo(-15 - Math.random() * 6, 0); x.lineTo(-7, 4); x.stroke();
+  }
+  x.restore();
+  x.shadowBlur = 0;
+}
+
+function overlay(title, sub) {
+  x.fillStyle = 'rgba(10,6,24,0.68)';
+  x.fillRect(0, 0, W, H);
+  x.textAlign = 'center';
+  x.font = 'italic bold 40px "Courier New",monospace';
+  x.fillStyle = '#9f7bff'; x.shadowColor = '#9f7bff'; x.shadowBlur = 20;
+  x.fillText(title, W / 2, H / 2 - 8);
+  x.shadowBlur = 0;
+  x.font = '15px "Courier New",monospace';
+  x.fillStyle = '#e8e6f5';
+  x.fillText(sub, W / 2, H / 2 + 26);
+}
+
+function draw() {
+  x.fillStyle = '#07051a';
+  x.fillRect(0, 0, W, H);
+
+  x.strokeStyle = '#b9a8ff';
+  x.lineWidth = 1.6;
+  for (const rk of rocks) {
+    x.save();
+    x.translate(rk.x, rk.y);
+    x.rotate(rk.a);
+    x.shadowColor = '#9f7bff'; x.shadowBlur = 8;
+    x.beginPath();
+    for (let i = 0; i < rk.verts.length; i++) {
+      const a = i / rk.verts.length * TAU;
+      const r = rk.r * rk.verts[i];
+      i ? x.lineTo(Math.cos(a) * r, Math.sin(a) * r) : x.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    x.closePath(); x.stroke();
+    x.restore();
+  }
+  x.shadowBlur = 0;
+
+  x.fillStyle = '#fff';
+  for (const b of bullets) { x.fillRect(b.x - 1.5, b.y - 1.5, 3, 3); }
+
+  for (const p of parts) {
+    x.globalAlpha = Math.min(1, p.life * 2.5);
+    x.fillStyle = 'hsl(' + p.hue + ',90%,70%)';
+    x.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+  }
+  x.globalAlpha = 1;
+
+  drawShip();
+
+  x.font = '14px "Courier New",monospace';
+  x.textAlign = 'left'; x.fillStyle = '#8affc9';
+  x.fillText('SCORE ' + score, 12, 24);
+  x.textAlign = 'center'; x.fillStyle = '#ffd166';
+  x.fillText('LVL ' + level, W / 2, 24);
+  x.textAlign = 'right'; x.fillStyle = '#ff6fb0';
+  x.fillText('▲'.repeat(Math.max(0, lives)) + '  BEST ' + best, W - 12, 24);
+
+  if (state === 'menu') overlay('ROCK BLASTER', 'press any key to fly');
+  else if (state === 'over') overlay('SHIP LOST', 'score ' + score + ' — R to retry');
+}
+
+addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault();
+  if (state === 'menu') { state = 'play'; return; }
+  if (state === 'over' && e.key.toLowerCase() === 'r') { reset(); state = 'play'; return; }
+  if (e.key === ' ') fire();
+});
+addEventListener('keyup', e => { keys[e.key] = false; });
+
+let last = 0;
+function loop(t) {
+  if (!last) last = t;
+  const dt = Math.min(0.03, (t - last) / 1000);
+  last = t;
+  if (state === 'play') step(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+reset();
+requestAnimationFrame(loop);
+</script>
+
+<div id="tc">
+  <b data-k="ArrowLeft" style="left:16px;bottom:18px">&#9664;</b>
+  <b data-k="ArrowRight" style="left:106px;bottom:18px">&#9654;</b>
+  <b data-k="ArrowUp" style="right:106px;bottom:18px">&#9650;</b>
+  <b data-k=" " data-r="260" style="right:16px;bottom:18px">FIRE</b>
+</div>
+<style>
+#tc { display:none; }
+@media (pointer: coarse) { #tc { display:block; } }
+#tc b { position:fixed; z-index:9; width:62px; height:62px; border-radius:50%;
+  background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.35);
+  color:rgba(255,255,255,.85); font:700 18px monospace; display:flex; align-items:center;
+  justify-content:center; user-select:none; -webkit-user-select:none; touch-action:none; }
+#tc b:active { background:rgba(255,255,255,.26); }
+</style>
+<script>
+(function () {
+  var fire = function (type, k) { dispatchEvent(new KeyboardEvent(type, { key: k })); };
+  document.querySelectorAll('#tc b').forEach(function (b) {
+    var iv = null, k = b.dataset.k, rep = +(b.dataset.r || 0);
+    b.addEventListener('pointerdown', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      fire('keydown', k);
+      if (rep) iv = setInterval(function () { fire('keydown', k); }, rep);
+    });
+    var end = function () { if (iv) { clearInterval(iv); iv = null; } fire('keyup', k); };
+    b.addEventListener('pointerup', end);
+    b.addEventListener('pointercancel', end);
+    b.addEventListener('pointerleave', end);
+  });
+  addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'touch') return;
+    if (e.target.closest && e.target.closest('#tc')) return;
+    fire('keydown', 'r'); fire('keyup', 'r');
+  });
+})();
+</script>
+</body>
+</html>

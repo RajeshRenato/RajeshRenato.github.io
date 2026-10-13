@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PIXEL FORGE — tiny pixel art editor</title>
+<style>
+  :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --orange:#ff8a5c; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:var(--bg); color:#dde4f5; font-family:ui-monospace,'Cascadia Code','Courier New',monospace; padding:16px; }
+  a.back { position:fixed; top:12px; left:14px; color:#7684a8; font-size:12px; text-decoration:none; }
+  h1 { font-size:18px; letter-spacing:4px; color:var(--orange); margin:0 0 14px; text-shadow:0 0 14px rgba(255,138,92,.5); }
+  #bar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center; }
+  #bar button { background:var(--panel); color:#dde4f5; border:1px solid var(--line); border-radius:6px;
+                padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  #bar button.sel { border-color:var(--orange); color:var(--orange); }
+  #wrap { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; justify-content:center; }
+  canvas { border:2px solid var(--line); border-radius:6px; image-rendering:pixelated; cursor:crosshair; touch-action:none; }
+  #palette { display:grid; grid-template-columns:repeat(4,30px); gap:6px; }
+  .sw { width:30px; height:30px; border-radius:5px; cursor:pointer; border:2px solid transparent; }
+  .sw.sel { border-color:#fff; }
+  #custom { width:66px; height:30px; padding:0; border:1px solid var(--line); background:var(--panel); border-radius:5px; cursor:pointer; }
+  #toast { height:18px; margin-top:12px; font-size:12px; color:#8affc9; }
+</style>
+<meta property="og:title" content="PIXEL FORGE — browser game">
+<meta property="og:description" content="Tiny pixel art editor: pencil, fill, eyedropper, undo, autosave, and crisp PNG export.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/pixel-forge/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/pixel-forge/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Tiny pixel art editor: pencil, fill, eyedropper, undo, autosave, and crisp PNG export.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>PIXEL FORGE</h1>
+<div id="bar">
+  <button id="tPencil" class="sel">✏️ draw</button>
+  <button id="tEraser">🧽 erase</button>
+  <button id="tFill">🪣 fill</button>
+  <button id="tPick">💧 pick</button>
+  <button id="undoBtn">↶ undo</button>
+  <button id="n16">new 16²</button>
+  <button id="n32">new 32²</button>
+  <button id="exportBtn">⬇ PNG</button>
+</div>
+<div id="wrap">
+  <canvas id="c" width="384" height="384"></canvas>
+  <div>
+    <div id="palette"></div>
+    <input type="color" id="custom" value="#ff8a5c" title="custom color" style="margin-top:8px">
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const cv = $('c'), x = cv.getContext('2d');
+const PAL = ['#000000','#ffffff','#ff5a7a','#ff8a5c','#ffd166','#39ff9c','#28e0ff','#7f8cff',
+             '#c77bff','#ff6fb0','#8b5a2b','#4a4a5e','#1d5438','#103a54','#54102c','#2b2250'];
+
+let size = 16, px = Array(size * size).fill(null);
+let color = PAL[2], tool = 'pencil', drawing = false, undoStack = [];
+
+function floodFill(grid, n, start, repl) {
+  const target = grid[start];
+  if (target === repl) return grid;
+  const stack = [start];
+  while (stack.length) {
+    const i = stack.pop();
+    if (grid[i] !== target) continue;
+    grid[i] = repl;
+    const c = i % n, r = (i / n) | 0;
+    if (c > 0) stack.push(i - 1);
+    if (c < n - 1) stack.push(i + 1);
+    if (r > 0) stack.push(i - n);
+    if (r < n - 1) stack.push(i + n);
+  }
+  return grid;
+}
+
+function paint() {
+  const cell = cv.width / size;
+  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+    const v = px[r * size + c];
+    if (v) x.fillStyle = v;
+    else x.fillStyle = (r + c) % 2 ? '#181d2e' : '#131726'; // transparent checker
+    x.fillRect(c * cell, r * cell, cell, cell);
+  }
+}
+
+function save() {
+  try { localStorage.setItem('pixelforge', JSON.stringify({ size, px })); } catch (e) { }
+}
+
+function pushUndo() {
+  undoStack.push(px.slice());
+  if (undoStack.length > 40) undoStack.shift();
+}
+
+function cellFromEvent(e) {
+  const rect = cv.getBoundingClientRect();
+  const c = Math.floor((e.clientX - rect.left) / rect.width * size);
+  const r = Math.floor((e.clientY - rect.top) / rect.height * size);
+  if (c < 0 || c >= size || r < 0 || r >= size) return -1;
+  return r * size + c;
+}
+
+function apply(i) {
+  if (i < 0) return;
+  if (tool === 'pencil') px[i] = color;
+  else if (tool === 'eraser') px[i] = null;
+  else if (tool === 'fill') floodFill(px, size, i, color);
+  else if (tool === 'pick') {
+    if (px[i]) { color = px[i]; $('custom').value = color; markPal(); }
+    return;
+  }
+  paint();
+}
+
+cv.addEventListener('pointerdown', e => {
+  pushUndo();
+  drawing = true;
+  apply(cellFromEvent(e));
+});
+cv.addEventListener('pointermove', e => {
+  if (drawing && (tool === 'pencil' || tool === 'eraser')) apply(cellFromEvent(e));
+});
+addEventListener('pointerup', () => { if (drawing) { drawing = false; save(); } });
+
+function setTool(t, btn) {
+  tool = t;
+  for (const id of ['tPencil', 'tEraser', 'tFill', 'tPick']) $(id).classList.remove('sel');
+  btn.classList.add('sel');
+}
+$('tPencil').addEventListener('click', e => setTool('pencil', e.target));
+$('tEraser').addEventListener('click', e => setTool('eraser', e.target));
+$('tFill').addEventListener('click', e => setTool('fill', e.target));
+$('tPick').addEventListener('click', e => setTool('pick', e.target));
+$('undoBtn').addEventListener('click', () => {
+  if (undoStack.length) { px = undoStack.pop(); paint(); save(); }
+});
+
+function newCanvas(n) {
+  size = n;
+  px = Array(size * size).fill(null);
+  undoStack = [];
+  paint();
+  save();
+  $('toast').textContent = 'fresh ' + n + '×' + n + ' canvas';
+}
+$('n16').addEventListener('click', () => newCanvas(16));
+$('n32').addEventListener('click', () => newCanvas(32));
+
+$('exportBtn').addEventListener('click', () => {
+  const S = 16;
+  const off = document.createElement('canvas');
+  off.width = size * S; off.height = size * S;
+  const g = off.getContext('2d');
+  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+    const v = px[r * size + c];
+    if (!v) continue;
+    g.fillStyle = v;
+    g.fillRect(c * S, r * S, S, S);
+  }
+  const a = document.createElement('a');
+  a.download = 'pixel-art.png';
+  a.href = off.toDataURL('image/png');
+  a.click();
+  $('toast').textContent = 'exported at ' + (size * S) + 'px';
+});
+
+function markPal() {
+  document.querySelectorAll('.sw').forEach(s => s.classList.toggle('sel', s.dataset.c === color));
+}
+const palBox = $('palette');
+for (const p of PAL) {
+  const s = document.createElement('div');
+  s.className = 'sw';
+  s.style.background = p;
+  s.dataset.c = p;
+  s.addEventListener('click', () => { color = p; $('custom').value = p; markPal(); });
+  palBox.appendChild(s);
+}
+$('custom').addEventListener('input', () => { color = $('custom').value; markPal(); });
+
+try {
+  const saved = JSON.parse(localStorage.getItem('pixelforge') || 'null');
+  if (saved && saved.px && (saved.size === 16 || saved.size === 32)) {
+    size = saved.size;
+    px = saved.px;
+  }
+} catch (e) { }
+markPal();
+paint();
+</script>
+</body>
+</html>

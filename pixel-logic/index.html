@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PIXEL LOGIC — neon nonograms</title>
+<style>
+  :root { --bg:#0a0618; --gold:#ffd166; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #2d2410, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:14px; }
+  a.back { position:fixed; top:12px; left:14px; color:#ff6fb0; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 6px; font-style:italic; letter-spacing:5px; color:var(--gold); text-shadow:0 0 18px var(--gold); }
+  #sub { color:#7684a8; font-size:12px; margin-bottom:14px; }
+  #bar { display:flex; gap:8px; margin-bottom:14px; font-size:13px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #bar .stat { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 12px; }
+  #bar .stat b { color:var(--gold); }
+  #bar button { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:6px;
+                padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  #bar button:hover { border-color:var(--gold); color:var(--gold); }
+  #bar button.tool.active { border-color:var(--gold); color:var(--gold); box-shadow:0 0 10px rgba(255,209,102,.35); }
+  #wrap { position:relative; background:var(--panel); border:2px solid var(--line); border-radius:12px;
+          box-shadow:0 0 28px rgba(255,209,102,.15); padding:10px; }
+  #boardGrid { display:grid; gap:0; user-select:none; }
+  .clue { display:flex; align-items:flex-end; justify-content:flex-end; font-size:11px; color:#9aa6c8; padding:2px 5px 2px 2px; }
+  .clue.col { flex-direction:column; align-items:center; justify-content:flex-end; padding:2px 0 4px; line-height:1.25; }
+  .clue.done { color:#4a5478; }
+  .cell { width:26px; height:26px; border:1px solid #221b3f; background:#100c22; cursor:pointer; position:relative; }
+  .cell.g5r { border-right:1px solid #4a3f85; }
+  .cell.g5b { border-bottom:1px solid #4a3f85; }
+  .cell.fill { background:var(--gold); box-shadow:inset 0 0 6px rgba(0,0,0,.35), 0 0 7px rgba(255,209,102,.5); }
+  .cell.mark::after { content:'×'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                      color:#5b668c; font-size:16px; }
+  .cell.bad { animation:badflash .5s 2; }
+  @keyframes badflash { 50% { background:#ff5a7a; box-shadow:0 0 10px #ff5a7a; } }
+  #overlay { position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column;
+             gap:8px; background:rgba(10,6,24,.86); z-index:5; border-radius:10px; }
+  #overlay.show { display:flex; }
+  #overlay .t { font-style:italic; font-size:28px; color:var(--gold); text-shadow:0 0 16px var(--gold); letter-spacing:3px; }
+  #overlay .s { font-size:13px; color:#cfd3ea; }
+  #overlay button { margin-top:8px; background:var(--panel); color:var(--gold); border:1px solid var(--gold);
+                    border-radius:8px; padding:10px 24px; font:inherit; font-size:15px; cursor:pointer; }
+  p.hint { opacity:.55; font-size:12px; margin-top:12px; text-align:center; max-width:560px; }
+  @media (max-width:520px) { .cell { width:21px; height:21px; } }
+</style>
+<meta property="og:title" content="PIXEL LOGIC — browser game">
+<meta property="og:description" content="Neon nonograms — every random picture is solver-verified, so pure deduction always wins.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/pixel-logic/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/pixel-logic/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Neon nonograms — every random picture is solver-verified, so pure deduction always wins.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>PIXEL LOGIC</h1>
+<div id="sub">the numbers are runs of filled cells, in order — deduce the picture</div>
+<div id="bar">
+  <span class="stat">level <b id="lvl">1</b></span>
+  <span class="stat">size <b id="size">5</b></span>
+  <span class="stat">solved <b id="solvedCt">0</b></span>
+  <button id="fillTool" class="tool active">▮ fill</button>
+  <button id="markTool" class="tool">× mark</button>
+  <button id="checkBtn">check</button>
+  <button id="rerollBtn">new puzzle</button>
+  <button id="shareBtn">share seed</button>
+</div>
+<div id="wrap"><div id="boardGrid"></div><div id="overlay"><div class="t"></div><div class="s"></div><button id="nextBtn">next level</button></div></div>
+<p class="hint">every puzzle is generated, then verified line-solvable by the built-in solver before you see it —
+no guessing ever needed, and the solution is unique. right-click (or the × tool) marks empties. seed is in the URL.</p>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// run lengths of 1s in a 0/1 line
+function clueFor(line) {
+  const out = [];
+  let run = 0;
+  for (const v of line) {
+    if (v === 1) run++;
+    else if (run) { out.push(run); run = 0; }
+  }
+  if (run) out.push(run);
+  return out;
+}
+
+// cells: -1 unknown / 0 empty / 1 filled. Deduce by intersecting every legal placement.
+// Returns a deduced copy, or null on contradiction.
+function solveLine(cells, clues) {
+  const n = cells.length;
+  const can0 = new Array(n).fill(false), can1 = new Array(n).fill(false);
+  const cur = new Array(n).fill(0);
+  // minimal space needed by clues[ci..]: their sum + one separator between each
+  const need = new Array(clues.length + 1).fill(0);
+  for (let i = clues.length - 1; i >= 0; i--) need[i] = need[i + 1] + clues[i] + (i < clues.length - 1 ? 1 : 0);
+  let any = false;
+  function place(ci, pos) {
+    if (ci === clues.length) {
+      for (let i = pos; i < n; i++) { if (cells[i] === 1) return; cur[i] = 0; }
+      for (let i = 0; i < n; i++) (cur[i] ? can1 : can0)[i] = true;
+      any = true;
+      return;
+    }
+    const len = clues[ci];
+    for (let s = pos; s + need[ci] <= n; s++) {
+      if (s > pos && cells[s - 1] === 1) break;        // can't skip past a known fill
+      let ok = true;
+      for (let i = s; i < s + len; i++) if (cells[i] === 0) { ok = false; break; }
+      if (ok && s + len < n && cells[s + len] === 1) ok = false;
+      if (ok) {
+        for (let i = pos; i < s; i++) cur[i] = 0;
+        for (let i = s; i < s + len; i++) cur[i] = 1;
+        if (s + len < n) { cur[s + len] = 0; place(ci + 1, s + len + 1); }
+        else place(ci + 1, s + len);
+      }
+    }
+  }
+  place(0, 0);
+  if (!any) return null;
+  const out = new Array(n);
+  for (let i = 0; i < n; i++) out[i] = can1[i] === can0[i] ? -1 : (can1[i] ? 1 : 0);
+  return out;
+}
+
+// full line-solver pass loop; returns solved grid or null if not line-solvable
+function solvePuzzle(rowClues, colClues, w, h) {
+  const g = Array.from({ length: h }, () => Array(w).fill(-1));
+  let changed = true, guard = 0;
+  while (changed && guard++ < 300) {
+    changed = false;
+    for (let y = 0; y < h; y++) {
+      const r = solveLine(g[y], rowClues[y]);
+      if (!r) return null;
+      for (let x = 0; x < w; x++) if (r[x] !== -1 && g[y][x] === -1) { g[y][x] = r[x]; changed = true; }
+    }
+    for (let x = 0; x < w; x++) {
+      const col = g.map(row => row[x]);
+      const r = solveLine(col, colClues[x]);
+      if (!r) return null;
+      for (let y = 0; y < h; y++) if (r[y] !== -1 && g[y][x] === -1) { g[y][x] = r[y]; changed = true; }
+    }
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (g[y][x] === -1) return null;
+  return g;
+}
+
+// keep rolling random pictures until one is line-solvable (=> unique, no guessing)
+function generatePuzzle(size, rng) {
+  for (let attempt = 0; attempt < 600; attempt++) {
+    const sol = Array.from({ length: size }, () => Array.from({ length: size }, () => rng() < 0.55 ? 1 : 0));
+    const rowClues = sol.map(clueFor);
+    const colClues = [];
+    for (let x = 0; x < size; x++) colClues.push(clueFor(sol.map(r => r[x])));
+    if (solvePuzzle(rowClues, colClues, size, size)) return { sol, rowClues, colClues, attempt };
+  }
+  return null;
+}
+
+function levelSpec(level) {
+  return { size: Math.min(12, 4 + level) };
+}
+
+let level = 1, seed = (Date.now() % 100000) | 0, solvedCt = +(localStorage.getItem('pl_solved') || 0);
+let N, solution, rowClues, colClues, state, cellEls, tool = 1, won;
+
+function loadLevel() {
+  N = levelSpec(level).size;
+  const rng = mulberry32((seed * 7919 + level * 104729) >>> 0);
+  const p = generatePuzzle(N, rng);
+  solution = p.sol; rowClues = p.rowClues; colClues = p.colClues;
+  state = Array.from({ length: N }, () => Array(N).fill(0));   // 0 blank / 1 fill / 2 mark
+  won = false;
+  buildBoard();
+  hud();
+  history.replaceState(null, '', '#' + seed + '.' + level);
+  $('overlay').classList.remove('show');
+}
+
+function buildBoard() {
+  const g = $('boardGrid');
+  g.innerHTML = '';
+  g.style.gridTemplateColumns = 'auto repeat(' + N + ', max-content)';
+  cellEls = {};
+  g.appendChild(mkClue('', false));                      // corner
+  for (let x = 0; x < N; x++) g.appendChild(mkClue(colClues[x].length ? colClues[x].join('\n') : '0', true, 'c' + x));
+  for (let y = 0; y < N; y++) {
+    g.appendChild(mkClue(rowClues[y].length ? rowClues[y].join(' ') : '0', false, 'r' + y));
+    for (let x = 0; x < N; x++) {
+      const c = document.createElement('div');
+      c.className = 'cell';
+      if ((x + 1) % 5 === 0 && x + 1 < N) c.classList.add('g5r');
+      if ((y + 1) % 5 === 0 && y + 1 < N) c.classList.add('g5b');
+      c.dataset.x = x; c.dataset.y = y;
+      c.addEventListener('pointerdown', ev => { ev.preventDefault(); press(x, y, ev.button === 2 ? 2 : tool); });
+      c.addEventListener('pointerenter', () => { if (painting !== null) applyCell(x, y, painting.set); });
+      c.addEventListener('contextmenu', ev => ev.preventDefault());
+      g.appendChild(c);
+      cellEls[x + ',' + y] = c;
+    }
+  }
+  paintAll();
+}
+
+function mkClue(text, isCol, id) {
+  const d = document.createElement('div');
+  d.className = 'clue' + (isCol ? ' col' : '');
+  d.style.whiteSpace = 'pre';
+  d.textContent = text;
+  if (id) d.id = 'clue_' + id;
+  return d;
+}
+
+let painting = null;
+addEventListener('pointerup', () => { painting = null; });
+
+function press(x, y, t) {
+  if (won) return;
+  const target = state[y][x] === t ? 0 : t;   // toggle
+  painting = { set: target };
+  applyCell(x, y, target);
+}
+
+function applyCell(x, y, set) {
+  if (won || state[y][x] === set) return;
+  state[y][x] = set;
+  paintCell(x, y);
+  lineDoneMarks();
+  if (isSolved(state, rowClues, colClues, N)) win();
+}
+
+function paintCell(x, y) {
+  const el = cellEls[x + ',' + y];
+  el.classList.toggle('fill', state[y][x] === 1);
+  el.classList.toggle('mark', state[y][x] === 2);
+}
+function paintAll() { for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) paintCell(x, y); }
+
+// clues satisfied by the current fills (marks/blanks both count as empty)
+function isSolved(st, rc, cc, n) {
+  for (let y = 0; y < n; y++)
+    if (JSON.stringify(clueFor(st[y].map(v => v === 1 ? 1 : 0))) !== JSON.stringify(rc[y])) return false;
+  for (let x = 0; x < n; x++)
+    if (JSON.stringify(clueFor(st.map(r => r[x] === 1 ? 1 : 0))) !== JSON.stringify(cc[x])) return false;
+  return true;
+}
+
+function lineDoneMarks() {
+  for (let y = 0; y < N; y++) {
+    const done = JSON.stringify(clueFor(state[y].map(v => v === 1 ? 1 : 0))) === JSON.stringify(rowClues[y]);
+    const el = $('clue_r' + y); if (el) el.classList.toggle('done', done);
+  }
+  for (let x = 0; x < N; x++) {
+    const done = JSON.stringify(clueFor(state.map(r => r[x] === 1 ? 1 : 0))) === JSON.stringify(colClues[x]);
+    const el = $('clue_c' + x); if (el) el.classList.toggle('done', done);
+  }
+}
+
+function hud() {
+  $('lvl').textContent = level;
+  $('size').textContent = N + '×' + N;
+  $('solvedCt').textContent = solvedCt;
+}
+
+function win() {
+  won = true;
+  solvedCt++;
+  try { localStorage.setItem('pl_solved', solvedCt); } catch (e) { }
+  hud();
+  const o = $('overlay');
+  o.querySelector('.t').textContent = '✦ SOLVED ✦';
+  o.querySelector('.s').textContent = N + '×' + N + ' — the picture is complete';
+  o.classList.add('show');
+}
+
+// flash fills that contradict the (unique) solution
+function checkErrors() {
+  let bad = 0;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    if (state[y][x] === 1 && solution[y][x] !== 1) {
+      bad++;
+      const el = cellEls[x + ',' + y];
+      el.classList.remove('bad'); void el.offsetWidth; el.classList.add('bad');
+    }
+  }
+  $('sub').textContent = bad === 0 ? 'no mistakes so far — keep deducing' : bad + ' filled cell(s) are wrong — flashing red';
+  return bad;
+}
+
+function setTool(t) {
+  tool = t;
+  $('fillTool').classList.toggle('active', t === 1);
+  $('markTool').classList.toggle('active', t === 2);
+}
+
+$('fillTool').addEventListener('click', () => setTool(1));
+$('markTool').addEventListener('click', () => setTool(2));
+$('checkBtn').addEventListener('click', checkErrors);
+$('rerollBtn').addEventListener('click', () => { seed = (Math.random() * 1e6) | 0; loadLevel(); });
+$('nextBtn').addEventListener('click', () => { level++; loadLevel(); });
+$('shareBtn').addEventListener('click', async () => {
+  history.replaceState(null, '', '#' + seed + '.' + level);
+  try {
+    await navigator.clipboard.writeText(location.href);
+    $('sub').textContent = 'link copied — same seed, same picture, race a friend';
+  } catch (e) {
+    $('sub').textContent = 'copy blocked — grab the URL from the address bar';
+  }
+});
+
+const hm = /^#(\d+)\.(\d+)$/.exec(location.hash);
+if (hm) { seed = +hm[1]; level = Math.max(1, Math.min(60, +hm[2])); }
+loadLevel();
+</script>
+</body>
+</html>

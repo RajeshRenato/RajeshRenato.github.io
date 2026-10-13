@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SORT ARENA — algorithm race</title>
+<style>
+  :root { --bg:#0a0618; --violet:#c77bff; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #1d1038, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:14px; }
+  a.back { position:fixed; top:12px; left:14px; color:#39ff9c; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 10px; font-style:italic; letter-spacing:5px; color:var(--violet); text-shadow:0 0 18px var(--violet); }
+  #bar { display:flex; gap:10px; margin-bottom:12px; font-size:13px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  select, button { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:6px;
+                   padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  button#go { color:var(--violet); border-color:var(--violet); min-width:86px; }
+  input[type=range] { width:100px; accent-color:var(--violet); }
+  #panels { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  .panel { text-align:center; }
+  .panel canvas { background:#0d0a1f; border:1px solid var(--line); border-radius:8px; }
+  .panel .lbl { font-size:13px; margin:6px 0 2px; color:#ffd166; }
+  .panel .ops { font-size:12px; color:#7684a8; }
+  .panel .ops.win { color:#39ff9c; }
+</style>
+<meta property="og:title" content="SORT ARENA — browser game">
+<meta property="og:description" content="Race sorting algorithms side-by-side on identical data and watch the op counters settle it.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/sort-arena/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/sort-arena/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Race sorting algorithms side-by-side on identical data and watch the op counters settle it.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>SORT ARENA</h1>
+<div id="bar">
+  <select id="algA"></select>
+  <span style="color:#7684a8">vs</span>
+  <select id="algB"></select>
+  <label>size <input type="range" id="size" min="20" max="160" step="10" value="80"></label>
+  <label>speed <input type="range" id="speed" min="1" max="60" value="12"></label>
+  <button id="shuffleBtn">shuffle</button>
+  <button id="go">▶ race</button>
+</div>
+<div id="panels">
+  <div class="panel"><canvas id="cA" width="420" height="240"></canvas><div class="lbl" id="lA"></div><div class="ops" id="oA"></div></div>
+  <div class="panel"><canvas id="cB" width="420" height="240"></canvas><div class="lbl" id="lB"></div><div class="ops" id="oB"></div></div>
+</div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+// each sorter is a generator that mutates `a` and yields {i,j} highlights
+const ALGOS = {
+  'bubble sort': function* (a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      let swapped = false;
+      for (let j = 0; j < i; j++) {
+        yield { i: j, j: j + 1 };
+        if (a[j] > a[j + 1]) { [a[j], a[j + 1]] = [a[j + 1], a[j]]; swapped = true; }
+      }
+      if (!swapped) break;
+    }
+  },
+  'insertion sort': function* (a) {
+    for (let i = 1; i < a.length; i++) {
+      const v = a[i];
+      let j = i - 1;
+      while (j >= 0 && a[j] > v) {
+        yield { i: j, j: j + 1 };
+        a[j + 1] = a[j];
+        j--;
+      }
+      a[j + 1] = v;
+      yield { i: j + 1, j: i };
+    }
+  },
+  'selection sort': function* (a) {
+    for (let i = 0; i < a.length - 1; i++) {
+      let mn = i;
+      for (let j = i + 1; j < a.length; j++) {
+        yield { i: mn, j };
+        if (a[j] < a[mn]) mn = j;
+      }
+      [a[i], a[mn]] = [a[mn], a[i]];
+      yield { i, j: mn };
+    }
+  },
+  'merge sort': function* (a) {
+    function* ms(lo, hi) {
+      if (hi - lo < 2) return;
+      const mid = (lo + hi) >> 1;
+      yield* ms(lo, mid);
+      yield* ms(mid, hi);
+      const tmp = [];
+      let i = lo, j = mid;
+      while (i < mid && j < hi) {
+        yield { i, j };
+        tmp.push(a[i] <= a[j] ? a[i++] : a[j++]);
+      }
+      while (i < mid) tmp.push(a[i++]);
+      while (j < hi) tmp.push(a[j++]);
+      for (let k = 0; k < tmp.length; k++) {
+        a[lo + k] = tmp[k];
+        yield { i: lo + k, j: lo + k };
+      }
+    }
+    yield* ms(0, a.length);
+  },
+  'quick sort': function* (a) {
+    function* qs(lo, hi) {
+      if (lo >= hi) return;
+      const p = a[hi];
+      let i = lo;
+      for (let j = lo; j < hi; j++) {
+        yield { i, j };
+        if (a[j] < p) { [a[i], a[j]] = [a[j], a[i]]; i++; }
+      }
+      [a[i], a[hi]] = [a[hi], a[i]];
+      yield { i, j: hi };
+      yield* qs(lo, i - 1);
+      yield* qs(i + 1, hi);
+    }
+    yield* qs(0, a.length - 1);
+  },
+  'heap sort': function* (a) {
+    const n = a.length;
+    function* sift(start, end) {
+      let root = start;
+      while (root * 2 + 1 <= end) {
+        let child = root * 2 + 1;
+        if (child + 1 <= end) {
+          yield { i: child, j: child + 1 };
+          if (a[child] < a[child + 1]) child++;
+        }
+        yield { i: root, j: child };
+        if (a[root] < a[child]) { [a[root], a[child]] = [a[child], a[root]]; root = child; }
+        else return;
+      }
+    }
+    for (let s = ((n - 2) / 2) | 0; s >= 0; s--) yield* sift(s, n - 1);
+    for (let e = n - 1; e > 0; e--) {
+      [a[0], a[e]] = [a[e], a[0]];
+      yield { i: 0, j: e };
+      yield* sift(0, e - 1);
+    }
+  },
+};
+
+let baseData = [], lanes = null;
+
+function shuffleData() {
+  const n = +$('size').value;
+  baseData = Array.from({ length: n }, (_, i) => i + 1);
+  for (let i = n - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [baseData[i], baseData[j]] = [baseData[j], baseData[i]];
+  }
+  lanes = null;
+  drawBars($('cA'), baseData, null);
+  drawBars($('cB'), baseData, null);
+  $('oA').textContent = ''; $('oB').textContent = '';
+  updateLabels();
+}
+
+function makeLane(name) {
+  const arr = baseData.slice();
+  return { name, arr, gen: ALGOS[name](arr), done: false, ops: 0, hl: null };
+}
+
+function startRace() {
+  lanes = [makeLane($('algA').value), makeLane($('algB').value)];
+}
+
+function stepLane(l, steps) {
+  for (let s = 0; s < steps && !l.done; s++) {
+    const r = l.gen.next();
+    if (r.done) { l.done = true; l.hl = null; }
+    else { l.hl = r.value; l.ops++; }
+  }
+}
+
+function drawBars(canvas, arr, hl, done) {
+  const g = canvas.getContext('2d');
+  const W2 = canvas.width, H2 = canvas.height;
+  g.fillStyle = '#0d0a1f';
+  g.fillRect(0, 0, W2, H2);
+  const n = arr.length, bw = W2 / n;
+  for (let i = 0; i < n; i++) {
+    const h = (arr[i] / n) * (H2 - 12);
+    let col = 'hsl(' + (260 + arr[i] / n * 90) + ',80%,58%)';
+    if (hl && (i === hl.i || i === hl.j)) col = '#ffffff';
+    if (done) col = 'hsl(' + (140 + arr[i] / n * 40) + ',85%,55%)';
+    g.fillStyle = col;
+    g.fillRect(i * bw + 0.5, H2 - h, Math.max(1, bw - 1), h);
+  }
+}
+
+function updateLabels() {
+  $('lA').textContent = $('algA').value;
+  $('lB').textContent = $('algB').value;
+}
+
+function frame() {
+  if (lanes) {
+    const steps = +$('speed').value;
+    const [A, B] = lanes;
+    stepLane(A, steps);
+    stepLane(B, steps);
+    drawBars($('cA'), A.arr, A.hl, A.done);
+    drawBars($('cB'), B.arr, B.hl, B.done);
+    const bothDone = A.done && B.done;
+    $('oA').textContent = A.ops.toLocaleString() + ' ops' + (A.done ? ' ✓' : '');
+    $('oB').textContent = B.ops.toLocaleString() + ' ops' + (B.done ? ' ✓' : '');
+    if (bothDone) {
+      const win = A.ops <= B.ops ? 'oA' : 'oB';
+      $(win).className = 'ops win';
+      $(win).textContent += '  🏆 fewer ops';
+      lanes = null;
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+for (const sel of ['algA', 'algB']) {
+  for (const name of Object.keys(ALGOS)) {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = name;
+    $(sel).appendChild(o);
+  }
+}
+$('algA').value = 'bubble sort';
+$('algB').value = 'quick sort';
+$('algA').addEventListener('change', () => { lanes = null; shuffleData(); });
+$('algB').addEventListener('change', () => { lanes = null; shuffleData(); });
+$('size').addEventListener('change', shuffleData);
+$('shuffleBtn').addEventListener('click', shuffleData);
+$('go').addEventListener('click', () => {
+  $('oA').className = 'ops'; $('oB').className = 'ops';
+  startRace();
+});
+
+shuffleData();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

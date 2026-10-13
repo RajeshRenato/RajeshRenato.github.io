@@ -1,0 +1,29 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: radial-gradient(1000px 700px at 50% -10%, #1b0f3d, #07050f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+}
+canvas {
+  image-rendering: pixelated;
+  width: min(96vw, 960px);
+  max-height: 92vh;
+  border: 2px solid #3a2a6e;
+  border-radius: 8px;
+  box-shadow: 0 0 40px rgba(159, 123, 255, .3);
+  cursor: crosshair;
+}
+a.back {
+  position: fixed;
+  top: 12px;
+  left: 14px;
+  color: #28e0ff;
+  font-size: 12px;
+  text-decoration: none;
+  opacity: .7;
+  z-index: 2;
+}
+a.back:hover { opacity: 1; }

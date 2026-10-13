@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SLIDE 2048</title>
+<style>
+  :root { --bg:#0a0618; --pink:#ff6fb0; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1200px 800px at 50% -10%, #231040, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; }
+  a.back { position:fixed; top:12px; left:14px; color:#28e0ff; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 10px; font-style:italic; letter-spacing:5px; color:var(--pink); text-shadow:0 0 18px var(--pink); }
+  #bar { display:flex; gap:14px; align-items:center; margin-bottom:14px; font-size:14px; }
+  #bar .box { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 14px; text-align:center; }
+  #bar .box div { font-size:10px; letter-spacing:2px; opacity:.6; }
+  #bar .box b { font-size:17px; color:#ffd166; }
+  #bar button { background:var(--panel); color:var(--pink); border:1px solid var(--pink); border-radius:8px;
+                padding:10px 16px; font:inherit; cursor:pointer; }
+  #board { position:relative; width:min(420px,92vw); aspect-ratio:1; background:var(--panel);
+           border:1px solid var(--line); border-radius:12px; padding:10px;
+           display:grid; grid-template:repeat(4,1fr)/repeat(4,1fr); gap:10px; touch-action:none; }
+  .cell { background:#100c22; border-radius:8px; display:flex; align-items:center; justify-content:center;
+          font-size:clamp(18px,6vw,30px); font-weight:700; }
+  .cell.pop { animation:pop .14s; }
+  @keyframes pop { from { transform:scale(.6); } to { transform:scale(1); } }
+  #over { position:absolute; inset:0; border-radius:12px; background:rgba(10,6,24,.82);
+          display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; }
+  #over.show { display:flex; }
+  #over .t { font-style:italic; font-size:30px; color:var(--pink); text-shadow:0 0 16px var(--pink); }
+  p.hint { opacity:.55; font-size:12px; margin-top:12px; }
+</style>
+<meta property="og:title" content="SLIDE 2048 — browser game">
+<meta property="og:description" content="The sliding-tile game, by keyboard or swipe.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/slide-2048/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/slide-2048/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="The sliding-tile game, by keyboard or swipe.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>SLIDE 2048</h1>
+<div id="bar">
+  <div class="box"><div>SCORE</div><b id="score">0</b></div>
+  <div class="box"><div>BEST</div><b id="best">0</b></div>
+  <button id="new">New game</button>
+</div>
+<div id="board"><div id="over"><div class="t"></div><div class="s"></div></div></div>
+<p class="hint">arrows / WASD / swipe — reach 2048 (then keep going)</p>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const boardEl = $('board'), overEl = $('over');
+let grid, score, best = +(localStorage.getItem('n2048_best') || 0), won, over;
+let cells = [];
+
+function init() {
+  // build 16 cell divs once (overlay stays last)
+  cells = [];
+  for (let i = 0; i < 16; i++) {
+    const d = document.createElement('div');
+    d.className = 'cell';
+    boardEl.insertBefore(d, overEl);
+    cells.push(d);
+  }
+  newGame();
+}
+
+function newGame() {
+  grid = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+  score = 0; won = false; over = false;
+  spawn(); spawn();
+  render();
+  overEl.classList.remove('show');
+}
+
+function emptyCells() {
+  const out = [];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++)
+    if (!grid[r][c]) out.push([r, c]);
+  return out;
+}
+
+function spawn() {
+  const e = emptyCells();
+  if (!e.length) return;
+  const [r, c] = e[(Math.random() * e.length) | 0];
+  grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+}
+
+function slide(vals) {
+  const a = vals.filter(v => v);
+  const out = [];
+  let gained = 0;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] === a[i + 1]) { out.push(a[i] * 2); gained += a[i] * 2; i++; }
+    else out.push(a[i]);
+  }
+  while (out.length < 4) out.push(0);
+  return { row: out, gained };
+}
+
+function lines(dir) { // 0 left, 1 up, 2 right, 3 down; coords in slide order
+  const L = [];
+  for (let i = 0; i < 4; i++) {
+    const line = [];
+    for (let j = 0; j < 4; j++) {
+      if (dir === 0) line.push([i, j]);
+      else if (dir === 2) line.push([i, 3 - j]);
+      else if (dir === 1) line.push([j, i]);
+      else line.push([3 - j, i]);
+    }
+    L.push(line);
+  }
+  return L;
+}
+
+function move(dir) {
+  if (over) return false;
+  let moved = false, gained = 0;
+  for (const line of lines(dir)) {
+    const res = slide(line.map(([r, c]) => grid[r][c]));
+    gained += res.gained;
+    res.row.forEach((v, k) => {
+      const [r, c] = line[k];
+      if (grid[r][c] !== v) moved = true;
+      grid[r][c] = v;
+    });
+  }
+  if (!moved) return false;
+  score += gained;
+  if (score > best) { best = score; try { localStorage.setItem('n2048_best', best); } catch (e) { } }
+  spawn();
+  render();
+  if (!won && grid.some(row => row.some(v => v >= 2048))) {
+    won = true;
+    showOver('YOU WIN', 'keep going for a higher tile', false);
+  } else if (!canMove()) {
+    over = true;
+    showOver('GAME OVER', 'score ' + score, true);
+  }
+  return true;
+}
+
+function canMove() {
+  if (emptyCells().length) return true;
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+    if (c < 3 && grid[r][c] === grid[r][c + 1]) return true;
+    if (r < 3 && grid[r][c] === grid[r + 1][c]) return true;
+  }
+  return false;
+}
+
+function showOver(title, sub, stay) {
+  overEl.querySelector('.t').textContent = title;
+  overEl.querySelector('.s').textContent = sub;
+  overEl.classList.add('show');
+  if (!stay) setTimeout(() => { if (!over) overEl.classList.remove('show'); }, 1800);
+}
+
+function render() {
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+    const v = grid[r][c], d = cells[r * 4 + c];
+    const prev = d.textContent;
+    d.textContent = v || '';
+    if (v) {
+      const e = Math.log2(v);
+      d.style.background = 'hsl(' + ((300 + e * 24) % 360) + ',75%,' + Math.min(28 + e * 3, 55) + '%)';
+      d.style.color = '#fff';
+      d.style.boxShadow = e >= 7 ? '0 0 14px hsl(' + ((300 + e * 24) % 360) + ',90%,60%)' : 'none';
+      if (String(v) !== prev) { d.classList.remove('pop'); void d.offsetWidth; d.classList.add('pop'); }
+    } else {
+      d.style.background = '#100c22';
+      d.style.boxShadow = 'none';
+    }
+  }
+  $('score').textContent = score;
+  $('best').textContent = best;
+}
+
+const DIRMAP = { arrowleft: 0, a: 0, arrowup: 1, w: 1, arrowright: 2, d: 2, arrowdown: 3, s: 3 };
+addEventListener('keydown', e => {
+  const d = DIRMAP[e.key.toLowerCase()];
+  if (d !== undefined) { e.preventDefault(); move(d); }
+});
+let tsx = 0, tsy = 0;
+boardEl.addEventListener('touchstart', e => {
+  tsx = e.touches[0].clientX; tsy = e.touches[0].clientY;
+}, { passive: true });
+boardEl.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tsx, dy = e.changedTouches[0].clientY - tsy;
+  if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+  move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 2 : 0) : (dy > 0 ? 3 : 1));
+}, { passive: true });
+$('new').addEventListener('click', newGame);
+
+init();
+</script>
+</body>
+</html>

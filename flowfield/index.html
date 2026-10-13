@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow Field — generative art playground</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; overflow:hidden; background:#080614; }
+  canvas { display:block; cursor:crosshair; }
+  #ui {
+    position:fixed; left:14px; bottom:12px; color:rgba(230,230,250,.55);
+    font:12px ui-monospace,'Courier New',monospace; pointer-events:none;
+    text-shadow:0 1px 3px #000;
+  }
+  a.back {
+    position:fixed; top:12px; left:14px; color:#22d9ff; font:12px ui-monospace,monospace;
+    text-decoration:none; opacity:.7; z-index:2;
+  }
+  a.back:hover { opacity:1; }
+</style>
+<meta property="og:title" content="FLOW FIELD — browser game">
+<meta property="og:description" content="Thousands of particles tracing a procedural vector field. Four moods, mouse gravity, save as PNG.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/flowfield/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/flowfield/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Thousands of particles tracing a procedural vector field. Four moods, mouse gravity, save as PNG.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="c"></canvas>
+<div id="ui">SPACE new field · 1-4 themes · hold mouse to attract · C clear · S save PNG</div>
+<script>
+'use strict';
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W, H;
+
+const THEMES = [
+  { name: 'synthwave', base: 300, range: 80, bg: '#080614' },
+  { name: 'deep sea',  base: 190, range: 50, bg: '#04101a' },
+  { name: 'ember',     base: 15,  range: 45, bg: '#120806' },
+  { name: 'matrix',    base: 120, range: 40, bg: '#04120a' },
+];
+let theme = THEMES[0];
+let seed = Math.random() * 10000;
+
+// value noise
+function hashN(ix, iy) {
+  const v = Math.sin(ix * 127.1 + iy * 311.7 + seed * 13.7) * 43758.5453;
+  return v - Math.floor(v);
+}
+function noise(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  let fx = x - ix, fy = y - iy;
+  fx = fx * fx * (3 - 2 * fx);
+  fy = fy * fy * (3 - 2 * fy);
+  const a = hashN(ix, iy), b = hashN(ix + 1, iy);
+  const c = hashN(ix, iy + 1), d = hashN(ix + 1, iy + 1);
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+}
+function fieldAngle(x, y) {
+  const n = noise(x * 0.0022, y * 0.0022) * 0.75 + noise(x * 0.006, y * 0.006) * 0.25;
+  return n * Math.PI * 4;
+}
+
+// particles
+const P = 2200;
+const parts = [];
+function resetParticle(p) {
+  p.x = Math.random() * W;
+  p.y = Math.random() * H;
+  p.px = p.x; p.py = p.y;
+}
+for (let i = 0; i < P; i++) {
+  const p = {};
+  parts.push(p);
+}
+
+const mouse = { x: 0, y: 0, down: false };
+addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+addEventListener('pointerdown', e => { mouse.down = true; mouse.x = e.clientX; mouse.y = e.clientY; });
+addEventListener('pointerup', () => { mouse.down = false; });
+
+function clearCanvas() {
+  ctx.fillStyle = theme.bg;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function resize() {
+  W = cv.width = window.innerWidth;
+  H = cv.height = window.innerHeight;
+  clearCanvas();
+  for (const p of parts) resetParticle(p);
+}
+addEventListener('resize', resize);
+resize();
+
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === ' ') { e.preventDefault(); seed = Math.random() * 10000; clearCanvas(); }
+  else if (k === 'c') clearCanvas();
+  else if (k === 's') {
+    const a = document.createElement('a');
+    a.download = 'flowfield.png';
+    a.href = cv.toDataURL('image/png');
+    a.click();
+  } else if (k >= '1' && k <= '4') {
+    theme = THEMES[+k - 1];
+    clearCanvas();
+  }
+});
+
+function frame() {
+  // slow fade so trails linger
+  ctx.globalAlpha = 0.045;
+  ctx.fillStyle = theme.bg;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 1;
+
+  for (const p of parts) {
+    const a = fieldAngle(p.x, p.y);
+    let vx = Math.cos(a) * 1.7;
+    let vy = Math.sin(a) * 1.7;
+    if (mouse.down) {
+      const dx = mouse.x - p.x, dy = mouse.y - p.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 260 && d > 1) {
+        vx += dx / d * 2.2;
+        vy += dy / d * 2.2;
+      }
+    }
+    p.px = p.x; p.py = p.y;
+    p.x += vx; p.y += vy;
+
+    if (p.x < 0 || p.x > W || p.y < 0 || p.y > H || Math.random() < 0.002) {
+      resetParticle(p);
+      continue;
+    }
+    const hue = theme.base + (a / (Math.PI * 4)) * theme.range;
+    ctx.strokeStyle = 'hsla(' + hue + ',85%,62%,0.22)';
+    ctx.beginPath();
+    ctx.moveTo(p.px, p.py);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

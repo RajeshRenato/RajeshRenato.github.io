@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>STACK TOWER</title>
+<style>
+  :root { --bg:#0a0618; --orange:#ff8a5c; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #2b1a10, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; }
+  a.back { position:fixed; top:12px; left:14px; color:#28e0ff; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 8px; font-style:italic; letter-spacing:5px; color:var(--orange); text-shadow:0 0 18px var(--orange); }
+  #bar { display:flex; gap:24px; margin-bottom:10px; font-size:14px; }
+  #bar b { color:#ffd166; }
+  canvas { background:#0d0a1f; border:2px solid #4a2e1e; border-radius:8px;
+           box-shadow:0 0 30px rgba(255,138,92,.25); max-height:74vh; max-width:94vw; touch-action:manipulation; }
+  p.hint { opacity:.55; font-size:12px; margin-top:10px; }
+</style>
+<meta property="og:title" content="STACK TOWER — browser game">
+<meta property="og:description" content="One-button stacker: slice the overhang, chase the perfect drop, climb into the neon sky.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/stack-tower/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/stack-tower/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="One-button stacker: slice the overhang, chase the perfect drop, climb into the neon sky.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>STACK TOWER</h1>
+<div class="bar" id="bar"><span>height <b id="score">0</b></span> <span>best <b id="best">0</b></span></div>
+<canvas id="c" width="360" height="560"></canvas>
+<p class="hint">click / tap / SPACE to drop · land perfectly for a glow bonus</p>
+<script>
+'use strict';
+const W = 360, H = 560, BH = 26;
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+let best = +(localStorage.getItem('st_best') || 0);
+$('best').textContent = best;
+
+// overlap of the dropped block with the one below; null = total miss
+function computeCut(prev, cur) {
+  const left = Math.max(prev.x, cur.x);
+  const right = Math.min(prev.x + prev.w, cur.x + cur.w);
+  const w = right - left;
+  if (w <= 0) return null;
+  return { x: left, w, cut: cur.w - w };
+}
+
+function isPerfect(prev, cur, tol) {
+  return Math.abs(cur.x - prev.x) <= (tol === undefined ? 5 : tol);
+}
+
+let stack, mover, debris, score, state, dir, speed, camY, flash;
+
+function reset() {
+  stack = [{ x: W / 2 - 70, w: 140, hue: 20 }];
+  score = 0; camY = 0; flash = 0;
+  debris = [];
+  dir = 1;
+  speed = 150;
+  state = 'play';
+  newMover();
+  $('score').textContent = 0;
+}
+
+function topY() { return H - 60 - (stack.length - 1) * BH; }
+
+function newMover() {
+  const top = stack[stack.length - 1];
+  mover = { x: -top.w, w: top.w, hue: (20 + stack.length * 14) % 360 };
+  speed = 150 + stack.length * 5;
+  dir = 1;
+}
+
+function drop() {
+  if (state === 'over') { reset(); return; }
+  if (state !== 'play') return;
+  const prev = stack[stack.length - 1];
+  const res = computeCut(prev, mover);
+  if (!res) {
+    state = 'over';
+    if (score > best) { best = score; try { localStorage.setItem('st_best', best); } catch (e) { } $('best').textContent = best; }
+    return;
+  }
+  let nx = res.x, nw = res.w;
+  if (isPerfect(prev, mover)) {           // perfect: snap, no loss, glow
+    nx = prev.x; nw = prev.w;
+    flash = 1;
+  } else if (res.cut > 0) {               // slice the overhang into debris
+    const fellLeft = mover.x < prev.x;
+    debris.push({
+      x: fellLeft ? mover.x : nx + nw,
+      w: res.cut, y: topY() - BH, vy: 0, hue: mover.hue
+    });
+  }
+  stack.push({ x: nx, w: nw, hue: mover.hue });
+  score++;
+  $('score').textContent = score;
+  newMover();
+}
+
+cv.addEventListener('pointerdown', drop);
+addEventListener('keydown', e => {
+  if (e.key === ' ') { e.preventDefault(); drop(); }
+});
+
+function step(dt) {
+  if (state === 'play') {
+    mover.x += dir * speed * dt;
+    if (mover.x + mover.w > W - 6) { mover.x = W - 6 - mover.w; dir = -1; }
+    if (mover.x < 6) { mover.x = 6; dir = 1; }
+  }
+  // camera eases so the top of the stack stays visible
+  const want = Math.max(0, (stack.length - 1) * BH - (H - 220));
+  camY += (want - camY) * Math.min(1, 5 * dt);
+  for (let i = debris.length - 1; i >= 0; i--) {
+    const d = debris[i];
+    d.vy += 900 * dt;
+    d.y += d.vy * dt;
+    if (d.y > H + camY + 100) debris.splice(i, 1);
+  }
+  if (flash > 0) flash -= dt * 2;
+}
+
+function blockRect(b, y) {
+  x.fillStyle = 'hsl(' + b.hue + ',80%,55%)';
+  x.shadowColor = 'hsl(' + b.hue + ',90%,60%)';
+  x.shadowBlur = 8;
+  x.fillRect(b.x, y, b.w, BH - 3);
+  x.shadowBlur = 0;
+  x.fillStyle = 'rgba(255,255,255,.12)';
+  x.fillRect(b.x, y, b.w, 5);
+}
+
+function draw() {
+  x.fillStyle = '#0d0a1f';
+  x.fillRect(0, 0, W, H);
+  x.save();
+  x.translate(0, camY);
+  for (let i = 0; i < stack.length; i++) {
+    blockRect(stack[i], H - 60 - i * BH);
+  }
+  for (const d of debris) blockRect(d, d.y);
+  if (state === 'play') blockRect(mover, topY() - BH);
+  x.restore();
+  if (flash > 0) {
+    x.fillStyle = 'rgba(255,255,255,' + (flash * 0.25).toFixed(3) + ')';
+    x.fillRect(0, 0, W, H);
+    x.textAlign = 'center';
+    x.font = 'bold 18px "Courier New",monospace';
+    x.fillStyle = '#ffd166';
+    x.fillText('PERFECT', W / 2, 90);
+  }
+  if (state === 'over') {
+    x.fillStyle = 'rgba(10,6,24,.7)';
+    x.fillRect(0, 0, W, H);
+    x.textAlign = 'center';
+    x.font = 'italic bold 34px "Courier New",monospace';
+    x.fillStyle = '#ff8a5c'; x.shadowColor = '#ff8a5c'; x.shadowBlur = 16;
+    x.fillText('TOWER DOWN', W / 2, H / 2 - 10);
+    x.shadowBlur = 0;
+    x.font = '14px "Courier New",monospace';
+    x.fillStyle = '#e8e6f5';
+    x.fillText('height ' + score + ' — tap to rebuild', W / 2, H / 2 + 24);
+  }
+}
+
+let last = 0;
+function loop(t) {
+  if (!last) last = t;
+  const dt = Math.min(0.03, (t - last) / 1000);
+  last = t;
+  step(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+reset();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

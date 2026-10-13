@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JWT PEEK — decode tokens locally</title>
+<style>
+  :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8; --red:#ff5a7a;
+          --key:#7f8cff; --str:#39ff9c; --num:#ffd166; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         background:var(--bg); color:var(--text); font-family:ui-monospace,'Cascadia Code','Courier New',monospace;
+         padding:40px 16px; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--dim); font-size:12px; text-decoration:none; }
+  h1 { font-size:18px; letter-spacing:4px; color:var(--red); margin:0 0 6px; text-shadow:0 0 14px rgba(255,90,122,.5); }
+  #sub { color:var(--dim); font-size:12px; margin-bottom:18px; }
+  textarea { width:min(680px,94vw); height:110px; background:var(--panel); color:var(--text);
+             border:1px solid var(--line); border-radius:10px; padding:12px; font:inherit; font-size:13px;
+             resize:vertical; outline:none; word-break:break-all; }
+  textarea:focus { border-color:var(--red); }
+  #sampleBtn { margin:10px 0 18px; background:var(--panel); color:var(--dim); border:1px solid var(--line);
+               border-radius:6px; padding:6px 14px; font:inherit; font-size:12px; cursor:pointer; }
+  #warn { width:min(680px,94vw); color:var(--red); font-size:13px; min-height:20px; margin-bottom:8px; }
+  .card { width:min(680px,94vw); background:var(--panel); border:1px solid var(--line); border-radius:10px;
+          padding:12px 16px; margin-bottom:12px; }
+  .card h2 { font-size:11px; letter-spacing:2px; color:var(--dim); margin:0 0 8px; font-weight:400; }
+  .card pre { margin:0; white-space:pre-wrap; word-break:break-all; font-size:13px; line-height:1.55; }
+  .k { color:var(--key); } .s { color:var(--str); } .n { color:var(--num); } .z { color:var(--dim); }
+  #claims { font-size:13px; }
+  #claims div { padding:3px 0; }
+  #claims b { color:var(--num); }
+  #claims .ok { color:var(--str); } #claims .bad { color:var(--red); }
+</style>
+<meta property="og:title" content="JWT PEEK — browser game">
+<meta property="og:description" content="Decode JWTs locally with colored claims and live expiry status. Tokens never leave the page.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/jwt-peek/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/jwt-peek/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Decode JWTs locally with colored claims and live expiry status. Tokens never leave the page.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>JWT PEEK</h1>
+<div id="sub">decodes entirely in your browser — the token never leaves this page. Signature is NOT verified.</div>
+<textarea id="tok" spellcheck="false" placeholder="paste a JWT (xxxxx.yyyyy.zzzzz)…"></textarea>
+<button id="sampleBtn">load a sample token</button>
+<div id="warn"></div>
+<div class="card"><h2>HEADER</h2><pre id="hdr"></pre></div>
+<div class="card"><h2>PAYLOAD</h2><pre id="pay"></pre></div>
+<div class="card"><h2>TIME CLAIMS</h2><div id="claims"></div></div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+function b64urlDecode(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  // utf-8 safe decode
+  let pct = '';
+  for (let i = 0; i < bin.length; i++)
+    pct += '%' + bin.charCodeAt(i).toString(16).padStart(2, '0');
+  return decodeURIComponent(pct);
+}
+
+function parseJwt(token) {
+  const parts = token.trim().split('.');
+  if (parts.length !== 3) throw new Error('a JWT has exactly 3 dot-separated parts — got ' + parts.length);
+  const header = JSON.parse(b64urlDecode(parts[0]));
+  const payload = JSON.parse(b64urlDecode(parts[1]));
+  return { header, payload, sig: parts[2] };
+}
+
+function colorJson(obj) {
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return esc(JSON.stringify(obj, null, 2)).replace(
+    /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
+    (m, str, colon, bool) => {
+      if (str) return colon ? '<span class="k">' + str + '</span>' + colon : '<span class="s">' + str + '</span>';
+      if (bool) return '<span class="n">' + bool + '</span>';
+      if (m === 'null') return '<span class="z">null</span>';
+      return '<span class="n">' + m + '</span>';
+    });
+}
+
+function fmtClaim(name, ts) {
+  if (ts === undefined) return '';
+  const d = new Date(ts * 1000);
+  const diff = ts * 1000 - Date.now();
+  const rel = Math.abs(diff) < 120000 ? Math.round(Math.abs(diff) / 1000) + 's'
+    : Math.abs(diff) < 7.2e6 ? Math.round(Math.abs(diff) / 60000) + ' min'
+    : Math.abs(diff) < 1.8e8 ? (Math.abs(diff) / 3.6e6).toFixed(1) + ' h'
+    : Math.round(Math.abs(diff) / 8.64e7) + ' days';
+  let status = '';
+  if (name === 'exp') status = diff > 0
+    ? ' — <span class="ok">valid, expires in ' + rel + '</span>'
+    : ' — <span class="bad">EXPIRED ' + rel + ' ago</span>';
+  if (name === 'nbf' && diff > 0) status = ' — <span class="bad">not valid yet (in ' + rel + ')</span>';
+  if (name === 'iat') status = ' — issued ' + rel + ' ago';
+  return '<div><b>' + name + '</b> = ' + ts + ' → ' + d.toLocaleString() + status + '</div>';
+}
+
+function update() {
+  const t = $('tok').value.trim();
+  $('warn').textContent = '';
+  if (!t) { $('hdr').innerHTML = ''; $('pay').innerHTML = ''; $('claims').innerHTML = ''; return; }
+  try {
+    const { header, payload } = parseJwt(t);
+    $('hdr').innerHTML = colorJson(header);
+    $('pay').innerHTML = colorJson(payload);
+    let warns = [];
+    if (String(header.alg).toLowerCase() === 'none') warns.push('⚠ alg:"none" — this token is UNSIGNED');
+    if (!header.alg) warns.push('⚠ missing alg in header');
+    $('warn').textContent = warns.join('   ');
+    $('claims').innerHTML =
+      (fmtClaim('iat', payload.iat) + fmtClaim('nbf', payload.nbf) + fmtClaim('exp', payload.exp)) ||
+      '<span class="z">no iat / nbf / exp claims present</span>';
+  } catch (e) {
+    $('warn').textContent = '✗ ' + e.message;
+    $('hdr').innerHTML = ''; $('pay').innerHTML = ''; $('claims').innerHTML = '';
+  }
+}
+
+function b64url(obj) {
+  return btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+$('sampleBtn').addEventListener('click', () => {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const payload = {
+    sub: 'user_8421', name: 'Ada Lovelace', role: 'admin',
+    iat: now - 3600, nbf: now - 3600, exp: now + 7200,
+    scopes: ['read', 'write'], iss: 'https://auth.example.dev'
+  };
+  $('tok').value = b64url(header) + '.' + b64url(payload) + '.sIgNaTuRe-not-verified-here';
+  update();
+});
+
+$('tok').addEventListener('input', update);
+update();
+</script>
+</body>
+</html>

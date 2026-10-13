@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FRACTAL VIEWER — Mandelbrot & Julia explorer</title>
+<style>
+  :root { --bg:#0a0618; --violet:#c77bff; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:var(--bg); color:#e8e6f5; font-family:'Courier New',monospace; padding:14px; }
+  a.back { position:fixed; top:12px; left:14px; color:#28e0ff; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 10px; font-style:italic; letter-spacing:5px; color:var(--violet); text-shadow:0 0 18px var(--violet); }
+  #bar { display:flex; gap:10px; align-items:center; margin-bottom:10px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+  #bar button, #bar select { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:6px;
+                padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  #bar input[type=range] { width:110px; accent-color:var(--violet); }
+  canvas { border:2px solid var(--line); border-radius:8px; cursor:crosshair; max-width:94vw;
+           box-shadow:0 0 30px rgba(199,123,255,.2); }
+  #info { margin-top:8px; font-size:12px; color:#7684a8; }
+</style>
+<meta property="og:title" content="FRACTAL VIEWER — browser game">
+<meta property="og:description" content="Zoom into the Mandelbrot set or four Julia sets with three palettes and chunked rendering.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/fractal-viewer/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/fractal-viewer/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Zoom into the Mandelbrot set or four Julia sets with three palettes and chunked rendering.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>FRACTAL VIEWER</h1>
+<div id="bar">
+  <button id="modeBtn">mode: mandelbrot</button>
+  <select id="palSel">
+    <option value="0">neon palette</option>
+    <option value="1">ember palette</option>
+    <option value="2">ice palette</option>
+  </select>
+  <label>detail <input type="range" id="iter" min="60" max="600" step="20" value="160"></label>
+  <button id="resetBtn">reset view</button>
+</div>
+<canvas id="c" width="640" height="440"></canvas>
+<div id="info"></div>
+<script>
+'use strict';
+const W = 640, H = 440;
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+
+const JULIAS = [{ x: -0.7, y: 0.27015 }, { x: -0.8, y: 0.156 }, { x: 0.285, y: 0.01 }, { x: -0.4, y: 0.6 }];
+let cx = -0.6, cy = 0, scale = 3.4 / W, maxIter = 160, pal = 0, julia = null, juliaI = 0;
+let renderToken = 0;
+
+function iterCount(px, py, maxI, jul) {
+  let zx, zy, ax, ay;
+  if (jul) { zx = px; zy = py; ax = jul.x; ay = jul.y; }
+  else { zx = 0; zy = 0; ax = px; ay = py; }
+  let i = 0;
+  while (i < maxI && zx * zx + zy * zy <= 4) {
+    const nx = zx * zx - zy * zy + ax;
+    zy = 2 * zx * zy + ay;
+    zx = nx;
+    i++;
+  }
+  return i;
+}
+
+const PALETTES = [
+  t => [Math.round(140 + 115 * Math.sin(6.3 * t)), Math.round(60 + 60 * Math.sin(6.3 * t + 2.1)), Math.round(170 + 85 * Math.sin(6.3 * t + 4.2))],
+  t => [Math.round(255 * Math.min(1, t * 2.2)), Math.round(255 * Math.max(0, t * 1.6 - 0.3)), Math.round(90 * Math.max(0, t * 2 - 1))],
+  t => [Math.round(40 + 60 * t), Math.round(120 + 120 * t), Math.round(180 + 75 * t)],
+];
+
+function render() {
+  const token = ++renderToken;
+  const img = x.createImageData(W, H);
+  const d = img.data;
+  const palFn = PALETTES[pal];
+  let row = 0;
+  function chunk() {
+    if (token !== renderToken) return;   // superseded by a newer render
+    const end = Math.min(H, row + 36);
+    for (; row < end; row++) {
+      for (let col = 0; col < W; col++) {
+        const px = cx + (col - W / 2) * scale;
+        const py = cy + (row - H / 2) * scale;
+        const i = iterCount(px, py, maxIter, julia);
+        const o = (row * W + col) * 4;
+        if (i >= maxIter) { d[o] = 4; d[o + 1] = 2; d[o + 2] = 12; }
+        else {
+          const [r, g, b] = palFn((i % 64) / 64);
+          d[o] = r; d[o + 1] = g; d[o + 2] = b;
+        }
+        d[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    if (row < H) setTimeout(chunk, 0);
+    else info();
+  }
+  chunk();
+}
+
+function info() {
+  const zoom = (3.4 / W) / scale;
+  $('info').textContent =
+    (julia ? 'julia c = ' + julia.x + ' + ' + julia.y + 'i' : 'mandelbrot') +
+    ' · center ' + cx.toFixed(5) + ', ' + cy.toFixed(5) +
+    ' · zoom ' + (zoom >= 100 ? zoom.toExponential(1) : zoom.toFixed(1)) + 'x' +
+    ' · click to zoom in, right-click out';
+}
+
+function zoomAt(e, factor) {
+  const rect = cv.getBoundingClientRect();
+  const col = (e.clientX - rect.left) * (W / rect.width);
+  const row = (e.clientY - rect.top) * (H / rect.height);
+  cx = cx + (col - W / 2) * scale;
+  cy = cy + (row - H / 2) * scale;
+  scale /= factor;
+  render();
+}
+
+cv.addEventListener('click', e => zoomAt(e, 2.4));
+cv.addEventListener('contextmenu', e => { e.preventDefault(); zoomAt(e, 1 / 2.4); });
+
+$('modeBtn').addEventListener('click', () => {
+  if (julia) {
+    juliaI++;
+    if (juliaI < JULIAS.length) {
+      julia = JULIAS[juliaI];
+    } else {
+      julia = null;
+      juliaI = 0;
+    }
+  } else {
+    julia = JULIAS[0];
+  }
+  $('modeBtn').textContent = julia ? 'mode: julia ' + (juliaI + 1) + '/' + JULIAS.length : 'mode: mandelbrot';
+  cx = julia ? 0 : -0.6; cy = 0; scale = 3.4 / W;
+  render();
+});
+$('palSel').addEventListener('change', () => { pal = +$('palSel').value; render(); });
+$('iter').addEventListener('change', () => { maxIter = +$('iter').value; render(); });
+$('resetBtn').addEventListener('click', () => {
+  cx = julia ? 0 : -0.6; cy = 0; scale = 3.4 / W;
+  render();
+});
+addEventListener('keydown', e => {
+  if (e.key.toLowerCase() === 'r') $('resetBtn').click();
+});
+
+render();
+</script>
+</body>
+</html>

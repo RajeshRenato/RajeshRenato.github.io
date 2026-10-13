@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BOID SWARM — flocking simulation</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; overflow:hidden; background:#06101a; }
+  canvas { display:block; cursor:crosshair; }
+  a.back { position:fixed; top:12px; left:14px; color:#64ffb4; font:12px ui-monospace,monospace;
+           text-decoration:none; opacity:.7; z-index:2; }
+  #panel { position:fixed; right:14px; top:14px; background:rgba(10,16,26,.85); border:1px solid #1e3448;
+           border-radius:10px; padding:12px 16px; color:#9fb8cc; font:12px ui-monospace,monospace; z-index:2; }
+  #panel label { display:flex; justify-content:space-between; gap:10px; align-items:center; margin:6px 0; }
+  #panel input[type=range] { width:110px; accent-color:#64ffb4; }
+  #hint { position:fixed; left:14px; bottom:12px; color:rgba(200,230,250,.5); font:12px ui-monospace,monospace; }
+</style>
+<meta property="og:title" content="BOID SWARM — browser game">
+<meta property="og:description" content="Flocking with tunable instincts — and your cursor is the hawk the whole flock fears.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/boid-swarm/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/boid-swarm/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Flocking with tunable instincts — and your cursor is the hawk the whole flock fears.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="c"></canvas>
+<div id="panel">
+  <label>separation <input type="range" id="sep" min="0" max="3" step="0.1" value="1.4"></label>
+  <label>alignment <input type="range" id="ali" min="0" max="3" step="0.1" value="1.0"></label>
+  <label>cohesion <input type="range" id="coh" min="0" max="3" step="0.1" value="0.9"></label>
+  <label>boids <input type="range" id="count" min="40" max="400" step="20" value="160"></label>
+  <label>trails <input type="checkbox" id="trails" checked></label>
+</div>
+<div id="hint">the cursor is a hawk — boids flee it · sliders tune the flock's instincts</div>
+<script>
+'use strict';
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+let W, H;
+
+const RADIUS = 62, MAXSPEED = 175, MINSPEED = 60;
+let boids = [];
+
+function makeBoid(w, h) {
+  const a = Math.random() * Math.PI * 2;
+  return {
+    x: Math.random() * w, y: Math.random() * h,
+    vx: Math.cos(a) * 120, vy: Math.sin(a) * 120
+  };
+}
+
+function setCount(n, w, h) {
+  while (boids.length < n) boids.push(makeBoid(w, h));
+  boids.length = n;
+}
+
+function stepBoids(list, dt, w, h, params, hawk) {
+  const r2 = RADIUS * RADIUS;
+  for (const b of list) {
+    let n = 0, cxs = 0, cys = 0, vxs = 0, vys = 0, sx = 0, sy = 0;
+    for (const o of list) {
+      if (o === b) continue;
+      const dx = o.x - b.x, dy = o.y - b.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 > r2) continue;
+      n++;
+      cxs += o.x; cys += o.y;
+      vxs += o.vx; vys += o.vy;
+      if (d2 < 640 && d2 > 0.01) { sx -= dx / d2; sy -= dy / d2; }
+    }
+    if (n) {
+      b.vx += ((cxs / n - b.x) * 0.9 * params.coh +
+               (vxs / n - b.vx) * 1.4 * params.ali) * dt;
+      b.vy += ((cys / n - b.y) * 0.9 * params.coh +
+               (vys / n - b.vy) * 1.4 * params.ali) * dt;
+      b.vx += sx * 5200 * params.sep * dt;
+      b.vy += sy * 5200 * params.sep * dt;
+    }
+    if (hawk) {
+      const dx = b.x - hawk.x, dy = b.y - hawk.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < 150 * 150 && d2 > 1) {
+        const d = Math.sqrt(d2);
+        b.vx += dx / d * 900 * dt;
+        b.vy += dy / d * 900 * dt;
+      }
+    }
+    // clamp speed
+    const sp = Math.hypot(b.vx, b.vy) || 1;
+    const target = sp > MAXSPEED ? MAXSPEED : sp < MINSPEED ? MINSPEED : sp;
+    b.vx = b.vx / sp * target;
+    b.vy = b.vy / sp * target;
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    // wrap
+    if (b.x < 0) b.x += w; if (b.x > w) b.x -= w;
+    if (b.y < 0) b.y += h; if (b.y > h) b.y -= h;
+  }
+}
+
+const mouse = { x: -9999, y: -9999, in: false };
+addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.in = true; });
+addEventListener('pointerleave', () => { mouse.in = false; });
+
+function resize() {
+  W = cv.width = window.innerWidth;
+  H = cv.height = window.innerHeight;
+  ctx.fillStyle = '#06101a';
+  ctx.fillRect(0, 0, W, H);
+}
+addEventListener('resize', resize);
+resize();
+setCount(160, W, H);
+
+let last = 0;
+function frame(t) {
+  if (!last) last = t;
+  const dt = Math.min(0.033, (t - last) / 1000);
+  last = t;
+
+  setCount(+$('count').value, W, H);
+  const params = { sep: +$('sep').value, ali: +$('ali').value, coh: +$('coh').value };
+  stepBoids(boids, dt, W, H, params, mouse.in ? mouse : null);
+
+  ctx.globalAlpha = $('trails').checked ? 0.12 : 1;
+  ctx.fillStyle = '#06101a';
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+
+  for (const b of boids) {
+    const a = Math.atan2(b.vy, b.vx);
+    const hue = 150 + (a / Math.PI) * 50;
+    ctx.fillStyle = 'hsl(' + hue + ',85%,62%)';
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.moveTo(7, 0); ctx.lineTo(-5, -3.5); ctx.lineTo(-3, 0); ctx.lineTo(-5, 3.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  // hawk
+  if (mouse.in) {
+    ctx.strokeStyle = 'rgba(255,110,140,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 12, 0, 7); ctx.stroke();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

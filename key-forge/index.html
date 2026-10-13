@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Key Forge — password generator</title>
+<style>
+  :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8; --red:#ff5a7a; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(900px 600px at 50% -10%, #2b1020, var(--bg)); color:var(--text);
+         font-family:ui-monospace,'Cascadia Code','Courier New',monospace; padding:20px; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--dim); font-size:12px; text-decoration:none; }
+  h1 { font-size:18px; letter-spacing:4px; color:var(--red); margin:0 0 18px; text-shadow:0 0 14px rgba(255,90,122,.5); }
+  #modeTabs { display:flex; gap:8px; margin-bottom:18px; }
+  #modeTabs button { background:var(--panel); color:var(--dim); border:1px solid var(--line); border-radius:16px;
+                     padding:6px 16px; font:inherit; font-size:13px; cursor:pointer; }
+  #modeTabs button.active { color:var(--red); border-color:var(--red); }
+  #out { display:flex; gap:10px; align-items:center; width:min(640px,94vw); }
+  #pw { flex:1; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px;
+        font-size:clamp(14px,2.6vw,20px); word-break:break-all; min-height:58px; display:flex; align-items:center; }
+  #out button { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px;
+                padding:14px 16px; font:inherit; cursor:pointer; }
+  #out button:hover { border-color:var(--red); color:var(--red); }
+  #meter { width:min(640px,94vw); height:8px; background:var(--panel); border-radius:4px; margin:12px 0 4px; overflow:hidden; }
+  #meterFill { height:100%; width:0; transition:width .2s; }
+  #entropy { font-size:12px; color:var(--dim); margin-bottom:18px; }
+  #entropy b { color:var(--text); }
+  .opts { width:min(640px,94vw); background:var(--panel); border:1px solid var(--line); border-radius:10px;
+          padding:14px 18px; display:flex; flex-wrap:wrap; gap:14px 24px; font-size:13px; }
+  .opts label { display:flex; gap:8px; align-items:center; cursor:pointer; color:var(--dim); }
+  .opts input[type=checkbox] { accent-color:var(--red); }
+  .opts input[type=range] { width:140px; accent-color:var(--red); }
+  .opts input[type=number], .opts select, .opts input[type=text] {
+    background:#0b0e16; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px 8px; font:inherit; width:70px; }
+  p.note { font-size:11px; color:var(--dim); margin-top:16px; max-width:520px; text-align:center; line-height:1.6; }
+</style>
+<meta property="og:title" content="KEY FORGE — browser game">
+<meta property="og:description" content="Password &amp; passphrase generator with real crypto randomness and a live entropy meter.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/key-forge/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/key-forge/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Password &amp; passphrase generator with real crypto randomness and a live entropy meter.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>KEY FORGE</h1>
+<div id="modeTabs">
+  <button data-m="password" class="active">password</button>
+  <button data-m="passphrase">passphrase</button>
+</div>
+<div id="out">
+  <div id="pw"></div>
+  <button id="regen" title="regenerate">↻</button>
+  <button id="copy" title="copy">copy</button>
+</div>
+<div id="meter"><div id="meterFill"></div></div>
+<div id="entropy"></div>
+<div class="opts" id="pwOpts">
+  <label>length <input type="range" id="len" min="8" max="64" value="20"> <b id="lenV">20</b></label>
+  <label><input type="checkbox" id="lower" checked> a-z</label>
+  <label><input type="checkbox" id="upper" checked> A-Z</label>
+  <label><input type="checkbox" id="digits" checked> 0-9</label>
+  <label><input type="checkbox" id="symbols" checked> !@#…</label>
+  <label><input type="checkbox" id="noAmb"> skip ambiguous (Il1O0)</label>
+</div>
+<div class="opts" id="phOpts" style="display:none">
+  <label>words <input type="number" id="phN" min="3" max="10" value="5"></label>
+  <label>separator <input type="text" id="phSep" value="-" maxlength="3" style="width:46px"></label>
+  <label><input type="checkbox" id="phCap" checked> Capitalize</label>
+  <label><input type="checkbox" id="phNum" checked> add a number</label>
+</div>
+<p class="note">Generated locally with the browser's crypto API — nothing is sent or stored anywhere.
+Entropy assumes an attacker knows your settings; 80+ bits is strong for most uses.</p>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+const WORDS = ('about above actor acute admit adopt adult agent agree ahead alarm album alert alike alive allow alone along alter anger angle angry apart apple apply arena argue arise armor array aside asset audio audit avoid awake award aware badge baker basic batch beach began begin being below bench birth black blame blank blast blind block blood board bonus boost booth bound brain brand brave bread break breed brick bride brief bring broad broke brown build built buyer cabin cable candy cargo carry catch cause chain chair chalk charm chart chase cheap check chess chest chief child chill chose civil claim class clean clear click cliff climb clock close cloud coach coast count court cover crack craft crash crazy cream crime cross crowd crown cycle daily dance dealt death debut delay depth dirty dozen draft drama drawn dream dress drill drink drive drove eager early earth eight elect elite empty enemy enjoy enter entry equal error event every exact exist extra faith false fancy fault fiber field fifth fifty fight final first flame flash fleet floor fluid focus force forge forth forty forum found frame frank fraud fresh front fruit fully funny ghost giant given glass globe glory goods grace grade grain grand grant grass grave great green greet group grown guard guess guest guide habit happy harsh heart heavy hello hence horse hotel house human humor ideal image index inner input issue joint judge juice knife knock known label large laser later laugh layer learn lease least leave legal lemon level light limit local logic loose lover lower loyal lucky lunch magic major maker march match maybe mayor meant medal media mercy metal meter might minor minus mixed model money month moral motor mount mouse mouth movie music naval nerve never newly night noble noise north noted novel nurse occur ocean offer often olive onion orbit order other ought outer owner paint panel panic paper party patch pause peace pearl phase phone photo piano piece pilot pitch place plain plane plant plate point pound power press price pride prime print prior prize proof proud prove pulse punch pupil queen quick quiet quite radio raise rally range rapid ratio reach ready realm rebel refer relax reply rider ridge rifle right rigid risky rival river robin robot rocky rough round route royal rural salad sauce scale scene scope score sense serve seven shade shake shall shape share sharp sheep sheet shelf shell shift shine shirt shock shoot shore short shown sight silly since sixty skill slate sleep slice slide small smart smile smoke snake solar solid solve sorry sound south space spare speak speed spend spice spike spine split sport staff stage stake stand start state steam steel stick still stock stone stood store storm story stove strip study style sugar suite sunny super sweet swift table taken taste teach thank theme there these thick thing think third those three throw thumb tiger tight timer title toast today token topic total touch tough tower trace track trade trail train treat trend trial tribe trick troop truck truly trust truth twice uncle under union unity until upper upset urban usage usual valid value video virus visit vital vocal voice waste watch water whale wheat wheel where which while white whole whose woman world worry worth would wound write wrong wrote young youth').split(' ');
+
+const SETS = {
+  lower: 'abcdefghijklmnopqrstuvwxyz',
+  upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  digits: '0123456789',
+  symbols: '!@#$%^&*()-_=+[]{};:,.<>?/'
+};
+const AMBIGUOUS = 'Il1O0o';
+
+function rnd(max) {
+  // unbiased random int in [0, max)
+  if (window.crypto && crypto.getRandomValues) {
+    const lim = Math.floor(0xFFFFFFFF / max) * max;
+    const buf = new Uint32Array(1);
+    let v;
+    do { crypto.getRandomValues(buf); v = buf[0]; } while (v >= lim);
+    return v % max;
+  }
+  return (Math.random() * max) | 0;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = rnd(i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function genPassword(len, opts) {
+  const chosen = ['lower', 'upper', 'digits', 'symbols'].filter(k => opts[k]);
+  if (!chosen.length) return { pw: '', bits: 0 };
+  let pools = chosen.map(k => SETS[k]);
+  if (opts.noAmb) pools = pools.map(p => [...p].filter(c => !AMBIGUOUS.includes(c)).join(''));
+  const all = pools.join('');
+  const chars = [];
+  pools.forEach(p => chars.push(p[rnd(p.length)]));   // one from each selected set
+  while (chars.length < len) chars.push(all[rnd(all.length)]);
+  shuffle(chars);
+  return { pw: chars.slice(0, len).join(''), bits: Math.round(len * Math.log2(all.length)) };
+}
+
+function genPassphrase(n, sep, cap, addNum) {
+  const words = [];
+  for (let i = 0; i < n; i++) {
+    let w = WORDS[rnd(WORDS.length)];
+    if (cap) w = w[0].toUpperCase() + w.slice(1);
+    words.push(w);
+  }
+  if (addNum) words[rnd(words.length)] += rnd(100);
+  let bits = Math.round(n * Math.log2(WORDS.length) + (addNum ? Math.log2(100 * n) : 0));
+  return { pw: words.join(sep), bits };
+}
+
+function strength(bits) {
+  if (bits < 40) return ['weak', '#ff5a7a', 20];
+  if (bits < 60) return ['fair', '#ff8a5c', 40];
+  if (bits < 80) return ['good', '#ffd166', 65];
+  if (bits < 100) return ['strong', '#8affc9', 85];
+  return ['excellent', '#39ff9c', 100];
+}
+
+let mode = 'password';
+
+function generate() {
+  let res;
+  if (mode === 'password') {
+    res = genPassword(+$('len').value, {
+      lower: $('lower').checked, upper: $('upper').checked,
+      digits: $('digits').checked, symbols: $('symbols').checked,
+      noAmb: $('noAmb').checked
+    });
+  } else {
+    const n = Math.max(3, Math.min(10, +$('phN').value || 5));
+    res = genPassphrase(n, $('phSep').value || '-', $('phCap').checked, $('phNum').checked);
+  }
+  $('pw').textContent = res.pw || 'pick at least one character set';
+  const [label, color, pct] = strength(res.bits);
+  $('meterFill').style.width = pct + '%';
+  $('meterFill').style.background = color;
+  $('entropy').innerHTML = '~<b>' + res.bits + ' bits</b> of entropy · ' + label;
+  return res;
+}
+
+document.querySelectorAll('#modeTabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#modeTabs button').forEach(o => o.classList.remove('active'));
+    b.classList.add('active');
+    mode = b.dataset.m;
+    $('pwOpts').style.display = mode === 'password' ? '' : 'none';
+    $('phOpts').style.display = mode === 'passphrase' ? '' : 'none';
+    generate();
+  });
+});
+$('len').addEventListener('input', () => { $('lenV').textContent = $('len').value; generate(); });
+['lower', 'upper', 'digits', 'symbols', 'noAmb', 'phN', 'phSep', 'phCap', 'phNum'].forEach(id =>
+  $(id).addEventListener('change', generate));
+$('regen').addEventListener('click', generate);
+$('copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('pw').textContent);
+    $('copy').textContent = '✓';
+    setTimeout(() => $('copy').textContent = 'copy', 900);
+  } catch (e) { $('copy').textContent = '✗'; }
+});
+
+generate();
+</script>
+</body>
+</html>

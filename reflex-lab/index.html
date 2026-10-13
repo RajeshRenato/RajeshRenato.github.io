@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REFLEX LAB — reaction test battery</title>
+<style>
+  :root { --bg:#0a0618; --pink:#ff6fb0; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #2b1026, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:16px; }
+  a.back { position:fixed; top:12px; left:14px; color:#28e0ff; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 10px; font-style:italic; letter-spacing:5px; color:var(--pink); text-shadow:0 0 18px var(--pink); }
+  #tabs { display:flex; gap:8px; margin-bottom:16px; }
+  #tabs button { background:var(--panel); color:#7684a8; border:1px solid var(--line); border-radius:16px;
+                 padding:7px 16px; font:inherit; font-size:13px; cursor:pointer; }
+  #tabs button.active { color:var(--pink); border-color:var(--pink); }
+  #arena { width:min(640px,94vw); height:360px; background:var(--panel); border:1px solid var(--line);
+           border-radius:12px; position:relative; display:flex; align-items:center; justify-content:center;
+           flex-direction:column; gap:10px; user-select:none; cursor:pointer; overflow:hidden; }
+  #arena.waiting { background:#54102c; }
+  #arena.go { background:#0f5134; }
+  #arena .big { font-size:30px; letter-spacing:2px; text-align:center; padding:0 20px; }
+  #arena .small { font-size:13px; color:#aab; }
+  #target { position:absolute; width:42px; height:42px; border-radius:50%; background:#ffd166;
+            box-shadow:0 0 16px #ffd166; display:none; }
+  #stats { margin-top:14px; font-size:13px; color:#7684a8; min-height:44px; text-align:center; line-height:1.7; }
+  #stats b { color:#ffd166; }
+  #stats .rate { color:#39ff9c; }
+</style>
+<meta property="og:title" content="REFLEX LAB — browser game">
+<meta property="og:description" content="Three-test reaction battery — raw reaction, aim, and choice speed — with ratings and bests.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/reflex-lab/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/reflex-lab/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Three-test reaction battery — raw reaction, aim, and choice speed — with ratings and bests.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>REFLEX LAB</h1>
+<div id="tabs">
+  <button data-t="react" class="active">⚡ reaction</button>
+  <button data-t="aim">🎯 aim</button>
+  <button data-t="choice">⬅➡ choice</button>
+</div>
+<div id="arena"><div class="big" id="bigTxt">click to start</div><div class="small" id="smallTxt"></div></div>
+<div id="stats"></div>
+<button id="cardBtn" style="display:none;margin-top:10px;background:var(--panel);color:#ffd166;border:1px solid #ffd166;border-radius:6px;padding:8px 18px;font:inherit;cursor:pointer">💾 save scorecard</button>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const arena = $('arena');
+
+function rateReaction(ms) { return ms < 220 ? 'lightning ⚡' : ms < 280 ? 'sharp' : ms < 350 ? 'average' : 'warming up'; }
+function rateAim(ms) { return ms < 500 ? 'sniper 🎯' : ms < 750 ? 'quick' : ms < 1000 ? 'steady' : 'take your time'; }
+function rateChoice(ms) { return ms < 400 ? 'instant 🧠' : ms < 520 ? 'decisive' : ms < 700 ? 'thoughtful' : 'contemplative'; }
+
+function bestKey(t) { return 'rl_' + t; }
+function getBest(t) { return +(localStorage.getItem(bestKey(t)) || 0); }
+function setBest(t, v) {
+  const b = getBest(t);
+  if (!b || v < b) { try { localStorage.setItem(bestKey(t), Math.round(v)); } catch (e) { } return true; }
+  return false;
+}
+const avg = a => a.reduce((s, v) => s + v, 0) / a.length;
+
+let mode = 'react', state = 'idle', timer = null, t0 = 0, trials = [], extra = 0;
+
+function setTxt(big, small) { $('bigTxt').textContent = big; $('smallTxt').textContent = small || ''; }
+function setStats(html) { $('stats').innerHTML = html; }
+
+function showBest() {
+  const b = getBest(mode);
+  setStats(b ? 'your best avg: <b>' + b + ' ms</b>' : '');
+}
+
+function resetMode() {
+  clearTimeout(timer);
+  state = 'idle';
+  trials = []; extra = 0;
+  arena.className = '';
+  $('cardBtn').style.display = 'none';
+  $('target').style.display = 'none';
+  if (mode === 'react') setTxt('REACTION', 'click → wait for green → click fast. 5 rounds.');
+  if (mode === 'aim') setTxt('AIM', 'click to start, then pop 10 targets fast.');
+  if (mode === 'choice') setTxt('CHOICE', 'click to start, then press the arrow key shown. 10 rounds.');
+  showBest();
+}
+
+let lastResult = null;
+function finish(ms, rateFn) {
+  state = 'idle';
+  arena.className = '';
+  const newBest = setBest(mode, ms);
+  setTxt(Math.round(ms) + ' ms avg', (newBest ? '★ new personal best! ' : '') + 'click to go again');
+  setStats('rating: <span class="rate">' + rateFn(ms) + '</span> · best: <b>' + getBest(mode) + ' ms</b>');
+  lastResult = { mode, ms: Math.round(ms), rating: rateFn(ms), best: getBest(mode) };
+  $('cardBtn').style.display = '';
+}
+
+const TEST_NAMES = { react: 'REACTION TIME', aim: 'AIM SPEED', choice: 'CHOICE REACTION' };
+function makeCard(r) {
+  const c = document.createElement('canvas');
+  c.width = 800; c.height = 420;
+  const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, 420);
+  gr.addColorStop(0, '#2b1026');
+  gr.addColorStop(1, '#0a0618');
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 800, 420);
+  g.strokeStyle = 'rgba(255,111,176,0.12)';
+  for (let i = 1; i < 8; i++) { g.beginPath(); g.moveTo(i * 100, 0); g.lineTo(i * 100, 420); g.stroke(); }
+  g.textAlign = 'center';
+  g.fillStyle = '#ff6fb0';
+  g.font = 'bold 26px monospace';
+  g.fillText('R E F L E X   L A B', 400, 58);
+  g.fillStyle = '#dde4f5';
+  g.font = '20px monospace';
+  g.fillText(TEST_NAMES[r.mode] || r.mode.toUpperCase(), 400, 100);
+  g.fillStyle = '#ffd166';
+  g.font = 'bold 110px monospace';
+  g.shadowColor = '#ffd166'; g.shadowBlur = 24;
+  g.fillText(r.ms + 'ms', 400, 225);
+  g.shadowBlur = 0;
+  g.fillStyle = '#8affc9';
+  g.font = '24px monospace';
+  g.fillText('rating: ' + r.rating + '   ·   best: ' + r.best + ' ms', 400, 290);
+  g.fillStyle = '#7684a8';
+  g.font = '16px monospace';
+  g.fillText(new Date().toISOString().slice(0, 10) + "  ·  rajesh's playground — think you're faster?", 400, 382);
+  return c.toDataURL('image/png');
+}
+$('cardBtn').addEventListener('click', () => {
+  if (!lastResult) return;
+  const a = document.createElement('a');
+  a.download = 'reflex-' + lastResult.mode + '-' + lastResult.ms + 'ms.png';
+  a.href = makeCard(lastResult);
+  a.click();
+});
+
+// reaction
+function reactStart() {
+  state = 'waiting';
+  arena.className = 'waiting';
+  setTxt('wait for green…', 'round ' + (trials.length + 1) + '/5');
+  timer = setTimeout(() => {
+    state = 'go';
+    arena.className = 'go';
+    t0 = performance.now();
+    setTxt('CLICK!', '');
+  }, 900 + Math.random() * 2600);
+}
+function reactClick() {
+  if (state === 'idle') { trials = []; reactStart(); return; }
+  if (state === 'waiting') {
+    clearTimeout(timer);
+    state = 'idle';
+    arena.className = '';
+    setTxt('too soon 😅', 'click to retry this round');
+    return;
+  }
+  if (state === 'go') {
+    trials.push(performance.now() - t0);
+    if (trials.length >= 5) finish(avg(trials), rateReaction);
+    else reactStart();
+  }
+}
+
+// aim
+function placeTarget() {
+  const t = $('target');
+  const r = arena.getBoundingClientRect();
+  t.style.left = (20 + Math.random() * (r.width - 82)) + 'px';
+  t.style.top = (20 + Math.random() * (r.height - 82)) + 'px';
+  t.style.display = 'block';
+}
+function aimClick(onTarget) {
+  if (state === 'idle') {
+    trials = []; extra = 0;
+    state = 'go';
+    setTxt('', '');
+    t0 = performance.now();
+    placeTarget();
+    return;
+  }
+  if (state !== 'go') return;
+  if (!onTarget) { extra++; return; }    // a miss
+  trials.push(performance.now() - t0);
+  t0 = performance.now();
+  if (trials.length >= 10) {
+    $('target').style.display = 'none';
+    const a = avg(trials);
+    finish(a, rateAim);
+    setStats($('stats').innerHTML + ' · misses: <b>' + extra + '</b>');
+  } else {
+    placeTarget();
+    setTxt('', trials.length + '/10');
+  }
+}
+
+// choice
+let want = null;
+function choiceNext() {
+  want = Math.random() < 0.5 ? 'ArrowLeft' : 'ArrowRight';
+  setTxt(want === 'ArrowLeft' ? '⬅' : '➡', (trials.length + 1) + '/10');
+  t0 = performance.now();
+}
+function choiceStart() {
+  trials = []; extra = 0;
+  state = 'go';
+  choiceNext();
+}
+addEventListener('keydown', e => {
+  if (mode !== 'choice' || state !== 'go') return;
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  e.preventDefault();
+  let ms = performance.now() - t0;
+  if (e.key !== want) { ms += 250; extra++; }    // wrong key: penalty
+  trials.push(ms);
+  if (trials.length >= 10) {
+    finish(avg(trials), rateChoice);
+    setStats($('stats').innerHTML + ' · wrong keys: <b>' + extra + '</b>');
+  } else choiceNext();
+});
+
+arena.addEventListener('pointerdown', e => {
+  if (mode === 'react') reactClick();
+  else if (mode === 'aim') aimClick(e.target.id === 'target');
+  else if (mode === 'choice' && state === 'idle') choiceStart();
+});
+
+const target = document.createElement('div');
+target.id = 'target';
+arena.appendChild(target);
+
+document.querySelectorAll('#tabs button').forEach(b =>
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#tabs button').forEach(o => o.classList.remove('active'));
+    b.classList.add('active');
+    mode = b.dataset.t;
+    resetMode();
+  }));
+
+resetMode();
+</script>
+</body>
+</html>

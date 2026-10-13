@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARROW FLUX</title>
+<style>
+  :root { --paper:#f6f6f2; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --accent:#0b8fb0; --bad:#d8392f; --panel:#ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#141416; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; --accent:#28e0ff; --bad:#ff5a52; --panel:#1c1c20; }
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         display:flex; flex-direction:column; align-items:center; overflow:hidden; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  header { padding:14px 16px 8px; }
+  h1 { margin:0; font-size:22px; font-weight:800; }
+  #bar { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; align-items:center; padding:0 12px 8px; font-size:14px; }
+  .stat { padding:5px 10px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); }
+  .stat b { font-variant-numeric:tabular-nums; }
+  #hearts { color:var(--bad); letter-spacing:1px; }
+  button, select { font:inherit; font-size:14px; padding:5px 11px; border:1px solid var(--ink); border-radius:6px;
+                   background:var(--panel); color:var(--ink); cursor:pointer; }
+  button:hover, select:hover { background:var(--ink); color:var(--paper); }
+  button:focus-visible, select:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  #wrap { position:relative; flex:1; width:100%; min-height:0; display:flex; align-items:center; justify-content:center; overflow:auto; }
+  canvas { display:block; touch-action:manipulation; cursor:pointer; }
+  #overlay { position:absolute; inset:0; display:none; align-items:center; justify-content:center; }
+  #overlay.show { display:flex; }
+  #overlay .card { background:var(--panel); border:1.5px solid var(--ink); border-radius:12px; padding:22px 28px;
+                   text-align:center; box-shadow:5px 6px 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  #overlay h2 { margin:0 0 6px; font-size:24px; }
+  #overlay p { margin:0 0 14px; color:var(--muted); }
+  #help { font-size:13px; color:var(--muted); margin:6px 16px 12px; text-align:center; max-width:620px; }
+</style>
+<meta property="og:title" content="ARROW FLUX — browser game">
+<meta property="og:description" content="Slide tangled arrows off a packed board; every puzzle is provably solvable.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/arrow-flux/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/arrow-flux/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Slide tangled arrows off a packed board; every puzzle is provably solvable.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<header><h1>Arrow Flux</h1></header>
+<div id="bar">
+  <span class="stat">Level <b id="lvl">1</b></span>
+  <span class="stat">Left <b id="left">0</b></span>
+  <span class="stat" id="hearts" title="Blocked taps cost a heart"></span>
+  <span class="stat">Cleared <b id="cleared">0</b></span>
+  <select id="sizeSel" title="Board size">
+    <option value="auto">Size: grows</option>
+    <option value="s">Small 8×11</option>
+    <option value="m">Medium 12×17</option>
+    <option value="l">Large 16×23</option>
+    <option value="xl">Huge 20×29</option>
+    <option value="xxl">Giant 26×37</option>
+  </select>
+  <button id="hintBtn">Hint</button>
+  <button id="undoBtn">Undo</button>
+  <button id="newBtn">New puzzle</button>
+  <button id="shareBtn">Share</button>
+</div>
+<div id="wrap">
+  <canvas id="board"></canvas>
+  <div id="overlay"><div class="card"><h2 id="ovT"></h2><p id="ovS"></p><button id="ovBtn"></button></div></div>
+</div>
+<p id="help">Tap an arrow to slide it out the way its head points. Anything in the straight line ahead blocks it, and a blocked tap costs a heart.</p>
+<script>
+'use strict';
+// Arrows puzzle: an arrow slides head-first along its own body and off the board,
+// provided nothing occupies the straight line ahead of its head.
+
+const $ = id => document.getElementById(id);
+const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];   // up, right, down, left
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Packs the whole board by peeling. Each new arrow's exit line may cross only
+// cells that are already peeled, so removing arrows in creation order always
+// works, and removals never block anything, so no tap order can dead-end.
+// Arrows come back as cell indices ordered tail -> head.
+function generate(cols, rows, rng, maxLen) {
+  const N = cols * rows;
+  const free = new Uint8Array(N).fill(1);
+  const inB = (x, y) => x >= 0 && y >= 0 && x < cols && y < rows;
+  const isFree = (x, y) => inB(x, y) && free[y * cols + x] === 1;
+  const rayClear = (x, y, d) => {
+    x += DX[d]; y += DY[d];
+    while (inB(x, y)) {
+      if (free[y * cols + x]) return false;
+      x += DX[d]; y += DY[d];
+    }
+    return true;
+  };
+  const freeNb = (x, y) => {
+    let n = 0;
+    for (let d = 0; d < 4; d++) if (isFree(x + DX[d], y + DY[d])) n++;
+    return n;
+  };
+
+  const arrows = [];
+  let left = N;
+  while (left > 0) {
+    const long = [], short = [];
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      if (!free[y * cols + x]) continue;
+      for (let d = 0; d < 4; d++) {
+        if (!rayClear(x, y, d)) continue;
+        (isFree(x - DX[d], y - DY[d]) ? long : short).push(x, y, d);
+      }
+    }
+    const pool = long.length ? long : short;
+    const k = ((rng() * pool.length / 3) | 0) * 3;
+    let cx = pool[k], cy = pool[k + 1];
+    const d = pool[k + 2];
+    const cells = [cy * cols + cx];
+    free[cy * cols + cx] = 0;
+
+    // the cell behind the head fixes the head's direction; then wander backwards
+    if (isFree(cx - DX[d], cy - DY[d])) {
+      cx -= DX[d]; cy -= DY[d];
+      cells.push(cy * cols + cx); free[cy * cols + cx] = 0;
+      const target = 2 + Math.floor(Math.pow(rng(), 0.7) * (maxLen - 1));
+      let walk = (d + 2) % 4;
+      while (cells.length < target) {
+        const opts = [];
+        for (let nd = 0; nd < 4; nd++) if (isFree(cx + DX[nd], cy + DY[nd])) opts.push(nd);
+        if (!opts.length) break;
+        let nd;
+        if (opts.includes(walk) && rng() < 0.55) nd = walk;
+        else {
+          // prefer squeezed cells so the walk doesn't strand single cells behind it
+          let best = 9, ties = [];
+          for (const o of opts) {
+            const n = freeNb(cx + DX[o], cy + DY[o]);
+            if (n < best) { best = n; ties = []; }
+            if (n === best) ties.push(o);
+          }
+          nd = ties[(rng() * ties.length) | 0];
+        }
+        cx += DX[nd]; cy += DY[nd]; walk = nd;
+        cells.push(cy * cols + cx); free[cy * cols + cx] = 0;
+      }
+      // swallow a stranded neighbour at the tail instead of leaving a one-cell arrow
+      for (let guard = 0; guard < 3; guard++) {
+        let took = false;
+        for (let nd = 0; nd < 4; nd++) {
+          const nx = cx + DX[nd], ny = cy + DY[nd];
+          if (isFree(nx, ny) && freeNb(nx, ny) === 0) {
+            cx = nx; cy = ny;
+            cells.push(cy * cols + cx); free[cy * cols + cx] = 0;
+            took = true;
+            break;
+          }
+        }
+        if (!took) break;
+      }
+    }
+    left -= cells.length;
+    arrows.push({ cells: cells.reverse(), dir: d });
+  }
+  return arrows;
+}
+
+// state
+const SIZES = { s: [8, 11], m: [12, 17], l: [16, 23], xl: [20, 29], xxl: [26, 37] };
+let level = 1, seed = (Date.now() % 100000) | 0, sizeMode = 'auto', cleared = 0;
+try {
+  cleared = +(localStorage.getItem('af_cleared') || 0);
+  sizeMode = localStorage.getItem('af_size2') || 'auto';
+} catch (e) { }
+if (sizeMode !== 'auto' && !SIZES[sizeMode]) sizeMode = 'auto';
+
+let cols = 0, rows = 0, arrows = [], occ = null, alive = 0;
+let hearts = 3, maxHearts = 3, mistakes = 0, undoStack = [];
+let flying = [], bumps = new Map(), flashes = new Map(), hint = null, done = false;
+let CS = 30, M = 36, LW = 6, dpr = 1, dirty = true;
+const COL = { ink: '#1a1a18', rule: '#dcdcd2', accent: '#0b8fb0', bad: '#d8392f' };
+
+const canvas = $('board');
+const ctx = canvas.getContext('2d');
+
+function boardDims(lv) {
+  if (sizeMode !== 'auto') return SIZES[sizeMode];
+  const c = Math.min(22, 5 + lv);
+  return [c, Math.round(c * 1.4)];
+}
+
+function buildPath(a) {
+  const pts = a.cells.map(c => [c % cols, (c / cols) | 0]);
+  const [hx, hy] = pts[pts.length - 1];
+  let x = hx, y = hy, dist = 0;
+  do { x += DX[a.dir]; y += DY[a.dir]; dist++; } while (x >= 0 && y >= 0 && x < cols && y < rows);
+  a.len = a.cells.length;
+  for (let k = 1; k <= dist + a.len + 2; k++) pts.push([hx + DX[a.dir] * k, hy + DY[a.dir] * k]);
+  a.pts = pts;
+  a.out = a.len - 1 + dist + 0.6;     // slide distance at which the tail has left the board
+}
+
+function loadLevel() {
+  [cols, rows] = boardDims(level);
+  const rng = mulberry32((seed * 7919 + level * 104729 + cols * 31) >>> 0);
+  const maxLen = Math.max(4, Math.round(Math.max(cols, rows) * 0.45));
+  arrows = generate(cols, rows, rng, maxLen);
+  occ = new Int16Array(cols * rows).fill(-1);
+  arrows.forEach((a, i) => {
+    a.id = i; a.gone = false;
+    for (const c of a.cells) occ[c] = i;
+    buildPath(a);
+  });
+  alive = arrows.length;
+  maxHearts = cols >= 16 ? 5 : 3;
+  hearts = maxHearts; mistakes = 0;
+  undoStack = []; flying = []; bumps = new Map(); flashes = new Map(); hint = null; done = false;
+  $('overlay').classList.remove('show');
+  layout();
+  hud();
+  try { history.replaceState(null, '', '#' + seed + '.' + level + '.' + sizeMode); } catch (e) { }
+}
+
+function readColors() {
+  try {
+    const cs = getComputedStyle(document.documentElement);
+    for (const k of ['ink', 'rule', 'accent', 'bad']) {
+      const v = cs.getPropertyValue('--' + k).trim();
+      if (v) COL[k] = v;
+    }
+  } catch (e) { }
+}
+
+function layout() {
+  const wrap = $('wrap');
+  const aw = (wrap.clientWidth || 800) - 12, ah = (wrap.clientHeight || 600) - 12;
+  CS = Math.floor(Math.min(aw / (cols + 2.4), ah / (rows + 2.4)));
+  CS = Math.max(9, Math.min(46, CS || 24));
+  M = Math.round(CS * 1.2);
+  LW = Math.max(2, Math.round(CS * 0.2));
+  const w = cols * CS + 2 * M, h = rows * CS + 2 * M;
+  dpr = Math.min(3, window.devicePixelRatio || 1);
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  readColors();
+  dirty = true;
+}
+
+function hud() {
+  $('lvl').textContent = level;
+  $('left').textContent = alive;
+  $('cleared').textContent = cleared;
+  $('hearts').textContent = '♥'.repeat(Math.max(0, hearts)) + '♡'.repeat(Math.max(0, maxHearts - hearts));
+}
+
+// moves
+function blockerOf(a) {
+  const h = a.cells[a.len - 1];
+  let x = h % cols + DX[a.dir], y = ((h / cols) | 0) + DY[a.dir], dist = 0;
+  while (x >= 0 && y >= 0 && x < cols && y < rows) {
+    const o = occ[y * cols + x];
+    if (o >= 0) return { id: o, dist };
+    x += DX[a.dir]; y += DY[a.dir]; dist++;
+  }
+  return null;
+}
+
+function tap(id) {
+  if (done) return;
+  const a = arrows[id];
+  if (!a || a.gone || bumps.has(id)) return;
+  hint = null;
+  const b = blockerOf(a);
+  if (b) {
+    bumps.set(id, { t: 0, T: 0.22 + Math.min(0.4, b.dist * 0.04), peak: Math.max(0.18, b.dist) });
+    flashes.set(b.id, now() + 450);
+    hearts--; mistakes++;
+    hud(); dirty = true;
+    return;
+  }
+  a.gone = true;
+  for (const c of a.cells) occ[c] = -1;
+  alive--;
+  undoStack.push(id);
+  flying.push({ a, s: 0, v: 9 + a.len * 0.8 });
+  hud(); dirty = true;
+}
+
+function undo() {
+  if (done) return;
+  const id = undoStack.pop();
+  if (id === undefined) return;
+  const a = arrows[id];
+  const fi = flying.findIndex(f => f.a === a);
+  if (fi >= 0) flying.splice(fi, 1);
+  a.gone = false;
+  for (const c of a.cells) occ[c] = id;
+  alive++;
+  hud(); dirty = true;
+}
+
+function showHint() {
+  if (done) return;
+  for (const a of arrows) {
+    if (!a.gone && !blockerOf(a)) { hint = { id: a.id, until: now() + 1800 }; dirty = true; return; }
+  }
+}
+
+function overlay(title, sub, btn, fn) {
+  $('ovT').textContent = title;
+  $('ovS').textContent = sub;
+  $('ovBtn').textContent = btn;
+  $('ovBtn').onclick = fn;
+  $('overlay').classList.add('show');
+}
+
+function win() {
+  cleared++;
+  try { localStorage.setItem('af_cleared', cleared); } catch (e) { }
+  hud();
+  overlay('Board clear',
+    arrows.length + ' arrows, ' + (mistakes ? mistakes + (mistakes === 1 ? ' mistake' : ' mistakes') : 'no mistakes'),
+    'Next level', () => { level++; loadLevel(); });
+}
+
+function lose() {
+  overlay('Out of hearts', 'Same puzzle, fresh start.', 'Try again', () => loadLevel());
+}
+
+// drawing
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+const X = gx => M + (gx + 0.5) * CS;
+const Y = gy => M + (gy + 0.5) * CS;
+
+function posAt(a, u) {
+  const i = Math.max(0, Math.min(a.pts.length - 2, Math.floor(u)));
+  const f = u - i, p = a.pts[i], q = a.pts[i + 1];
+  return [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f];
+}
+function dirAt(a, u) {
+  const i = Math.max(0, Math.min(a.pts.length - 2, Math.floor(u)));
+  const p = a.pts[i], q = a.pts[i + 1];
+  return [q[0] - p[0], q[1] - p[1]];
+}
+
+function traceBody(a, s) {
+  const u1 = s + a.len - 1;
+  const p0 = posAt(a, s), d0 = dirAt(a, s);
+  ctx.moveTo(X(p0[0] - d0[0] * 0.32), Y(p0[1] - d0[1] * 0.32));
+  for (let i = Math.floor(s) + 1; i < u1; i++) ctx.lineTo(X(a.pts[i][0]), Y(a.pts[i][1]));
+  const p1 = posAt(a, u1);
+  ctx.lineTo(X(p1[0]), Y(p1[1]));
+}
+
+function traceHead(a, s) {
+  const u1 = s + a.len - 1, p = posAt(a, u1), d = dirAt(a, u1);
+  const cx = X(p[0]), cy = Y(p[1]);
+  const tip = 0.42 * CS, back = 0.04 * CS, hw = Math.max(3, 0.27 * CS);
+  ctx.moveTo(cx + d[0] * tip, cy + d[1] * tip);
+  ctx.lineTo(cx - d[0] * back - d[1] * hw, cy - d[1] * back + d[0] * hw);
+  ctx.lineTo(cx - d[0] * back + d[1] * hw, cy - d[1] * back - d[0] * hw);
+  ctx.closePath();
+}
+
+function drawArrow(a, s, color, width) {
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+  ctx.beginPath(); traceBody(a, s); ctx.stroke();
+  ctx.beginPath(); traceHead(a, s); ctx.fill();
+}
+
+function draw() {
+  const w = canvas.width / dpr, h = canvas.height / dpr;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = COL.rule; ctx.lineWidth = 1;
+  ctx.strokeRect(M - CS * 0.1 + 0.5, M - CS * 0.1 + 0.5, cols * CS + CS * 0.2, rows * CS + CS * 0.2);
+
+  ctx.lineJoin = 'miter'; ctx.lineCap = 'butt'; ctx.miterLimit = 2;
+  const special = id => bumps.has(id) || flashes.has(id) || (hint && hint.id === id);
+  ctx.strokeStyle = COL.ink; ctx.fillStyle = COL.ink; ctx.lineWidth = LW;
+  ctx.beginPath();
+  for (const a of arrows) if (!a.gone && !special(a.id)) traceBody(a, 0);
+  ctx.stroke();
+  ctx.beginPath();
+  for (const a of arrows) if (!a.gone && !special(a.id)) traceHead(a, 0);
+  ctx.fill();
+
+  for (const [id] of flashes) if (!arrows[id].gone && !bumps.has(id)) drawArrow(arrows[id], 0, COL.bad, LW);
+  for (const [id, b] of bumps) drawArrow(arrows[id], b.peak * Math.sin(Math.PI * Math.min(1, b.t / b.T)), COL.bad, LW);
+  if (hint && !arrows[hint.id].gone) {
+    drawArrow(arrows[hint.id], 0, COL.accent, LW * (1.15 + 0.25 * Math.sin(now() / 110)));
+  }
+  for (const f of flying) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, (f.a.out - f.s) / Math.min(f.a.len, 4)));
+    drawArrow(f.a, f.s, COL.accent, LW);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// loop
+let last = 0;
+function frame(t) {
+  const dt = Math.min(0.05, (t - (last || t)) / 1000);
+  last = t;
+  let anim = false;
+  for (let i = flying.length - 1; i >= 0; i--) {
+    const f = flying[i];
+    f.v += 60 * dt; f.s += f.v * dt;
+    if (f.s >= f.a.out) { flying.splice(i, 1); dirty = true; }
+    anim = true;
+  }
+  for (const [id, b] of bumps) {
+    b.t += dt;
+    if (b.t >= b.T) { bumps.delete(id); dirty = true; }
+    anim = true;
+  }
+  const tn = now();
+  for (const [id, until] of flashes) {
+    if (tn > until) { flashes.delete(id); dirty = true; }
+    anim = true;
+  }
+  if (hint) { if (tn > hint.until) { hint = null; dirty = true; } anim = true; }
+  if (!done && alive === 0 && flying.length === 0) { done = true; win(); }
+  if (!done && hearts <= 0 && bumps.size === 0) { done = true; lose(); }
+  if (anim || dirty) { draw(); dirty = false; }
+  requestAnimationFrame(frame);
+}
+
+// input
+canvas.addEventListener('pointerdown', e => {
+  const r = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left - M) / CS), y = Math.floor((e.clientY - r.top - M) / CS);
+  if (x < 0 || y < 0 || x >= cols || y >= rows) return;
+  const id = occ[y * cols + x];
+  if (id >= 0) tap(id);
+});
+$('hintBtn').addEventListener('click', showHint);
+$('undoBtn').addEventListener('click', undo);
+$('newBtn').addEventListener('click', () => { seed = (Math.random() * 1e6) | 0; loadLevel(); });
+const sizeSel = $('sizeSel');
+sizeSel.value = sizeMode;
+sizeSel.addEventListener('change', () => {
+  sizeMode = sizeSel.value;
+  try { localStorage.setItem('af_size2', sizeMode); } catch (e) { }
+  loadLevel();
+});
+$('shareBtn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(location.href);
+    $('help').textContent = 'Link copied. Anyone who opens it gets this exact board.';
+  } catch (e) {
+    $('help').textContent = 'Copying was blocked; share the address bar URL instead.';
+  }
+});
+window.addEventListener('resize', () => { if (cols) layout(); });
+try {
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); dirty = true; });
+} catch (e) { }
+
+const hm = /^#(\d+)\.(\d+)(?:\.(\w+))?$/.exec(location.hash || '');
+if (hm) {
+  seed = +hm[1];
+  level = Math.max(1, Math.min(500, +hm[2]));
+  if (hm[3] && (hm[3] === 'auto' || SIZES[hm[3]])) { sizeMode = hm[3]; sizeSel.value = sizeMode; }
+}
+loadLevel();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

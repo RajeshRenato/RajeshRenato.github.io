@@ -1,0 +1,9 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #06121d;
+  cursor: crosshair;
+}
+canvas { display: block; touch-action: none; }

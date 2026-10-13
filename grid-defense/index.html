@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GRID DEFENSE</title>
+<style>
+  :root { --bg:#0a0618; --red:#ff5a7a; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1100px 700px at 50% -10%, #2b1020, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; }
+  a.back { position:fixed; top:12px; left:14px; color:#39ff9c; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 8px; font-style:italic; letter-spacing:5px; color:var(--red); text-shadow:0 0 18px var(--red); }
+  #bar { display:flex; gap:10px; margin-bottom:10px; font-size:13px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #bar .stat { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 12px; }
+  #bar .stat b { color:#ffd166; }
+  #bar button { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:6px;
+                padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  #bar button.sel { border-color:var(--red); color:var(--red); }
+  #bar button#waveBtn { border-color:#39ff9c; color:#39ff9c; }
+  canvas { background:#0d0a1f; border:2px solid #3a1e2e; border-radius:8px;
+           box-shadow:0 0 30px rgba(255,90,122,.2); max-width:94vw; cursor:crosshair; }
+  p.hint { opacity:.55; font-size:12px; margin-top:10px; text-align:center; }
+</style>
+<meta property="og:title" content="GRID DEFENSE — browser game">
+<meta property="og:description" content="Micro tower defense: blasters and snipers vs. ever-tougher waves snaking down the path.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/grid-defense/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/grid-defense/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Micro tower defense: blasters and snipers vs. ever-tougher waves snaking down the path.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>GRID DEFENSE</h1>
+<div id="bar">
+  <span class="stat">💰 <b id="money">60</b></span>
+  <span class="stat">❤️ <b id="lives">12</b></span>
+  <span class="stat">wave <b id="wave">0</b></span>
+  <span class="stat">best <b id="best">0</b></span>
+  <button id="tBlaster" class="sel">⚡ blaster $20</button>
+  <button id="tSniper">🎯 sniper $45</button>
+  <button id="waveBtn">▶ send wave</button>
+</div>
+<canvas id="c" width="600" height="400"></canvas>
+<p class="hint">click an empty cell to build · towers auto-fire at the front-most creep in range</p>
+<script>
+'use strict';
+const COLS = 15, ROWS = 10, CELL = 40;
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+
+const WAYPOINTS = [[0, 1], [13, 1], [13, 4], [1, 4], [1, 7], [14, 7]];
+function buildPath() {
+  const out = [];
+  for (let i = 0; i < WAYPOINTS.length - 1; i++) {
+    let [c, r] = WAYPOINTS[i];
+    const [tc, tr] = WAYPOINTS[i + 1];
+    const dc = Math.sign(tc - c), dr = Math.sign(tr - r);
+    while (c !== tc || r !== tr) { out.push([c, r]); c += dc; r += dr; }
+  }
+  out.push(WAYPOINTS[WAYPOINTS.length - 1]);
+  return out;
+}
+const path = buildPath();
+const pathSet = new Set(path.map(([c, r]) => c + ',' + r));
+
+function creepPos(dist) {
+  const i = Math.max(0, Math.min(path.length - 2, Math.floor(dist)));
+  const t = Math.max(0, Math.min(1, dist - i));
+  const [c1, r1] = path[i], [c2, r2] = path[i + 1];
+  return { x: (c1 + (c2 - c1) * t + 0.5) * CELL, y: (r1 + (r2 - r1) * t + 0.5) * CELL };
+}
+
+function waveHp(w) { return Math.round(18 * Math.pow(1.22, w - 1)); }
+function waveCount(w) { return 6 + 2 * w; }
+
+const TYPES = {
+  blaster: { cost: 20, range: 90, dmg: 6, rate: 0.35, color: '#28e0ff' },
+  sniper: { cost: 45, range: 170, dmg: 30, rate: 1.3, color: '#ffd166' },
+};
+
+let money, lives, wave, creeps, towers, beams, spawning, toSpawn, spawnT, state, sel = 'blaster';
+let best = +(localStorage.getItem('gd_best') || 0);
+$('best').textContent = best;
+
+function reset() {
+  money = 60; lives = 12; wave = 0;
+  creeps = []; towers = []; beams = [];
+  spawning = false; toSpawn = 0; spawnT = 0;
+  state = 'play';
+  hud();
+}
+
+function hud() {
+  $('money').textContent = Math.floor(money);
+  $('lives').textContent = lives;
+  $('wave').textContent = wave;
+}
+
+function startWave() {
+  if (spawning || creeps.length || state !== 'play') return;
+  wave++;
+  toSpawn = waveCount(wave);
+  spawning = true;
+  spawnT = 0;
+  hud();
+}
+
+function towerTarget(tw, list) {
+  const tx = (tw.c + 0.5) * CELL, ty = (tw.r + 0.5) * CELL;
+  let best2 = null;
+  for (const cr of list) {
+    if (!cr.alive) continue;
+    const p = creepPos(cr.dist);
+    const dx = p.x - tx, dy = p.y - ty;
+    if (dx * dx + dy * dy > TYPES[tw.type].range ** 2) continue;
+    if (!best2 || cr.dist > best2.dist) best2 = cr;   // front-most first
+  }
+  return best2;
+}
+
+function step(dt) {
+  if (spawning) {
+    spawnT -= dt;
+    if (spawnT <= 0 && toSpawn > 0) {
+      creeps.push({ dist: 0, hp: waveHp(wave), maxHp: waveHp(wave), speed: 1.1 + wave * 0.04, alive: true });
+      toSpawn--;
+      spawnT = 0.7;
+    }
+    if (toSpawn === 0) spawning = false;
+  }
+  for (const cr of creeps) {
+    if (!cr.alive) continue;
+    cr.dist += cr.speed * dt;
+    if (cr.dist >= path.length - 1) {
+      cr.alive = false;
+      lives--;
+      hud();
+      if (lives <= 0) {
+        state = 'over';
+        if (wave - 1 > best) { best = wave - 1; try { localStorage.setItem('gd_best', best); } catch (e) { } $('best').textContent = best; }
+      }
+    }
+  }
+  for (const tw of towers) {
+    tw.cool -= dt;
+    if (tw.cool > 0) continue;
+    const t = towerTarget(tw, creeps);
+    if (!t) continue;
+    tw.cool = TYPES[tw.type].rate;
+    t.hp -= TYPES[tw.type].dmg;
+    const p = creepPos(t.dist);
+    beams.push({ x1: (tw.c + 0.5) * CELL, y1: (tw.r + 0.5) * CELL, x2: p.x, y2: p.y, t: 0.09, color: TYPES[tw.type].color });
+    if (t.hp <= 0 && t.alive) {
+      t.alive = false;
+      money += Math.max(2, Math.round(t.maxHp / 6));
+      hud();
+    }
+  }
+  creeps = creeps.filter(c => c.alive);
+  for (let i = beams.length - 1; i >= 0; i--) {
+    beams[i].t -= dt;
+    if (beams[i].t <= 0) beams.splice(i, 1);
+  }
+  if (!spawning && !creeps.length && wave > 0 && state === 'play' && !step._paid) { /* wave cleared bonus paid once */ }
+}
+
+function build(c, r) {
+  if (state !== 'play') return false;
+  if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return false;
+  if (pathSet.has(c + ',' + r)) return false;
+  if (towers.some(t => t.c === c && t.r === r)) return false;
+  const cost = TYPES[sel].cost;
+  if (money < cost) return false;
+  money -= cost;
+  towers.push({ c, r, type: sel, cool: 0 });
+  hud();
+  return true;
+}
+
+cv.addEventListener('click', e => {
+  if (state === 'over') { reset(); return; }
+  const rect = cv.getBoundingClientRect();
+  const c = Math.floor((e.clientX - rect.left) * (600 / rect.width) / CELL);
+  const r = Math.floor((e.clientY - rect.top) * (400 / rect.height) / CELL);
+  build(c, r);
+});
+$('tBlaster').addEventListener('click', () => { sel = 'blaster'; $('tBlaster').classList.add('sel'); $('tSniper').classList.remove('sel'); });
+$('tSniper').addEventListener('click', () => { sel = 'sniper'; $('tSniper').classList.add('sel'); $('tBlaster').classList.remove('sel'); });
+$('waveBtn').addEventListener('click', startWave);
+
+function draw() {
+  x.fillStyle = '#0d0a1f';
+  x.fillRect(0, 0, 600, 400);
+  x.strokeStyle = 'rgba(90,70,160,0.1)';
+  x.lineWidth = 1;
+  for (let c = 1; c < COLS; c++) { x.beginPath(); x.moveTo(c * CELL, 0); x.lineTo(c * CELL, 400); x.stroke(); }
+  for (let r = 1; r < ROWS; r++) { x.beginPath(); x.moveTo(0, r * CELL); x.lineTo(600, r * CELL); x.stroke(); }
+  // path
+  for (const [c, r] of path) {
+    x.fillStyle = 'rgba(255,90,122,0.14)';
+    x.fillRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2);
+  }
+  // towers
+  for (const tw of towers) {
+    const T = TYPES[tw.type];
+    x.fillStyle = T.color;
+    x.shadowColor = T.color; x.shadowBlur = 10;
+    x.beginPath(); x.arc((tw.c + 0.5) * CELL, (tw.r + 0.5) * CELL, 11, 0, 7); x.fill();
+    x.shadowBlur = 0;
+    x.fillStyle = '#0d0a1f';
+    x.beginPath(); x.arc((tw.c + 0.5) * CELL, (tw.r + 0.5) * CELL, 5, 0, 7); x.fill();
+  }
+  // beams
+  for (const b of beams) {
+    x.strokeStyle = b.color;
+    x.globalAlpha = Math.min(1, b.t * 12);
+    x.lineWidth = 2.5;
+    x.beginPath(); x.moveTo(b.x1, b.y1); x.lineTo(b.x2, b.y2); x.stroke();
+  }
+  x.globalAlpha = 1;
+  // creeps
+  for (const cr of creeps) {
+    const p = creepPos(cr.dist);
+    x.fillStyle = '#ff5a7a';
+    x.shadowColor = '#ff5a7a'; x.shadowBlur = 8;
+    x.beginPath(); x.arc(p.x, p.y, 9, 0, 7); x.fill();
+    x.shadowBlur = 0;
+    x.fillStyle = '#2a0f18';
+    x.fillRect(p.x - 10, p.y - 16, 20, 4);
+    x.fillStyle = '#8affc9';
+    x.fillRect(p.x - 10, p.y - 16, 20 * Math.max(0, cr.hp / cr.maxHp), 4);
+  }
+  if (state === 'over') {
+    x.fillStyle = 'rgba(10,6,24,0.72)';
+    x.fillRect(0, 0, 600, 400);
+    x.textAlign = 'center';
+    x.font = 'italic bold 38px "Courier New",monospace';
+    x.fillStyle = '#ff5a7a'; x.shadowColor = '#ff5a7a'; x.shadowBlur = 18;
+    x.fillText('OVERRUN', 300, 190);
+    x.shadowBlur = 0;
+    x.font = '14px "Courier New",monospace';
+    x.fillStyle = '#e8e6f5';
+    x.fillText('survived ' + Math.max(0, wave - 1) + ' waves — click to retry', 300, 222);
+  } else if (!spawning && !creeps.length) {
+    x.textAlign = 'center';
+    x.font = '13px "Courier New",monospace';
+    x.fillStyle = 'rgba(138,255,201,0.8)';
+    x.fillText(wave === 0 ? 'build a tower or two, then send the first wave' : 'wave cleared — build up, then send the next', 300, 388);
+  }
+}
+
+let last = 0;
+function loop(t) {
+  if (!last) last = t;
+  const dt = Math.min(0.03, (t - last) / 1000);
+  last = t;
+  if (state === 'play') step(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+reset();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

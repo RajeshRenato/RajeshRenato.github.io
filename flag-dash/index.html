@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FLAG DASH — 60 second flag quiz</title>
+<style>
+  :root { --bg:#0a0618; --green:#39ff9c; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #0f2b1c, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:16px; }
+  a.back { position:fixed; top:12px; left:14px; color:#ff6fb0; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 6px; font-style:italic; letter-spacing:5px; color:var(--green); text-shadow:0 0 18px var(--green); }
+  #bar { display:flex; gap:20px; margin-bottom:22px; font-size:14px; }
+  #bar b { color:#ffd166; }
+  #flag { font-size:110px; line-height:1; margin-bottom:8px; min-height:120px; }
+  #streak { height:20px; font-size:13px; color:#ffd166; margin-bottom:14px; }
+  #opts { display:grid; grid-template-columns:repeat(2,minmax(160px,220px)); gap:10px; }
+  #opts button { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:8px;
+                 padding:14px 10px; font:inherit; font-size:14px; cursor:pointer; }
+  #opts button:hover { border-color:var(--green); }
+  #opts button.right { background:#0f5134; border-color:var(--green); color:var(--green); }
+  #opts button.wrong { background:#54102c; border-color:#ff5a7a; color:#ff8ea8; }
+  #bigBtn { margin-top:18px; background:var(--panel); color:var(--green); border:1px solid var(--green);
+            border-radius:8px; padding:12px 28px; font:inherit; font-size:16px; cursor:pointer; }
+  p.hint { opacity:.55; font-size:12px; margin-top:14px; }
+</style>
+<meta property="og:title" content="FLAG DASH — browser game">
+<meta property="og:description" content="60-second flag quiz built entirely from emoji — ~90 countries, streak bonuses, zero assets.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/flag-dash/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/flag-dash/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="60-second flag quiz built entirely from emoji — ~90 countries, streak bonuses, zero assets.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>FLAG DASH</h1>
+<div id="bar">time <b id="time">60</b> · score <b id="score">0</b> · best <b id="best">0</b></div>
+<div id="flag">🏁</div>
+<div id="streak"></div>
+<div id="opts"></div>
+<button id="bigBtn">start 60s dash</button>
+<p class="hint">guess the country · streaks of 3+ earn double points</p>
+<script>
+'use strict';
+const FLAGS = [['🇮🇳','India'],['🇺🇸','United States'],['🇬🇧','United Kingdom'],['🇯🇵','Japan'],['🇧🇷','Brazil'],['🇨🇦','Canada'],['🇦🇺','Australia'],['🇩🇪','Germany'],['🇫🇷','France'],['🇮🇹','Italy'],['🇪🇸','Spain'],['🇵🇹','Portugal'],['🇳🇱','Netherlands'],['🇧🇪','Belgium'],['🇨🇭','Switzerland'],['🇦🇹','Austria'],['🇸🇪','Sweden'],['🇳🇴','Norway'],['🇩🇰','Denmark'],['🇫🇮','Finland'],['🇮🇸','Iceland'],['🇮🇪','Ireland'],['🇵🇱','Poland'],['🇨🇿','Czechia'],['🇬🇷','Greece'],['🇹🇷','Türkiye'],['🇷🇺','Russia'],['🇺🇦','Ukraine'],['🇨🇳','China'],['🇰🇷','South Korea'],['🇹🇭','Thailand'],['🇻🇳','Vietnam'],['🇵🇭','Philippines'],['🇮🇩','Indonesia'],['🇲🇾','Malaysia'],['🇸🇬','Singapore'],['🇱🇰','Sri Lanka'],['🇳🇵','Nepal'],['🇵🇰','Pakistan'],['🇧🇩','Bangladesh'],['🇮🇷','Iran'],['🇮🇶','Iraq'],['🇸🇦','Saudi Arabia'],['🇦🇪','United Arab Emirates'],['🇮🇱','Israel'],['🇪🇬','Egypt'],['🇿🇦','South Africa'],['🇳🇬','Nigeria'],['🇰🇪','Kenya'],['🇪🇹','Ethiopia'],['🇬🇭','Ghana'],['🇲🇦','Morocco'],['🇹🇳','Tunisia'],['🇩🇿','Algeria'],['🇲🇽','Mexico'],['🇦🇷','Argentina'],['🇨🇱','Chile'],['🇨🇴','Colombia'],['🇵🇪','Peru'],['🇻🇪','Venezuela'],['🇺🇾','Uruguay'],['🇧🇴','Bolivia'],['🇪🇨','Ecuador'],['🇨🇺','Cuba'],['🇯🇲','Jamaica'],['🇳🇿','New Zealand'],['🇫🇯','Fiji'],['🇭🇺','Hungary'],['🇷🇴','Romania'],['🇧🇬','Bulgaria'],['🇷🇸','Serbia'],['🇭🇷','Croatia'],['🇸🇮','Slovenia'],['🇸🇰','Slovakia'],['🇪🇪','Estonia'],['🇱🇻','Latvia'],['🇱🇹','Lithuania'],['🇱🇺','Luxembourg'],['🇲🇹','Malta'],['🇨🇾','Cyprus'],['🇶🇦','Qatar'],['🇰🇼','Kuwait'],['🇴🇲','Oman'],['🇯🇴','Jordan'],['🇱🇧','Lebanon'],['🇲🇲','Myanmar'],['🇰🇭','Cambodia'],['🇱🇦','Laos'],['🇲🇳','Mongolia'],['🇰🇿','Kazakhstan']];
+
+const $ = id => document.getElementById(id);
+let score, streak, timeLeft, timer = null, playing = false, cur = null, locked = false;
+let best = +(localStorage.getItem('fd_best') || 0);
+$('best').textContent = best;
+
+function makeQuestion() {
+  const ai = (Math.random() * FLAGS.length) | 0;
+  const answer = FLAGS[ai];
+  const opts = [answer];
+  while (opts.length < 4) {
+    const f = FLAGS[(Math.random() * FLAGS.length) | 0];
+    if (!opts.some(o => o[1] === f[1])) opts.push(f);
+  }
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return { flag: answer[0], answer: answer[1], options: opts.map(o => o[1]) };
+}
+
+function show() {
+  cur = makeQuestion();
+  locked = false;
+  $('flag').textContent = cur.flag;
+  const box = $('opts');
+  box.innerHTML = '';
+  for (const name of cur.options) {
+    const b = document.createElement('button');
+    b.textContent = name;
+    b.addEventListener('click', () => answer(b, name));
+    box.appendChild(b);
+  }
+}
+
+function answer(btn, name) {
+  if (!playing || locked) return;
+  locked = true;
+  const right = name === cur.answer;
+  if (right) {
+    streak++;
+    score += streak >= 3 ? 2 : 1;
+    btn.classList.add('right');
+  } else {
+    streak = 0;
+    btn.classList.add('wrong');
+    for (const b of $('opts').children)
+      if (b.textContent === cur.answer) b.classList.add('right');
+  }
+  $('score').textContent = score;
+  $('streak').textContent = streak >= 3 ? '🔥 streak ' + streak + ' — double points!' : streak > 0 ? 'streak ' + streak : '';
+  setTimeout(show, right ? 350 : 900);
+}
+
+function start() {
+  score = 0; streak = 0; timeLeft = 60;
+  playing = true;
+  $('score').textContent = 0;
+  $('time').textContent = 60;
+  $('streak').textContent = '';
+  $('bigBtn').style.display = 'none';
+  clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    $('time').textContent = timeLeft;
+    if (timeLeft <= 0) finish();
+  }, 1000);
+  show();
+}
+
+function finish() {
+  clearInterval(timer);
+  playing = false;
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem('fd_best', best); } catch (e) { }
+    $('best').textContent = best;
+  }
+  $('flag').textContent = '🏁';
+  $('opts').innerHTML = '';
+  $('streak').textContent = 'final score: ' + score;
+  $('bigBtn').textContent = 'go again';
+  $('bigBtn').style.display = '';
+}
+
+$('bigBtn').addEventListener('click', start);
+</script>
+</body>
+</html>

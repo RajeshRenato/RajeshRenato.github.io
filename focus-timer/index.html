@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Focus Timer — pomodoro</title>
+<style>
+  :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8;
+          --focus:#ff5a7a; --short:#39ff9c; --long:#28e0ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #1a1030, var(--bg)); color:var(--text);
+         font-family:ui-monospace,'Cascadia Code','Courier New',monospace; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--dim); font-size:12px; text-decoration:none; }
+  #tabs { display:flex; gap:8px; margin-bottom:26px; }
+  #tabs button { background:var(--panel); color:var(--dim); border:1px solid var(--line); border-radius:20px;
+                 padding:7px 18px; font:inherit; font-size:13px; cursor:pointer; }
+  #tabs button.active { color:var(--c); border-color:var(--c); box-shadow:0 0 12px -2px var(--c); }
+  #ringWrap { position:relative; width:280px; height:280px; }
+  svg { transform:rotate(-90deg); }
+  #ringBg { fill:none; stroke:var(--line); stroke-width:10; }
+  #ring { fill:none; stroke:var(--c,var(--focus)); stroke-width:10; stroke-linecap:round;
+          filter:drop-shadow(0 0 8px var(--c,var(--focus))); transition:stroke-dashoffset .2s linear; }
+  #mid { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #clock { font-size:56px; font-weight:700; letter-spacing:2px; }
+  #phaseLbl { font-size:11px; letter-spacing:4px; color:var(--dim); margin-top:4px; }
+  #controls { display:flex; gap:12px; margin-top:28px; }
+  #controls button { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px;
+                     padding:10px 26px; font:inherit; font-size:14px; cursor:pointer; }
+  #controls button#startBtn { border-color:var(--c,var(--focus)); color:var(--c,var(--focus)); }
+  #stats { margin-top:24px; color:var(--dim); font-size:13px; }
+  #stats b { color:var(--text); }
+  #durs { margin-top:18px; display:flex; gap:14px; color:var(--dim); font-size:12px; align-items:center; }
+  #durs input { width:52px; background:var(--panel); color:var(--text); border:1px solid var(--line);
+                border-radius:6px; padding:4px 6px; font:inherit; text-align:center; }
+</style>
+<meta property="og:title" content="FOCUS TIMER — browser game">
+<meta property="og:description" content="Pomodoro with a glowing progress ring, auto-cycling breaks, chimes, and daily session stats.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/focus-timer/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/focus-timer/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Pomodoro with a glowing progress ring, auto-cycling breaks, chimes, and daily session stats.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="tabs">
+  <button data-p="focus" style="--c:var(--focus)">focus</button>
+  <button data-p="short" style="--c:var(--short)">short break</button>
+  <button data-p="long" style="--c:var(--long)">long break</button>
+</div>
+<div id="ringWrap">
+  <svg width="280" height="280">
+    <circle id="ringBg" cx="140" cy="140" r="120"></circle>
+    <circle id="ring" cx="140" cy="140" r="120"></circle>
+  </svg>
+  <div id="mid">
+    <div id="clock">25:00</div>
+    <div id="phaseLbl">FOCUS</div>
+  </div>
+</div>
+<div id="controls">
+  <button id="startBtn">start</button>
+  <button id="skipBtn">skip</button>
+  <button id="resetBtn">reset</button>
+</div>
+<div id="stats">today: <b id="today">0</b> focus sessions · cycle: <b id="cycle">0</b>/4</div>
+<div id="durs">
+  minutes — focus <input id="dFocus" type="number" min="1" max="120" value="25">
+  short <input id="dShort" type="number" min="1" max="60" value="5">
+  long <input id="dLong" type="number" min="1" max="90" value="15">
+</div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const CIRC = 2 * Math.PI * 120;
+$('ring').style.strokeDasharray = CIRC;
+
+let durs = { focus: 25, short: 5, long: 15 };
+try { Object.assign(durs, JSON.parse(localStorage.getItem('ft_durs') || '{}')); } catch (e) { }
+$('dFocus').value = durs.focus; $('dShort').value = durs.short; $('dLong').value = durs.long;
+
+let phase = 'focus';
+let total = durs.focus * 60;
+let remaining = total;
+let running = false;
+let endAt = 0;
+let completedFocus = 0;
+
+function todayKey() { return 'ft_day_' + new Date().toISOString().slice(0, 10); }
+function todayCount() { return +(localStorage.getItem(todayKey()) || 0); }
+function bumpToday() {
+  try { localStorage.setItem(todayKey(), todayCount() + 1); } catch (e) { }
+}
+
+const COLORS = { focus: 'var(--focus)', short: 'var(--short)', long: 'var(--long)' };
+const LABELS = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK' };
+
+function fmt(sec) {
+  sec = Math.max(0, Math.round(sec));
+  return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0');
+}
+
+function render() {
+  $('clock').textContent = fmt(remaining);
+  $('phaseLbl').textContent = LABELS[phase];
+  $('ring').style.strokeDashoffset = CIRC * (1 - remaining / total);
+  document.documentElement.style.setProperty('--c', COLORS[phase]);
+  document.querySelectorAll('#tabs button').forEach(b =>
+    b.classList.toggle('active', b.dataset.p === phase));
+  $('startBtn').textContent = running ? 'pause' : 'start';
+  $('today').textContent = todayCount();
+  $('cycle').textContent = completedFocus % 4;
+  document.title = (running ? fmt(remaining) + ' · ' : '') + LABELS[phase].toLowerCase() + ' — Focus Timer';
+  const wrap = document.getElementById('ringWrap');
+  wrap.style.setProperty('--c', COLORS[phase]);
+  document.getElementById('controls').style.setProperty('--c', COLORS[phase]);
+}
+
+function setPhase(p) {
+  phase = p;
+  total = durs[p] * 60;
+  remaining = total;
+  running = false;
+  render();
+}
+
+let audioCtx = null;
+function chime() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    [523.25, 784].forEach((f, i) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime + i * 0.18);
+      g.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + i * 0.18 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + i * 0.18 + 0.5);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + i * 0.18);
+      o.stop(audioCtx.currentTime + i * 0.18 + 0.55);
+    });
+  } catch (e) { }
+}
+
+function finishPhase() {
+  chime();
+  if (phase === 'focus') {
+    completedFocus++;
+    bumpToday();
+    setPhase(completedFocus % 4 === 0 ? 'long' : 'short');
+  } else {
+    setPhase('focus');
+  }
+}
+
+function toggle() {
+  if (running) {
+    remaining = Math.max(0, (endAt - Date.now()) / 1000);
+    running = false;
+  } else {
+    endAt = Date.now() + remaining * 1000;
+    running = true;
+  }
+  render();
+}
+
+setInterval(() => {
+  if (!running) return;
+  remaining = Math.max(0, (endAt - Date.now()) / 1000);
+  if (remaining <= 0) finishPhase();
+  else render();
+}, 200);
+
+$('startBtn').addEventListener('click', toggle);
+$('skipBtn').addEventListener('click', finishPhase);
+$('resetBtn').addEventListener('click', () => setPhase(phase));
+document.querySelectorAll('#tabs button').forEach(b =>
+  b.addEventListener('click', () => setPhase(b.dataset.p)));
+
+[['dFocus', 'focus'], ['dShort', 'short'], ['dLong', 'long']].forEach(([id, p]) => {
+  $(id).addEventListener('change', () => {
+    const v = Math.max(1, Math.min(180, +$(id).value || 1));
+    $(id).value = v;
+    durs[p] = v;
+    try { localStorage.setItem('ft_durs', JSON.stringify(durs)); } catch (e) { }
+    if (phase === p) setPhase(p);
+  });
+});
+
+addEventListener('keydown', e => {
+  if (e.key === ' ' && e.target.tagName !== 'INPUT') { e.preventDefault(); toggle(); }
+});
+
+render();
+</script>
+</body>
+</html>

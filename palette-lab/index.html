@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Palette Lab — color palette generator</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; height:100vh; display:flex; flex-direction:column; background:#0b0e16; color:#dde4f5; font-family:ui-monospace,'Cascadia Code','Courier New',monospace; }
+  header { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid #232c45; flex-wrap:wrap; }
+  header h1 { font-size:16px; margin:0 12px 0 0; color:#ff4fa3; letter-spacing:2px; font-weight:600; }
+  header a.back { color:#7684a8; font-size:12px; text-decoration:none; }
+  select, button { background:#121726; color:#dde4f5; border:1px solid #232c45; border-radius:6px; padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  button:hover { border-color:#ff4fa3; color:#ff4fa3; }
+  .spacer { margin-left:auto; color:#7684a8; font-size:12px; }
+  #palette { flex:1; display:flex; min-height:0; }
+  .col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:36px; cursor:pointer; transition:flex .25s; position:relative; }
+  .col:hover { flex:1.25; }
+  .col .hex { font-size:17px; font-weight:700; letter-spacing:1px; margin-bottom:8px; }
+  .col .hsl { font-size:11px; opacity:.7; margin-bottom:14px; }
+  .col .lock { background:none; border:none; font-size:18px; cursor:pointer; opacity:.5; padding:6px; }
+  .col .lock:hover, .col.locked .lock { opacity:1; }
+  #toast { position:fixed; left:50%; top:18px; transform:translateX(-50%); background:#121726; border:1px solid #ff4fa3; color:#ff8ec4; padding:8px 18px; border-radius:20px; font-size:13px; opacity:0; transition:opacity .25s; pointer-events:none; }
+  #toast.show { opacity:1; }
+  dialog { background:#121726; color:#dde4f5; border:1px solid #232c45; border-radius:10px; padding:18px; width:min(560px,92vw); }
+  dialog::backdrop { background:rgba(0,0,0,.6); }
+  dialog textarea { width:100%; height:240px; background:#0b0e16; color:#dde4f5; border:1px solid #232c45; border-radius:6px; font:inherit; font-size:12px; padding:10px; resize:vertical; }
+  dialog .row { display:flex; gap:10px; margin-top:10px; justify-content:flex-end; }
+</style>
+<meta property="og:title" content="PALETTE LAB — browser game">
+<meta property="og:description" content="Spacebar-driven color palette generator. Lock what you like, copy hexes, export CSS/JSON, share by URL.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/palette-lab/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/palette-lab/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Spacebar-driven color palette generator. Lock what you like, copy hexes, export CSS/JSON, share by URL.">
+</head>
+<body>
+<header>
+  <a class="back" href="../">&larr;</a>
+  <h1>PALETTE LAB</h1>
+  <select id="strategy">
+    <option value="auto">auto harmony</option>
+    <option value="analogous">analogous</option>
+    <option value="complementary">complementary</option>
+    <option value="triadic">triadic</option>
+    <option value="random">chaos</option>
+  </select>
+  <button id="bGen">Generate (space)</button>
+  <button id="bExport">Export</button>
+  <span class="spacer">click a color to copy · lock what you like · URL is shareable</span>
+</header>
+<div id="palette"></div>
+<div id="toast"></div>
+<dialog id="exportDlg">
+  <h3 style="margin:0 0 10px;font-size:14px;letter-spacing:2px;">EXPORT</h3>
+  <textarea id="exportText" readonly spellcheck="false"></textarea>
+  <div class="row">
+    <button id="bCopyExport">Copy</button>
+    <button id="bCloseExport">Close</button>
+  </div>
+</dialog>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const paletteEl = $('palette'), toastEl = $('toast');
+let colors = [];
+let toastTimer;
+
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1400);
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return '#' + [f(0), f(8), f(4)]
+    .map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
+}
+
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (mx + mn) / 2;
+  if (mx !== mn) {
+    const d = mx - mn;
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    if (mx === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+function generate() {
+  let strat = $('strategy').value;
+  if (strat === 'auto') strat = ['analogous', 'complementary', 'triadic'][(Math.random() * 3) | 0];
+  const base = Math.random() * 360;
+  let hues;
+  if (strat === 'analogous') hues = [-30, -15, 0, 15, 30].map(o => base + o);
+  else if (strat === 'complementary') hues = [base - 15, base, base + 15, base + 180, base + 195];
+  else if (strat === 'triadic') hues = [base, base + 15, base + 120, base + 135, base + 240];
+  else hues = Array.from({ length: 5 }, () => Math.random() * 360);
+  const lights = [18, 36, 52, 68, 84].sort(() => Math.random() - 0.5);
+  colors = colors.map((c, i) => c.locked ? c : {
+    h: ((hues[i] % 360) + 360) % 360,
+    s: Math.round(55 + Math.random() * 35),
+    l: lights[i],
+    locked: false
+  });
+  render();
+  updateHash();
+}
+
+function render() {
+  paletteEl.innerHTML = '';
+  colors.forEach((c, i) => {
+    const hex = hslToHex(c.h, c.s, c.l);
+    const col = document.createElement('div');
+    col.className = 'col' + (c.locked ? ' locked' : '');
+    col.style.background = hex;
+    const fg = c.l > 60 ? '#14161c' : '#ffffff';
+    col.style.color = fg;
+    col.innerHTML =
+      '<div class="hex">' + hex.toUpperCase() + '</div>' +
+      '<div class="hsl">hsl(' + Math.round(c.h) + ', ' + c.s + '%, ' + c.l + '%)</div>' +
+      '<button class="lock" title="lock/unlock" style="color:' + fg + '">' + (c.locked ? '🔒' : '🔓') + '</button>';
+    col.addEventListener('click', async e => {
+      if (e.target.classList.contains('lock')) return;
+      try { await navigator.clipboard.writeText(hex.toUpperCase()); toast(hex.toUpperCase() + ' copied'); }
+      catch (err) { toast('copy blocked by browser'); }
+    });
+    col.querySelector('.lock').addEventListener('click', () => {
+      c.locked = !c.locked;
+      render();
+    });
+    paletteEl.appendChild(col);
+  });
+}
+
+function updateHash() {
+  const hex = colors.map(c => hslToHex(c.h, c.s, c.l).slice(1)).join('-');
+  history.replaceState(null, '', '#' + hex);
+  try { localStorage.setItem('pl_last', hex); } catch (e) { }
+}
+
+function loadFrom(hashStr) {
+  const parts = hashStr.split('-').filter(p => /^[0-9a-fA-F]{6}$/.test(p));
+  if (parts.length !== 5) return false;
+  colors = parts.map(p => ({ ...hexToHsl('#' + p), locked: false }));
+  return true;
+}
+
+$('bGen').addEventListener('click', generate);
+addEventListener('keydown', e => {
+  if (e.key === ' ' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+    e.preventDefault();
+    generate();
+  }
+});
+
+$('bExport').addEventListener('click', () => {
+  const hexes = colors.map(c => hslToHex(c.h, c.s, c.l).toUpperCase());
+  const css = ':root {\n' + hexes.map((h, i) => '  --color-' + (i + 1) + ': ' + h + ';').join('\n') + '\n}';
+  const json = JSON.stringify(hexes, null, 2);
+  const url = location.href;
+  $('exportText').value = '/* CSS */\n' + css + '\n\n/* JSON */\n' + json + '\n\n/* Share */\n' + url;
+  $('exportDlg').showModal();
+});
+$('bCopyExport').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('exportText').value); toast('export copied'); }
+  catch (e) { toast('copy blocked by browser'); }
+});
+$('bCloseExport').addEventListener('click', () => $('exportDlg').close());
+
+// boot: URL hash > last session > fresh
+colors = Array.from({ length: 5 }, () => ({ h: 0, s: 0, l: 50, locked: false }));
+const fromHash = location.hash.length > 1 && loadFrom(location.hash.slice(1));
+const last = !fromHash && localStorage.getItem('pl_last');
+if (fromHash) { render(); }
+else if (last && loadFrom(last)) { render(); updateHash(); }
+else generate();
+</script>
+</body>
+</html>

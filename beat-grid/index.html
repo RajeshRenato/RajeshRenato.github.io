@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BEAT GRID — browser drum machine</title>
+<style>
+  :root { --bg:#0a0618; --cyan:#28e0ff; --panel:#17122e; --line:#2b2250; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1000px 700px at 50% -10%, #101b3d, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:16px; }
+  a.back { position:fixed; top:12px; left:14px; color:#ff6fb0; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 14px; font-style:italic; letter-spacing:5px; color:var(--cyan); text-shadow:0 0 18px var(--cyan); }
+  #bar { display:flex; gap:10px; margin-bottom:18px; align-items:center; flex-wrap:wrap; justify-content:center; font-size:13px; }
+  #bar button { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:6px;
+                padding:8px 16px; font:inherit; cursor:pointer; }
+  #bar button#playBtn { color:var(--cyan); border-color:var(--cyan); min-width:90px; }
+  #bar input[type=range] { width:120px; accent-color:var(--cyan); }
+  #bar b { color:#ffd166; }
+  #grid { display:grid; grid-template-columns:70px repeat(16, 30px); gap:4px; align-items:center; }
+  .lbl { font-size:11px; color:#7684a8; text-align:right; padding-right:6px; }
+  .st { width:30px; height:30px; border-radius:5px; background:#1b1534; border:1px solid var(--line); cursor:pointer; }
+  .st.q { background:#241d44; }
+  .st.on { background:var(--tc); box-shadow:0 0 10px var(--tc); border-color:var(--tc); }
+  .st.now { outline:2px solid rgba(255,255,255,.55); }
+  #toast { height:20px; margin-top:14px; font-size:12px; color:#8affc9; }
+  p.hint { opacity:.5; font-size:12px; margin-top:6px; }
+</style>
+<meta property="og:title" content="BEAT GRID — browser game">
+<meta property="og:description" content="A 16-step drum machine with live-synthesized sounds. The whole beat fits in the URL.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/beat-grid/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/beat-grid/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A 16-step drum machine with live-synthesized sounds. The whole beat fits in the URL.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>BEAT GRID</h1>
+<div id="bar">
+  <button id="playBtn">▶ play</button>
+  <label>tempo <input type="range" id="tempo" min="60" max="180" value="112"> <b id="bpmV">112</b> bpm</label>
+  <button id="clearBtn">clear</button>
+  <button id="randBtn">random</button>
+  <button id="shareBtn">copy share link</button>
+</div>
+<div id="grid"></div>
+<div id="toast"></div>
+<p class="hint">patterns live in the URL — share the link, share the beat</p>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const TRACKS = [
+  { name: 'kick', color: '#ff5a7a' },
+  { name: 'snare', color: '#ffd166' },
+  { name: 'hat', color: '#28e0ff' },
+  { name: 'open hat', color: '#8affc9' },
+  { name: 'clap', color: '#c77bff' },
+  { name: 'bass', color: '#ff8a5c' },
+];
+const STEPS = 16;
+let pattern = TRACKS.map(() => Array(STEPS).fill(false));
+let tempo = 112;
+let playing = false, step = 0, nextTime = 0, timer = null;
+let cells = [];
+
+function toggle(t, s) {
+  pattern[t][s] = !pattern[t][s];
+  paintCell(t, s);
+  saveHash();
+}
+
+function encodePattern(p, bpm) {
+  return bpm.toString(16).padStart(2, '0') +
+    p.map(tr => tr.reduce((a, b, i) => a | (b ? 1 << i : 0), 0).toString(16).padStart(4, '0')).join('');
+}
+
+function decodePattern(s) {
+  if (!/^[0-9a-f]{26}$/.test(s)) return null;
+  const bpm = parseInt(s.slice(0, 2), 16);
+  if (bpm < 40 || bpm > 220) return null;
+  const p = [];
+  for (let t = 0; t < 6; t++) {
+    const bits = parseInt(s.slice(2 + t * 4, 6 + t * 4), 16);
+    p.push(Array.from({ length: STEPS }, (_, i) => !!(bits & (1 << i))));
+  }
+  return { pattern: p, tempo: bpm };
+}
+
+function saveHash() {
+  history.replaceState(null, '', '#' + encodePattern(pattern, tempo));
+}
+
+// audio
+let ctx = null;
+function audio() {
+  if (!ctx) {
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { }
+  }
+  return ctx;
+}
+function noiseBuf(dur) {
+  const sr = ctx.sampleRate, b = ctx.createBuffer(1, sr * dur | 0, sr);
+  const d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+function playVoice(t, when) {
+  if (!ctx) return;
+  const out = ctx.destination;
+  if (t === 0) {           // kick
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(150, when);
+    o.frequency.exponentialRampToValueAtTime(42, when + 0.12);
+    g.gain.setValueAtTime(0.9, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.28);
+    o.connect(g); g.connect(out); o.start(when); o.stop(when + 0.3);
+  } else if (t === 1) {    // snare
+    const s = ctx.createBufferSource(); s.buffer = noiseBuf(0.2);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.5, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.18);
+    s.connect(f); f.connect(g); g.connect(out); s.start(when);
+  } else if (t === 2 || t === 3) { // hats
+    const s = ctx.createBufferSource(); s.buffer = noiseBuf(t === 2 ? 0.06 : 0.3);
+    const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7500;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.3, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + (t === 2 ? 0.05 : 0.28));
+    s.connect(f); f.connect(g); g.connect(out); s.start(when);
+  } else if (t === 4) {    // clap: three fast noise taps
+    for (let k = 0; k < 3; k++) {
+      const s = ctx.createBufferSource(); s.buffer = noiseBuf(0.1);
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1200;
+      const g = ctx.createGain();
+      const tt = when + k * 0.018;
+      g.gain.setValueAtTime(0.35, tt);
+      g.gain.exponentialRampToValueAtTime(0.001, tt + 0.09);
+      s.connect(f); f.connect(g); g.connect(out); s.start(tt);
+    }
+  } else {                 // bass
+    const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    o.type = 'square'; o.frequency.value = 55;
+    f.type = 'lowpass'; f.frequency.value = 300;
+    g.gain.setValueAtTime(0.4, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.25);
+    o.connect(f); f.connect(g); g.connect(out); o.start(when); o.stop(when + 0.3);
+  }
+}
+
+function scheduler() {
+  while (nextTime < ctx.currentTime + 0.12) {
+    const s = step;
+    for (let t = 0; t < TRACKS.length; t++)
+      if (pattern[t][s]) playVoice(t, nextTime);
+    const delay = Math.max(0, (nextTime - ctx.currentTime) * 1000);
+    setTimeout(() => highlight(s), delay);
+    nextTime += 60 / tempo / 4;
+    step = (step + 1) % STEPS;
+  }
+}
+
+function highlight(s) {
+  for (let t = 0; t < TRACKS.length; t++)
+    for (let i = 0; i < STEPS; i++)
+      cells[t][i].classList.toggle('now', i === s);
+}
+
+function play() {
+  if (!audio()) { $('toast').textContent = 'WebAudio unavailable in this browser'; return; }
+  if (ctx.state === 'suspended') ctx.resume();
+  playing = true;
+  step = 0;
+  nextTime = ctx.currentTime + 0.06;
+  timer = setInterval(scheduler, 25);
+  $('playBtn').textContent = '■ stop';
+}
+function stop() {
+  playing = false;
+  clearInterval(timer);
+  highlight(-1);
+  $('playBtn').textContent = '▶ play';
+}
+
+// UI
+function build() {
+  const g = $('grid');
+  g.innerHTML = '';
+  cells = [];
+  for (let t = 0; t < TRACKS.length; t++) {
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    lbl.textContent = TRACKS[t].name;
+    g.appendChild(lbl);
+    cells.push([]);
+    for (let s = 0; s < STEPS; s++) {
+      const d = document.createElement('div');
+      d.className = 'st' + (s % 4 === 0 ? ' q' : '');
+      d.style.setProperty('--tc', TRACKS[t].color);
+      d.addEventListener('click', () => toggle(t, s));
+      g.appendChild(d);
+      cells[t].push(d);
+    }
+  }
+  paintAll();
+}
+function paintCell(t, s) { cells[t][s].classList.toggle('on', pattern[t][s]); }
+function paintAll() {
+  for (let t = 0; t < TRACKS.length; t++)
+    for (let s = 0; s < STEPS; s++)
+      paintCell(t, s);
+}
+
+$('playBtn').addEventListener('click', () => playing ? stop() : play());
+$('tempo').addEventListener('input', () => {
+  tempo = +$('tempo').value;
+  $('bpmV').textContent = tempo;
+  saveHash();
+});
+$('clearBtn').addEventListener('click', () => {
+  pattern = TRACKS.map(() => Array(STEPS).fill(false));
+  paintAll(); saveHash();
+});
+$('randBtn').addEventListener('click', () => {
+  pattern = pattern.map((tr, t) => tr.map((_, s) => {
+    if (t === 0) return s % 4 === 0 || Math.random() < 0.08;        // kick on the floor
+    if (t === 1) return s % 8 === 4;                                 // snare backbeat
+    if (t === 2) return Math.random() < 0.55;
+    return Math.random() < 0.18;
+  }));
+  paintAll(); saveHash();
+});
+$('shareBtn').addEventListener('click', async () => {
+  saveHash();
+  try { await navigator.clipboard.writeText(location.href); $('toast').textContent = 'link copied — it contains the whole beat'; }
+  catch (e) { $('toast').textContent = 'copy blocked — grab the URL from the address bar'; }
+});
+addEventListener('keydown', e => {
+  if (e.key === ' ' && e.target.tagName !== 'INPUT') { e.preventDefault(); playing ? stop() : play(); }
+});
+
+build();
+const fromHash = location.hash.length > 1 ? decodePattern(location.hash.slice(1)) : null;
+if (fromHash) {
+  pattern = fromHash.pattern;
+  tempo = fromHash.tempo;
+  $('tempo').value = tempo;
+  $('bpmV').textContent = tempo;
+  paintAll();
+} else {
+  $('randBtn').click();
+}
+</script>
+</body>
+</html>

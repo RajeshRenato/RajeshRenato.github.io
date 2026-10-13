@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEON LABYRINTH</title>
+<style>
+  :root { --bg:#0a0618; --gold:#ffd166; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1100px 700px at 50% -10%, #2b2010, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; }
+  a.back { position:fixed; top:12px; left:14px; color:#28e0ff; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 8px; font-style:italic; letter-spacing:5px; color:var(--gold); text-shadow:0 0 18px var(--gold); }
+  #bar { display:flex; gap:24px; margin-bottom:10px; font-size:14px; }
+  #bar b { color:var(--gold); }
+  canvas { background:#070512; border:2px solid #4a3a1e; border-radius:8px;
+           box-shadow:0 0 30px rgba(255,209,102,.2); max-width:92vw; max-height:74vh; }
+  p.hint { opacity:.55; font-size:12px; margin-top:10px; }
+</style>
+<meta property="og:title" content="NEON LABYRINTH — browser game">
+<meta property="og:description" content="Escape endless procedural mazes through fog of war. Every exit leads somewhere deeper.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/labyrinth/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/labyrinth/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Escape endless procedural mazes through fog of war. Every exit leads somewhere deeper.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>NEON LABYRINTH</h1>
+<div id="bar">depth <b id="level">1</b> · time <b id="time">0.0s</b> · best depth <b id="best">0</b></div>
+<canvas id="c" width="480" height="480"></canvas>
+<p class="hint">WASD / arrows — move through the fog · reach the golden gate · mazes grow deeper</p>
+<script>
+'use strict';
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const OPP = { n: 's', s: 'n', e: 'w', w: 'e' };
+
+function genMaze(cols, rows) {
+  const cells = Array.from({ length: cols * rows }, () => ({ n: true, s: true, e: true, w: true, v: false }));
+  const idx = (c, r) => r * cols + c;
+  const stack = [0];
+  cells[0].v = true;
+  while (stack.length) {
+    const cur = stack[stack.length - 1];
+    const c = cur % cols, r = (cur / cols) | 0;
+    const opts = [];
+    if (r > 0 && !cells[idx(c, r - 1)].v) opts.push(['n', c, r - 1]);
+    if (r < rows - 1 && !cells[idx(c, r + 1)].v) opts.push(['s', c, r + 1]);
+    if (c > 0 && !cells[idx(c - 1, r)].v) opts.push(['w', c - 1, r]);
+    if (c < cols - 1 && !cells[idx(c + 1, r)].v) opts.push(['e', c + 1, r]);
+    if (!opts.length) { stack.pop(); continue; }
+    const [d, nc, nr] = opts[(Math.random() * opts.length) | 0];
+    const ni = idx(nc, nr);
+    cells[cur][d] = false;
+    cells[ni][OPP[d]] = false;
+    cells[ni].v = true;
+    stack.push(ni);
+  }
+  cells.forEach(cl => delete cl.v);
+  return cells;
+}
+
+function canMove(cells, cols, c, r, dir) {
+  return !cells[r * cols + c][dir];
+}
+
+let size, cells, pc, pr, level = 1, visited, t0, elapsed = 0, won = 0;
+let best = +(localStorage.getItem('lab_best') || 0);
+$('best').textContent = best;
+
+function newMaze() {
+  size = Math.min(29, 11 + (level - 1) * 2);
+  cells = genMaze(size, size);
+  pc = 0; pr = 0;
+  visited = new Set(['0,0']);
+  won = 0;
+  $('level').textContent = level;
+}
+
+const DIRMAP = { arrowup: 'n', w: 'n', arrowdown: 's', s: 's', arrowleft: 'w', a: 'w', arrowright: 'e', d: 'e' };
+const DELTA = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] };
+
+addEventListener('keydown', e => {
+  const d = DIRMAP[e.key.toLowerCase()];
+  if (!d) return;
+  e.preventDefault();
+  if (won) return;
+  if (!t0) t0 = performance.now();
+  if (canMove(cells, size, pc, pr, d)) {
+    pc += DELTA[d][0];
+    pr += DELTA[d][1];
+    visited.add(pc + ',' + pr);
+    if (pc === size - 1 && pr === size - 1) {
+      won = 1;
+      level++;
+      if (level - 1 > best) {
+        best = level - 1;
+        try { localStorage.setItem('lab_best', best); } catch (err) { }
+        $('best').textContent = best;
+      }
+      setTimeout(newMaze, 900);
+    }
+  }
+});
+
+function draw() {
+  if (t0 && !won) elapsed = (performance.now() - t0) / 1000;
+  $('time').textContent = elapsed.toFixed(1) + 's';
+  const CELL = Math.floor(480 / size);
+  const off = (480 - CELL * size) / 2;
+  x.fillStyle = '#070512';
+  x.fillRect(0, 0, 480, 480);
+
+  const fog = 4.2; // visibility radius in cells
+  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+    const d = Math.hypot(c - pc, r - pr);
+    const seen = visited.has(c + ',' + r);
+    if (d > fog && !seen) continue;
+    const a = d <= fog ? Math.max(0.15, 1 - d / fog) : 0.08;
+    const px = off + c * CELL, py = off + r * CELL;
+    // floor
+    if (seen) {
+      x.fillStyle = 'rgba(255,209,102,0.05)';
+      x.fillRect(px, py, CELL, CELL);
+    }
+    // exit gate
+    if (c === size - 1 && r === size - 1) {
+      x.fillStyle = 'rgba(255,209,102,' + (0.4 + 0.3 * Math.sin(performance.now() / 200)) + ')';
+      x.fillRect(px + 3, py + 3, CELL - 6, CELL - 6);
+    }
+    // walls
+    const cl = cells[r * size + c];
+    x.strokeStyle = 'rgba(80,220,255,' + (a * 0.9).toFixed(3) + ')';
+    x.lineWidth = 2;
+    x.beginPath();
+    if (cl.n) { x.moveTo(px, py); x.lineTo(px + CELL, py); }
+    if (cl.s) { x.moveTo(px, py + CELL); x.lineTo(px + CELL, py + CELL); }
+    if (cl.w) { x.moveTo(px, py); x.lineTo(px, py + CELL); }
+    if (cl.e) { x.moveTo(px + CELL, py); x.lineTo(px + CELL, py + CELL); }
+    x.stroke();
+  }
+  // player
+  const px = off + pc * CELL + CELL / 2, py = off + pr * CELL + CELL / 2;
+  x.fillStyle = '#ffd166';
+  x.shadowColor = '#ffd166'; x.shadowBlur = 14;
+  x.beginPath(); x.arc(px, py, Math.max(3, CELL * 0.28), 0, 7); x.fill();
+  x.shadowBlur = 0;
+
+  if (won) {
+    x.fillStyle = 'rgba(10,6,24,0.6)';
+    x.fillRect(0, 200, 480, 80);
+    x.textAlign = 'center';
+    x.font = 'italic bold 26px "Courier New",monospace';
+    x.fillStyle = '#ffd166'; x.shadowColor = '#ffd166'; x.shadowBlur = 14;
+    x.fillText('DEEPER…', 240, 248);
+    x.shadowBlur = 0;
+  }
+  requestAnimationFrame(draw);
+}
+
+newMaze();
+requestAnimationFrame(draw);
+</script>
+
+<div id="tc">
+  <b data-k="ArrowUp" data-r="150" style="left:61px;bottom:104px">&#9650;</b>
+  <b data-k="ArrowLeft" data-r="150" style="left:16px;bottom:58px">&#9664;</b>
+  <b data-k="ArrowRight" data-r="150" style="left:106px;bottom:58px">&#9654;</b>
+  <b data-k="ArrowDown" data-r="150" style="left:61px;bottom:12px">&#9660;</b>
+</div>
+<style>
+#tc { display:none; }
+@media (pointer: coarse) { #tc { display:block; } }
+#tc b { position:fixed; z-index:9; width:62px; height:62px; border-radius:50%;
+  background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.35);
+  color:rgba(255,255,255,.85); font:700 18px monospace; display:flex; align-items:center;
+  justify-content:center; user-select:none; -webkit-user-select:none; touch-action:none; }
+#tc b:active { background:rgba(255,255,255,.26); }
+</style>
+<script>
+(function () {
+  var fire = function (type, k) { dispatchEvent(new KeyboardEvent(type, { key: k })); };
+  document.querySelectorAll('#tc b').forEach(function (b) {
+    var iv = null, k = b.dataset.k, rep = +(b.dataset.r || 0);
+    b.addEventListener('pointerdown', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      fire('keydown', k);
+      if (rep) iv = setInterval(function () { fire('keydown', k); }, rep);
+    });
+    var end = function () { if (iv) { clearInterval(iv); iv = null; } fire('keyup', k); };
+    b.addEventListener('pointerup', end);
+    b.addEventListener('pointercancel', end);
+    b.addEventListener('pointerleave', end);
+  });
+  addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'touch') return;
+    if (e.target.closest && e.target.closest('#tc')) return;
+    fire('keydown', 'r'); fire('keyup', 'r');
+  });
+})();
+</script>
+</body>
+</html>

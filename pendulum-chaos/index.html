@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PENDULUM CHAOS — double pendulums diverging</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; overflow:hidden; background:#070512; }
+  canvas { display:block; }
+  a.back { position:fixed; top:12px; left:14px; color:#8affc9; font:12px ui-monospace,monospace;
+           text-decoration:none; opacity:.7; z-index:2; }
+  #panel { position:fixed; right:14px; top:14px; background:rgba(12,10,24,.85); border:1px solid #2b2250;
+           border-radius:10px; padding:12px 16px; color:#9a94c2; font:12px ui-monospace,monospace; z-index:2; }
+  #panel label { display:flex; justify-content:space-between; gap:12px; align-items:center; margin:6px 0; }
+  #panel input[type=range] { width:110px; accent-color:#8affc9; }
+  #panel button { width:100%; margin-top:8px; background:#17122e; color:#8affc9; border:1px solid #8affc9;
+                  border-radius:6px; padding:7px; font:inherit; cursor:pointer; }
+  #hint { position:fixed; left:14px; bottom:12px; color:rgba(200,220,250,.45); font:12px ui-monospace,monospace; }
+</style>
+<meta property="og:title" content="PENDULUM CHAOS — browser game">
+<meta property="og:description" content="Twelve double pendulums, 0.0005 radians apart, painting determinism&#x27;s unraveling in neon.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/pendulum-chaos/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/pendulum-chaos/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Twelve double pendulums, 0.0005 radians apart, painting determinism&#x27;s unraveling in neon.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="c"></canvas>
+<div id="panel">
+  <label>pendulums <input type="range" id="count" min="1" max="12" value="6"></label>
+  <label>gravity <input type="range" id="grav" min="200" max="1600" value="900"></label>
+  <label>trails <input type="checkbox" id="trails" checked></label>
+  <button id="resetBtn">new random start</button>
+</div>
+<div id="hint">identical pendulums, starting 0.0005 radians apart — watch determinism fall apart</div>
+<script>
+'use strict';
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+let W, H, ox, oy;
+const L1 = 130, L2 = 130, M1 = 1, M2 = 1;
+
+// state s = [a1, w1, a2, w2]
+function deriv(s, g) {
+  const [a1, w1, a2, w2] = s;
+  const d = a1 - a2;
+  const den = 2 * M1 + M2 - M2 * Math.cos(2 * d);
+  const dw1 = (-g * (2 * M1 + M2) * Math.sin(a1)
+    - M2 * g * Math.sin(a1 - 2 * a2)
+    - 2 * Math.sin(d) * M2 * (w2 * w2 * L2 + w1 * w1 * L1 * Math.cos(d))) / (L1 * den);
+  const dw2 = (2 * Math.sin(d) * (w1 * w1 * L1 * (M1 + M2)
+    + g * (M1 + M2) * Math.cos(a1)
+    + w2 * w2 * L2 * M2 * Math.cos(d))) / (L2 * den);
+  return [w1, dw1, w2, dw2];
+}
+
+function rk4(s, dt, g) {
+  const add = (a, b, k) => a.map((v, i) => v + b[i] * k);
+  const k1 = deriv(s, g);
+  const k2 = deriv(add(s, k1, dt / 2), g);
+  const k3 = deriv(add(s, k2, dt / 2), g);
+  const k4 = deriv(add(s, k3, dt), g);
+  return s.map((v, i) => v + (dt / 6) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+}
+
+function energy(s, g) {
+  const [a1, w1, a2, w2] = s;
+  const ke = 0.5 * M1 * (L1 * w1) ** 2 +
+    0.5 * M2 * ((L1 * w1) ** 2 + (L2 * w2) ** 2 + 2 * L1 * L2 * w1 * w2 * Math.cos(a1 - a2));
+  const pe = -(M1 + M2) * g * L1 * Math.cos(a1) - M2 * g * L2 * Math.cos(a2);
+  return ke + pe;
+}
+
+let pends = [];
+
+function makePendulums(n) {
+  const a1 = Math.PI / 2 + (Math.random() - 0.5) * 1.6;
+  const a2 = Math.PI / 2 + (Math.random() - 0.5) * 1.6;
+  pends = [];
+  for (let i = 0; i < n; i++) {
+    pends.push({ s: [a1 + i * 0.0005, 0, a2, 0], hue: 150 + i * (200 / Math.max(1, n - 1) || 0) });
+  }
+}
+
+function clearBg() {
+  ctx.fillStyle = '#070512';
+  ctx.fillRect(0, 0, W, H);
+}
+
+function resize() {
+  W = cv.width = window.innerWidth;
+  H = cv.height = window.innerHeight;
+  ox = W / 2; oy = H * 0.34;
+  clearBg();
+}
+addEventListener('resize', resize);
+resize();
+
+$('resetBtn').addEventListener('click', () => { makePendulums(+$('count').value); clearBg(); });
+$('count').addEventListener('change', () => { makePendulums(+$('count').value); clearBg(); });
+$('trails').addEventListener('change', clearBg);
+
+function bobPos(s) {
+  const [a1, , a2] = s;
+  const x1 = ox + L1 * Math.sin(a1), y1 = oy + L1 * Math.cos(a1);
+  const x2 = x1 + L2 * Math.sin(a2), y2 = y1 + L2 * Math.cos(a2);
+  return { x1, y1, x2, y2 };
+}
+
+function frame() {
+  const g = +$('grav').value;
+  const steps = 6, dt = 1 / 60 / steps;
+  for (const p of pends)
+    for (let s = 0; s < steps; s++)
+      p.s = rk4(p.s, dt, g);
+
+  if ($('trails').checked) {
+    ctx.fillStyle = 'rgba(7,5,18,0.06)';
+    ctx.fillRect(0, 0, W, H);
+  } else clearBg();
+
+  for (const p of pends) {
+    const { x1, y1, x2, y2 } = bobPos(p.s);
+    const col = 'hsl(' + p.hue + ',85%,62%)';
+    ctx.strokeStyle = 'rgba(200,200,230,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.shadowColor = col; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(x1, y1, 5, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(x2, y2, 7, 0, 7); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  // pivot
+  ctx.fillStyle = '#9a94c2';
+  ctx.beginPath(); ctx.arc(ox, oy, 4, 0, 7); ctx.fill();
+  requestAnimationFrame(frame);
+}
+
+makePendulums(6);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

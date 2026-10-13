@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MINEFIELD</title>
+<style>
+  :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --orange:#ff8a5c; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:radial-gradient(1200px 800px at 50% -10%, #241233, var(--bg));
+         font-family:'Courier New',monospace; color:#e8e6f5; padding:16px; }
+  a.back { position:fixed; top:12px; left:14px; color:#28e0ff; font-size:12px; text-decoration:none; opacity:.7; }
+  h1 { margin:0 0 10px; font-style:italic; letter-spacing:5px; color:var(--orange); text-shadow:0 0 18px var(--orange); }
+  #bar { display:flex; gap:10px; align-items:center; margin-bottom:12px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+  #bar button { background:var(--panel); color:#e8e6f5; border:1px solid var(--line); border-radius:6px;
+                padding:6px 12px; font:inherit; cursor:pointer; }
+  #bar button.active { border-color:var(--orange); color:var(--orange); }
+  #bar .stat { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 12px; }
+  #bar .stat b { color:#ffd166; }
+  #board { display:grid; gap:2px; background:var(--line); border:2px solid var(--line); border-radius:8px; padding:4px; touch-action:manipulation; }
+  .cell { width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+          background:#231b45; border-radius:3px; font-size:14px; font-weight:700; cursor:pointer; user-select:none; }
+  .cell:hover { background:#2e2458; }
+  .cell.open { background:#100c22; cursor:default; }
+  .cell.mine { background:#5a1025; }
+  .cell.flag { color:var(--orange); }
+  .cell.boom { background:#ff2d55; }
+  p.hint { opacity:.55; font-size:12px; margin-top:10px; text-align:center; }
+  #msg { height:22px; margin-top:10px; font-size:15px; letter-spacing:2px; }
+  #msg.win { color:#39ff9c; text-shadow:0 0 10px #39ff9c; }
+  #msg.lose { color:#ff5a7a; text-shadow:0 0 10px #ff5a7a; }
+</style>
+<meta property="og:title" content="MINEFIELD — browser game">
+<meta property="og:description" content="Minesweeper with three difficulties, safe first click, and best times.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/minefield/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/minefield/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Minesweeper with three difficulties, safe first click, and best times.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<h1>MINEFIELD</h1>
+<div id="bar">
+  <button data-d="easy" class="active">9×9 · 10</button>
+  <button data-d="med">16×16 · 40</button>
+  <button data-d="hard">24×16 · 99</button>
+  <span class="stat">💣 <b id="left">10</b></span>
+  <span class="stat">⏱ <b id="time">0</b></span>
+  <span class="stat">best <b id="best">—</b></span>
+  <button id="flagMode" title="tap-to-flag for touchscreens">🚩 off</button>
+  <button id="again">new</button>
+</div>
+<div id="board"></div>
+<div id="msg"></div>
+<p class="hint">left click — reveal · right click — flag · first click is always safe</p>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const DIFFS = { easy: [9, 9, 10], med: [16, 16, 40], hard: [16, 24, 99] }; // rows, cols, mines
+let rows, cols, mineCount, cells, placed, state, flags, revealedCount, diff = 'easy';
+let timer = null, seconds = 0, flagMode = false;
+let doms = [];
+
+function idx(r, c) { return r * cols + c; }
+function inB(r, c) { return r >= 0 && r < rows && c >= 0 && c < cols; }
+function neighbors(i) {
+  const r = Math.floor(i / cols), c = i % cols, out = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    if (!dr && !dc) continue;
+    if (inB(r + dr, c + dc)) out.push(idx(r + dr, c + dc));
+  }
+  return out;
+}
+
+function newGame(d) {
+  diff = d || diff;
+  [rows, cols, mineCount] = DIFFS[diff];
+  cells = Array.from({ length: rows * cols }, () => ({ mine: false, adj: 0, open: false, flag: false }));
+  placed = false; state = 'play'; flags = 0; revealedCount = 0; seconds = 0;
+  clearInterval(timer); timer = null;
+  $('time').textContent = 0;
+  $('left').textContent = mineCount;
+  $('msg').textContent = ''; $('msg').className = '';
+  const b = +(localStorage.getItem('nm_best_' + diff) || 0);
+  $('best').textContent = b ? b + 's' : '—';
+  buildDOM();
+}
+
+function placeMines(safe) {
+  const banned = new Set([safe, ...neighbors(safe)]);
+  let n = 0;
+  while (n < mineCount) {
+    const i = (Math.random() * cells.length) | 0;
+    if (cells[i].mine || banned.has(i)) continue;
+    cells[i].mine = true; n++;
+  }
+  for (let i = 0; i < cells.length; i++)
+    cells[i].adj = neighbors(i).filter(j => cells[j].mine).length;
+  placed = true;
+}
+
+function reveal(i) {
+  if (state !== 'play') return;
+  if (!placed) {
+    placeMines(i);
+    timer = setInterval(() => { seconds++; $('time').textContent = seconds; }, 1000);
+  }
+  const c = cells[i];
+  if (c.open || c.flag) return;
+  if (c.mine) { lose(i); return; }
+  const stack = [i];
+  while (stack.length) {
+    const j = stack.pop();
+    const cj = cells[j];
+    if (cj.open || cj.flag || cj.mine) continue;
+    cj.open = true;
+    revealedCount++;
+    if (cj.adj === 0) for (const k of neighbors(j)) if (!cells[k].open) stack.push(k);
+  }
+  paint();
+  if (revealedCount === cells.length - mineCount) win();
+}
+
+function toggleFlag(i) {
+  if (state !== 'play' || cells[i].open) return;
+  cells[i].flag = !cells[i].flag;
+  flags += cells[i].flag ? 1 : -1;
+  $('left').textContent = mineCount - flags;
+  paint();
+}
+
+function lose(hit) {
+  state = 'lose';
+  clearInterval(timer);
+  cells.forEach(c => { if (c.mine) c.open = true; });
+  cells[hit].boom = true;
+  $('msg').textContent = 'BOOM.';
+  $('msg').className = 'lose';
+  paint();
+}
+
+function win() {
+  state = 'win';
+  clearInterval(timer);
+  $('msg').textContent = 'CLEARED IN ' + seconds + 's';
+  $('msg').className = 'win';
+  const key = 'nm_best_' + diff;
+  const b = +(localStorage.getItem(key) || 0);
+  if (!b || seconds < b) {
+    try { localStorage.setItem(key, seconds); } catch (e) { }
+    $('best').textContent = seconds + 's';
+  }
+}
+
+const NUMC = ['', '#28e0ff', '#39ff9c', '#ffd166', '#ff8a5c', '#ff5a7a', '#c77bff', '#fff', '#aaa'];
+
+function buildDOM() {
+  const board = $('board');
+  board.innerHTML = '';
+  board.style.gridTemplateColumns = 'repeat(' + cols + ',28px)';
+  doms = [];
+  for (let i = 0; i < cells.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'cell';
+    d.addEventListener('click', () => flagMode ? toggleFlag(i) : reveal(i));
+    d.addEventListener('contextmenu', e => { e.preventDefault(); toggleFlag(i); });
+    board.appendChild(d);
+    doms.push(d);
+  }
+  paint();
+}
+
+function paint() {
+  for (let i = 0; i < cells.length; i++) {
+    const c = cells[i], d = doms[i];
+    if (!d) continue;
+    d.className = 'cell';
+    if (c.open) {
+      d.classList.add('open');
+      if (c.mine) {
+        d.classList.add('mine');
+        if (c.boom) d.classList.add('boom');
+        d.textContent = '💣';
+      } else {
+        d.textContent = c.adj || '';
+        d.style.color = NUMC[c.adj];
+      }
+    } else {
+      d.textContent = c.flag ? '🚩' : '';
+      if (c.flag) d.classList.add('flag');
+    }
+  }
+}
+
+document.querySelectorAll('#bar button[data-d]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#bar button[data-d]').forEach(o => o.classList.remove('active'));
+    b.classList.add('active');
+    newGame(b.dataset.d);
+  });
+});
+$('again').addEventListener('click', () => newGame());
+$('flagMode').addEventListener('click', () => {
+  flagMode = !flagMode;
+  $('flagMode').textContent = flagMode ? '🚩 on' : '🚩 off';
+  $('flagMode').classList.toggle('active', flagMode);
+});
+
+newGame('easy');
+</script>
+</body>
+</html>
