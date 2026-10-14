@@ -47,6 +47,12 @@
   table.cheat td { padding:3px 6px; border-bottom:1px solid var(--line); }
   table.cheat td:first-child { color:var(--accent); white-space:nowrap; }
   table.cheat td:last-child { color:var(--dim); }
+  @media (max-width: 640px) {
+    body { height: auto; min-height: 100vh; }
+    main { flex-direction: column; }
+    .left { border-right: 0; border-bottom: 1px solid var(--line); min-height: 70vh; }
+    .right { overflow: visible; }
+  }
 </style>
 <meta property="og:title" content="Regex Playground">
 <meta property="og:description" content="Live regex tester: inline match highlighting, capture groups, replace preview, cheatsheet.">

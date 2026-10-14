@@ -245,7 +245,7 @@ function draw(t) {
 let last = 0;
 function loop(t) {
   if (!last) last = t;
-  const dt = Math.min(0.03, (t - last) / 1000);
+  const dt = Math.max(0, Math.min(0.03, (t - last) / 1000));
   last = t;
   step(dt);
   draw(t);

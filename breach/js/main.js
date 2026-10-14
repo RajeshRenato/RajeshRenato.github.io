@@ -131,7 +131,7 @@ function render() {
 
 let last = 0;
 function frame(t) {
-  const dt = Math.min(0.033, (t - last) / 1000);
+  const dt = Math.max(0, Math.min(0.033, (t - last) / 1000));
   last = t;
   update(dt);
   render();

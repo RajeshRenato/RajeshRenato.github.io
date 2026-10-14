@@ -28,6 +28,7 @@
   #side { display:flex; flex-direction:column; gap:10px; }
   .boxLbl { font-size:10px; letter-spacing:2px; color:#7684a8; margin-bottom:4px; }
   p.hint { opacity:.55; font-size:12px; margin-top:10px; text-align:center; max-width:720px; }
+  @media (max-width: 600px) { canvas { max-width: 94vw; height: auto; } }
 </style>
 <meta property="og:title" content="Neuro Pilot">
 <meta property="og:description" content="Watch 120 small neural networks learn to fly through neuroevolution, with a live view of the best one&#39;s brain.">
@@ -328,7 +329,7 @@ $('resetBtn').addEventListener('click', startEvolution);
 let last = 0;
 function loop(t) {
   if (!last) last = t;
-  const dt = Math.min(0.03, (t - last) / 1000);
+  const dt = Math.max(0, Math.min(0.03, (t - last) / 1000));
   last = t;
   for (let i = 0; i < speedMul; i++) stepWorld(1 / 60);
   draw();

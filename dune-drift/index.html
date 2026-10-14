@@ -141,7 +141,7 @@ const PALS = [
 ];
 const CYCLE = 110;    // seconds for a full day
 function palette(time) {
-  const p = (time % CYCLE) / CYCLE * 4;
+  const p = (((time % CYCLE) + CYCLE) % CYCLE) / CYCLE * 4;
   const i = Math.floor(p) % 4, j = (i + 1) % 4;
   const t = p - Math.floor(p);
   const s = t * t * (3 - 2 * t);
@@ -667,7 +667,7 @@ resetRun();
 G.state = 'menu';
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.033, (now - last) / 1000);
+  const dt = Math.max(0, Math.min(0.033, (now - last) / 1000));
   last = now;
   update(dt);
   render();

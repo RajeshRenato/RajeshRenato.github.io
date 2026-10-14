@@ -122,7 +122,7 @@ function drawBar() {
 
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
   last = now;
   ctx.fillStyle = '#0e0f14';
   ctx.fillRect(0, 0, W, H);
@@ -160,7 +160,7 @@ requestAnimationFrame(frame);
 <div class="pg-about" id="pg-about" hidden>
 <h2>LinkPlay</h2>
 <p>A small kit for making a browser game multiplayer with no server of your own. Players connect by sending each other links.</p>
-<p>Cycle Duel, Type Race, Sketch &amp; Guess, Four in a Row, Checkers, Clue Grid, Ludo, Trivia Night, and Whiteboard are built on it.</p>
+<p>Cycle Duel, Type Race, Sketch &amp; Guess, Four in a Row, Checkers, Chess, Clue Grid, Ludo, Trivia Night, and Whiteboard are built on it.</p>
 <h3>How the connection works</h3>
 <p>Browsers can talk directly over WebRTC, but first they have to swap a description of themselves (an "offer" and an "answer"). Normally a signaling server carries those. Here the players carry them:</p>
 <ul><li>The host creates an invite. The offer is compressed into the link: <code>page/#offer=ID.CODE</code>. 2. The friend opens it. Their page makes an answer and shows a reply link: <code>page/#answer=ID.CODE</code>. 3. The friend sends the reply back. The host opens it in the same browser (a <code>BroadcastChannel</code> passes it to the game tab) or pastes it in. 4. The data channel opens.</li></ul>

@@ -12,7 +12,7 @@
   :root { --bg:#0a0618; --blue:#7f8cff; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
   body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
-         background:radial-gradient(1000px 700px at 50% -10%, #14133, var(--bg));
+         background:radial-gradient(1000px 700px at 50% -10%, #14133a, var(--bg));
          font-family:'Courier New',monospace; color:#e8e6f5; padding:14px; }
   a.back { position:fixed; top:12px; left:14px; color:#39ff9c; font-size:12px; text-decoration:none; opacity:.7; }
   h1 { margin:0 0 8px; font-style:italic; letter-spacing:5px; color:var(--blue); text-shadow:0 0 18px var(--blue); }
@@ -39,6 +39,7 @@
   #pad button:hover { border-color:var(--blue); }
   #msg { height:26px; margin-top:10px; font-size:15px; letter-spacing:2px; color:#39ff9c; }
   p.hint { opacity:.55; font-size:12px; margin-top:4px; }
+  @media (max-width: 520px) { #pad { flex-wrap: wrap; justify-content: center; max-width: 94vw; } }
 </style>
 <meta property="og:title" content="Sudoku">
 <meta property="og:description" content="Sudoku from a generator that guarantees exactly one solution.">

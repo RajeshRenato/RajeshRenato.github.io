@@ -123,7 +123,7 @@ setCount(160, W, H);
 let last = 0;
 function frame(t) {
   if (!last) last = t;
-  const dt = Math.min(0.033, (t - last) / 1000);
+  const dt = Math.max(0, Math.min(0.033, (t - last) / 1000));
   last = t;
 
   setCount(+$('count').value, W, H);

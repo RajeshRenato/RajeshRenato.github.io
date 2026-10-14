@@ -226,7 +226,7 @@ update();
 <h2>Profile Banner</h2>
 <p>Make an animated SVG banner for your GitHub profile README. Type your name and a tagline, pick a theme, and download the file.</p>
 <h3>Use</h3>
-<p>Download <code>banner.svg</code>, commit it to your profile repo (<code>username/username</code>), and add <code>!<a href="banner.svg">banner</a></code> at the top of the README. The copy button puts that line on your clipboard.</p>
+<p>Download <code>banner.svg</code>, commit it to your profile repo (<code>username/username</code>), and add <code>![banner](banner.svg)</code> at the top of the README. The copy button puts that line on your clipboard.</p>
 <h3>What it does</h3>
 <ul><li>The banner is 960×240 and uses SVG animation, which GitHub renders: the name glows, the stars twinkle, and the cursor blinks.</li><li>Four themes: synthwave sunset, deep ocean, terminal green, and ember. The grid floor, stars, and cursor can each be turned off.</li><li>Star positions come from a hash of your name and tagline, so the same text always gives the same banner.</li><li>Your text is escaped before it goes into the SVG.</li><li>You can download the SVG or copy its source. Your settings are saved in <code>localStorage</code>, and nothing is sent anywhere.</li></ul>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/profile-banner">profile-banner on GitHub</a>.</p>

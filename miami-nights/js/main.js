@@ -355,7 +355,7 @@ function render(dt) {
 
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.033, (now - last) / 1000);
+  const dt = Math.max(0, Math.min(0.033, (now - last) / 1000));
   last = now;
   update(dt);
   render(dt);
