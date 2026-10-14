@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f6fd8'/%3E%3Crect x='7' y='6' width='18' height='20' rx='2' fill='%23ffffff'/%3E%3Cpath d='M9 21 l5-6 4 4 3-3 3 5z' fill='%232f6fd8'/%3E%3Ccircle cx='19' cy='11' r='2' fill='%232f6fd8'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Images to PDF | convert JPG and PNG to PDF, no upload</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/images-to-pdf/">
+<style>
+  :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#2f6fd8; --sheet:#ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121214; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; --card:#1b1b1f; --accent:#6b9cff; --sheet:#ecebe4; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         line-height:1.5; padding:48px 20px 64px; }
+  main { max-width:1080px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; z-index:5; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  .lede { font-size:17px; margin:0 0 18px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .drop { border:2px dashed var(--rule); border-radius:12px; padding:26px 16px; text-align:center; cursor:pointer; background:var(--card); }
+  .drop.over { border-color:var(--accent); }
+  .drop strong { display:block; font-size:17px; }
+  button { font:inherit; font-weight:600; font-size:14px; padding:8px 13px; border-radius:8px; cursor:pointer;
+           border:1.5px solid var(--ink); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { background:var(--ink); color:var(--paper); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--ink); color:var(--paper); }
+  button.primary:hover:not(:disabled) { opacity:.85; }
+  button:focus-visible, input:focus-visible, select:focus-visible, .drop:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .opts { display:flex; gap:10px 16px; flex-wrap:wrap; align-items:flex-end; margin:18px 0 6px; background:var(--card); border:1.5px solid var(--rule);
+          border-radius:12px; padding:12px 14px; }
+  .opts label { display:flex; flex-direction:column; font-size:13px; color:var(--muted); gap:3px; }
+  .opts select, .opts input { font:inherit; font-size:16px; color:var(--ink); background:var(--paper); border:1.5px solid var(--rule); border-radius:8px; padding:6px 8px; }
+  .opts input { width:200px; max-width:100%; }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:14px 0 6px; }
+  .bar .grow { flex:1; min-width:10px; }
+  #summary { font-weight:600; }
+  #errors { color:#d8392f; margin:10px 0 0; padding-left:18px; }
+  #tiles { list-style:none; margin:14px 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px; }
+  .tile { background:var(--card); border:1.5px solid var(--rule); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px; }
+  .tile.dragging { opacity:.4; }
+  .tile.before { box-shadow:-4px 0 0 var(--accent); }
+  .tile.after { box-shadow:4px 0 0 var(--accent); }
+  .stage { height:140px; display:flex; align-items:center; justify-content:center; cursor:grab; }
+  .sheet { position:relative; background:var(--sheet); border:1px solid #c9c7bd; border-radius:2px; box-shadow:0 2px 6px rgba(0,0,0,.12); }
+  .sheet .clip { position:absolute; overflow:hidden; }
+  .sheet .box { position:absolute; }
+  .sheet img { position:absolute; left:50%; top:50%; image-orientation:from-image; display:block; }
+  .tile .num { font-weight:700; font-size:14px; }
+  .tile .meta { font-size:12px; color:var(--muted); line-height:1.35; overflow:hidden; }
+  .tile .meta div { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tools { display:flex; gap:4px; flex-wrap:wrap; }
+  .tools button { padding:3px 7px; font-size:13px; border-width:1px; min-width:30px; }
+  .note { font-size:14px; color:var(--muted); margin-top:26px; }
+  [hidden] { display:none !important; }
+  @media (max-width:560px) {
+    #tiles { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+    .stage { height:120px; }
+    h1 { font-size:28px; }
+    .opts label { flex:1 1 40%; }
+    .opts input { width:100%; }
+  }
+</style>
+<meta property="og:title" content="Images to PDF">
+<meta property="og:description" content="Turn JPG, PNG, and other photos into one PDF in your browser. JPEGs go in without re-compression, and nothing is uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/images-to-pdf/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/images-to-pdf/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Turn JPG, PNG, and other photos into one PDF in your browser. JPEGs go in without re-compression, and nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Images to PDF", "url": "https://rajeshrenato.github.io/playground/images-to-pdf/", "description": "Turn JPG, PNG, and other photos into one PDF in your browser. JPEGs go in without re-compression, and nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Images to PDF</h1>
+  <p class="lede">Put photos and scans into one PDF, one image per page. JPEGs go in exactly as they are, so there is no quality loss. Everything happens on your device. Nothing is uploaded.</p>
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Add images">
+    <strong>Drop images here, click to choose, or paste</strong>
+    <span class="muted small">JPEG, PNG, WebP, and GIF. HEIC works in browsers that can open it, like Safari.</span>
+  </div>
+  <input type="file" id="file" accept="image/*,.heic,.heif" multiple hidden>
+  <ul id="errors" hidden></ul>
+  <div id="work" hidden>
+    <div class="opts">
+      <label>Page size<select id="size"><option value="a4">A4</option><option value="letter">Letter</option><option value="fit">Same as the image</option></select></label>
+      <label>Orientation<select id="orient"><option value="auto">Match each image</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
+      <label>Margin<select id="margin"><option value="none">None</option><option value="small" selected>Small</option><option value="large">Large</option></select></label>
+      <label>Image<select id="fit"><option value="fit">Fit on the page</option><option value="fill">Fill the page (crops)</option></select></label>
+      <label>File name<input id="name" value="images" spellcheck="false" autocomplete="off"></label>
+    </div>
+    <div class="bar">
+      <span id="summary"></span><span class="grow"></span>
+      <button id="clear">Start over</button>
+      <button class="primary" id="make">Make PDF</button>
+    </div>
+    <p class="muted small" style="margin:4px 0 0">Drag the pages to reorder them, or use the arrow buttons. Each page shows how the image will sit on it.</p>
+    <ul id="tiles"></ul>
+  </div>
+  <p class="note">Photos taken sideways on a phone come out the right way up. Mirrored photos and other formats are converted through a canvas: as high-quality JPEG, or losslessly when the image has see-through parts.</p>
+</main>
+<script>
+'use strict';
+
+// --- JPEG headers: size, color channels, and the EXIF orientation
+
+const SOF = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
+
+function jpegInfo(b) {
+  if (b.length < 4 || b[0] !== 0xff || b[1] !== 0xd8) return null;
+  const info = { w: 0, h: 0, comps: 0, adobe: false, orientation: 1 };
+  let i = 2;
+  while (i + 3 < b.length) {
+    if (b[i] !== 0xff) { i++; continue; }
+    let m = b[i + 1];
+    if (m === 0xff) { i++; continue; }
+    i += 2;
+    if (m === 0xd8 || m === 0x01 || (m >= 0xd0 && m <= 0xd7)) continue;
+    if (m === 0xd9) break;
+    const len = (b[i] << 8) | b[i + 1];
+    if (len < 2 || i + len > b.length) break;
+    const seg = i + 2;
+    if (SOF.has(m)) {
+      info.h = (b[seg + 1] << 8) | b[seg + 2];
+      info.w = (b[seg + 3] << 8) | b[seg + 4];
+      info.comps = b[seg + 5];
+    } else if (m === 0xee && ascii(b, seg, 5) === 'Adobe') info.adobe = true;
+    else if (m === 0xe1 && ascii(b, seg, 6) === 'Exif\0\0') info.orientation = exifOrientation(b, seg + 6, len - 8) || 1;
+    if (m === 0xda) break;
+    i += len;
+  }
+  return info.w && info.h && [1, 3, 4].includes(info.comps) ? info : null;
+}
+
+function ascii(b, at, n) { let s = ''; for (let k = 0; k < n; k++) s += String.fromCharCode(b[at + k]); return s; }
+
+function exifOrientation(b, t, len) {
+  if (len < 8) return 0;
+  const le = b[t] === 0x49;
+  const u16 = o => (le ? b[t + o] | (b[t + o + 1] << 8) : (b[t + o] << 8) | b[t + o + 1]);
+  const u32 = o => (le ? (b[t + o] | (b[t + o + 1] << 8) | (b[t + o + 2] << 16)) + b[t + o + 3] * 16777216
+                       : ((b[t + o + 1] << 16) | (b[t + o + 2] << 8) | b[t + o + 3]) + b[t + o] * 16777216);
+  const ifd = u32(4);
+  if (ifd + 2 > len) return 0;
+  const n = u16(ifd);
+  for (let k = 0; k < n; k++) {
+    const e = ifd + 2 + k * 12;
+    if (e + 12 > len) return 0;
+    if (u16(e) === 0x0112) { const v = u16(e + 8); return v >= 1 && v <= 8 ? v : 0; }
+  }
+  return 0;
+}
+
+const ROT_OF = { 1: 0, 3: 180, 6: 90, 8: 270 };
+
+// An image ready for the PDF: raw JPEG bytes, or deflated RGB with an alpha mask.
+function jpegImage(bytes, info = jpegInfo(bytes)) {
+  const cs = info.comps === 1 ? 'DeviceGray' : info.comps === 4 ? 'DeviceCMYK' : 'DeviceRGB';
+  return { filter: 'DCTDecode', data: bytes, w: info.w, h: info.h, cs, decode: info.comps === 4 && info.adobe ? [1, 0, 1, 0, 1, 0, 1, 0] : null,
+           smask: null, baseRot: ROT_OF[info.orientation] || 0, raw: true };
+}
+
+async function deflate(bytes) {
+  const res = new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate')));
+  return new Uint8Array(await res.arrayBuffer());
+}
+
+async function rgbaImage(rgba, w, h) {
+  const rgb = new Uint8Array(w * h * 3), alpha = new Uint8Array(w * h);
+  let see = false;
+  for (let p = 0, q = 0; p < w * h; p++) {
+    rgb[q++] = rgba[p * 4]; rgb[q++] = rgba[p * 4 + 1]; rgb[q++] = rgba[p * 4 + 2];
+    alpha[p] = rgba[p * 4 + 3];
+    if (alpha[p] !== 255) see = true;
+  }
+  return { filter: 'FlateDecode', data: await deflate(rgb), w, h, cs: 'DeviceRGB', decode: null,
+           smask: see ? { data: await deflate(alpha), w, h } : null, baseRot: 0, raw: false };
+}
+
+function hasAlpha(rgba) { for (let i = 3; i < rgba.length; i += 4) if (rgba[i] !== 255) return true; return false; }
+
+// Anything that isn't a plain JPEG goes through a canvas, which also applies
+// EXIF orientation (including mirroring) when the image is decoded.
+async function decodeImage(blob) {
+  const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+  const w = bmp.width, h = bmp.height;
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const g = cv.getContext('2d');
+  g.drawImage(bmp, 0, 0);
+  if (bmp.close) bmp.close();
+  const rgba = g.getImageData(0, 0, w, h).data;
+  if (hasAlpha(rgba)) return rgbaImage(rgba, w, h);
+  const jpg = await new Promise((ok, no) => cv.toBlob(b => (b ? ok(b) : no(new Error('encode'))), 'image/jpeg', 0.92));
+  const bytes = new Uint8Array(await jpg.arrayBuffer());
+  return { ...jpegImage(bytes), raw: false };
+}
+
+async function prepare(bytes, type) {
+  const info = jpegInfo(bytes);
+  if (info && [1, 3, 6, 8].includes(info.orientation)) return jpegImage(bytes, info);
+  return decodeImage(new Blob([bytes], { type: type || '' }));
+}
+
+// --- page layout, in points
+
+const PAGE = { a4: [595.28, 841.89], letter: [612, 792] };
+const MARGIN = { none: 0, small: 18, large: 54 };
+
+function layout(img, rot, opts) {
+  const r = (img.baseRot + rot) % 360;
+  const turned = r % 180 !== 0;
+  const dw = turned ? img.h : img.w, dh = turned ? img.w : img.h;
+  const m = MARGIN[opts.margin] ?? 18;
+  let pw, ph;
+  if (opts.size === 'fit') {
+    let s = 0.75;
+    if (Math.max(dw, dh) * s > 842) s = 842 / Math.max(dw, dh);
+    pw = dw * s + 2 * m; ph = dh * s + 2 * m;
+  } else {
+    [pw, ph] = PAGE[opts.size] || PAGE.a4;
+    const land = opts.orient === 'landscape' || (opts.orient === 'auto' && dw > dh);
+    if (land !== pw > ph) [pw, ph] = [ph, pw];
+  }
+  const cw = pw - 2 * m, ch = ph - 2 * m;
+  const s = opts.fit === 'fill' ? Math.max(cw / dw, ch / dh) : Math.min(cw / dw, ch / dh);
+  const bw = dw * s, bh = dh * s;
+  const x = m + (cw - bw) / 2, y = m + (ch - bh) / 2;
+  const cm = r === 0 ? [bw, 0, 0, bh, x, y]
+    : r === 90 ? [0, -bh, bw, 0, x, y + bh]
+    : r === 180 ? [-bw, 0, 0, -bh, x + bw, y + bh]
+    : [0, bh, -bw, 0, x + bw, y];
+  return { pw, ph, m, cw, ch, x, y, bw, bh, r, cm };
+}
+
+// --- the PDF writer
+
+const enc = new TextEncoder();
+const num = n => (Math.abs(n) < 1e-6 ? '0' : String(Math.round(n * 1000) / 1000));
+
+function pdfDate(d = new Date()) {
+  const p = n => String(n).padStart(2, '0');
+  return 'D:' + d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) + p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds()) + "+00'00'";
+}
+
+function buildPdf(entries, opts, date = new Date()) {
+  const chunks = [], offsets = [];
+  let size = 0;
+  const put = x => { const b = typeof x === 'string' ? enc.encode(x) : x; chunks.push(b); size += b.length; };
+  const objects = [];
+  const alloc = () => objects.push(null);
+  const catalog = alloc(), pages = alloc(), info = alloc();
+  const kids = [];
+  const body = [];
+  for (const e of entries) {
+    const L = layout(e.img, e.rot, opts);
+    const imgNum = alloc();
+    const smaskNum = e.img.smask ? alloc() : 0;
+    const contentNum = alloc(), pageNum = alloc();
+    kids.push(pageNum);
+    const content = 'q\n' + (opts.fit === 'fill' ? num(L.m) + ' ' + num(L.m) + ' ' + num(L.cw) + ' ' + num(L.ch) + ' re W n\n' : '') +
+      L.cm.map(num).join(' ') + ' cm\n/Im0 Do\nQ\n';
+    body.push({ n: imgNum, image: e.img, smaskNum }, { n: contentNum, content },
+      { n: pageNum, dict: '<< /Type /Page /Parent ' + pages + ' 0 R /MediaBox [0 0 ' + num(L.pw) + ' ' + num(L.ph) +
+        '] /Resources << /XObject << /Im0 ' + imgNum + ' 0 R >> >> /Contents ' + contentNum + ' 0 R >>' });
+  }
+
+  put(new Uint8Array([...enc.encode('%PDF-1.7\n%'), 0xe2, 0xe3, 0xcf, 0xd3, 10]));
+  const begin = n => { offsets[n] = size; put(n + ' 0 obj\n'); };
+  const end = () => put('\nendobj\n');
+  const stream = (n, dict, data) => { begin(n); put(dict); put('stream\n'); put(data); put('\nendstream'); end(); };
+
+  begin(catalog); put('<< /Type /Catalog /Pages ' + pages + ' 0 R >>'); end();
+  begin(pages); put('<< /Type /Pages /Kids [' + kids.map(k => k + ' 0 R').join(' ') + '] /Count ' + kids.length + ' >>'); end();
+  begin(info); put('<< /Producer (Images to PDF, Rajesh\'s Playground) /CreationDate (' + pdfDate(date) + ') >>'); end();
+  for (const { n, dict, content, image: x, smaskNum } of body) {
+    if (dict) { begin(n); put(dict); end(); }
+    else if (content) {
+      const data = enc.encode(content);
+      stream(n, '<< /Length ' + data.length + ' >>\n', data);
+    } else {
+      stream(n, '<< /Type /XObject /Subtype /Image /Width ' + x.w + ' /Height ' + x.h + ' /ColorSpace /' + x.cs + ' /BitsPerComponent 8 /Filter /' + x.filter +
+        (x.decode ? ' /Decode [' + x.decode.join(' ') + ']' : '') + (smaskNum ? ' /SMask ' + smaskNum + ' 0 R' : '') + ' /Length ' + x.data.length + ' >>\n', x.data);
+      if (smaskNum) stream(smaskNum, '<< /Type /XObject /Subtype /Image /Width ' + x.smask.w + ' /Height ' + x.smask.h +
+        ' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode /Length ' + x.smask.data.length + ' >>\n', x.smask.data);
+    }
+  }
+  const xref = size;
+  let table = 'xref\n0 ' + (objects.length + 1) + '\n0000000000 65535 f \n';
+  for (let n = 1; n <= objects.length; n++) table += String(offsets[n]).padStart(10, '0') + ' 00000 n \n';
+  put(table + 'trailer\n<< /Size ' + (objects.length + 1) + ' /Root ' + catalog + ' 0 R /Info ' + info + ' 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+  const out = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) { out.set(c, at); at += c.length; }
+  return out;
+}
+
+function estimate(entries) {
+  let n = 600;
+  for (const e of entries) n += e.img.data.length + (e.img.smask ? e.img.smask.data.length + 200 : 0) + 450;
+  return n;
+}
+
+// --- the page
+
+const $ = id => document.getElementById(id);
+let items = [];      // { id, name, img, rot, url }
+let nextId = 1;
+
+const opts = () => ({ size: $('size').value, orient: $('orient').value, margin: $('margin').value, fit: $('fit').value });
+
+function fmtSize(n) {
+  return n < 1024 ? n + ' bytes' : n < 1048576 ? Math.round(n / 1024) + ' KB' : (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + ' MB';
+}
+
+function showErrors(list) {
+  const ul = $('errors');
+  ul.hidden = !list.length;
+  ul.innerHTML = '';
+  for (const t of list) { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }
+}
+
+let busy = 0;
+async function addFiles(list) {
+  const errs = [];
+  busy += list.length;
+  render();
+  for (const f of list) {
+    try {
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      const img = await prepare(bytes, f.type);
+      items.push({ id: nextId++, name: f.name || 'pasted image', img, rot: 0, url: URL.createObjectURL(f) });
+    } catch (e) {
+      errs.push((f.name || 'An image') + (/\.hei[cf]$/i.test(f.name || '') || /heic|heif/.test(f.type || '')
+        ? ' is a HEIC photo, and this browser can\'t open those. Safari can, or export it as JPEG first.'
+        : ' couldn\'t be opened as an image.'));
+    }
+    busy--;
+  }
+  if (items.length && $('name').value === 'images' && items.length === list.length && list.length === 1) $('name').value = baseName(items[0].name);
+  showErrors(errs);
+  render();
+}
+
+const baseName = n => (n || 'images').replace(/\.[a-z0-9]+$/i, '').slice(0, 80) || 'images';
+
+function move(id, to) {
+  const from = items.findIndex(p => p.id === id);
+  if (from < 0 || to < 0 || to >= items.length || to === from) return;
+  const [p] = items.splice(from, 1);
+  items.splice(to, 0, p);
+}
+
+let dragId = 0;
+
+function render() {
+  $('work').hidden = !items.length && !busy;
+  const o = opts();
+  $('summary').textContent = items.length ? items.length + (items.length === 1 ? ' image' : ' images') + ', about ' + fmtSize(estimate(items)) +
+    (busy ? ', reading ' + busy + ' more…' : '') : busy ? 'Reading ' + busy + (busy === 1 ? ' image…' : ' images…') : '';
+  $('make').disabled = !items.length || busy > 0;
+  const ul = $('tiles');
+  ul.innerHTML = '';
+  items.forEach((p, i) => {
+    const L = layout(p.img, p.rot, o);
+    const k = 118 / Math.max(L.pw, L.ph);
+    const li = document.createElement('li');
+    li.className = 'tile';
+    li.draggable = true;
+    li.dataset.id = p.id;
+    const turned = p.rot % 180 !== 0;
+    const iw = (turned ? L.bh : L.bw) * k, ih = (turned ? L.bw : L.bh) * k;
+    li.innerHTML =
+      '<div class="stage"><div class="sheet" style="width:' + Math.round(L.pw * k) + 'px;height:' + Math.round(L.ph * k) + 'px">' +
+      '<div class="clip" style="left:' + L.m * k + 'px;bottom:' + L.m * k + 'px;width:' + L.cw * k + 'px;height:' + L.ch * k + 'px">' +
+      '<div class="box" style="left:' + (L.x - L.m) * k + 'px;bottom:' + (L.y - L.m) * k + 'px;width:' + L.bw * k + 'px;height:' + L.bh * k + 'px">' +
+      '<img alt="" draggable="false" style="width:' + iw + 'px;height:' + ih + 'px;transform:translate(-50%,-50%) rotate(' + p.rot + 'deg)"></div></div></div></div>' +
+      '<span class="num">Page ' + (i + 1) + '</span>' +
+      '<div class="meta"><div></div><div></div></div>' +
+      '<div class="tools"><button data-a="left" title="Move left" aria-label="Move left">&larr;</button>' +
+      '<button data-a="right" title="Move right" aria-label="Move right">&rarr;</button>' +
+      '<button data-a="rot" title="Rotate 90 degrees" aria-label="Rotate">&#8635;</button>' +
+      '<button data-a="del" title="Remove" aria-label="Remove">&times;</button></div>';
+    const img = li.querySelector('img');
+    if (img) img.src = p.url;
+    const meta = li.querySelectorAll('.meta div');
+    if (meta.length === 2) {
+      meta[0].textContent = p.name;
+      meta[1].textContent = p.img.w + ' × ' + p.img.h + ', ' + (p.img.raw ? 'JPEG, kept as is' : p.img.smask ? 'lossless, see-through' : 'converted to JPEG') +
+        (p.rot ? ', turned ' + p.rot + '°' : '');
+      meta[0].title = meta[0].textContent;
+      meta[1].title = meta[1].textContent;
+    }
+    const tools = li.querySelector('.tools');
+    if (tools) tools.onclick = e => {
+      const a = e.target.closest('button');
+      if (!a) return;
+      const at = items.indexOf(p);
+      if (a.dataset.a === 'left') move(p.id, at - 1);
+      else if (a.dataset.a === 'right') move(p.id, at + 1);
+      else if (a.dataset.a === 'rot') p.rot = (p.rot + 90) % 360;
+      else if (a.dataset.a === 'del') { URL.revokeObjectURL(p.url); items = items.filter(q => q !== p); }
+      render();
+      const again = ul.querySelector('[data-id="' + p.id + '"] [data-a="' + a.dataset.a + '"]');
+      if (again) again.focus();
+    };
+    li.addEventListener('dragstart', e => { dragId = p.id; li.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/x-image-page', String(p.id)); });
+    li.addEventListener('dragend', () => { dragId = 0; render(); });
+    li.addEventListener('dragover', e => {
+      if (!dragId || dragId === p.id) return;
+      e.preventDefault();
+      const r = li.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+      li.classList.toggle('after', after);
+      li.classList.toggle('before', !after);
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('before', 'after'));
+    li.addEventListener('drop', e => {
+      if (!dragId) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const r = li.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+      const moving = dragId;
+      dragId = 0;
+      const from = items.findIndex(q => q.id === moving);
+      let to = items.indexOf(p) + (after ? 1 : 0);
+      if (from < to) to--;
+      move(moving, to);
+      render();
+    });
+    ul.appendChild(li);
+  });
+}
+
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+}
+
+function makePdf() {
+  const bytes = buildPdf(items, opts());
+  const name = ($('name').value.trim().replace(/[\\/:*?"<>|]+/g, '-') || 'images').replace(/\.pdf$/i, '') + '.pdf';
+  save(new Blob([bytes], { type: 'application/pdf' }), name);
+  return bytes;
+}
+
+const imageFiles = list => [...list].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|bmp|avif|hei[cf])$/i.test(f.name || ''));
+
+$('drop').onclick = () => $('file').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } };
+$('file').onchange = () => { addFiles([...$('file').files]); $('file').value = ''; };
+addEventListener('dragover', e => { if (dragId) return; e.preventDefault(); $('drop').classList.add('over'); });
+addEventListener('dragleave', e => { if (!e.relatedTarget) $('drop').classList.remove('over'); });
+addEventListener('drop', e => {
+  if (dragId) return;
+  e.preventDefault();
+  $('drop').classList.remove('over');
+  const list = imageFiles((e.dataTransfer && e.dataTransfer.files) || []);
+  if (list.length) addFiles(list);
+});
+addEventListener('paste', e => {
+  const list = imageFiles([...((e.clipboardData && e.clipboardData.files) || [])]);
+  if (list.length) { e.preventDefault(); addFiles(list); }
+});
+for (const id of ['size', 'orient', 'margin', 'fit']) $(id).addEventListener('change', render);
+$('make').onclick = makePdf;
+$('clear').onclick = () => { for (const p of items) URL.revokeObjectURL(p.url); items = []; showErrors([]); $('name').value = 'images'; render(); };
+render();
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Images to PDF</h2>
+<p>Turn photos, scans, and screenshots into one PDF, one image per page. JPEGs go into the PDF exactly as they are, so there is no quality loss. Everything happens in your browser. The images are never uploaded.</p>
+<h3>Use</h3>
+<p>Drop images on the page, click to choose them, or paste them. JPEG, PNG, WebP, and GIF work everywhere. HEIC photos work in browsers that can open them, like Safari. Then:</p>
+<ul><li>Drag the pages to reorder them, or use the arrow buttons on each one.</li><li>Rotate an image by 90 degrees, or remove it.</li><li>Pick a page size (A4, Letter, or the same size as each image), the orientation, the margin, and whether the image fits on the page or fills it.</li><li>Each tile shows how its image will sit on the page, and the total shows the expected file size.</li><li>Name the file and press Make PDF.</li></ul>
+<h3>What it does</h3>
+<ul><li>Photos taken sideways on a phone come out the right way up. The camera's orientation tag is read from the JPEG, and the page turns the image instead of changing it.</li><li>JPEG photos are copied into the PDF byte for byte. The output is about the size of the photos added together.</li><li>Mirrored JPEGs (from some front cameras) and other formats are drawn onto a canvas first. Images with no see-through parts are saved as JPEG at quality 0.92. Images with see-through parts, like logos, are stored without loss, with their transparency kept.</li><li>Grayscale and CMYK JPEGs are kept in their own color space.</li></ul>
+<h3>How it works</h3>
+<ul><li>The JPEG header is read directly: the frame marker gives the width, height, and number of color channels, the Adobe marker says whether CMYK values are stored inverted, and the EXIF block gives the orientation.</li><li>The PDF is written from scratch as a PDF 1.7 file with a classic cross-reference table. Each page holds one image, placed with a transform that scales, centers, and turns it. With Fill, the image is clipped to the area inside the margin.</li><li>JPEGs are stored with the DCTDecode filter, so PDF viewers decode the original data. Lossless images are stored as RGB with the FlateDecode filter, compressed with the browser's CompressionStream, and their transparency becomes a soft mask.</li><li>The file info names the tool and the time it was made. Nothing else about you or your photos is added.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/images-to-pdf">images-to-pdf on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

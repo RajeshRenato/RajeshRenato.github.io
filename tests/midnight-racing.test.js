@@ -4,6 +4,9 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { load, run } = require('./helpers/browser');
 
+// rivals and traffic use Math.random, so seed it to keep the runs repeatable
+let seed = 12345;
+Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 load('midnight-racing/index.html');
 const step = (n, each = '') => run(`for (let i = 0; i < ${n}; i++) { ${each}; update(0.016); render(); }`);
 

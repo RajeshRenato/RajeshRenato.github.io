@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235b7391'/%3E%3Ctext x='16' y='25' font-family='Arial,Helvetica,sans-serif' font-size='24' text-anchor='middle' fill='%23f4f1ea'%3E%E2%99%9E%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Chess | play chess online with a friend or the computer</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/chess/">
+<style>
+  :root { --bg: #15181e; --ink: #ecebe4; --muted: #8e95a3; --light: #dde3ea; --dark: #7d93ad; --hl: rgba(255, 204, 77, .45);
+          --lp-bg: #15181e; --lp-panel: #1f242d; --lp-veil: rgba(21, 24, 30, .94); --lp-accent: #ffcc4d; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+         display: flex; flex-direction: column; align-items: center; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #top { margin-top: 40px; display: flex; gap: 18px; align-items: center; font-size: 15px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
+  #top .p { display: flex; align-items: center; gap: 7px; font-variant-numeric: tabular-nums; }
+  #top .p i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1.5px solid #8e95a3; }
+  #top .p.on { color: var(--ink); font-weight: 700; }
+  #status { margin: 8px 0 8px; min-height: 26px; font-size: 19px; font-weight: 700; text-align: center; padding: 0 16px; }
+  .cap { display: flex; align-items: center; gap: 1px; min-height: 24px; font-size: 18px; color: var(--muted); width: var(--bw); }
+  .cap b { font-size: 13px; margin-left: 6px; font-weight: 600; }
+  #wrap { position: relative; }
+  #board { display: grid; grid-template-columns: repeat(8, 1fr); width: var(--bw); height: var(--bw); border-radius: 6px; overflow: hidden;
+           touch-action: none; user-select: none; -webkit-user-select: none; }
+  .sq { position: relative; display: flex; align-items: center; justify-content: center; }
+  .sq.l { background: var(--light); } .sq.d { background: var(--dark); }
+  .sq.last::before, .sq.sel::before { content: ''; position: absolute; inset: 0; background: var(--hl); }
+  .sq.chk::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(230, 60, 60, .9) 0%, rgba(230, 60, 60, .35) 55%, transparent 75%); }
+  .sq .dot { position: absolute; width: 28%; height: 28%; border-radius: 50%; background: rgba(20, 24, 32, .28); }
+  .sq .ring { position: absolute; inset: 4%; border-radius: 50%; border: calc(var(--bw) / 90) solid rgba(20, 24, 32, .3); }
+  .sq .co { position: absolute; font-size: calc(var(--bw) / 42); font-weight: 700; opacity: .75; pointer-events: none; }
+  .sq .co.r { left: 4%; top: 2%; } .sq .co.f { right: 5%; bottom: 1%; }
+  .sq.l .co { color: var(--dark); } .sq.d .co { color: var(--light); }
+  .pc { position: relative; font-size: calc(var(--bw) / 9.6); line-height: 1; cursor: grab; z-index: 1; font-family: 'Segoe UI Symbol', 'Apple Symbols', 'DejaVu Sans', system-ui, sans-serif; }
+  .pc.w { color: #fbfaf6; text-shadow: 0 0 1px #1d2026, 0 0 1px #1d2026, 0 0 2px #1d2026, 0 1px 2px rgba(0,0,0,.45); }
+  .pc.b { color: #1d2026; text-shadow: 0 0 1px #f2f2f2, 0 1px 1px rgba(255,255,255,.35); }
+  .pc.drag { opacity: .25; }
+  .cap .pc.b { color: #2a2f38; text-shadow: 0 0 1px #c9ced8, 0 0 1px #c9ced8; }
+  .cap .pc.w { text-shadow: none; color: #d9dde4; }
+  #ghost { position: fixed; pointer-events: none; z-index: 20; transform: translate(-50%, -55%); display: none; }
+  #promo { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(15, 18, 24, .6); z-index: 5; }
+  #promo div { display: flex; gap: 8px; background: #f4f1ea; padding: 10px; border-radius: 10px; }
+  #promo button { font-size: calc(var(--bw) / 10); width: calc(var(--bw) / 7); height: calc(var(--bw) / 7); border: 0; border-radius: 8px; background: var(--light); cursor: pointer; line-height: 1; }
+  #promo button:first-child { background: #ffcc4d; }
+  #moves { width: var(--bw); margin-top: 6px; font: 14px ui-monospace, Menlo, monospace; color: var(--muted); white-space: nowrap; overflow-x: auto; min-height: 22px; }
+  #moves span { color: var(--ink); margin-right: 6px; }
+  .actions { display: flex; gap: 12px; margin: 10px 0 20px; flex-wrap: wrap; justify-content: center; }
+  .actions button { font: inherit; font-weight: 600; font-size: 15px; padding: 9px 15px; border-radius: 8px; cursor: pointer;
+                    border: 1.5px solid var(--ink); background: #1f242d; color: var(--ink); }
+  .actions button:hover { background: var(--ink); color: var(--bg); }
+  .actions button.quiet { border: 0; background: none; color: var(--muted); text-decoration: underline; font-weight: 500; }
+  .actions button:focus-visible { outline: 2px solid #ffcc4d; outline-offset: 2px; }
+</style>
+<meta property="og:title" content="Chess">
+<meta property="og:description" content="Play chess with a friend online over a link, on one screen, or against a bot with three levels. Full rules, no sign-up, no server.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/chess/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/chess/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Play chess with a friend online over a link, on one screen, or against a bot with three levels. Full rules, no sign-up, no server.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Chess", "url": "https://rajeshrenato.github.io/playground/chess/", "description": "Play chess with a friend online over a link, on one screen, or against a bot with three levels. Full rules, no sign-up, no server.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="top"></div>
+<div id="status"></div>
+<div class="cap" id="capTop"></div>
+<div id="wrap"><div id="board"></div><div id="promo"><div></div></div></div>
+<div class="cap" id="capBottom"></div>
+<div id="moves"></div>
+<div class="actions" id="actions"></div>
+<span id="ghost" class="pc"></span>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+// --- rules. 0x88 board: square = rank * 16 + file, rank 0 is white's back rank.
+// Pieces are type | color << 3: types 1..6 = P N B R Q K, color 0 white, 1 black.
+
+const P = 1, N = 2, B = 3, R = 4, Q = 5, K = 6;
+const FILES = 'abcdefgh';
+const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const KN = [33, 31, 18, 14, -33, -31, -18, -14], KG = [1, -1, 16, -16, 17, 15, -17, -15];
+const DI = [17, 15, -17, -15], OR = [1, -1, 16, -16], QD = DI.concat(OR);
+const CM = new Array(128).fill(15);
+CM[4] = 12; CM[7] = 14; CM[0] = 13; CM[116] = 3; CM[119] = 11; CM[112] = 7;
+
+const sqName = s => FILES[s & 7] + ((s >> 4) + 1);
+const sqFrom = n => (+n[1] - 1) * 16 + FILES.indexOf(n[0]);
+const mFrom = m => m & 127, mTo = m => (m >> 7) & 127, mPromo = m => (m >> 14) & 7, mFlag = m => m >> 17;
+
+function fromFEN(fen) {
+  const [place, side, castIn, ep, half, full] = fen.trim().split(/\s+/);
+  const pos = { b: new Int8Array(128), side: 0, castle: 0, ep: -1, half: 0, full: 1, kings: [0, 0], stack: [] };
+  let r = 7, f = 0;
+  for (const ch of place) {
+    if (ch === '/') { r--; f = 0; continue; }
+    if (ch >= '1' && ch <= '8') { f += +ch; continue; }
+    const color = ch === ch.toUpperCase() ? 0 : 1;
+    const t = 'pnbrqk'.indexOf(ch.toLowerCase()) + 1;
+    const s = r * 16 + f;
+    pos.b[s] = t | color << 3;
+    if (t === K) pos.kings[color] = s;
+    f++;
+  }
+  pos.side = side === 'b' ? 1 : 0;
+  const cast = castIn || '-';
+  pos.castle = (cast.includes('K') ? 1 : 0) | (cast.includes('Q') ? 2 : 0) | (cast.includes('k') ? 4 : 0) | (cast.includes('q') ? 8 : 0);
+  pos.ep = ep && ep !== '-' ? sqFrom(ep) : -1;
+  pos.half = +half || 0;
+  pos.full = +full || 1;
+  return pos;
+}
+
+function placement(pos) {
+  let out = '';
+  for (let r = 7; r >= 0; r--) {
+    let empty = 0;
+    for (let f = 0; f < 8; f++) {
+      const p = pos.b[r * 16 + f];
+      if (!p) { empty++; continue; }
+      if (empty) { out += empty; empty = 0; }
+      const ch = ' pnbrqk'[p & 7];
+      out += p >> 3 ? ch : ch.toUpperCase();
+    }
+    if (empty) out += empty;
+    if (r) out += '/';
+  }
+  return out;
+}
+function castleStr(c) { return (c & 1 ? 'K' : '') + (c & 2 ? 'Q' : '') + (c & 4 ? 'k' : '') + (c & 8 ? 'q' : '') || '-'; }
+function toFEN(pos) {
+  return [placement(pos), pos.side ? 'b' : 'w', castleStr(pos.castle), pos.ep >= 0 ? sqName(pos.ep) : '-', pos.half, pos.full].join(' ');
+}
+
+// Repetition key: the en passant square only counts if a capture there is possible.
+function posKey(pos) {
+  let ep = '-';
+  if (pos.ep >= 0) {
+    const pawn = P | pos.side << 3, back = pos.side ? 16 : -16;
+    for (const d of [back - 1, back + 1]) { const s = pos.ep + d; if (!(s & 0x88) && pos.b[s] === pawn) ep = sqName(pos.ep); }
+  }
+  return placement(pos) + ' ' + pos.side + ' ' + castleStr(pos.castle) + ' ' + ep;
+}
+
+function clonePos(pos) {
+  return { b: Int8Array.from(pos.b), side: pos.side, castle: pos.castle, ep: pos.ep, half: pos.half, full: pos.full, kings: pos.kings.slice(), stack: [] };
+}
+
+function attacked(pos, sq, by) {
+  const b = pos.b;
+  if (by === 0) { for (const d of [-15, -17]) { const s = sq + d; if (!(s & 0x88) && b[s] === P) return true; } }
+  else { for (const d of [15, 17]) { const s = sq + d; if (!(s & 0x88) && b[s] === (P | 8)) return true; } }
+  const c = by << 3, kn = N | c, kg = K | c, bi = B | c, ro = R | c, qu = Q | c;
+  for (const d of KN) { const s = sq + d; if (!(s & 0x88) && b[s] === kn) return true; }
+  for (const d of KG) { const s = sq + d; if (!(s & 0x88) && b[s] === kg) return true; }
+  for (const d of DI) {
+    for (let s = sq + d; !(s & 0x88); s += d) { const p = b[s]; if (p) { if (p === bi || p === qu) return true; break; } }
+  }
+  for (const d of OR) {
+    for (let s = sq + d; !(s & 0x88); s += d) { const p = b[s]; if (p) { if (p === ro || p === qu) return true; break; } }
+  }
+  return false;
+}
+const inCheck = pos => attacked(pos, pos.kings[pos.side], pos.side ^ 1);
+
+function genMoves(pos, out, capsOnly) {
+  const b = pos.b, us = pos.side, them = us ^ 1;
+  for (let sq = 0; sq < 128; sq++) {
+    if (sq & 0x88) { sq += 7; continue; }
+    const p = b[sq];
+    if (!p || p >> 3 !== us) continue;
+    const t = p & 7;
+    if (t === P) {
+      const fwd = us ? -16 : 16, startRank = us ? 6 : 1, lastRank = us ? 0 : 7;
+      const one = sq + fwd;
+      if (!(one & 0x88) && !b[one]) {
+        if (one >> 4 === lastRank) { for (const pr of [Q, R, B, N]) out.push(sq | one << 7 | pr << 14); }
+        else if (!capsOnly) {
+          out.push(sq | one << 7);
+          const two = one + fwd;
+          if (sq >> 4 === startRank && !b[two]) out.push(sq | two << 7 | 3 << 17);
+        }
+      }
+      for (const d of [fwd - 1, fwd + 1]) {
+        const s = sq + d;
+        if (s & 0x88) continue;
+        if (b[s] && b[s] >> 3 === them) {
+          if (s >> 4 === lastRank) { for (const pr of [Q, R, B, N]) out.push(sq | s << 7 | pr << 14); }
+          else out.push(sq | s << 7);
+        } else if (s === pos.ep) out.push(sq | s << 7 | 1 << 17);
+      }
+    } else if (t === N || t === K) {
+      for (const d of t === N ? KN : KG) {
+        const s = sq + d;
+        if (s & 0x88) continue;
+        const q = b[s];
+        if (!q) { if (!capsOnly) out.push(sq | s << 7); }
+        else if (q >> 3 === them) out.push(sq | s << 7);
+      }
+      if (t === K && !capsOnly) {
+        const base = us ? 112 : 0, rk = R | us << 3;
+        if (sq === base + 4 && !attacked(pos, sq, them)) {
+          if (pos.castle & (us ? 4 : 1) && b[base + 7] === rk && !b[base + 5] && !b[base + 6] &&
+              !attacked(pos, base + 5, them) && !attacked(pos, base + 6, them)) out.push(sq | (base + 6) << 7 | 2 << 17);
+          if (pos.castle & (us ? 8 : 2) && b[base] === rk && !b[base + 1] && !b[base + 2] && !b[base + 3] &&
+              !attacked(pos, base + 3, them) && !attacked(pos, base + 2, them)) out.push(sq | (base + 2) << 7 | 2 << 17);
+        }
+      }
+    } else {
+      for (const d of t === B ? DI : t === R ? OR : QD) {
+        for (let s = sq + d; !(s & 0x88); s += d) {
+          const q = b[s];
+          if (!q) { if (!capsOnly) out.push(sq | s << 7); continue; }
+          if (q >> 3 === them) out.push(sq | s << 7);
+          break;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+function makeMove(pos, m) {
+  const b = pos.b, from = m & 127, to = (m >> 7) & 127, promo = (m >> 14) & 7, flag = m >> 17;
+  const p = b[from];
+  let cap = b[to];
+  if (flag === 1) { const cs = to + (pos.side ? 16 : -16); cap = b[cs]; b[cs] = 0; }
+  pos.stack.push(m, cap, pos.castle, pos.ep, pos.half);
+  b[to] = promo ? promo | pos.side << 3 : p;
+  b[from] = 0;
+  if (flag === 2) {
+    if (to === from + 2) { b[from + 1] = b[from + 3]; b[from + 3] = 0; }
+    else { b[from - 1] = b[from - 4]; b[from - 4] = 0; }
+  }
+  if ((p & 7) === K) pos.kings[pos.side] = to;
+  pos.castle &= CM[from] & CM[to];
+  pos.ep = flag === 3 ? (from + to) >> 1 : -1;
+  pos.half = (p & 7) === P || cap ? 0 : pos.half + 1;
+  if (pos.side) pos.full++;
+  pos.side ^= 1;
+}
+
+function unmakeMove(pos) {
+  const st = pos.stack;
+  const half = st.pop(), ep = st.pop(), castle = st.pop(), cap = st.pop(), m = st.pop();
+  pos.side ^= 1;
+  if (pos.side) pos.full--;
+  const b = pos.b, from = m & 127, to = (m >> 7) & 127, promo = (m >> 14) & 7, flag = m >> 17;
+  const p = b[to];
+  b[from] = promo ? P | pos.side << 3 : p;
+  if (flag === 1) { b[to] = 0; b[to + (pos.side ? 16 : -16)] = cap; } else b[to] = cap;
+  if (flag === 2) {
+    if (to === from + 2) { b[from + 3] = b[from + 1]; b[from + 1] = 0; }
+    else { b[from - 4] = b[from - 1]; b[from - 1] = 0; }
+  }
+  if ((p & 7) === K) pos.kings[pos.side] = from;
+  pos.castle = castle; pos.ep = ep; pos.half = half;
+}
+
+function legalMoves(pos) {
+  const out = [];
+  for (const m of genMoves(pos, [], false)) {
+    makeMove(pos, m);
+    if (!attacked(pos, pos.kings[pos.side ^ 1], pos.side)) out.push(m);
+    unmakeMove(pos);
+  }
+  return out;
+}
+
+function perft(pos, depth) {
+  if (depth === 0) return 1;
+  let n = 0;
+  for (const m of genMoves(pos, [], false)) {
+    makeMove(pos, m);
+    if (!attacked(pos, pos.kings[pos.side ^ 1], pos.side)) n += depth === 1 ? 1 : perft(pos, depth - 1);
+    unmakeMove(pos);
+  }
+  return n;
+}
+
+const uci = m => sqName(mFrom(m)) + sqName(mTo(m)) + (mPromo(m) ? ' pnbrqk'[mPromo(m)] : '');
+
+function san(pos, m, legal) {
+  const from = mFrom(m), to = mTo(m), promo = mPromo(m), flag = mFlag(m);
+  const t = pos.b[from] & 7;
+  let s;
+  if (flag === 2) s = to > from ? 'O-O' : 'O-O-O';
+  else {
+    const cap = pos.b[to] || flag === 1;
+    if (t === P) s = (cap ? FILES[from & 7] + 'x' : '') + sqName(to) + (promo ? '=' + ' PNBRQK'[promo] : '');
+    else {
+      s = ' PNBRQK'[t];
+      const others = legal.filter(o => mTo(o) === to && mFrom(o) !== from && (pos.b[mFrom(o)] & 7) === t);
+      if (others.length) {
+        const sameFile = others.some(o => (mFrom(o) & 7) === (from & 7));
+        const sameRank = others.some(o => mFrom(o) >> 4 === from >> 4);
+        s += !sameFile ? FILES[from & 7] : !sameRank ? String((from >> 4) + 1) : sqName(from);
+      }
+      s += (cap ? 'x' : '') + sqName(to);
+    }
+  }
+  makeMove(pos, m);
+  if (inCheck(pos)) s += legalMoves(pos).length ? '+' : '#';
+  unmakeMove(pos);
+  return s;
+}
+
+function insufficient(pos) {
+  const minors = [];
+  for (let s = 0; s < 128; s++) {
+    if (s & 0x88) { s += 7; continue; }
+    const t = pos.b[s] & 7;
+    if (!t || t === K) continue;
+    if (t === P || t === R || t === Q) return false;
+    minors.push([t, ((s >> 4) + (s & 7)) & 1]);
+  }
+  if (minors.length <= 1) return true;
+  return minors.every(([t, c]) => t === B && c === minors[0][1]);
+}
+
+// --- bot: negamax with alpha-beta, iterative deepening, and a quiescence search
+
+const VAL = [0, 100, 320, 330, 500, 900, 0];
+const PST = [null,
+  [0,0,0,0,0,0,0,0, 50,50,50,50,50,50,50,50, 10,10,20,30,30,20,10,10, 5,5,10,25,25,10,5,5, 0,0,0,20,20,0,0,0, 5,-5,-10,0,0,-10,-5,5, 5,10,10,-20,-20,10,10,5, 0,0,0,0,0,0,0,0],
+  [-50,-40,-30,-30,-30,-30,-40,-50, -40,-20,0,0,0,0,-20,-40, -30,0,10,15,15,10,0,-30, -30,5,15,20,20,15,5,-30, -30,0,15,20,20,15,0,-30, -30,5,10,15,15,10,5,-30, -40,-20,0,5,5,0,-20,-40, -50,-40,-30,-30,-30,-30,-40,-50],
+  [-20,-10,-10,-10,-10,-10,-10,-20, -10,0,0,0,0,0,0,-10, -10,0,5,10,10,5,0,-10, -10,5,5,10,10,5,5,-10, -10,0,10,10,10,10,0,-10, -10,10,10,10,10,10,10,-10, -10,5,0,0,0,0,5,-10, -20,-10,-10,-10,-10,-10,-10,-20],
+  [0,0,0,0,0,0,0,0, 5,10,10,10,10,10,10,5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, 0,0,0,5,5,0,0,0],
+  [-20,-10,-10,-5,-5,-10,-10,-20, -10,0,0,0,0,0,0,-10, -10,0,5,5,5,5,0,-10, -5,0,5,5,5,5,0,-5, 0,0,5,5,5,5,0,-5, -10,5,5,5,5,5,0,-10, -10,0,5,0,0,0,0,-10, -20,-10,-10,-5,-5,-10,-10,-20],
+  [-30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -20,-30,-30,-40,-40,-30,-30,-20, -10,-20,-20,-20,-20,-20,-20,-10, 20,20,0,0,0,0,20,20, 20,30,10,0,0,10,30,20],
+];
+const KING_END = [-50,-40,-30,-20,-20,-30,-40,-50, -30,-20,-10,0,0,-10,-20,-30, -30,-10,20,30,30,20,-10,-30, -30,-10,30,40,40,30,-10,-30, -30,-10,30,40,40,30,-10,-30, -30,-10,20,30,30,20,-10,-30, -30,-30,0,0,0,0,-30,-30, -50,-30,-30,-30,-30,-30,-30,-50];
+
+function evaluate(pos) {
+  const b = pos.b;
+  let score = 0, heavy = 0;
+  for (let s = 0; s < 128; s++) {
+    if (s & 0x88) { s += 7; continue; }
+    const t = b[s] & 7;
+    if (t >= N && t <= Q) heavy += VAL[t];
+  }
+  const endgame = heavy <= 1600;
+  for (let s = 0; s < 128; s++) {
+    if (s & 0x88) { s += 7; continue; }
+    const p = b[s];
+    if (!p) continue;
+    const t = p & 7, c = p >> 3, r = s >> 4, f = s & 7;
+    const idx = c ? r * 8 + f : (7 - r) * 8 + f;
+    const v = VAL[t] + (t === K && endgame ? KING_END[idx] : PST[t][idx]);
+    score += c ? -v : v;
+  }
+  return pos.side ? -score : score;
+}
+
+const MATE = 100000;
+let nodes = 0, deadline = 0, stopped = false;
+const killers = [];
+
+function orderScore(pos, m, ply, best) {
+  if (m === best) return 1e7;
+  const victim = mFlag(m) === 1 ? P : pos.b[mTo(m)] & 7;
+  let s = 0;
+  if (victim) s += 1e5 + VAL[victim] * 10 - VAL[pos.b[mFrom(m)] & 7];
+  if (mPromo(m)) s += 9e4 + VAL[mPromo(m)];
+  if (killers[ply] && (killers[ply][0] === m || killers[ply][1] === m)) s += 5e4;
+  return s;
+}
+
+function ordered(pos, moves, ply, best) {
+  const sc = moves.map(m => orderScore(pos, m, ply, best));
+  const idx = moves.map((m, i) => i).sort((a, b) => sc[b] - sc[a]);
+  return idx.map(i => moves[i]);
+}
+
+function quiesce(pos, alpha, beta, ply) {
+  if ((++nodes & 1023) === 0 && now() > deadline) stopped = true;
+  if (stopped) return 0;
+  const stand = evaluate(pos);
+  if (stand >= beta) return beta;
+  if (stand > alpha) alpha = stand;
+  if (ply > 40) return alpha;
+  for (const m of ordered(pos, genMoves(pos, [], true), ply, 0)) {
+    makeMove(pos, m);
+    if (attacked(pos, pos.kings[pos.side ^ 1], pos.side)) { unmakeMove(pos); continue; }
+    const v = -quiesce(pos, -beta, -alpha, ply + 1);
+    unmakeMove(pos);
+    if (stopped) return 0;
+    if (v >= beta) return beta;
+    if (v > alpha) alpha = v;
+  }
+  return alpha;
+}
+
+function negamax(pos, depth, alpha, beta, ply) {
+  if ((++nodes & 1023) === 0 && now() > deadline) stopped = true;
+  if (stopped) return 0;
+  if (pos.half >= 100) return 0;
+  const chk = inCheck(pos);
+  if (chk && ply < 24) depth++;
+  if (depth <= 0) return quiesce(pos, alpha, beta, ply);
+  let best = -Infinity, legal = 0;
+  for (const m of ordered(pos, genMoves(pos, [], false), ply, 0)) {
+    makeMove(pos, m);
+    if (attacked(pos, pos.kings[pos.side ^ 1], pos.side)) { unmakeMove(pos); continue; }
+    legal++;
+    const v = -negamax(pos, depth - 1, -beta, -alpha, ply + 1);
+    unmakeMove(pos);
+    if (stopped) return 0;
+    if (v > best) best = v;
+    if (v > alpha) alpha = v;
+    if (alpha >= beta) {
+      if (!pos.b[mTo(m)]) { const k = killers[ply] || (killers[ply] = [0, 0]); if (k[0] !== m) { k[1] = k[0]; k[0] = m; } }
+      break;
+    }
+  }
+  if (!legal) return chk ? -MATE + ply : 0;
+  return best;
+}
+
+const LEVELS = { easy: { ms: 100, depth: 2, noise: 60 }, normal: { ms: 500, depth: 20, noise: 0 }, hard: { ms: 1500, depth: 20, noise: 0 } };
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+// history: position keys of the game so far. Moving into one of them scores as a draw,
+// so the bot avoids repeating when it is ahead.
+function think(pos, level = 'normal', rand = Math.random, history = []) {
+  const L = LEVELS[level] || LEVELS.normal;
+  pos = clonePos(pos);
+  const root = legalMoves(pos);
+  if (!root.length) return 0;
+  if (root.length === 1) return root[0];
+  const noise = new Map(root.map(m => [m, L.noise ? Math.floor((rand() - 0.5) * 2 * L.noise) : 0]));
+  const until = now() + L.ms;
+  let bestMove = 0;
+  stopped = false; nodes = 0; killers.length = 0;
+  for (let depth = 1; depth <= L.depth; depth++) {
+    deadline = depth === 1 ? Infinity : until;
+    let alpha = -Infinity, iterBest = 0, iterScore = -Infinity;
+    for (const m of ordered(pos, root, 0, bestMove)) {
+      makeMove(pos, m);
+      // with noise every root move needs an exact score, so no window there
+      let v = history.includes(posKey(pos)) ? 0 : -negamax(pos, depth - 1, -Infinity, L.noise ? Infinity : -alpha, 1);
+      unmakeMove(pos);
+      if (stopped) break;
+      if (L.noise) v += noise.get(m);
+      if (v > iterScore) { iterScore = v; iterBest = m; }
+      if (v > alpha) alpha = v;
+    }
+    if (stopped) break;
+    bestMove = iterBest;
+    if (iterScore > MATE - 100 || now() > until) break;
+  }
+  return bestMove;
+}
+
+// --- the game: a list of moves from the start, replayed to get the position
+
+let mode = 'idle';   // idle | bot | local | online
+let room = null;
+let level = 'normal';
+const G = { pos: fromFEN(START), moves: [], sans: [], keys: [], aColor: 0, score: [0, 0, 0], end: null, last: null };
+
+function newGame(aColor) {
+  Object.assign(G, { pos: fromFEN(START), moves: [], sans: [], aColor, end: null, last: null });
+  G.keys = [posKey(G.pos)];
+  sel = -1; promoFor = null;
+}
+
+function playUci(u, countScore = true) {
+  if (G.end) return false;
+  const legal = legalMoves(G.pos);
+  const m = legal.find(x => uci(x) === u);
+  if (m === undefined) return false;
+  G.sans.push(san(G.pos, m, legal));
+  makeMove(G.pos, m);
+  G.pos.stack.length = 0;
+  G.moves.push(u);
+  G.last = [mFrom(m), mTo(m)];
+  G.keys.push(posKey(G.pos));
+  checkEnd(countScore);
+  return true;
+}
+
+function checkEnd(countScore) {
+  const pos = G.pos;
+  if (!legalMoves(pos).length) G.end = inCheck(pos) ? { winner: pos.side ^ 1, reason: 'checkmate' } : { winner: -1, reason: 'stalemate' };
+  else if (pos.half >= 100) G.end = { winner: -1, reason: 'the fifty-move rule' };
+  else if (G.keys.filter(k => k === G.keys[G.keys.length - 1]).length >= 3) G.end = { winner: -1, reason: 'threefold repetition' };
+  else if (insufficient(pos)) G.end = { winner: -1, reason: 'insufficient material' };
+  if (G.end && countScore) scoreEnd();
+}
+
+function scoreEnd() {
+  if (G.end.winner < 0) G.score[0]++;
+  else G.score[G.end.winner === G.aColor ? 1 : 2]++;
+}
+
+function myColor() {
+  if (mode === 'online') return room.isHost ? G.aColor : 1 - G.aColor;
+  if (mode === 'bot') return G.aColor;
+  return G.pos.side;
+}
+function myTurn() { return mode !== 'idle' && !G.end && (mode === 'local' || G.pos.side === myColor()); }
+function flipped() { return mode !== 'local' && mode !== 'idle' && myColor() === 1; }
+
+function commit(u) {
+  if (mode === 'online' && !room.isHost) { room.send({ t: 'move', uci: u }); sel = -1; render(); return; }
+  if (playUci(u)) afterMove();
+}
+
+function afterMove() {
+  sel = -1;
+  if (mode === 'online') broadcast();
+  if (mode === 'bot' && !G.end && G.pos.side !== G.aColor) {
+    const n = G.moves.length;
+    setTimeout(() => {
+      if (mode !== 'bot' || G.end || G.moves.length !== n) return;
+      const m = think(G.pos, level, Math.random, G.keys);
+      if (m) playUci(uci(m));
+      render();
+    }, 60);
+  }
+  render();
+}
+
+function resign() {
+  if (G.end || mode === 'idle' || mode === 'local') return;
+  if (mode === 'online' && !room.isHost) { room.send({ t: 'resign' }); return; }
+  G.end = { winner: 1 - myColor(), reason: 'resignation' };
+  scoreEnd();
+  afterMove();
+}
+
+function rematch() {
+  if (mode === 'online' && !room.isHost) { room.send({ t: 'again' }); return; }
+  newGame(mode === 'local' ? 0 : 1 - G.aColor);
+  afterMove();
+}
+
+// --- online: the host checks every move and sends the move list out
+
+function broadcast() {
+  room.send({ t: 'state', moves: G.moves, aColor: G.aColor, score: G.score, end: G.end });
+}
+
+function attach(r) {
+  room = r;
+  mode = 'online';
+  G.score = [0, 0, 0];
+  room.on('message', m => {
+    if (room.isHost) {
+      const guestColor = 1 - G.aColor;
+      if (m.t === 'move' && G.pos.side === guestColor && typeof m.uci === 'string') { if (playUci(m.uci)) afterMove(); }
+      else if (m.t === 'resign' && !G.end) { G.end = { winner: G.aColor, reason: 'resignation' }; scoreEnd(); afterMove(); }
+      else if (m.t === 'again' && G.end) rematch();
+      return;
+    }
+    if (m.t === 'state') {
+      newGame(m.aColor);
+      for (const u of m.moves) playUci(u, false);
+      G.end = m.end;
+      G.score = m.score;
+      render();
+    }
+  });
+  room.on('roster', () => render());
+  room.on('leave', () => leave());
+  room.on('close', () => { mode = 'idle'; room = null; lobby.start(); render(); });
+  if (room.isHost) { newGame(0); broadcast(); }
+  render();
+}
+
+function startLocal(m) {
+  if (room) { try { room.close(); } catch (e) { } room = null; }
+  mode = m;
+  G.score = [0, 0, 0];
+  newGame(0);
+  render();
+}
+
+function leave() {
+  mode = 'idle';
+  room = null;
+  lobby.start();
+  render();
+}
+
+// --- drawing
+
+const $ = id => document.getElementById(id);
+const GLYPH = ' ♟♞♝♜♛♚';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+let sel = -1, promoFor = null;
+let bw = 480;
+
+function resize() {
+  const avail = Math.min(innerWidth - 24, innerHeight - 250, 640);
+  bw = Math.max(240, Math.floor(avail / 8) * 8);
+  const st = document.documentElement.style;
+  if (st.setProperty) st.setProperty('--bw', bw + 'px');
+}
+addEventListener('resize', () => { resize(); render(); });
+resize();
+
+function names() {
+  if (mode === 'bot') return ['You', 'Bot (' + level + ')'];
+  if (mode === 'online') {
+    const host = room.players.find(p => p.id === 0), guest = room.players.find(p => p.id !== 0);
+    const tag = id => (id === room.me ? ' (you)' : '');
+    return [(host ? host.name : 'Host') + tag(0), guest ? guest.name + tag(guest.id) : 'Waiting…'];
+  }
+  return ['White', 'Black'];
+}
+const colorName = c => (c ? 'Black' : 'White');
+const nameOf = c => names()[c === G.aColor ? 0 : 1];
+
+function glyph(p) {
+  return '<span class="pc ' + (p >> 3 ? 'b' : 'w') + '">' + GLYPH[p & 7] + '︎</span>';
+}
+
+function render() {
+  const n = names();
+  const side = G.pos.side;
+  $('top').innerHTML = mode === 'idle' ? '' : [0, 1].map(i => {
+    const c = i === 0 ? G.aColor : 1 - G.aColor;
+    return '<span class="p' + (!G.end && side === c ? ' on' : '') + '"><i style="background:' + (c ? '#1d2026' : '#fbfaf6') + '"></i>' + esc(n[i]) + ' ' + G.score[i + 1] + '</span>';
+  }).join('') + (G.score[0] ? '<span class="p">draws ' + G.score[0] + '</span>' : '');
+
+  let st = '';
+  if (mode === 'idle') st = '';
+  else if (G.end) {
+    if (G.end.winner < 0) st = 'Draw by ' + G.end.reason + '.';
+    else {
+      const who = mode === 'local' ? colorName(G.end.winner) : G.end.winner === myColor() ? 'You' : nameOf(G.end.winner);
+      st = (who === 'You' ? 'You win' : who + ' wins') + ' by ' + G.end.reason + '.';
+    }
+  } else {
+    const chk = inCheck(G.pos) ? ' Check!' : '';
+    if (mode === 'local') st = colorName(side) + ' to move.' + chk;
+    else st = (side === myColor() ? 'Your move.' : mode === 'bot' ? 'Bot is thinking…' : 'Waiting for ' + nameOf(side) + '…') + chk;
+  }
+  $('status').textContent = st;
+
+  drawBoard();
+  drawCaptures();
+  const mv = $('moves');
+  mv.innerHTML = G.sans.map((s, i) => (i % 2 ? '' : (i / 2 + 1) + '.') + '<span>' + esc(s) + '</span>').join('');
+  mv.scrollLeft = 1e6;
+
+  let a = '';
+  if (G.end && mode !== 'idle') a += '<button id="again">' + (mode === 'online' && !room.isHost ? 'Ask for a rematch' : 'Play again') + '</button>';
+  if (!G.end && (mode === 'bot' || mode === 'online')) a += '<button class="quiet" id="resign">Resign</button>';
+  if (mode === 'bot') a += '<button class="quiet" id="lvl">Bot: ' + level + '</button>';
+  if (mode !== 'idle') a += '<button class="quiet" id="leave">Leave</button>';
+  if ($('actions').dataset.html !== a) {
+    $('actions').innerHTML = a;
+    $('actions').dataset.html = a;
+    const on = (id, fn) => { const b = $('actions').querySelector('#' + id); if (b) b.onclick = fn; };
+    on('again', rematch);
+    on('resign', resign);
+    on('lvl', () => { level = level === 'easy' ? 'normal' : level === 'normal' ? 'hard' : 'easy'; G.score = [0, 0, 0]; newGame(0); afterMove(); });
+    on('leave', leave);
+  }
+}
+
+function targetsFrom(s) {
+  if (s < 0 || !myTurn()) return [];
+  return legalMoves(G.pos).filter(m => mFrom(m) === s);
+}
+
+function drawBoard() {
+  const pos = G.pos, flip = flipped();
+  const targets = targetsFrom(sel);
+  const chkSq = !G.end || G.end.reason === 'checkmate' ? (inCheck(pos) ? pos.kings[pos.side] : -1) : -1;
+  let html = '';
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const r = flip ? row : 7 - row, f = flip ? 7 - col : col;
+      const s = r * 16 + f;
+      let cls = 'sq ' + ((r + f) % 2 ? 'l' : 'd');
+      if (G.last && (s === G.last[0] || s === G.last[1])) cls += ' last';
+      if (s === sel) cls += ' sel';
+      if (s === chkSq) cls += ' chk';
+      let inner = '';
+      if (col === 0) inner += '<span class="co r">' + (r + 1) + '</span>';
+      if (row === 7) inner += '<span class="co f">' + FILES[f] + '</span>';
+      if (pos.b[s]) inner += glyph(pos.b[s]);
+      if (targets.some(m => mTo(m) === s)) inner += pos.b[s] ? '<span class="ring"></span>' : '<span class="dot"></span>';
+      html += '<div class="' + cls + '" data-s="' + s + '">' + inner + '</div>';
+    }
+  }
+  $('board').innerHTML = html;
+}
+
+function drawCaptures() {
+  const count = [{}, {}];
+  let mat = 0;
+  for (let s = 0; s < 128; s++) {
+    if (s & 0x88) { s += 7; continue; }
+    const p = G.pos.b[s];
+    if (!p) continue;
+    count[p >> 3][p & 7] = (count[p >> 3][p & 7] || 0) + 1;
+    mat += (p >> 3 ? -1 : 1) * VAL[p & 7];
+  }
+  const full = { 1: 8, 2: 2, 3: 2, 4: 2, 5: 1 };
+  const taken = c => { let h = ''; for (const t of [5, 4, 3, 2, 1]) for (let i = (count[c][t] || 0); i < full[t]; i++) h += GLYPH[t] + '︎'; return h; };
+  const bottom = flipped() ? 1 : 0;
+  const line = c => {
+    const lost = taken(1 - c);
+    const adv = c === 0 ? mat : -mat;
+    return '<span class="pc ' + (c ? 'w' : 'b') + '" style="font-size:18px;cursor:default">' + lost + '</span>' + (adv > 0 ? '<b>+' + Math.round(adv / 100) + '</b>' : '');
+  };
+  $('capBottom').innerHTML = mode === 'idle' ? '' : line(bottom);
+  $('capTop').innerHTML = mode === 'idle' ? '' : line(1 - bottom);
+}
+
+// --- input: tap a piece then a square, or drag
+
+function squareAt(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const sq = el && el.closest ? el.closest('.sq') : null;
+  return sq ? +sq.dataset.s : -1;
+}
+
+function tryMove(from, to) {
+  const ms = legalMoves(G.pos).filter(m => mFrom(m) === from && mTo(m) === to);
+  if (!ms.length) return false;
+  if (ms.length > 1) { askPromotion(from, to); return true; }
+  commit(uci(ms[0]));
+  return true;
+}
+
+function tap(s) {
+  if (!myTurn()) return;
+  const p = G.pos.b[s];
+  if (sel >= 0 && s !== sel && tryMove(sel, s)) return;
+  sel = p && p >> 3 === G.pos.side && s !== sel ? s : -1;
+  render();
+}
+
+function askPromotion(from, to) {
+  promoFor = [from, to];
+  sel = from;
+  const box = $('promo');
+  const c = G.pos.side;
+  box.querySelector('div').innerHTML = [Q, R, B, N].map(t => '<button data-t="' + t + '" class="pc ' + (c ? 'b' : 'w') + '" aria-label="' + ' PNBRQK'[t] + '">' + GLYPH[t] + '︎</button>').join('');
+  box.style.display = 'flex';
+  for (const b of box.querySelectorAll('button')) b.onclick = () => choosePromotion(+b.dataset.t);
+  render();
+}
+function choosePromotion(t) {
+  const [from, to] = promoFor;
+  promoFor = null;
+  $('promo').style.display = 'none';
+  commit(sqName(from) + sqName(to) + ' pnbrqk'[t]);
+}
+
+let drag = null;
+const board = $('board');
+board.addEventListener('pointerdown', e => {
+  if (promoFor) return;
+  const s = squareAt(e.clientX, e.clientY);
+  if (s < 0) return;
+  const p = G.pos.b[s];
+  if (myTurn() && p && p >> 3 === G.pos.side && e.pointerType === 'mouse') {
+    drag = { from: s, x: e.clientX, y: e.clientY, moved: false };
+    try { board.setPointerCapture(e.pointerId); } catch (err) { }
+  } else tap(s);
+});
+board.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+  if (!drag.moved) {
+    drag.moved = true;
+    sel = drag.from;
+    render();
+    const g = $('ghost');
+    g.className = 'pc ' + (G.pos.b[drag.from] >> 3 ? 'b' : 'w');
+    g.style.fontSize = (bw / 9.6) + 'px';
+    g.textContent = GLYPH[G.pos.b[drag.from] & 7] + '︎';
+    g.style.display = 'block';
+    const pcEl = board.querySelector('[data-s="' + drag.from + '"] .pc');
+    if (pcEl) pcEl.classList.add('drag');
+  }
+  const g = $('ghost');
+  g.style.left = e.clientX + 'px';
+  g.style.top = e.clientY + 'px';
+});
+board.addEventListener('pointerup', e => {
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+  $('ghost').style.display = 'none';
+  if (!d.moved) { tap(d.from); return; }
+  const to = squareAt(e.clientX, e.clientY);
+  if (to >= 0 && to !== d.from && tryMove(d.from, to)) return;
+  sel = d.from;
+  render();
+});
+addEventListener('keydown', e => {
+  if (promoFor && e.key === 'Enter') { e.preventDefault(); choosePromotion(Q); }
+  else if (e.key === 'Escape') { if (promoFor) { promoFor = null; $('promo').style.display = 'none'; } sel = -1; render(); }
+});
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'chess',
+  title: 'Chess',
+  blurb: 'Full chess rules: castling, en passant, promotion, and every kind of draw. Play a friend online, on one screen, or the bot.',
+  min: 2, max: 2,
+  extra: [
+    { label: 'Play the bot', note: 'Easy, normal, or hard. You start with white, then swap.', onClick: () => startLocal('bot') },
+    { label: 'Two players, one screen', note: 'Take turns on one device.', onClick: () => startLocal('local') },
+  ],
+  onStart: attach,
+  onJoin: attach,
+});
+newGame(0);
+render();
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Chess</h2>
+<p>Chess with the full rules. Play a friend online with a link, two players on one screen, or a bot with three levels.</p>
+<h3>Play</h3>
+<p>To play online: click "Play a friend online" and send the invite. Your friend sends back a reply link; open it in your browser or paste it in. The game starts as soon as they're in. The host plays white first, and colors swap on every rematch. Each player sees their own pieces at the bottom.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Tap a piece, then a square</td><td>move. Dots show where it can go, rings show captures.</td></tr><tr><td>Drag a piece (mouse)</td><td>move</td></tr><tr><td>Escape</td><td>cancel a selection</td></tr><tr><td>Enter</td><td>pick a queen when promoting</td></tr></table>
+<p>The moves are listed in standard notation under the board, with the pieces each side has captured and who is ahead in material. The last move and a king in check are highlighted.</p>
+<h3>Rules</h3>
+<ul><li>Castling is allowed only if the king and that rook haven't moved, the squares between them are empty, and the king isn't in check, doesn't pass through an attacked square, and doesn't land on one.</li><li>En passant is allowed on the move right after a pawn's two-square advance.</li><li>A pawn that reaches the last rank promotes to a queen, rook, bishop, or knight. You choose.</li><li>The game is drawn by stalemate, the fifty-move rule (50 moves each with no capture or pawn move), the same position appearing three times with the same player to move, or when neither side has enough material to mate (king against king, or king and one bishop or knight, or kings and bishops all on one color of square).</li><li>Against the bot or online you can resign. Scores are kept until you leave.</li></ul>
+<h3>The bot</h3>
+<p>The bot searches with negamax and alpha-beta pruning, deepening one move at a time until its time runs out: about 0.1 seconds on easy (2 moves deep, with some randomness), 0.5 seconds on normal, and 1.5 seconds on hard. It looks at captures to the end so it doesn't stop counting in the middle of a trade, tries captures of valuable pieces with cheap ones first, and judges positions by material plus tables of good squares for each piece. It avoids repeating positions when it is ahead.</p>
+<h3>How it works</h3>
+<p>The board is a 0x88 array: 128 squares where a square is off the board when its index ANDed with 0x88 is not zero, which makes edge checks one operation. Move generation is checked against the standard perft counts (the number of positions after every possible sequence of moves) for the starting position and several tricky test positions.</p>
+<p>Online play uses <a href="../linkplay/">LinkPlay</a>. The guest sends each move in coordinate form, the host checks it against the legal moves, and sends back the whole move list. Both sides replay it from the start, so they always agree on the position.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/chess">chess on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

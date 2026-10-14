@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='16' height='16' fill='%23e5484d'/%3E%3Crect x='16' width='16' height='16' fill='%232a9d4b'/%3E%3Crect y='16' width='16' height='16' fill='%233e7bfa'/%3E%3Crect x='16' y='16' width='16' height='16' fill='%23f5b700'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Ludo | play Ludo online with friends or bots</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/ludo/">
+<style>
+  :root { --bg: #f1ece2; --ink: #22201c; --muted: #6f695e; --card: #fffdf8; --rule: #d8d0c0;
+          --s0: #e5484d; --s1: #2a9d4b; --s2: #f5b700; --s3: #3e7bfa;
+          --lp-bg: #f1ece2; --lp-panel: #fffdf8; --lp-field: #ffffff; --lp-ink: #22201c; --lp-muted: #6f695e; --lp-rule: #d8d0c0;
+          --lp-veil: rgba(241, 236, 226, .97); --lp-accent: #e5484d; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #app { display: flex; gap: 22px; justify-content: center; align-items: flex-start; padding: 44px 14px 24px; flex-wrap: wrap; }
+  #boardWrap { position: relative; }
+  canvas { display: block; border-radius: 12px; box-shadow: 0 2px 0 var(--rule); touch-action: manipulation; }
+  #side { width: 270px; display: flex; flex-direction: column; gap: 12px; }
+  #status { font-size: 19px; font-weight: 700; min-height: 2.6em; }
+  #dice { width: 96px; height: 96px; border-radius: 18px; border: 0; background: var(--card); cursor: pointer; box-shadow: 0 3px 0 var(--rule);
+          display: grid; place-items: center; padding: 0; }
+  #dice:disabled { cursor: default; opacity: .55; }
+  #dice:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  #dice svg { width: 72px; height: 72px; }
+  #dice.rolling svg { animation: wob .35s ease-in-out; }
+  @keyframes wob { 0% { transform: rotate(0) scale(1); } 50% { transform: rotate(18deg) scale(.88); } 100% { transform: rotate(0) scale(1); } }
+  #players { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: 12px; }
+  #players li { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-bottom: 1px solid var(--bg); font-size: 15px; }
+  #players li:last-child { border-bottom: 0; }
+  #players li.on { font-weight: 700; }
+  #players i { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  #players .home { margin-left: auto; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  #log { font-size: 13px; color: var(--muted); line-height: 1.5; min-height: 3em; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button.act { font: inherit; font-weight: 700; font-size: 15px; padding: 9px 15px; border-radius: 9px; border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); cursor: pointer; }
+  button.act:hover { background: var(--ink); color: var(--card); }
+  button.quiet { font: inherit; border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px 0; }
+  #setup { position: absolute; inset: 0; background: rgba(241, 236, 226, .95); border-radius: 12px; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; }
+  #setup[hidden] { display: none; }
+  #setup h2 { margin: 0; font-size: 24px; }
+  #setup p { margin: 0; color: var(--muted); max-width: 34ch; }
+  .seats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seat { font: inherit; font-size: 15px; font-weight: 600; padding: 10px 12px; border-radius: 10px; border: 2px solid; background: var(--card); cursor: pointer; min-width: 132px; }
+  .seat small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  [hidden] { display: none !important; }
+  @media (max-width: 700px) { #side { width: min(100%, 420px); } #app { padding-top: 40px; gap: 14px; } #dice { width: 80px; height: 80px; } #dice svg { width: 60px; height: 60px; } }
+</style>
+<meta property="og:title" content="Ludo">
+<meta property="og:description" content="Ludo for 2 to 4 players. Play friends online with a link, on one phone, or against bots. Need a six to start, captures send tokens home.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/ludo/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/ludo/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Ludo for 2 to 4 players. Play friends online with a link, on one phone, or against bots. Need a six to start, captures send tokens home.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Ludo", "url": "https://rajeshrenato.github.io/playground/ludo/", "description": "Ludo for 2 to 4 players. Play friends online with a link, on one phone, or against bots. Need a six to start, captures send tokens home.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="app">
+  <div id="boardWrap"><canvas id="c"></canvas><div id="setup" hidden></div></div>
+  <div id="side">
+    <div id="status"></div>
+    <div class="row"><button id="dice" aria-label="Roll the dice" disabled></button><div id="log"></div></div>
+    <ul id="players"></ul>
+    <div class="row" id="actions"></div>
+  </div>
+</div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const now = () => performance.now();
+const COLORS = ['#e5484d', '#2a9d4b', '#f5b700', '#3e7bfa'];
+const NAMES = ['Red', 'Green', 'Yellow', 'Blue'];
+
+// --- the board. Cells are [col, row] on a 15 by 15 grid. The main track has 52
+// cells, starting at red's start square and going clockwise. Each seat starts 13
+// cells after the previous one. A token's progress is -1 in the yard, 0 to 50 on
+// the main track, 51 to 55 in its home column, and 56 when it's home.
+
+const TRACK = [];
+(() => {
+  const run = (x, y, dx, dy, n) => { for (let i = 0; i < n; i++) TRACK.push([x + dx * i, y + dy * i]); };
+  run(1, 6, 1, 0, 5); run(6, 5, 0, -1, 6); TRACK.push([7, 0]);
+  run(8, 0, 0, 1, 6); run(9, 6, 1, 0, 6); TRACK.push([14, 7]);
+  run(14, 8, -1, 0, 6); run(8, 9, 0, 1, 6); TRACK.push([7, 14]);
+  run(6, 14, 0, -1, 6); run(5, 8, -1, 0, 6); TRACK.push([0, 7], [0, 6]);
+})();
+const HOME_COL = [
+  [1, 2, 3, 4, 5].map(i => [i, 7]), [1, 2, 3, 4, 5].map(i => [7, i]),
+  [13, 12, 11, 10, 9].map(i => [i, 7]), [13, 12, 11, 10, 9].map(i => [7, i]),
+];
+const YARD = [[1.5, 1.5], [10.5, 1.5], [10.5, 10.5], [1.5, 10.5]];
+const SAFE = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
+const HOME = 56;
+
+const absCell = (seat, p) => (seat * 13 + p) % 52;
+
+function cellOf(seat, p, k) {
+  if (p < 0) { const [x, y] = YARD[seat]; return [x + (k % 2) * 2 + 0.5, y + Math.floor(k / 2) * 2 + 0.5]; }
+  if (p <= 50) { const [x, y] = TRACK[absCell(seat, p)]; return [x + 0.5, y + 0.5]; }
+  if (p < HOME) { const [x, y] = HOME_COL[seat][p - 51]; return [x + 0.5, y + 0.5]; }
+  const c = [[6.6, 7.5], [7.5, 6.6], [8.4, 7.5], [7.5, 8.4]][seat];
+  return [c[0] + ((k % 2) - 0.5) * 0.35, c[1] + (Math.floor(k / 2) - 0.5) * 0.35];
+}
+
+// --- rules
+
+function legalMoves(tokens, seat, roll) {
+  const out = [];
+  tokens[seat].forEach((p, k) => {
+    if (p === HOME) return;
+    if (p < 0) { if (roll === 6) out.push(k); return; }
+    if (p + roll <= HOME) out.push(k);
+  });
+  return out;
+}
+
+// Moves one token and returns what happened: { to, captured: [[seat, k]], home }
+function moveToken(tokens, seat, k, roll) {
+  const from = tokens[seat][k];
+  const to = from < 0 ? 0 : from + roll;
+  tokens[seat][k] = to;
+  const captured = [];
+  if (to <= 50) {
+    const cell = absCell(seat, to);
+    if (!SAFE.has(cell)) {
+      for (let s = 0; s < 4; s++) {
+        if (s === seat) continue;
+        tokens[s].forEach((q, j) => { if (q >= 0 && q <= 50 && absCell(s, q) === cell) { tokens[s][j] = -1; captured.push([s, j]); } });
+      }
+    }
+  }
+  return { from, to, captured, home: to === HOME };
+}
+
+function finished(tokens, seat) { return tokens[seat].every(p => p === HOME); }
+
+// --- bot: score each legal move and take the best
+
+function danger(tokens, seat, p) {
+  if (p < 0 || p > 50) return 0;
+  const cell = absCell(seat, p);
+  if (SAFE.has(cell)) return 0;
+  let d = 0;
+  for (let s = 0; s < 4; s++) {
+    if (s === seat) continue;
+    for (const q of tokens[s]) {
+      if (q < 0 || q > 50) continue;
+      const behind = (cell - absCell(s, q) + 52) % 52;
+      if (behind >= 1 && behind <= 6) d++;
+    }
+  }
+  return d;
+}
+
+function botChoice(tokens, seat, roll, rand = Math.random) {
+  const moves = legalMoves(tokens, seat, roll);
+  let best = -Infinity, pick = moves[0];
+  for (const k of moves) {
+    const t = tokens.map(r => r.slice());
+    const from = t[seat][k];
+    const r = moveToken(t, seat, k, roll);
+    let s = 0;
+    s += r.captured.length * 60;
+    if (r.home) s += 45;
+    if (from < 0) s += 35;
+    if (r.to > 50 && from <= 50) s += 25;
+    s -= danger(t, seat, r.to) * 22;
+    s += danger(tokens, seat, from) * 18;
+    if (r.to <= 50 && SAFE.has(absCell(seat, r.to))) s += 10;
+    s += r.to * 0.3 + rand() * 4;
+    if (s > best) { best = s; pick = k; }
+  }
+  return pick;
+}
+
+// --- game state. The host (or this device, when playing locally) runs it.
+
+let room = null, local = false;
+const G = { seats: [], tokens: [[-1, -1, -1, -1], [-1, -1, -1, -1], [-1, -1, -1, -1], [-1, -1, -1, -1]], turn: 0, roll: 0, sixes: 0,
+            phase: 'setup', winner: -1, last: null, log: [], botAt: 0 };
+let setupSeats = [{ kind: 'human' }, { kind: 'bot' }, { kind: 'bot' }, { kind: 'bot' }];
+
+function runsGame() { return local || (room && room.isHost); }
+function myId() { return room ? room.me : 0; }
+function seatPlayer(seat) { return G.seats[seat]; }
+function mySeats() {
+  if (local) return G.seats.map((s, i) => (s && s.kind === 'human' ? i : -1)).filter(i => i >= 0);
+  return G.seats.map((s, i) => (s && s.kind === 'human' && s.id === myId() ? i : -1)).filter(i => i >= 0);
+}
+function active(seat) { return !!G.seats[seat]; }
+
+function note(text) { G.log.push(text); if (G.log.length > 3) G.log.shift(); }
+
+function startGame(seats) {
+  G.seats = seats;
+  G.tokens = [0, 1, 2, 3].map(() => [-1, -1, -1, -1]);
+  G.turn = seats.findIndex(Boolean);
+  G.roll = 0; G.sixes = 0; G.phase = 'roll'; G.winner = -1; G.last = null; G.log = [];
+  G.botAt = now() + 700;
+  note(seatName(G.turn) + ' goes first.');
+  publish();
+}
+
+function seatName(seat) {
+  const s = G.seats[seat];
+  if (!s) return NAMES[seat];
+  if (s.kind === 'bot') return NAMES[seat] + ' bot';
+  return s.name || NAMES[seat];
+}
+
+function nextTurn() {
+  let s = G.turn;
+  do s = (s + 1) % 4; while (!active(s) || finished(G.tokens, s));
+  G.turn = s;
+  G.sixes = 0;
+  G.phase = 'roll';
+  G.roll = 0;
+  G.botAt = now() + 650;
+}
+
+function doRoll(seat, rand = Math.random) {
+  if (G.phase !== 'roll' || seat !== G.turn) return;
+  const roll = 1 + Math.floor(rand() * 6);
+  G.roll = roll;
+  if (roll === 6) G.sixes++;
+  if (G.sixes === 3) {
+    note(seatName(seat) + ' rolled three sixes and loses the turn.');
+    G.phase = 'pause'; G.pauseUntil = now() + 1100; G.after = 'next';
+    publish();
+    return;
+  }
+  const moves = legalMoves(G.tokens, seat, roll);
+  if (!moves.length) {
+    note(seatName(seat) + ' rolled ' + roll + (G.tokens[seat].every(p => p < 0) ? ' and needs a six to start.' : ' and can\'t move.'));
+    G.phase = 'pause'; G.pauseUntil = now() + 1000; G.after = roll === 6 ? 'again' : 'next';
+    publish();
+    return;
+  }
+  G.phase = 'move';
+  G.botAt = now() + 550;
+  publish();
+  G.autoAt = moves.length === 1 && !isBot(seat) ? now() + 500 : 0;
+}
+
+function doMove(seat, k) {
+  if (G.phase !== 'move' || seat !== G.turn || !legalMoves(G.tokens, seat, G.roll).includes(k)) return;
+  const r = moveToken(G.tokens, seat, k, G.roll);
+  G.last = { seat, k, from: r.from, to: r.to, captured: r.captured };
+  G.autoAt = 0;
+  if (r.captured.length) note(seatName(seat) + ' captured ' + r.captured.map(([s]) => seatName(s)).join(' and ') + '!');
+  if (r.home) note(seatName(seat) + ' got a token home.');
+  if (finished(G.tokens, seat)) {
+    G.phase = 'over'; G.winner = seat;
+    note(seatName(seat) + ' wins!');
+    publish();
+    return;
+  }
+  const six = G.roll === 6;
+  if (six || r.captured.length || r.home) {
+    if (!six) G.sixes = 0;
+    G.phase = 'roll'; G.roll = 0; G.botAt = now() + 700;
+  } else nextTurn();
+  publish();
+}
+
+const isBot = seat => G.seats[seat] && G.seats[seat].kind === 'bot';
+
+function tick() {
+  if (!runsGame() || G.phase === 'setup' || G.phase === 'over') return;
+  const t = now();
+  if (G.phase === 'pause' && t > G.pauseUntil) {
+    if (G.after === 'again') { G.phase = 'roll'; G.roll = 0; G.botAt = t + 500; }
+    else nextTurn();
+    publish();
+    return;
+  }
+  if (G.phase === 'move' && G.autoAt && t > G.autoAt) { doMove(G.turn, legalMoves(G.tokens, G.turn, G.roll)[0]); return; }
+  if (!isBot(G.turn) || t < G.botAt) return;
+  if (G.phase === 'roll') doRoll(G.turn);
+  else if (G.phase === 'move') doMove(G.turn, botChoice(G.tokens, G.turn, G.roll));
+}
+
+// --- sharing the game
+
+function snapshot() {
+  return { t: 'state', seats: G.seats, tokens: G.tokens, turn: G.turn, roll: G.roll, phase: G.phase, winner: G.winner, last: G.last, log: G.log };
+}
+let V = snapshot();
+function publish() {
+  const s = snapshot();
+  if (room && room.isHost) room.send(s);
+  apply(s);
+}
+function apply(s) {
+  const prev = V;
+  V = JSON.parse(JSON.stringify(s));
+  if (s.last && JSON.stringify(s.last) !== JSON.stringify(prev.last)) startHop(s.last);
+  if (s.roll && (s.roll !== prev.roll || s.turn !== prev.turn || s.phase !== prev.phase) && s.phase !== 'roll') shakeDice();
+  render();
+}
+
+function act(m) {
+  if (runsGame()) {
+    const seat = G.turn;
+    if (!mySeats().includes(seat)) return;
+    if (m.t === 'roll') doRoll(seat);
+    else if (m.t === 'move') doMove(seat, m.k);
+  } else if (room) room.send(m);
+}
+
+function attach(r) {
+  room = r; local = false;
+  room.on('message', (m, from) => {
+    if (!room.isHost) { if (m.t === 'state') apply(m); return; }
+    const seat = G.turn;
+    const s = G.seats[seat];
+    if (!s || s.kind !== 'human' || s.id !== from) return;
+    if (m.t === 'roll') doRoll(seat);
+    else if (m.t === 'move') doMove(seat, m.k);
+  });
+  room.on('roster', players => {
+    if (room.isHost && G.phase === 'setup') renderSetup();
+    if (room.isHost && G.phase !== 'setup') room.send(snapshot());
+    render();
+  });
+  room.on('leave', id => {
+    if (G.phase === 'setup') return;
+    G.seats.forEach((s, i) => { if (s && s.kind === 'human' && s.id === id) { G.seats[i] = { kind: 'bot' }; note(NAMES[i] + ' left. A bot took over.'); } });
+    G.botAt = now() + 600;
+    publish();
+  });
+  room.on('close', () => { room = null; G.phase = 'setup'; V = snapshot(); lobby.start(); render(); });
+  if (room.isHost) { G.phase = 'setup'; renderSetup(); }
+  render();
+}
+
+function startLocalSetup() {
+  if (room) { try { room.close(); } catch (e) { } room = null; }
+  local = true;
+  G.phase = 'setup';
+  V = snapshot();
+  renderSetup();
+  render();
+}
+
+// Online, people take seats in join order: two players sit opposite each other.
+function onlineSeats(fillBots) {
+  const people = room.players.slice(0, 4);
+  const order = people.length === 2 ? [0, 2] : people.length === 3 ? [0, 1, 2] : [0, 1, 2, 3];
+  const seats = [null, null, null, null];
+  people.forEach((p, i) => { seats[order[i]] = { kind: 'human', id: p.id, name: p.name }; });
+  if (fillBots) for (let i = 0; i < 4; i++) if (!seats[i]) seats[i] = { kind: 'bot' };
+  return seats;
+}
+
+let fillBots = false;
+function renderSetup() {
+  const el = $('setup');
+  el.hidden = false;
+  if (local) {
+    el.innerHTML = '<h2>Who\'s playing?</h2><p>Tap a seat to switch it between a player on this device, a bot, or empty. At least two seats need to play.</p>' +
+      '<div class="seats">' + setupSeats.map((s, i) => '<button class="seat" data-i="' + i + '" style="border-color:' + COLORS[i] + '">' + NAMES[i] +
+        '<small>' + (s.kind === 'human' ? 'player' : s.kind === 'bot' ? 'bot' : 'empty') + '</small></button>').join('') + '</div>' +
+      '<button class="act" id="goBtn">Start</button>';
+    for (const b of el.querySelectorAll('.seat')) b.onclick = () => {
+      const s = setupSeats[+b.dataset.i];
+      s.kind = s.kind === 'human' ? 'bot' : s.kind === 'bot' ? 'off' : 'human';
+      renderSetup();
+    };
+    const go = el.querySelector('#goBtn');
+    if (go) go.onclick = () => {
+      const seats = setupSeats.map((s, i) => (s.kind === 'off' ? null : s.kind === 'bot' ? { kind: 'bot' } : { kind: 'human', name: NAMES[i] }));
+      if (seats.filter(Boolean).length < 2) return;
+      el.hidden = true;
+      startGame(seats);
+    };
+    return;
+  }
+  const people = room.players.length;
+  el.innerHTML = '<h2>Ready?</h2><p>' + people + (people === 1 ? ' person is' : ' people are') + ' here. Seats go in join order, and two players sit opposite each other.</p>' +
+    '<label class="row" style="justify-content:center"><input type="checkbox" id="botsBox"' + (fillBots ? ' checked' : '') + '> Fill empty seats with bots</label>' +
+    '<button class="act" id="goBtn">Start</button>';
+  const box = el.querySelector('#botsBox'), go = el.querySelector('#goBtn');
+  if (box) box.onchange = () => { fillBots = box.checked; };
+  if (go) go.onclick = () => { el.hidden = true; startGame(onlineSeats(fillBots)); };
+}
+
+// --- drawing
+
+const cv = $('c'), ctx = cv.getContext('2d');
+let S = 600, cs = 40;
+function resize() {
+  const avail = Math.min(innerWidth - 28, innerWidth > 700 ? innerHeight - 70 : 640, 640);
+  cs = Math.floor(Math.max(300, avail) / 15);
+  S = cs * 15;
+  const d = devicePixelRatio || 1;
+  cv.width = S * d; cv.height = S * d;
+  cv.style.width = S + 'px'; cv.style.height = S + 'px';
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener('resize', resize);
+resize();
+
+let hop = null;   // { seat, k, path: [p...], i, t }
+function startHop(last) {
+  const steps = [];
+  if (last.from < 0) steps.push(0);
+  else for (let p = last.from + 1; p <= last.to; p++) steps.push(p);
+  hop = { seat: last.seat, k: last.k, path: steps, i: 0, t: now() };
+}
+
+function star(x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+  ctx.closePath(); ctx.fill();
+}
+
+function drawBoard() {
+  ctx.fillStyle = '#fffdf8'; ctx.fillRect(0, 0, S, S);
+  const yards = [[0, 0], [9, 0], [9, 9], [0, 9]];
+  yards.forEach(([x, y], i) => {
+    ctx.fillStyle = COLORS[i]; ctx.fillRect(x * cs, y * cs, 6 * cs, 6 * cs);
+    ctx.fillStyle = '#fffdf8'; ctx.beginPath(); ctx.roundRect((x + 1) * cs, (y + 1) * cs, 4 * cs, 4 * cs, cs * 0.5); ctx.fill();
+    for (let k = 0; k < 4; k++) {
+      ctx.fillStyle = COLORS[i]; ctx.globalAlpha = 0.25;
+      ctx.beginPath(); ctx.arc((x + 2 + (k % 2) * 2) * cs, (y + 2 + Math.floor(k / 2) * 2) * cs, cs * 0.55, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  });
+  ctx.strokeStyle = '#cfc6b4'; ctx.lineWidth = 1;
+  TRACK.forEach(([x, y], i) => {
+    ctx.fillStyle = '#fffdf8';
+    const startSeat = [0, 13, 26, 39].indexOf(i);
+    if (startSeat >= 0) ctx.fillStyle = COLORS[startSeat];
+    ctx.fillRect(x * cs, y * cs, cs, cs); ctx.strokeRect(x * cs + 0.5, y * cs + 0.5, cs - 1, cs - 1);
+    if (SAFE.has(i)) { ctx.fillStyle = startSeat >= 0 ? 'rgba(255,255,255,.8)' : '#bdb3a0'; star(x * cs + cs / 2, y * cs + cs / 2, cs * 0.3); }
+  });
+  HOME_COL.forEach((col, i) => col.forEach(([x, y]) => {
+    ctx.fillStyle = COLORS[i]; ctx.fillRect(x * cs, y * cs, cs, cs); ctx.strokeRect(x * cs + 0.5, y * cs + 0.5, cs - 1, cs - 1);
+  }));
+  const c = 7.5 * cs, tri = [[6, 6, 6, 9], [6, 6, 9, 6], [9, 6, 9, 9], [6, 9, 9, 9]];
+  tri.forEach(([x0, y0, x1, y1], i) => {
+    ctx.fillStyle = COLORS[i];
+    ctx.beginPath(); ctx.moveTo(x0 * cs, y0 * cs); ctx.lineTo(x1 * cs, y1 * cs); ctx.lineTo(c, c); ctx.closePath(); ctx.fill();
+  });
+}
+
+function drawToken(x, y, seat, glow, scale = 1) {
+  const r = cs * 0.34 * scale;
+  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  ctx.beginPath(); ctx.ellipse(x * cs, y * cs + r * 0.55, r * 0.95, r * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLORS[seat];
+  ctx.beginPath(); ctx.arc(x * cs, y * cs, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(2, r * 0.22);
+  ctx.beginPath(); ctx.arc(x * cs, y * cs, r * 0.62, 0, Math.PI * 2); ctx.stroke();
+  if (glow) {
+    ctx.strokeStyle = '#22201c'; ctx.lineWidth = 2.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.arc(x * cs, y * cs, r + 5 + Math.sin(now() / 160) * 1.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function movable() {
+  if (V.phase !== 'move' || !canAct()) return [];
+  return legalMoves(V.tokens, V.turn, V.roll);
+}
+function canAct() {
+  if (!V.seats.length || V.phase === 'over' || V.phase === 'setup') return false;
+  const s = V.seats[V.turn];
+  if (!s || s.kind !== 'human') return false;
+  return local || s.id === myId();
+}
+
+function tokenSpots() {
+  const spots = [];
+  const groups = new Map();
+  V.tokens.forEach((row, seat) => row.forEach((p, k) => {
+    let pos = p;
+    if (hop && hop.seat === seat && hop.k === k && hop.i < hop.path.length) pos = hop.path[hop.i];
+    const [x, y] = cellOf(seat, pos, k);
+    const key = pos >= 0 && pos < HOME ? x + ',' + y : seat + ',' + k + ',' + pos;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ seat, k, x, y });
+  }));
+  for (const g of groups.values()) {
+    g.forEach((t, i) => {
+      const n = g.length;
+      if (n === 1) spots.push({ ...t, scale: 1 });
+      else if (n === 2) spots.push({ ...t, x: t.x + (i - 0.5) * 0.3, scale: 0.72 });
+      else {
+        const cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols), step = 0.84 / cols;
+        spots.push({ ...t, x: t.x + ((i % cols) - (cols - 1) / 2) * step, y: t.y + (Math.floor(i / cols) - (rows - 1) / 2) * step, scale: 1.12 / cols });
+      }
+    });
+  }
+  return spots;
+}
+
+function draw() {
+  if (hop && now() - hop.t > 95) { hop.i++; hop.t = now(); if (hop.i >= hop.path.length) hop = null; }
+  drawBoard();
+  const moves = movable();
+  for (const t of tokenSpots()) drawToken(t.x, t.y, t.seat, t.seat === V.turn && moves.includes(t.k) && !hop, t.scale);
+}
+
+// --- side panel
+
+const PIPS = { 1: [[2, 2]], 2: [[1, 1], [3, 3]], 3: [[1, 1], [2, 2], [3, 3]], 4: [[1, 1], [3, 1], [1, 3], [3, 3]], 5: [[1, 1], [3, 1], [2, 2], [1, 3], [3, 3]], 6: [[1, 1], [3, 1], [1, 2], [3, 2], [1, 3], [3, 3]] };
+function diceSvg(n, color) {
+  const pips = (PIPS[n] || []).map(([x, y]) => '<circle cx="' + (x * 6 + 2) + '" cy="' + (y * 6 + 2) + '" r="2.2" fill="#fff"/>').join('');
+  return '<svg viewBox="0 0 26 26"><rect x="1" y="1" width="24" height="24" rx="5" fill="' + color + '"/>' + pips + '</svg>';
+}
+
+function shakeDice() {
+  const d = $('dice');
+  d.classList.remove('rolling');
+  void d.offsetWidth;
+  d.classList.add('rolling');
+}
+
+function render() {
+  const playing = V.seats.length && V.phase !== 'setup';
+  const dice = $('dice');
+  const color = playing ? COLORS[V.turn] : '#bdb3a0';
+  dice.innerHTML = diceSvg(V.roll || (playing ? 0 : 6), color);
+  dice.disabled = !(V.phase === 'roll' && canAct());
+  let st = '';
+  if (!playing) st = room || local ? 'Setting up…' : '';
+  else if (V.phase === 'over') st = (canSee(V.winner) ? 'You win!' : seatNameV(V.winner) + ' wins!');
+  else if (canAct()) st = V.phase === 'roll' ? (local ? seatNameV(V.turn) + ', roll the dice' : 'Your turn. Roll the dice.') : 'Pick a token to move ' + V.roll + '.';
+  else st = seatNameV(V.turn) + (V.phase === 'move' ? ' is moving…' : ' is rolling…');
+  $('status').textContent = st;
+  $('status').style.color = playing && V.phase !== 'over' ? COLORS[V.turn] : '';
+  $('log').textContent = V.log.join(' ');
+  $('players').innerHTML = playing ? V.seats.map((s, i) => s ? '<li class="' + (i === V.turn && V.phase !== 'over' ? 'on' : '') + '"><i style="background:' + COLORS[i] + '"></i>' +
+    esc(seatNameV(i)) + (canSee(i) && !local ? ' (you)' : '') + '<span class="home">' + V.tokens[i].filter(p => p === HOME).length + ' / 4 home</span></li>' : '').join('') : '';
+  let a = '';
+  if (V.phase === 'over' && runsGame()) a += '<button class="act" id="againBtn">Play again</button>';
+  if (room && room.isHost) a += '<button class="quiet" id="inviteBtn">Invite more</button>';
+  if (room || local) a += '<button class="quiet" id="leaveBtn">Leave</button>';
+  if ($('actions').dataset.html !== a) {
+    $('actions').innerHTML = a; $('actions').dataset.html = a;
+    const ag = $('actions').querySelector('#againBtn'), iv = $('actions').querySelector('#inviteBtn'), lv = $('actions').querySelector('#leaveBtn');
+    if (ag) ag.onclick = () => { if (local) { G.phase = 'setup'; V = snapshot(); renderSetup(); render(); } else { G.phase = 'setup'; publish(); renderSetup(); } };
+    if (iv) iv.onclick = () => lobby.reopen();
+    if (lv) lv.onclick = () => { room = null; local = false; G.phase = 'setup'; G.seats = []; V = snapshot(); $('setup').hidden = true; lobby.start(); render(); };
+  }
+}
+function seatNameV(i) {
+  const s = V.seats[i];
+  if (!s) return NAMES[i];
+  return s.kind === 'bot' ? NAMES[i] + ' bot' : s.name || NAMES[i];
+}
+function canSee(i) { const s = V.seats[i]; return !!s && s.kind === 'human' && !local && s.id === myId(); }
+
+$('dice').addEventListener('click', () => act({ t: 'roll' }));
+cv.addEventListener('click', e => {
+  const moves = movable();
+  if (!moves.length) return;
+  const r = cv.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * 15, y = (e.clientY - r.top) / r.height * 15;
+  let best = null, bd = 0.9;
+  for (const t of tokenSpots()) {
+    if (t.seat !== V.turn || !moves.includes(t.k)) continue;
+    const d = Math.hypot(t.x - x, t.y - y);
+    if (d < bd) { bd = d; best = t; }
+  }
+  if (best) act({ t: 'move', k: best.k });
+});
+addEventListener('keydown', e => {
+  if (e.key === ' ' || e.key === 'Enter') { if (V.phase === 'roll' && canAct()) { e.preventDefault(); act({ t: 'roll' }); } }
+  else if (e.key >= '1' && e.key <= '4') { const k = +e.key - 1; if (movable().includes(k)) act({ t: 'move', k }); }
+});
+
+function frame() { tick(); draw(); requestAnimationFrame(frame); }
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'ludo',
+  title: 'Ludo',
+  blurb: 'Race your four tokens around the board and home. Roll a six to start, land on others to send them back, and stay on the stars to be safe.',
+  min: 2, max: 4,
+  extra: [{ label: 'Play on this device', note: 'Against bots, or pass the phone around.', onClick: startLocalSetup }],
+  onStart: attach,
+  onJoin: attach,
+});
+render();
+requestAnimationFrame(frame);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Ludo</h2>
+<p>Ludo for 2 to 4 players. Race your four tokens from your yard, around the board, and into your home column. Play friends online with links, pass one phone around, or play against bots.</p>
+<h3>Play</h3>
+<p>To play online: click "Play with friends" and send each friend their own invite. Each of them sends back a reply link; open it in your browser or paste it in, then press Start. Seats go in join order, and with two players you sit opposite each other. You can fill the empty seats with bots.</p>
+<p>To play on one device: pick "Play on this device" and set each seat to a player, a bot, or empty.</p>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Click the dice, or Space or Enter</td><td>roll</td></tr><tr><td>Click a highlighted token, or 1 to 4</td><td>move it</td></tr></table>
+<p>When only one token can move, it moves by itself.</p>
+<h3>Rules</h3>
+<ul><li>You need a six to bring a token out of your yard onto your start square.</li><li>Rolling a six gives you another roll. Three sixes in a row lose the turn.</li><li>Landing on another player's token sends it back to their yard and gives you another roll.</li><li>Start squares and star squares are safe: nobody can be captured there.</li><li>After going once around, a token turns into its home column. It needs an exact roll to reach home, and getting a token home gives another roll.</li><li>The first player to get all four tokens home wins.</li></ul>
+<p>There are no blockades: two tokens on the same square don't stop anyone from passing.</p>
+<h3>How it works</h3>
+<p>The 52 track squares are listed once, in order. Each seat starts 13 squares after the previous one, so a token's position is just a number from its own start, and the board square comes from adding the seat's offset.</p>
+<p>Bots score every legal move: capturing, getting home, leaving the yard, and reaching the home column count for a move, and ending up within six squares in front of an opponent counts against it.</p>
+<p>Online, it uses <a href="../linkplay/">LinkPlay</a>. The host's browser rolls the dice for everyone, so nobody can choose their roll, and checks that each move is legal. If a player leaves, a bot takes their seat and the game goes on.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/ludo">ludo on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>
