@@ -20,7 +20,7 @@ const Mission = {
         const d = distp(this.pickup.x, this.pickup.y, this.dropoff.x, this.dropoff.y);
         this.timeLeft = 10 + d / 110;
         this.reward = Math.round((40 + d / 25) / 5) * 5;
-        toast('Package picked up — deliver it!', '#ffd166');
+        toast('Package picked up. Deliver it!', '#ffd166');
       }
     } else if (this.state === 'deliver') {
       this.timeLeft -= dt;
@@ -31,7 +31,7 @@ const Mission = {
         this.state = 'wait';
         this.waitTimer = 4;
       } else if (this.timeLeft <= 0) {
-        toast('Too late — package gone cold', '#ff6b6b');
+        toast('Too late. The package went cold.', '#ff6b6b');
         this.state = 'wait';
         this.waitTimer = 6;
       }
@@ -57,7 +57,7 @@ const Mission = {
 
   text() {
     if (this.state === 'pickup') return 'Pick up the package';
-    if (this.state === 'deliver') return 'Deliver the package — ' + Math.ceil(this.timeLeft) + 's';
+    if (this.state === 'deliver') return 'Deliver the package: ' + Math.ceil(this.timeLeft) + 's';
     return '';
   }
 };

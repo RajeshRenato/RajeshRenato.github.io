@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { load, run } = require('./helpers/browser');
 
-load('vicecity/index.html');
+load('miami-nights/index.html');
 const step = (n, each = '') => run(`for (let i = 0; i < ${n}; i++) { ${each}; update(0.016); render(0.016); }`);
 
 test('on foot in street view, W walks along the facing direction', () => {

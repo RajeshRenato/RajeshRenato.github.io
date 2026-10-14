@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffd166'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ER%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>ROAD RASH — neon bike combat racing</title>
+<title>Midnight Racing</title>
 <style>
   * { box-sizing:border-box; }
   html, body { margin:0; height:100%; overflow:hidden; background:#07041a; }
@@ -13,13 +13,13 @@
   a.back { position:fixed; top:12px; left:14px; color:#ff6fb0; font:12px 'Courier New',monospace;
            text-decoration:none; opacity:.7; z-index:5; }
 </style>
-<meta property="og:title" content="ROAD RASH — browser game">
-<meta property="og:description" content="Pseudo-3D motorcycle combat racing — punch rivals off their bikes, dodge traffic, win cash, climb the levels.">
+<meta property="og:title" content="Midnight Racing">
+<meta property="og:description" content="Road Rash-style bike combat racing at midnight. Punch and kick rivals, dodge two-way traffic, and race a friend&#39;s ghost.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rajeshrenato.github.io/playground/road-rash/">
-<meta property="og:image" content="https://rajeshrenato.github.io/playground/road-rash/og.png">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/midnight-racing/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/midnight-racing/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="Pseudo-3D motorcycle combat racing — punch rivals off their bikes, dodge traffic, win cash, climb the levels.">
+<meta name="description" content="Road Rash-style bike combat racing at midnight. Punch and kick rivals, dodge two-way traffic, and race a friend&#39;s ghost.">
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -105,7 +105,12 @@ function menuTap(x, y) {
 canvas.addEventListener('pointerdown', e => {
   if (e.pointerType === 'touch') Touch.on = true;
   if (G.state === 'menu') { menuTap(e.clientX, e.clientY); return; }
-  if (G.state === 'over') { Pressed['Enter'] = true; return; }
+  if (G.state === 'over') {
+    const r = shareRect;
+    if (r && e.clientX >= r.x && e.clientX <= r.x + r.w && e.clientY >= r.y && e.clientY <= r.y + r.h) shareGhost();
+    else Pressed['Enter'] = true;
+    return;
+  }
   if (!Touch.on) return;
   const k = touchHit(e.clientX, e.clientY);
   if (k === 'punch') { Pressed[' '] = true; return; }
@@ -257,7 +262,7 @@ const DIFFS = {
 const BIKES = [
   { name: 'RAT BIKE', cost: 0, top: 1.0, acc: 1.0, grip: 1.0 },
   { name: 'STREET HAWK', cost: 800, top: 1.12, acc: 1.3, grip: 1.15 },
-  { name: 'NEON GP', cost: 2500, top: 1.26, acc: 1.6, grip: 1.3 }
+  { name: 'NIGHTHAWK GP', cost: 2500, top: 1.26, acc: 1.6, grip: 1.3 }
 ];
 
 const G = {
@@ -271,18 +276,87 @@ const G = {
 };
 G.diff = clamp(G.diff, 1, 3);
 G.bike = clamp(G.bike, 0, BIKES.length - 1);
+// ghosts: track position and lane sampled every GHOST_DT, packed into the URL
+const GHOST_DT = 0.2;
+let rec = [], recNext = 0, myGhost = null, ghost = null, ghostSaved = null, ghostResult = null, shareRect = null;
+
+function b64urlEncode(bytes) {
+  let s = '';
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlDecode(str) {
+  const s = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  const out = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+  return out;
+}
+// header: version, level, difficulty, finish time in centiseconds (3 bytes); then position delta / 16 and lane per sample
+function encodeGhost(g) {
+  const cs = Math.min(0xffffff, Math.round(g.t * 100));
+  const bytes = [1, Math.min(255, g.level), g.diff, (cs >> 16) & 255, (cs >> 8) & 255, cs & 255];
+  let q = 0;
+  for (const [pos, x] of g.samples) {
+    const d = Math.max(0, Math.min(255, Math.round((pos - q) / 16)));
+    q += d * 16;
+    bytes.push(d, Math.max(0, Math.min(255, Math.round(x * 70) + 128)));
+  }
+  return b64urlEncode(Uint8Array.from(bytes));
+}
+function decodeGhost(str) {
+  try {
+    const b = b64urlDecode(str);
+    if (b.length < 8 || b[0] !== 1 || (b.length - 6) % 2 || b[1] < 1 || b[2] < 1 || b[2] > 3) return null;
+    const g = { level: b[1], diff: b[2], t: ((b[3] << 16) | (b[4] << 8) | b[5]) / 100, samples: [] };
+    let q = 0;
+    for (let i = 6; i < b.length; i += 2) { q += b[i] * 16; g.samples.push([q, (b[i + 1] - 128) / 70]); }
+    return g;
+  } catch (e) { return null; }
+}
+function ghostAt(g, t) {
+  const f = Math.max(0, t) / GHOST_DT, i = Math.floor(f), n = g.samples.length;
+  if (i >= n - 1) return { pos: g.samples[n - 1][0], x: g.samples[n - 1][1], done: true };
+  const a = g.samples[i], b = g.samples[i + 1], k = f - i;
+  return { pos: a[0] + (b[0] - a[0]) * k, x: a[1] + (b[1] - a[1]) * k, done: false };
+}
+function startGhost(g) {
+  ghost = g;
+  ghostSaved = { level: G.level, diff: G.diff };
+  G.level = g.level; G.diff = g.diff;
+}
+function endGhost() {
+  if (!ghost) return;
+  G.level = ghostSaved.level; G.diff = ghostSaved.diff;
+  ghost = null; ghostSaved = null; ghostResult = null;
+  try { history.replaceState(null, '', location.pathname); } catch (e) { }
+}
+async function shareGhost() {
+  if (!myGhost) return;
+  const url = location.origin + location.pathname + '#ghost=' + encodeGhost(myGhost);
+  try {
+    await navigator.clipboard.writeText(url);
+    msg('Ghost link copied. Send it to a friend.', '#7dffc9');
+  } catch (e) {
+    try { history.replaceState(null, '', url); } catch (err) { }
+    msg('Copy the link from the address bar', '#ffd166');
+  }
+}
+
 function save() {
   try {
-    localStorage.setItem('rr_level', String(G.level));
+    localStorage.setItem('rr_level', String(ghostSaved ? ghostSaved.level : G.level));
     localStorage.setItem('rr_cash', String(G.cash));
-    localStorage.setItem('rr_diff', String(G.diff));
+    localStorage.setItem('rr_diff', String(ghostSaved ? ghostSaved.diff : G.diff));
     localStorage.setItem('rr_bike', String(G.bike));
   } catch (e) { }
 }
 function diff() { return DIFFS[G.diff]; }
 function bike() { return BIKES[G.bike]; }
 function PMAX() { return MAXS * bike().top; }
-function msg(text, color) { G.msgs.push({ text, color: color || '#fff', t: 2.6 }); }
+function msg(text, color) {
+  G.msgs.push({ text, color: color || '#fff', t: 2.6 });
+  if (G.msgs.length > 4) G.msgs.shift();
+}
 
 // particles
 // world sparks live on the track (pos/off, h = height above road, world units);
@@ -332,6 +406,7 @@ const P = {
 let rivals = [], traffic = [], cop = null;
 
 function resetRace() {
+  rec = []; recNext = 0;
   buildTrack(G.level);
   P.pos = 0; P.x = 0; P.speed = 0; P.hp = 100;
   P.state = 'ride'; P.crashT = 0; P.invuln = 0; P.punchT = 0; P.kickT = 0;
@@ -447,7 +522,7 @@ function crashPlayer(why) {
     const fine = Math.min(100, G.cash + G.raceCash);
     if (fine > 0) {
       G.raceCash -= fine;
-      msg('OFFICER MACK: reckless riding — $' + fine + ' fine', '#7fb4ff');
+      msg('OFFICER MACK: reckless riding. $' + fine + ' fine', '#7fb4ff');
     }
   }
 }
@@ -462,7 +537,8 @@ function update(dt) {
 
   if (G.state === 'menu') {
     for (const d of ['1', '2', '3']) {
-      if (pressed(d)) { G.diff = +d; save(); msg(diff().name + ' — ' + (G.diff === 1 ? 'no oncoming traffic' : G.diff === 2 ? 'oncoming traffic joins in' : 'heavy traffic, armed pack, police'), diff().color); }
+      if (pressed(d) && ghost) msg("Ghost races use the ghost's difficulty", '#ffd166');
+      else if (pressed(d)) { G.diff = +d; save(); msg(diff().name + ': ' + (G.diff === 1 ? 'no oncoming traffic' : G.diff === 2 ? 'oncoming traffic joins in' : 'heavy traffic, armed pack, police'), diff().color); }
     }
     if (pressed('b')) {
       const next = BIKES[G.bike + 1];
@@ -481,11 +557,13 @@ function update(dt) {
   } else if (G.state === 'race') {
     G.raceT += dt;
     updatePlayer(dt);
+    while (G.raceT >= recNext) { rec.push([P.pos, P.x]); recNext += GHOST_DT; }
     updateField(dt, true);
     if (!G.finished && P.pos >= finishZ) finishRace();
     if (pressed('r')) { resetRace(); G.state = 'count'; G.countT = 3.2; }
   } else if (G.state === 'over') {
-    if (pressed('Enter')) { resetRace(); G.state = 'count'; G.countT = 3.2; }
+    if (pressed('g')) shareGhost();
+    if (pressed('Enter')) { endGhost(); resetRace(); G.state = 'count'; G.countT = 3.2; }
   }
   for (const k in Pressed) Pressed[k] = false;
   Snd.setEngine(G.state === 'race' || G.state === 'count', P.speed / MAXS);
@@ -495,10 +573,13 @@ function finishRace() {
   G.finished = true;
   G.finishRank = rankOf();
   G.finishT = G.raceT;
+  rec.push([P.pos, P.x]);
+  myGhost = { level: G.level, diff: G.diff, t: G.finishT, samples: rec.slice() };
+  ghostResult = ghost ? G.finishT - ghost.t : null;
   const prize = Math.round(([300, 200, 140, 90, 60, 40, 25, 15][G.finishRank - 1] || 10) * diff().prize);
   G.raceCash += prize;
   G.cash = Math.max(0, G.cash + G.raceCash);
-  if (G.finishRank <= 3) G.level++;
+  if (G.finishRank <= 3 && !ghost) G.level++;
   save();
   G.state = 'over';
 }
@@ -614,7 +695,7 @@ function updateField(dt, combat) {
     o.wasAhead = ahead;
 
     // rival throws punches back
-    if (combat && P.state === 'ride') {
+    if (combat && P.state === 'ride' && G.raceT > 3) {
       o.punchCd -= dt;
       const dz = o.pos - P.pos;
       if (o.punchCd <= 0 && Math.abs(dz) < 300 && Math.abs(o.off - P.x) < 0.42) {
@@ -667,13 +748,13 @@ function project(worldX, worldY, z) {
 function drawSky() {
   const horY = H * 0.55;
   const g = ctx.createLinearGradient(0, 0, 0, horY);
-  g.addColorStop(0, '#05030f');
-  g.addColorStop(0.45, '#1b0b3c');
-  g.addColorStop(0.8, '#3c1162');
-  g.addColorStop(1, '#6b1e6e');
+  g.addColorStop(0, '#020309');
+  g.addColorStop(0.5, '#080d26');
+  g.addColorStop(0.85, '#141c45');
+  g.addColorStop(1, '#232a5c');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, horY);
-  ctx.fillStyle = '#6b1e6e';
+  ctx.fillStyle = '#232a5c';
   ctx.fillRect(0, horY - 1, W, H - horY + 1);
 
   for (let i = 0; i < 70; i++) {
@@ -686,24 +767,21 @@ function drawSky() {
   }
   ctx.globalAlpha = 1;
 
-  const sunX = W * 0.5 - (segAt(P.pos).curve * 30) - (P.x * 40);
-  const sunY = horY - H * 0.16, R = Math.min(W, H) * 0.12;
-  const halo = ctx.createRadialGradient(sunX, sunY, R * 0.4, sunX, sunY, R * 2.6);
-  halo.addColorStop(0, 'rgba(255,120,170,0.33)');
-  halo.addColorStop(1, 'rgba(255,120,170,0)');
+  const mx = W * 0.68 - (segAt(P.pos).curve * 30) - (P.x * 40);
+  const my = horY - H * 0.34, R = Math.min(W, H) * 0.055;
+  const halo = ctx.createRadialGradient(mx, my, R * 0.8, mx, my, R * 4.5);
+  halo.addColorStop(0, 'rgba(170,190,255,0.22)');
+  halo.addColorStop(1, 'rgba(170,190,255,0)');
   ctx.fillStyle = halo;
-  ctx.fillRect(sunX - R * 2.6, sunY - R * 2.6, R * 5.2, R * 5.2);
-  const sg = ctx.createLinearGradient(0, sunY - R, 0, sunY + R);
-  sg.addColorStop(0, '#ffe08a'); sg.addColorStop(0.55, '#ffb05c'); sg.addColorStop(1, '#ff4fa3');
-  ctx.save();
-  ctx.beginPath(); ctx.arc(sunX, sunY, R, 0, 7); ctx.clip();
-  ctx.fillStyle = sg; ctx.fillRect(sunX - R, sunY - R, R * 2, R * 2);
-  ctx.fillStyle = '#2a1050';
-  for (let i = 0; i < 6; i++) {
-    const by = sunY + R * 0.05 + i * R * 0.16;
-    ctx.fillRect(sunX - R, by, R * 2, 1.5 + i * 1.6);
+  ctx.fillRect(mx - R * 4.5, my - R * 4.5, R * 9, R * 9);
+  const mg = ctx.createRadialGradient(mx - R * 0.35, my - R * 0.35, R * 0.1, mx, my, R);
+  mg.addColorStop(0, '#fbfaf2'); mg.addColorStop(1, '#cfd3e2');
+  ctx.fillStyle = mg;
+  ctx.beginPath(); ctx.arc(mx, my, R, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(150,158,182,0.45)';
+  for (const [cx, cy, cr] of [[-0.3, -0.2, 0.22], [0.25, 0.15, 0.16], [0.05, 0.45, 0.12], [-0.38, 0.32, 0.09], [0.38, -0.38, 0.08]]) {
+    ctx.beginPath(); ctx.arc(mx + cx * R, my + cy * R, cr * R, 0, 7); ctx.fill();
   }
-  ctx.restore();
 
   for (let i = 0; i < 14; i++) {
     const bx = ((i * 419 - P.pos * 0.002) % (W + 400) + W + 400) % (W + 400) - 200;
@@ -728,13 +806,13 @@ function drawSky() {
       ctx.closePath(); ctx.fill();
     }
   }
-  ctx.fillStyle = 'rgba(255,79,163,0.1)';
+  ctx.fillStyle = 'rgba(120,140,255,0.1)';
   ctx.fillRect(0, horY - 10, W, 10);
-  ctx.fillStyle = 'rgba(255,79,163,0.3)';
+  ctx.fillStyle = 'rgba(255,79,163,0.28)';
   ctx.fillRect(0, horY - 2, W, 3);
 }
 
-const FOGC = '#5b1a63';
+const FOGC = '#232a5c';
 function fogAlpha(n) { return 1 - Math.exp(-(n / DRAW) * 3.2); }
 
 function poly(x1, y1, x2, y2, x3, y3, x4, y4, style) {
@@ -833,8 +911,8 @@ function render() {
   strokePolyline(edgeL); strokePolyline(edgeR);
   // vanishing-point bloom
   const bloom = ctx.createRadialGradient(farX, farY, 2, farX, farY, Math.min(W, H) * 0.4);
-  bloom.addColorStop(0, 'rgba(255,140,190,0.2)');
-  bloom.addColorStop(1, 'rgba(255,140,190,0)');
+  bloom.addColorStop(0, 'rgba(150,170,255,0.16)');
+  bloom.addColorStop(1, 'rgba(150,170,255,0)');
   ctx.fillStyle = bloom;
   ctx.fillRect(farX - W * 0.4, farY - H * 0.25, W * 0.8, H * 0.5);
 
@@ -854,6 +932,12 @@ function render() {
     const si = Math.floor(f.pos / SEG);
     if (!bySeg.has(si)) bySeg.set(si, []);
     bySeg.get(si).push({ kind: 'fx', o: f });
+  }
+  if (ghost && (G.state === 'race' || G.state === 'count')) {
+    const gp = ghostAt(ghost, G.state === 'race' ? G.raceT : 0);
+    const si = Math.floor(gp.pos / SEG);
+    if (!bySeg.has(si)) bySeg.set(si, []);
+    bySeg.get(si).push({ kind: 'ghost', o: { pos: gp.pos, off: gp.x } });
   }
   if (cop && cop.pos > 0) {
     const si = Math.floor(cop.pos / SEG);
@@ -879,6 +963,17 @@ function render() {
         const ex = sx + e.o.off * sw;
         const k = sw / RW;         // px per world unit
         if (e.kind === 'car') drawCar(ex, sy, k, e.o);
+        else if (e.kind === 'ghost') {
+          ctx.globalAlpha = 0.45;
+          drawBikeSprite(ex, sy, k, '#e8e8f5', 0, '#8a8aa8', {});
+          ctx.globalAlpha = 1;
+          if (n < 30 && k > 0.04) {
+            ctx.font = 'bold ' + Math.max(9, 110 * k) + 'px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(232,232,245,0.8)';
+            ctx.fillText('GHOST', ex, sy - 560 * k);
+          }
+        }
         else if (e.kind === 'cop') {
           drawBikeSprite(ex, sy, k, '#e9edf2', Math.sin(G.time * 2.5) * 0.08, '#1d2f52', { cop: true });
           if (n < 24 && k > 0.05) {
@@ -1322,12 +1417,12 @@ function drawHUD() {
   ctx.textAlign = 'left';
   ctx.font = 'bold 20px monospace';
   ctx.fillStyle = '#7dffc9';
-  ctx.fillText('$' + (G.cash + G.raceCash), 16, 14);
+  ctx.fillText('$' + (G.cash + G.raceCash), 16, 34);
   ctx.font = '12px monospace';
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fillText('LEVEL ' + G.level + ' · ' + diff().name + ' · ' + bike().name + ' · ' + G.raceT.toFixed(1) + 's', 16, 40);
+  ctx.fillText('LEVEL ' + G.level + ' · ' + diff().name + ' · ' + bike().name + ' · ' + G.raceT.toFixed(1) + 's', 16, 60);
 
-  // progress bar
+  // progress bar (the ghost is the white tick)
   const pw = Math.min(420, W * 0.4);
   ctx.fillStyle = 'rgba(255,255,255,0.14)';
   ctx.fillRect(W / 2 - pw / 2, 16, pw, 8);
@@ -1336,6 +1431,11 @@ function drawHUD() {
   for (const o of rivals) {
     ctx.fillStyle = o.color;
     ctx.fillRect(W / 2 - pw / 2 + pw * clamp(o.pos / finishZ, 0, 1) - 1.5, 13, 3, 6);
+  }
+  if (ghost) {
+    const gp = ghostAt(ghost, G.state === 'race' ? G.raceT : 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(W / 2 - pw / 2 + pw * clamp(gp.pos / finishZ, 0, 1) - 1.5, 11, 3, 10);
   }
 
   // health bar sits higher on touch to clear the steer buttons
@@ -1414,11 +1514,17 @@ function drawMenu() {
   ctx.font = 'italic bold ' + Math.min(96, W / 9) + 'px "Arial Black", sans-serif';
   ctx.fillStyle = '#ff4fa3';
   ctx.shadowColor = '#ff4fa3'; ctx.shadowBlur = 26;
-  ctx.fillText('ROAD RASH', W / 2, H * 0.24);
+  ctx.fillText('MIDNIGHT RACING', W / 2, H * 0.24);
   ctx.shadowBlur = 0;
   ctx.font = '18px monospace';
   ctx.fillStyle = '#28e0ff';
-  ctx.fillText('neon bike combat racing', W / 2, H * 0.24 + Math.min(96, W / 9) + 8);
+  ctx.fillText('bike combat racing after dark', W / 2, H * 0.24 + Math.min(96, W / 9) + 8);
+  if (ghost) {
+    ctx.font = 'bold 17px monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('GHOST RACE: a friend finished level ' + ghost.level + ' (' + DIFFS[ghost.diff].name.toLowerCase() + ') in ' +
+      ghost.t.toFixed(1) + 's. Beat that time.', W / 2, H * 0.42 - 40);
+  }
   // difficulty selector
   ctx.font = 'bold 20px monospace';
   for (const d of [1, 2, 3]) {
@@ -1439,14 +1545,14 @@ function drawMenu() {
   ctx.font = '15px monospace';
   ctx.fillStyle = '#28e0ff';
   ctx.fillText('YOUR BIKE: ' + bike().name +
-    (next ? '    ·    B — buy ' + next.name + ' ($' + next.cost + ')' : '    ·    top of the line'),
+    (next ? '    ·    B: buy ' + next.name + ' ($' + next.cost + ')' : '    ·    top of the line'),
     W / 2, H * 0.42 + 58);
 
   ctx.font = '15px monospace';
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   const lines = [
-    'W / ↑ — throttle      S / ↓ — brake      A / D — steer',
-    'SPACE / F — punch     E / K — kick       R restart · M mute',
+    'W / ↑ throttle      S / ↓ brake      A / D steer',
+    'SPACE / F punch     E / K kick       R restart · M mute',
     '',
     'Finish top 3 to advance a level. Knockdowns pay $15.',
     'Beat a club rider (†) and the club is yours.'
@@ -1458,7 +1564,7 @@ function drawMenu() {
   if (Math.sin(G.time * 5) > 0) {
     ctx.font = 'bold 22px monospace';
     ctx.fillStyle = '#ffd166';
-    ctx.fillText(Touch.on ? '— tap here to race —' : '— press ENTER to race —', W / 2, H * 0.58 + lines.length * 25 + 54);
+    ctx.fillText(Touch.on ? 'tap here to race' : 'press ENTER to race', W / 2, H * 0.58 + lines.length * 25 + 54);
   }
 }
 
@@ -1476,16 +1582,39 @@ function drawOver() {
   ctx.font = '17px monospace';
   ctx.fillStyle = '#fff';
   ctx.fillText('time ' + G.finishT.toFixed(1) + 's   ·   earned $' + G.raceCash + '   ·   bank $' + G.cash, W / 2, H * 0.26 + 60);
-  ctx.fillStyle = won ? '#7dffc9' : '#ffd166';
-  ctx.fillText(won ? 'Level up! Next race is longer and meaner.' : 'Top 3 advances — run it back.', W / 2, H * 0.26 + 92);
+  if (ghostResult !== null) {
+    const beat = ghostResult < 0;
+    ctx.fillStyle = beat ? '#7dffc9' : '#ff6b6b';
+    ctx.fillText(beat ? 'You beat the ghost by ' + (-ghostResult).toFixed(1) + 's'
+                      : 'The ghost was ' + ghostResult.toFixed(1) + 's faster', W / 2, H * 0.26 + 92);
+  } else {
+    ctx.fillStyle = won ? '#7dffc9' : '#ffd166';
+    ctx.fillText(won ? 'Level up! Next race is longer and meaner.' : 'Finish in the top 3 to move up a level.', W / 2, H * 0.26 + 92);
+  }
   if (Math.sin(G.time * 5) > 0) {
     ctx.font = 'bold 22px monospace';
     ctx.fillStyle = '#ffd166';
-    ctx.fillText(Touch.on ? '— tap to continue —' : '— press ENTER —', W / 2, H * 0.26 + 150);
+    ctx.fillText(Touch.on ? 'tap to continue' : 'press ENTER to continue', W / 2, H * 0.26 + 150);
+  }
+  if (myGhost) {
+    const label = Touch.on ? 'Share ghost' : 'G: copy a link to race your ghost';
+    ctx.font = 'bold 16px monospace';
+    const bw = ctx.measureText(label).width + 36, bh = 38;
+    shareRect = { x: W / 2 - bw / 2, y: H * 0.26 + 190, w: bw, h: bh };
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(shareRect.x, shareRect.y, bw, bh);
+    ctx.fillStyle = '#ffffff';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, W / 2, shareRect.y + bh / 2 + 1);
+    ctx.textBaseline = 'top';
   }
 }
 
 // boot
+const gm = /^#ghost=([A-Za-z0-9_-]+)$/.exec(location.hash || '');
+const linked = gm && decodeGhost(gm[1]);
+if (linked) startGhost(linked);
 resetRace();
 let last = performance.now();
 function frame(now) {

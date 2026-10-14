@@ -72,7 +72,7 @@ function drawMenu(ctx) {
   ctx.fillStyle = '#ff4fa3';
   ctx.shadowColor = '#ff4fa3';
   ctx.shadowBlur = 26;
-  ctx.fillText('VICE CITY', W / 2, H * 0.34);
+  ctx.fillText('MIAMI NIGHTS', W / 2, H * 0.34);
   ctx.font = '20px monospace';
   ctx.shadowColor = '#28e0ff';
   ctx.shadowBlur = 12;
@@ -82,12 +82,12 @@ function drawMenu(ctx) {
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = '15px monospace';
   const lines = [
-    'WASD / arrows — move & drive',
-    'E — enter / exit car',
-    'SPACE — handbrake (drift!)',
-    'SHIFT — sprint',
-    'V — camera: street view / top-down',
-    'M — mute',
+    'WASD / arrows: move and drive',
+    'E: get in or out of a car',
+    'SPACE: handbrake, for drifting',
+    'SHIFT: run',
+    'V: street view or top-down',
+    'M: mute',
     '',
     "Deliver packages. Dodge the cops. Mind the pedestrians... or don't."
   ];
@@ -95,7 +95,7 @@ function drawMenu(ctx) {
   if (Math.sin(Game.time * 5) > 0) {
     ctx.font = 'bold 22px monospace';
     ctx.fillStyle = '#ffd166';
-    ctx.fillText('— press ENTER or click to start —', W / 2, H * 0.5 + lines.length * 24 + 36);
+    ctx.fillText('press ENTER or click to start', W / 2, H * 0.5 + lines.length * 24 + 36);
   }
   ctx.restore();
 }

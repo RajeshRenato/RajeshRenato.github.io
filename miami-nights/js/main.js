@@ -298,7 +298,7 @@ function update(dt) {
   if (Game.state === 'menu') {
     if (keyPressed('Enter', 'Mouse0')) {
       Game.state = 'play';
-      toast('Your pink ride is right there — press E', '#28e0ff');
+      toast('Your pink ride is right there. Press E.', '#28e0ff');
     }
   } else if (Game.state === 'busted') {
     Game.bustedTimer -= dt;

@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { load, run } = require('./helpers/browser');
 
-load('road-rash/index.html');
+load('midnight-racing/index.html');
 const step = (n, each = '') => run(`for (let i = 0; i < ${n}; i++) { ${each}; update(0.016); render(); }`);
 
 test('menu: difficulty select and bike purchases', () => {
@@ -73,4 +73,55 @@ test('touch controls steer and give auto-throttle', () => {
   assert.ok(run(`Keys['d'] && Keys['w']`));
   assert.ok(run(`P.speed > 0 || P.state !== 'ride'`));
   run('Touch.pts.clear(); Touch.on = false;');
+});
+
+test('a finished race becomes a ghost link that decodes back to the same run', () => {
+  run(`Touch.on = false; Touch.pts.clear(); G.state = 'race'; P.state = 'ride'; P.pos = finishZ - 400; P.speed = MAXS;`);
+  step(60);
+  assert.strictEqual(run('G.state'), 'over');
+  assert.ok(run('myGhost.samples.length') > 5);
+  const code = run('encodeGhost(myGhost)');
+  assert.match(code, /^[A-Za-z0-9_-]+$/, 'ghost code must be URL-safe');
+  run(`globalThis.back = decodeGhost(${JSON.stringify(code)});`);
+  assert.strictEqual(run('back.level'), run('myGhost.level'));
+  assert.strictEqual(run('back.diff'), run('myGhost.diff'));
+  assert.ok(Math.abs(run('back.t') - run('myGhost.t')) < 0.011);
+  assert.strictEqual(run('back.samples.length'), run('myGhost.samples.length'));
+
+  // a long run at the fastest bike's top speed, with braking and lane changes
+  run(`globalThis.real = { level: 7, diff: 3, t: 95.4, samples: [] };
+       let pos = 0;
+       for (let i = 0; i < 480; i++) {
+         pos += MAXS * BIKES[2].top * GHOST_DT * (i % 50 < 40 ? 1 : 0.3);
+         real.samples.push([pos, Math.sin(i / 9) * 1.6]);
+       }
+       globalThis.real2 = decodeGhost(encodeGhost(real));`);
+  const worst = run('Math.max(...real.samples.map((s, i) => Math.abs(s[0] - real2.samples[i][0])))');
+  assert.ok(worst < 16, 'position drift ' + worst);
+  const lane = run('Math.max(...real.samples.map((s, i) => Math.abs(s[1] - real2.samples[i][1])))');
+  assert.ok(lane < 0.01, 'lane drift ' + lane);
+  assert.ok(run('encodeGhost(real).length') < 1400, 'link stays short');
+  assert.strictEqual(run(`decodeGhost('not-a-ghost')`), null);
+});
+
+test('racing a ghost uses its track and keeps your own level and difficulty', () => {
+  run(`globalThis.lvl0 = G.level; globalThis.diff0 = G.diff;
+       startGhost(decodeGhost(encodeGhost({ level: 4, diff: 1, t: 50, samples: [[0, 0], [3000, 0.2], [6000, 0]] })));
+       G.state = 'menu'; Pressed['Enter'] = true;`);
+  step(1);
+  assert.strictEqual(run('G.level'), 4);
+  assert.strictEqual(run('G.diff'), 1);
+  step(220);
+  assert.strictEqual(run('G.state'), 'race');
+  run('P.state = "ride"; P.pos = finishZ - 300; P.speed = MAXS;');
+  step(60);
+  assert.strictEqual(run('G.state'), 'over');
+  assert.strictEqual(typeof run('ghostResult'), 'number');
+  assert.strictEqual(run('G.level'), 4, 'a ghost race must not level you up');
+  assert.strictEqual(run(`localStorage.getItem('rr_level')`), String(run('lvl0')));
+  run(`Pressed['Enter'] = true;`);
+  step(1);
+  assert.strictEqual(run('G.level'), run('lvl0'));
+  assert.strictEqual(run('G.diff'), run('diff0'));
+  assert.strictEqual(run('ghost'), null);
 });
