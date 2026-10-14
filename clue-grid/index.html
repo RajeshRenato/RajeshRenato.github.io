@@ -73,7 +73,9 @@
   @media (max-width: 820px) {
     #app { grid-template-columns: 1fr; }
     #grid { gap: 5px; }
-    .card { font-size: clamp(9px, 2.9vw, 15px); letter-spacing: 0; }
+    .card { font-size: clamp(9px, 2.9vw, 15px); letter-spacing: 0; overflow-wrap: normal; }
+    .card.long { font-size: clamp(7px, 2.2vw, 13px); }
+    #log { order: -1; max-height: 150px; }
   }
 </style>
 <meta property="og:title" content="Clue Grid">
@@ -419,6 +421,7 @@ function renderGrid() {
     else if (V.key && V.phase === 'over') cls += ' over-' + V.key[i];
     else if (V.key && V.key[i] !== 'n') cls += ' k-' + V.key[i];
     if (!rev && guess) cls += ' can';
+    if (w.length >= 8) cls += ' long';
     return '<button class="' + cls + '" data-i="' + i + '"' + (!rev && guess ? '' : ' tabindex="-1"') + '>' + esc(w) + '</button>';
   }).join('');
   if (guess) for (const b of g.querySelectorAll('.card.can')) b.onclick = () => act({ t: 'tap', i: +b.dataset.i });

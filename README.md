@@ -1,6 +1,6 @@
 # Playground
 
-65 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+68 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/playground/
 
@@ -8,7 +8,7 @@ MIT licensed. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRI
 
 New every day: [daily puzzles](daily/), with today's Penta, Sudoku, and Arrow Flux and one streak across all three.
 
-Six of the games play online with friends and no server: [Cycle Duel](cycle-duel/), [Type Race](type-race/), [Sketch & Guess](sketch-guess/), [Four in a Row](four-in-a-row/), [Checkers](checkers/), and [Clue Grid](clue-grid/). Browsers connect directly through links, using a small kit you can reuse: [LinkPlay](linkplay/).
+Eight of these work online with friends and no server: [Cycle Duel](cycle-duel/), [Type Race](type-race/), [Sketch & Guess](sketch-guess/), [Four in a Row](four-in-a-row/), [Checkers](checkers/), [Clue Grid](clue-grid/), [Trivia Night](trivia-night/), and [Whiteboard](whiteboard/). Browsers connect directly through links, using a small kit you can reuse: [LinkPlay](linkplay/).
 
 ## Highlights
 
@@ -58,6 +58,8 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | [four-in-a-row](four-in-a-row/) | Connect Four-style. Play a friend online with a link, on one screen, or against a bot |
 | [checkers](checkers/) | Forced captures, multi-jumps, and kings. Play a friend online, on one screen, or against a bot |
 | [clue-grid](clue-grid/) | A Codenames-style word game for two teams. Spymasters give one-word clues. 4 to 8 players |
+| [trivia-night](trivia-night/) | A trivia quiz for friends over a link. 320 questions in 8 categories, or play alone |
+| [whiteboard](whiteboard/) | Draw, sketch shapes, and write notes together over a link. Save the board as a PNG |
 
 ### Games
 
@@ -94,6 +96,7 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 
 | Project | What it is |
 | --- | --- |
+| [pdf-toolkit](pdf-toolkit/) | Merge, split, reorder, rotate, and delete PDF pages. Everything stays on your device |
 | [linkplay](linkplay/) | A small kit for making browser games multiplayer with links and no server. All the online games here use it |
 | [file-send](file-send/) | Send files straight to a friend's browser. Nothing is uploaded |
 | [secret-note](secret-note/) | Write a note and get a link with it encrypted inside. Nothing is stored |

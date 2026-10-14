@@ -125,7 +125,7 @@
 <div class="page">
 <header>
   <h1 aria-label="Playground"><i style="--t:#ff4fa3">P</i><i style="--t:#28e0ff">L</i><i style="--t:#ffd166">A</i><i style="--t:#64ffb4">Y</i><i style="--t:#c77bff">G</i><i style="--t:#ff8a5c">R</i><i style="--t:#7f8cff">O</i><i style="--t:#39ff9c">U</i><i style="--t:#ff6fb0">N</i><i style="--t:#45d9e8">D</i></h1>
-  <p class="lede">65 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.</p>
+  <p class="lede">68 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.</p>
   <p class="lede">Every thumbnail below is drawn live by the page. Hover one and it moves. The source is <a href="https://github.com/RajeshRenato/playground">on GitHub</a> and pull requests are welcome.</p>
 </header>
 
@@ -142,7 +142,7 @@
   <li><a href="arrow-flux/" style="--c:#28e0ff" data-t="arrow"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arrow Flux</strong><span>Slide tangled arrows off a packed board. The generator builds every board in solution order, so each one is provably solvable.</span></div></a></li>
 </ul>
 
-<h2>Play online<small>6</small></h2>
+<h2>Play online<small>8</small></h2>
 <ul class="list">
   <li><a href="cycle-duel/" style="--c:#28e0ff" data-t="cycle"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cycle Duel</strong><span>Light-cycle duels. Play a friend online with just a link, or on one keyboard.</span></div></a></li>
   <li><a href="type-race/" style="--c:#ffd166" data-t="typerace"><canvas width="304" height="171"></canvas><div class="txt"><strong>Type Race</strong><span>Typing races with friends over a link, no server. Or race your own best pace.</span></div></a></li>
@@ -150,6 +150,8 @@
   <li><a href="four-in-a-row/" style="--c:#ffc93c" data-t="four"><canvas width="304" height="171"></canvas><div class="txt"><strong>Four in a Row</strong><span>Connect Four-style. Play a friend online with a link, on one screen, or against a bot.</span></div></a></li>
   <li><a href="checkers/" style="--c:#e04848" data-t="checkers"><canvas width="304" height="171"></canvas><div class="txt"><strong>Checkers</strong><span>Forced captures, multi-jumps, and kings. Play a friend online, on one screen, or against a bot.</span></div></a></li>
   <li><a href="clue-grid/" style="--c:#3e7bfa" data-t="cluegrid"><canvas width="304" height="171"></canvas><div class="txt"><strong>Clue Grid</strong><span>A Codenames-style word game for two teams. Spymasters give one-word clues. 4 to 8 players.</span></div></a></li>
+  <li><a href="trivia-night/" style="--c:#ffb703" data-t="trivia"><canvas width="304" height="171"></canvas><div class="txt"><strong>Trivia Night</strong><span>A trivia quiz for friends over a link. 320 questions in 8 categories, or play alone.</span></div></a></li>
+  <li><a href="whiteboard/" style="--c:#1e88e5" data-t="whiteboard"><canvas width="304" height="171"></canvas><div class="txt"><strong>Whiteboard</strong><span>Draw, sketch shapes, and write notes together over a link. Save the board as a PNG.</span></div></a></li>
 </ul>
 
 <h2>Games<small>13</small></h2>
@@ -181,8 +183,9 @@
   <li><a href="penta/" style="--c:#39ff9c" data-t="penta"><canvas width="304" height="171"></canvas><div class="txt"><strong>Penta</strong><span>A five-letter word game with win streaks and emoji sharing.</span></div></a></li>
 </ul>
 
-<h2>Tools<small>25</small></h2>
+<h2>Tools<small>26</small></h2>
 <ul class="list">
+  <li><a href="pdf-toolkit/" style="--c:#e5484d" data-t="pdf"><canvas width="304" height="171"></canvas><div class="txt"><strong>PDF Toolkit</strong><span>Merge, split, reorder, rotate, and delete PDF pages. Everything stays on your device.</span></div></a></li>
   <li><a href="linkplay/" style="--c:#7dffc9" data-t="linkplay"><canvas width="304" height="171"></canvas><div class="txt"><strong>LinkPlay</strong><span>A small kit for making browser games multiplayer with links and no server. All the online games here use it.</span></div></a></li>
   <li><a href="file-send/" style="--c:#39ff9c" data-t="filesend"><canvas width="304" height="171"></canvas><div class="txt"><strong>File Send</strong><span>Send files straight to a friend's browser. Nothing is uploaded.</span></div></a></li>
   <li><a href="secret-note/" style="--c:#c77bff" data-t="secret"><canvas width="304" height="171"></canvas><div class="txt"><strong>Secret Note</strong><span>Write a note and get a link with it encrypted inside. Nothing is stored.</span></div></a></li>
@@ -745,6 +748,67 @@ cluegrid(g, w, h, c, t) {
   g.font = 'bold 15px system-ui, sans-serif'; g.fillStyle = '#3e7bfa'; g.textAlign = 'left';
   g.fillText('WATER 3', gx, 26);
   g.fillStyle = '#8e94a6'; g.font = '11px system-ui, sans-serif'; g.fillText('blue is guessing', gx + 72, 26);
+},
+
+trivia(g, w, h, c, t) {
+  bgFill(g, w, h, '#10202a');
+  g.fillStyle = '#18303d'; g.beginPath(); g.roundRect(20, 18, w - 40, 8, 4); g.fill();
+  const left = t ? 1 - (t * 0.25) % 1 : 0.62;
+  g.fillStyle = '#ffb703'; g.beginPath(); g.roundRect(20, 18, (w - 40) * left, 8, 4); g.fill();
+  g.fillStyle = '#f1efe6'; g.font = '700 14px system-ui, sans-serif'; g.textAlign = 'left';
+  g.fillText('Which planet has the shortest year?', 20, 50);
+  const opts = ['Mercury', 'Venus', 'Mars', 'Earth'], cols = ['#ff6b6b', '#4ea8ff', '#ffb703', '#3ccf7a'];
+  const revealed = t && (t * 0.25) % 1 > 0.7;
+  opts.forEach((o, i) => {
+    const x = 20 + (i % 2) * 136, y = 64 + Math.floor(i / 2) * 46;
+    g.fillStyle = revealed && i === 0 ? '#1f4a3a' : '#18303d';
+    g.strokeStyle = revealed && i === 0 ? '#3ccf7a' : '#27424f'; g.lineWidth = 2;
+    g.beginPath(); g.roundRect(x, y, 128, 38, 7); g.fill(); g.stroke();
+    g.fillStyle = cols[i]; g.beginPath(); g.roundRect(x + 8, y + 9, 20, 20, 4); g.fill();
+    g.fillStyle = '#10202a'; g.font = '700 11px system-ui, sans-serif'; g.fillText('ABCD'[i], x + 14, y + 23);
+    g.fillStyle = '#f1efe6'; g.font = '600 12px system-ui, sans-serif'; g.fillText(o, x + 36, y + 23);
+  });
+},
+
+whiteboard(g, w, h, c, t) {
+  bgFill(g, w, h, '#e4e8ee');
+  g.fillStyle = '#fff'; g.beginPath(); g.roundRect(16, 14, w - 32, h - 28, 8); g.fill();
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  g.strokeStyle = '#1e88e5'; g.lineWidth = 3;
+  g.strokeRect(40, 40, 70, 44);
+  g.beginPath(); g.moveTo(112, 62); g.lineTo(168, 62); g.moveTo(160, 56); g.lineTo(168, 62); g.lineTo(160, 68); g.stroke();
+  g.strokeStyle = '#2a9d4b'; g.beginPath(); g.ellipse(208, 62, 34, 22, 0, 0, 7); g.stroke();
+  g.fillStyle = '#1b2230'; g.font = '600 12px system-ui, sans-serif'; g.fillText('idea', 60, 66); g.fillText('ship', 195, 66);
+  const prog = t ? (t * 0.5) % 1.4 : 1;
+  g.strokeStyle = '#e5383b'; g.lineWidth = 3;
+  g.beginPath();
+  for (let i = 0; i <= 40 * Math.min(1, prog); i++) { const x = 50 + i * 5, y = 120 + Math.sin(i * 0.5) * 10; i ? g.lineTo(x, y) : g.moveTo(x, y); }
+  g.stroke();
+  const cx = 50 + 200 * Math.min(1, prog), cy = 120 + Math.sin(40 * Math.min(1, prog) * 0.5) * 10;
+  g.fillStyle = '#ff4fa3'; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + 4, cy + 14); g.lineTo(cx + 8, cy + 9); g.lineTo(cx + 14, cy + 9); g.closePath(); g.fill();
+  g.font = '10px system-ui, sans-serif'; g.fillText('Bo', cx + 12, cy + 22);
+},
+
+pdf(g, w, h, c, t) {
+  bgFill(g, w, h, '#16161a');
+  const sheets = [['#e5484d', 0], ['#2f6fd8', 1], ['#e5484d', 2], ['#1f9d6a', 3]];
+  const swap = t ? Math.min(1, Math.max(0, ((t * 0.6) % 2) - 0.6)) : 0;
+  const pos = i => (i === 1 ? 1 + swap : i === 2 ? 2 - swap : i);
+  sheets.forEach(([col, i]) => {
+    const x = 34 + pos(i) * 62, y = 36 - (i === 1 || i === 2 ? Math.sin(swap * Math.PI) * 10 : 0);
+    const turned = i === 3;
+    const sw = turned ? 64 : 48, sh = turned ? 48 : 64;
+    g.fillStyle = '#ecebe4'; g.fillRect(x + (48 - sw) / 2, y + (64 - sh) / 2 + 8, sw, sh);
+    g.fillStyle = col;
+    if (turned) g.fillRect(x + (48 - sw) / 2 + sw - 4, y + 16, 4, sh); else g.fillRect(x, y + 8, sw, 4);
+    g.fillStyle = '#c9c5b8';
+    for (let k = 0; k < 4; k++) g.fillRect(x + (48 - sw) / 2 + 7, y + (64 - sh) / 2 + 20 + k * 7, sw - 14, 2);
+    g.fillStyle = '#1a1a18'; g.font = 'bold 13px system-ui, sans-serif'; g.textAlign = 'center';
+    g.fillText(String(i + 1), x + 24, y + 48);
+  });
+  g.fillStyle = c; g.beginPath(); g.roundRect(w / 2 - 70, h - 46, 140, 28, 7); g.fill();
+  g.fillStyle = '#fff'; g.font = '600 12px system-ui, sans-serif'; g.textAlign = 'center';
+  g.fillText('Save as one PDF', w / 2, h - 28);
 },
 
 snake(g, w, h, c, t) {

@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e5484d'/%3E%3Ctext x='16' y='22' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='13' text-anchor='middle' fill='%23ffffff'%3EPDF%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>PDF Toolkit</title>
+<style>
+  :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#d8392f; --sheet:#ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121214; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; --card:#1b1b1f; --accent:#ff6b62; --sheet:#ecebe4; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         line-height:1.5; padding:48px 20px 64px; }
+  main { max-width:1080px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; z-index:5; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  .lede { font-size:17px; margin:0 0 18px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .drop { border:2px dashed var(--rule); border-radius:12px; padding:26px 16px; text-align:center; cursor:pointer; background:var(--card); }
+  .drop.over { border-color:var(--accent); }
+  .drop strong { display:block; font-size:17px; }
+  button { font:inherit; font-weight:600; font-size:14px; padding:8px 13px; border-radius:8px; cursor:pointer;
+           border:1.5px solid var(--ink); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { background:var(--ink); color:var(--paper); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--ink); color:var(--paper); }
+  button.primary:hover:not(:disabled) { opacity:.85; }
+  button:focus-visible, input:focus-visible, .drop:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:18px 0 6px; }
+  .bar .grow { flex:1; min-width:10px; }
+  #summary { font-weight:600; }
+  #errors { color:var(--accent); margin:10px 0 0; padding-left:18px; }
+  #tiles { list-style:none; margin:14px 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px; }
+  .tile { background:var(--card); border:1.5px solid var(--rule); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px; }
+  .tile.sel { border-color:var(--ink); box-shadow:0 0 0 1.5px var(--ink); }
+  .tile.dragging { opacity:.4; }
+  .tile.before { box-shadow:-4px 0 0 var(--accent); }
+  .tile.after { box-shadow:4px 0 0 var(--accent); }
+  .stage { height:130px; display:flex; align-items:center; justify-content:center; cursor:grab; }
+  .sheet { position:relative; background:var(--sheet); border:1px solid #c9c7bd; border-radius:2px; box-shadow:0 2px 6px rgba(0,0,0,.12);
+           display:flex; align-items:center; justify-content:center; color:#1a1a18; font-weight:800; font-size:22px; }
+  .sheet .stripe { position:absolute; left:0; right:0; top:0; height:5px; }
+  .sheet .lines { position:absolute; inset:16px 12px 12px; background:repeating-linear-gradient(#d8d5ca 0 2px, transparent 2px 9px); opacity:.6; }
+  .sheet span { position:relative; background:var(--sheet); padding:0 4px; border-radius:3px; }
+  .tile label { display:flex; gap:6px; align-items:center; font-weight:600; font-size:14px; }
+  .tile .meta { font-size:12px; color:var(--muted); line-height:1.35; overflow:hidden; }
+  .tile .meta div { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tools { display:flex; gap:4px; flex-wrap:wrap; }
+  .tools button { padding:3px 7px; font-size:13px; border-width:1px; min-width:30px; }
+  #view { position:fixed; inset:0; background:rgba(10,10,12,.9); z-index:10; display:flex; flex-direction:column; padding:16px; }
+  #view .top { display:flex; gap:12px; align-items:center; color:#e8e8e2; margin-bottom:10px; flex-wrap:wrap; }
+  #view .top span { flex:1; font-size:14px; }
+  #view .top button { background:#e8e8e2; color:#121214; border-color:#e8e8e2; }
+  #view iframe { flex:1; width:100%; border:0; background:#fff; border-radius:6px; }
+  .note { font-size:14px; color:var(--muted); margin-top:26px; }
+  [hidden] { display:none !important; }
+  @media (max-width:560px) {
+    #tiles { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+    .stage { height:110px; }
+    h1 { font-size:28px; }
+  }
+</style>
+<meta property="og:title" content="PDF Toolkit">
+<meta property="og:description" content="Merge, split, reorder, rotate, and delete PDF pages in your browser. Nothing is uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/pdf-toolkit/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/pdf-toolkit/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Merge, split, reorder, rotate, and delete PDF pages in your browser. Nothing is uploaded.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>PDF Toolkit</h1>
+  <p class="lede">Merge PDFs, pull out pages, split a file into single pages, or reorder, rotate, and delete pages. Everything happens on your device. Nothing is uploaded.</p>
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Open PDF files">
+    <strong>Drop PDFs here, or click to open</strong>
+    <span class="muted small">Open as many as you like. Their pages go into one list.</span>
+  </div>
+  <input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>
+  <ul id="errors" hidden></ul>
+  <div id="work" hidden>
+    <div class="bar">
+      <span id="summary"></span><span class="grow"></span>
+      <button id="selAll">Select all</button><button id="selNone">Select none</button>
+      <button id="rotSel">Rotate selected</button><button id="delSel">Delete selected</button>
+    </div>
+    <div class="bar">
+      <button class="primary" id="saveAll">Save as one PDF</button>
+      <button id="saveSel">Save selected pages</button>
+      <button id="split">Split into single pages</button>
+      <span class="grow"></span><button id="clear">Start over</button>
+    </div>
+    <p class="muted small" style="margin:4px 0 0">Drag pages to reorder them, or use the arrow buttons. Previews open in your browser's own PDF viewer.</p>
+    <ul id="tiles"></ul>
+  </div>
+  <p class="note">Pages are copied as they are, so text stays sharp and searchable. Bookmarks, form fields, and links that jump to other pages are not kept. Password-protected PDFs can't be opened.</p>
+</main>
+<div id="view" hidden>
+  <div class="top"><span id="viewTitle"></span><button id="viewClose">Close</button></div>
+  <iframe id="viewFrame" title="Page preview"></iframe>
+</div>
+<script>
+'use strict';
+
+// ---------- objects
+
+class Name { constructor(n) { this.n = n; } }
+class Str { constructor(b) { this.b = b; } }
+class Ref { constructor(num, gen) { this.num = num; this.gen = gen; } }
+class Kw { constructor(k) { this.k = k; } }
+class Dict {
+  constructor() { this.m = new Map(); }
+  get(k) { return this.m.get(k); }
+  set(k, v) { this.m.set(k, v); return this; }
+  has(k) { return this.m.has(k); }
+}
+class Stream { constructor(dict, data) { this.dict = dict; this.data = data; } }
+const nm = v => (v instanceof Name ? v.n : undefined);
+const N = n => new Name(n);
+
+// ---------- lexer
+
+const WS = new Uint8Array(256), DELIM = new Uint8Array(256);
+for (const c of [0, 9, 10, 12, 13, 32]) WS[c] = 1;
+for (const c of '()<>[]{}/%') DELIM[c.charCodeAt(0)] = 1;
+const isDigit = c => c >= 48 && c <= 57;
+
+class Lexer {
+  constructor(b, i = 0) { this.b = b; this.i = i; }
+  ws() {
+    const b = this.b;
+    for (;;) {
+      while (this.i < b.length && WS[b[this.i]]) this.i++;
+      if (b[this.i] !== 37) return;
+      while (this.i < b.length && b[this.i] !== 10 && b[this.i] !== 13) this.i++;
+    }
+  }
+  obj() {
+    this.ws();
+    const b = this.b, c = b[this.i];
+    if (c === undefined) throw new Error('unexpected end of data');
+    if (c === 47) return this.name();
+    if (c === 40) return this.literal();
+    if (c === 60) {
+      if (b[this.i + 1] === 60) { this.i += 2; return this.dict(); }
+      return this.hex();
+    }
+    if (c === 91) {
+      this.i++;
+      const a = [];
+      for (;;) {
+        this.ws();
+        if (this.i >= b.length) throw new Error('unclosed array');
+        if (b[this.i] === 93) { this.i++; return a; }
+        a.push(this.obj());
+      }
+    }
+    if (isDigit(c) || c === 43 || c === 45 || c === 46) {
+      const n = this.num();
+      if (Number.isInteger(n) && n >= 0) {
+        const save = this.i;
+        this.ws();
+        if (isDigit(b[this.i])) {
+          const g = this.num();
+          this.ws();
+          const after = b[this.i + 1];
+          if (b[this.i] === 82 && (after === undefined || WS[after] || DELIM[after])) { this.i++; return new Ref(n, g); }
+        }
+        this.i = save;
+      }
+      return n;
+    }
+    let s = '';
+    while (this.i < b.length && !WS[b[this.i]] && !DELIM[b[this.i]]) s += String.fromCharCode(b[this.i++]);
+    if (!s) { this.i++; return new Kw(String.fromCharCode(c)); }
+    if (s === 'true') return true;
+    if (s === 'false') return false;
+    if (s === 'null') return null;
+    return new Kw(s);
+  }
+  num() {
+    const b = this.b;
+    let s = '';
+    while (this.i < b.length && (isDigit(b[this.i]) || b[this.i] === 43 || b[this.i] === 45 || b[this.i] === 46)) s += String.fromCharCode(b[this.i++]);
+    const v = parseFloat(s.replace(/^([+-])[+-]+/, '$1'));
+    return Number.isFinite(v) ? v : 0;
+  }
+  name() {
+    const b = this.b;
+    this.i++;
+    let s = '';
+    while (this.i < b.length && !WS[b[this.i]] && !DELIM[b[this.i]]) {
+      if (b[this.i] === 35 && this.i + 2 < b.length) {
+        const h = parseInt(String.fromCharCode(b[this.i + 1], b[this.i + 2]), 16);
+        if (!Number.isNaN(h)) { s += String.fromCharCode(h); this.i += 3; continue; }
+      }
+      s += String.fromCharCode(b[this.i++]);
+    }
+    return new Name(s);
+  }
+  literal() {
+    const b = this.b, out = [];
+    let depth = 1;
+    this.i++;
+    while (this.i < b.length) {
+      let c = b[this.i++];
+      if (c === 40) depth++;
+      else if (c === 41 && --depth === 0) break;
+      else if (c === 92) {
+        c = b[this.i++];
+        const map = { 110: 10, 114: 13, 116: 9, 98: 8, 102: 12 };
+        if (map[c] !== undefined) c = map[c];
+        else if (c >= 48 && c <= 55) {
+          let v = c - 48;
+          for (let k = 0; k < 2 && b[this.i] >= 48 && b[this.i] <= 55; k++) v = v * 8 + b[this.i++] - 48;
+          c = v & 255;
+        } else if (c === 13 || c === 10) {
+          if (c === 13 && b[this.i] === 10) this.i++;
+          continue;
+        }
+      } else if (c === 13) {
+        if (b[this.i] === 10) this.i++;
+        c = 10;
+      }
+      out.push(c);
+    }
+    return new Str(Uint8Array.from(out));
+  }
+  hex() {
+    const b = this.b;
+    this.i++;
+    let s = '';
+    while (this.i < b.length && b[this.i] !== 62) {
+      const ch = String.fromCharCode(b[this.i++]);
+      if (/[0-9a-fA-F]/.test(ch)) s += ch;
+    }
+    this.i++;
+    if (s.length % 2) s += '0';
+    const out = new Uint8Array(s.length / 2);
+    for (let k = 0; k < out.length; k++) out[k] = parseInt(s.substr(k * 2, 2), 16);
+    return new Str(out);
+  }
+  dict() {
+    const b = this.b, d = new Dict();
+    for (;;) {
+      this.ws();
+      if (this.i >= b.length) throw new Error('unclosed dictionary');
+      if (b[this.i] === 62 && b[this.i + 1] === 62) { this.i += 2; return d; }
+      const k = this.obj();
+      if (!(k instanceof Name)) continue;
+      this.ws();
+      if (b[this.i] === 62 && b[this.i + 1] === 62) { this.i += 2; return d; }
+      d.set(k.n, this.obj());
+    }
+  }
+}
+
+// ---------- bytes
+
+function findBytes(b, pat, from = 0, back = false) {
+  const p = typeof pat === 'string' ? Array.from(pat, c => c.charCodeAt(0)) : pat;
+  if (back) {
+    for (let i = Math.min(from, b.length - p.length); i >= 0; i--) {
+      let k = 0;
+      while (k < p.length && b[i + k] === p[k]) k++;
+      if (k === p.length) return i;
+    }
+    return -1;
+  }
+  for (let i = from; i <= b.length - p.length; i++) {
+    if (b[i] !== p[0]) continue;
+    let k = 1;
+    while (k < p.length && b[i + k] === p[k]) k++;
+    if (k === p.length) return i;
+  }
+  return -1;
+}
+const startsWith = (b, i, s) => { for (let k = 0; k < s.length; k++) if (b[i + k] !== s.charCodeAt(k)) return false; return true; };
+function latin1(b) {
+  let s = '';
+  for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode.apply(null, b.subarray(i, i + 8192));
+  return s;
+}
+
+async function inflate(data) {
+  const res = new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate')));
+  return new Uint8Array(await res.arrayBuffer());
+}
+
+function unpredict(data, parms) {
+  const pred = parms instanceof Dict ? parms.get('Predictor') || 1 : 1;
+  if (pred < 10) return data;
+  const colors = parms.get('Colors') || 1, bpc = parms.get('BitsPerComponent') || 8, cols = parms.get('Columns') || 1;
+  const bpp = Math.max(1, Math.ceil(colors * bpc / 8)), row = Math.ceil(colors * bpc * cols / 8);
+  const rows = Math.floor(data.length / (row + 1));
+  const out = new Uint8Array(rows * row);
+  let prev = new Uint8Array(row);
+  for (let r = 0; r < rows; r++) {
+    const type = data[r * (row + 1)], src = data.subarray(r * (row + 1) + 1, (r + 1) * (row + 1)), cur = out.subarray(r * row, (r + 1) * row);
+    for (let x = 0; x < row; x++) {
+      const a = x >= bpp ? cur[x - bpp] : 0, up = prev[x], c = x >= bpp ? prev[x - bpp] : 0;
+      let v = src[x];
+      if (type === 1) v += a;
+      else if (type === 2) v += up;
+      else if (type === 3) v += (a + up) >> 1;
+      else if (type === 4) { const p = a + up - c, pa = Math.abs(p - a), pb = Math.abs(p - up), pc = Math.abs(p - c); v += pa <= pb && pa <= pc ? a : pb <= pc ? up : c; }
+      cur[x] = v & 255;
+    }
+    prev = cur;
+  }
+  return out;
+}
+
+class EncryptedError extends Error {}
+
+// ---------- reading
+
+class PdfDoc {
+  constructor(bytes, name) {
+    this.b = bytes;
+    this.name = name;
+    this.xref = new Map();
+    this.cache = new Map();
+    this.packed = new Map();
+    this.trailer = null;
+  }
+
+  async load() {
+    try {
+      await this.readXrefChain();
+      this.checkEncryption();
+      await this.unpackObjectStreams();
+      this.findPages();
+    } catch (e) {
+      if (e instanceof EncryptedError) throw e;
+      this.xref.clear(); this.cache.clear(); this.packed.clear(); this.trailer = null;
+      this.scan();
+      this.checkEncryption();
+      await this.unpackObjectStreams();
+      this.findPages();
+      this.repaired = true;
+    }
+    return this;
+  }
+
+  checkEncryption() {
+    if (this.trailer && this.trailer.has('Encrypt')) throw new EncryptedError(this.name + ' is password-protected or encrypted, so it can\'t be edited here.');
+  }
+
+  async readXrefChain() {
+    const b = this.b;
+    const sx = findBytes(b, 'startxref', b.length - 1, true);
+    if (sx < 0) throw new Error('no startxref');
+    let off = new Lexer(b, sx + 9).obj();
+    const seen = new Set();
+    while (typeof off === 'number' && !seen.has(off) && off >= 0 && off < b.length) {
+      seen.add(off);
+      let i = off;
+      while (WS[b[i]]) i++;
+      const trailer = startsWith(b, i, 'xref') ? this.readXrefTable(i + 4) : await this.readXrefStream(i);
+      if (!this.trailer) this.trailer = trailer;
+      const xs = trailer.get('XRefStm');
+      if (typeof xs === 'number' && !seen.has(xs)) { seen.add(xs); await this.readXrefStream(xs); }
+      off = trailer.get('Prev');
+    }
+    if (!this.trailer || !this.trailer.get('Root')) throw new Error('no document catalog');
+  }
+
+  readXrefTable(i) {
+    const L = new Lexer(this.b, i);
+    for (;;) {
+      const t = L.obj();
+      if (t instanceof Kw && t.k === 'trailer') break;
+      if (typeof t !== 'number') throw new Error('bad xref table');
+      const count = L.obj();
+      for (let k = 0; k < count; k++) {
+        const off = L.obj(), gen = L.obj(), kind = L.obj();
+        if (typeof off !== 'number' || !(kind instanceof Kw)) throw new Error('bad xref entry');
+        const num = t + k;
+        if (!this.xref.has(num)) this.xref.set(num, kind.k === 'n' && off > 0 ? { t: 1, off, gen } : { t: 0 });
+      }
+    }
+    const tr = L.obj();
+    if (!(tr instanceof Dict)) throw new Error('bad trailer');
+    return tr;
+  }
+
+  async readXrefStream(off) {
+    const s = this.readAt(off);
+    if (!(s instanceof Stream) || nm(s.dict.get('Type')) !== 'XRef') throw new Error('bad xref stream');
+    const data = await this.decode(s);
+    const W = s.dict.get('W'), index = s.dict.get('Index') || [0, s.dict.get('Size')];
+    let p = 0;
+    const read = w => { let v = 0; for (let k = 0; k < w; k++) v = v * 256 + data[p++]; return v; };
+    for (let j = 0; j < index.length; j += 2) {
+      for (let k = 0; k < index[j + 1]; k++) {
+        if (p >= data.length) break;
+        const type = W[0] ? read(W[0]) : 1, f2 = read(W[1]), f3 = read(W[2]);
+        const num = index[j] + k;
+        if (this.xref.has(num)) continue;
+        if (type === 1) this.xref.set(num, { t: 1, off: f2, gen: f3 });
+        else if (type === 2) this.xref.set(num, { t: 2, stm: f2, idx: f3 });
+        else this.xref.set(num, { t: 0 });
+      }
+    }
+    return s.dict;
+  }
+
+  // Rebuild the table by finding every "N G obj" in the file; the last one of each number wins.
+  scan() {
+    const s = latin1(this.b);
+    const re = /(\d+)\s+(\d+)\s+obj\b/g;
+    let m;
+    while ((m = re.exec(s))) {
+      if (m.index > 0 && /\d/.test(s[m.index - 1])) continue;
+      this.xref.set(+m[1], { t: 1, off: m.index, gen: +m[2] });
+    }
+    for (let i = s.lastIndexOf('trailer'); i >= 0; i = s.lastIndexOf('trailer', i - 1)) {
+      try {
+        const d = new Lexer(this.b, i + 7).obj();
+        if (d instanceof Dict && d.get('Root')) { this.trailer = d; break; }
+      } catch (e) { }
+    }
+    if (!this.trailer) {
+      for (const [num, e] of this.xref) {
+        let v;
+        try { v = this.readAt(e.off); } catch (err) { continue; }
+        if (v instanceof Stream && nm(v.dict.get('Type')) === 'XRef' && v.dict.get('Root')) { this.trailer = v.dict; break; }
+        if (v instanceof Dict && nm(v.get('Type')) === 'Catalog') this.trailer = new Dict().set('Root', new Ref(num, 0));
+      }
+    }
+    if (!this.trailer) throw new Error('no document catalog');
+    this.scanned = true;
+  }
+
+  async unpackObjectStreams() {
+    const streams = new Set();
+    for (const e of this.xref.values()) if (e.t === 2) streams.add(e.stm);
+    if (this.scanned) {
+      for (const [num, e] of this.xref) {
+        if (e.t !== 1) continue;
+        try { const v = this.fetch(num); if (v instanceof Stream && nm(v.dict.get('Type')) === 'ObjStm') streams.add(num); } catch (err) { }
+      }
+    }
+    for (const num of streams) {
+      const s = this.fetch(num);
+      if (!(s instanceof Stream)) continue;
+      const data = await this.decode(s);
+      const n = s.dict.get('N'), first = s.dict.get('First');
+      const L = new Lexer(data, 0);
+      const heads = [];
+      for (let k = 0; k < n; k++) heads.push([L.obj(), L.obj()]);
+      heads.forEach(([objNum, off], k) => {
+        const e = this.xref.get(objNum);
+        if (e && (e.t !== 2 || e.stm !== num)) return;
+        if (!e) this.xref.set(objNum, { t: 2, stm: num, idx: k });
+        try { this.packed.set(objNum, new Lexer(data, first + off).obj()); } catch (err) { }
+      });
+    }
+  }
+
+  async decode(s) {
+    let filters = s.dict.get('Filter'), parms = this.get(s.dict.get('DecodeParms'));
+    filters = Array.isArray(filters) ? filters : filters ? [filters] : [];
+    parms = Array.isArray(parms) ? parms : [parms];
+    let data = s.data;
+    for (let k = 0; k < filters.length; k++) {
+      const f = nm(this.get(filters[k]));
+      if (f !== 'FlateDecode' && f !== 'Fl') throw new Error('unsupported filter ' + f);
+      data = unpredict(await inflate(data), this.get(parms[k]));
+    }
+    return data;
+  }
+
+  readAt(off) {
+    const L = new Lexer(this.b, off);
+    L.obj(); L.obj();
+    const kw = L.obj();
+    if (!(kw instanceof Kw) || kw.k !== 'obj') throw new Error('expected an object at ' + off);
+    const v = L.obj();
+    if (!(v instanceof Dict)) return v;
+    L.ws();
+    if (!startsWith(this.b, L.i, 'stream')) return v;
+    let start = L.i + 6;
+    if (this.b[start] === 13) start++;
+    if (this.b[start] === 10) start++;
+    let len = v.get('Length');
+    if (len instanceof Ref) { try { len = this.get(len); } catch (e) { len = -1; } }
+    let end = typeof len === 'number' && len >= 0 ? start + len : -1;
+    if (end > 0) {
+      let k = end;
+      while (WS[this.b[k]]) k++;
+      if (!startsWith(this.b, k, 'endstream')) end = -1;
+    }
+    if (end < 0) {
+      end = findBytes(this.b, 'endstream', start);
+      if (end < 0) end = this.b.length;
+      if (this.b[end - 1] === 10) end--;
+      if (this.b[end - 1] === 13) end--;
+    }
+    return new Stream(v, this.b.subarray(start, end));
+  }
+
+  fetch(num) {
+    if (this.cache.has(num)) return this.cache.get(num);
+    const e = this.xref.get(num);
+    let v = null;
+    if (e && e.t === 1) v = this.readAt(e.off);
+    else if (e && e.t === 2) v = this.packed.has(num) ? this.packed.get(num) : null;
+    this.cache.set(num, v);
+    return v;
+  }
+
+  get(v) {
+    for (let hops = 0; v instanceof Ref && hops < 32; hops++) v = this.fetch(v.num);
+    return v instanceof Ref ? null : v;
+  }
+
+  findPages() {
+    const root = this.get(this.trailer.get('Root'));
+    if (!(root instanceof Dict)) throw new Error('no document catalog');
+    this.pages = [];
+    this.treeNums = new Set();
+    const seen = new Set();
+    const walk = (ref, inh, depth) => {
+      if (depth > 64) return;
+      if (ref instanceof Ref) { if (seen.has(ref.num)) return; seen.add(ref.num); }
+      const node = this.get(ref);
+      if (!(node instanceof Dict)) return;
+      const here = Object.assign({}, inh);
+      for (const k of ['Resources', 'MediaBox', 'CropBox', 'Rotate']) if (node.has(k)) here[k] = node.get(k);
+      const kids = this.get(node.get('Kids'));
+      if (nm(node.get('Type')) !== 'Page' && Array.isArray(kids)) {
+        if (ref instanceof Ref) this.treeNums.add(ref.num);
+        for (const k of kids) walk(k, here, depth + 1);
+      } else {
+        if (ref instanceof Ref) this.treeNums.add(ref.num);
+        this.pages.push({ ref, dict: node, inh: here });
+      }
+    };
+    walk(root.get('Pages'), {}, 0);
+    if (!this.pages.length) throw new Error('no pages found');
+  }
+
+  pageInfo(k) {
+    const p = this.pages[k];
+    let box = this.get(p.inh.CropBox) || this.get(p.inh.MediaBox);
+    box = Array.isArray(box) && box.length === 4 ? box.map(x => +this.get(x) || 0) : [0, 0, 612, 792];
+    const w = Math.abs(box[2] - box[0]) || 612, h = Math.abs(box[3] - box[1]) || 792;
+    const rot = ((Math.round((+this.get(p.inh.Rotate) || 0) / 90) * 90) % 360 + 360) % 360;
+    return { w, h, rot };
+  }
+}
+
+async function openPdf(bytes, name) {
+  const head = findBytes(bytes.subarray(0, 1024), '%PDF-');
+  if (head < 0) throw new Error(name + ' is not a PDF.');
+  return new PdfDoc(bytes, name).load();
+}
+
+// ---------- writing
+
+function fmtNum(n) {
+  if (Number.isInteger(n)) return String(n);
+  const s = n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+  return s === '-0' ? '0' : s;
+}
+function escName(s) {
+  let o = '';
+  for (const ch of s) {
+    const c = ch.charCodeAt(0);
+    o += c < 33 || c > 126 || c === 35 || DELIM[c] ? '#' + c.toString(16).padStart(2, '0') : ch;
+  }
+  return o;
+}
+function hexOf(b) {
+  let s = '';
+  for (let i = 0; i < b.length; i++) s += (b[i] < 16 ? '0' : '') + b[i].toString(16);
+  return s;
+}
+function ser(v) {
+  if (v === null || v === undefined) return 'null';
+  if (v === true || v === false) return String(v);
+  if (typeof v === 'number') return fmtNum(v);
+  if (v instanceof Name) return '/' + escName(v.n);
+  if (v instanceof Str) return '<' + hexOf(v.b) + '>';
+  if (v instanceof Ref) return v.num + ' ' + v.gen + ' R';
+  if (Array.isArray(v)) return '[' + v.map(ser).join(' ') + ']';
+  if (v instanceof Dict) {
+    let s = '<<';
+    for (const [k, x] of v.m) s += '/' + escName(k) + ' ' + ser(x);
+    return s + '>>';
+  }
+  if (v instanceof Kw) return v.k;
+  return 'null';
+}
+const ascii = s => { const a = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i) & 255; return a; };
+
+function isLinkToPage(doc, annot) {
+  annot = doc.get(annot);
+  if (!(annot instanceof Dict) || nm(annot.get('Subtype')) !== 'Link') return false;
+  if (annot.has('Dest')) return true;
+  const a = doc.get(annot.get('A'));
+  return a instanceof Dict && nm(a.get('S')) === 'GoTo';
+}
+
+// items: [{ doc, k (page index in doc), rot (extra quarter turns, in degrees) }]
+function buildPdf(items) {
+  const objs = [null, null, null];
+  const maps = new Map();
+  const queue = [];
+  const alloc = v => { objs.push(v); return objs.length - 1; };
+
+  function refFor(doc, ref) {
+    if (doc.treeNums.has(ref.num)) return null;
+    let m = maps.get(doc);
+    if (!m) maps.set(doc, (m = new Map()));
+    if (!m.has(ref.num)) { const n = alloc(null); m.set(ref.num, n); queue.push([doc, ref.num, n]); }
+    return new Ref(m.get(ref.num), 0);
+  }
+  function copy(doc, v) {
+    if (v instanceof Ref) return refFor(doc, v);
+    if (Array.isArray(v)) return v.map(x => copy(doc, x));
+    if (v instanceof Stream) {
+      const d = new Dict();
+      for (const [k, x] of v.dict.m) d.set(k, k === 'Length' ? v.data.length : copy(doc, x));
+      return new Stream(d, v.data);
+    }
+    if (v instanceof Dict) {
+      const d = new Dict();
+      for (const [k, x] of v.m) d.set(k, copy(doc, x));
+      return d;
+    }
+    return v;
+  }
+
+  const kids = [];
+  for (const { doc, k, rot } of items) {
+    const p = doc.pages[k];
+    const d = new Dict();
+    d.set('Type', N('Page'));
+    d.set('Parent', new Ref(2, 0));
+    for (const [key, x] of p.dict.m) {
+      if (['Type', 'Parent', 'Resources', 'MediaBox', 'CropBox', 'Rotate', 'Annots'].includes(key)) continue;
+      d.set(key, copy(doc, x));
+    }
+    d.set('Resources', p.inh.Resources !== undefined ? copy(doc, p.inh.Resources) : new Dict());
+    d.set('MediaBox', p.inh.MediaBox !== undefined ? copy(doc, p.inh.MediaBox) : [0, 0, 612, 792]);
+    if (p.inh.CropBox !== undefined) d.set('CropBox', copy(doc, p.inh.CropBox));
+    const rotate = ((doc.pageInfo(k).rot + (rot || 0)) % 360 + 360) % 360;
+    if (rotate) d.set('Rotate', rotate);
+    const annots = doc.get(p.dict.get('Annots'));
+    if (Array.isArray(annots)) {
+      const kept = annots.filter(a => !isLinkToPage(doc, a)).map(a => copy(doc, a)).filter(a => a !== null);
+      if (kept.length) d.set('Annots', kept);
+    }
+    kids.push(new Ref(alloc(d), 0));
+    while (queue.length) {
+      const [qdoc, num, n] = queue.shift();
+      let v;
+      try { v = qdoc.fetch(num); } catch (e) { v = null; }
+      objs[n] = copy(qdoc, v);
+    }
+  }
+  objs[1] = new Dict().set('Type', N('Catalog')).set('Pages', new Ref(2, 0));
+  objs[2] = new Dict().set('Type', N('Pages')).set('Kids', kids).set('Count', kids.length);
+
+  const parts = [];
+  let size = 0;
+  const put = a => { parts.push(a); size += a.length; };
+  put(ascii('%PDF-1.7\n%\xe2\xe3\xcf\xd3\n'));
+  const offsets = [0];
+  for (let n = 1; n < objs.length; n++) {
+    offsets[n] = size;
+    const v = objs[n];
+    if (v instanceof Stream) {
+      put(ascii(n + ' 0 obj\n' + ser(v.dict) + '\nstream\n'));
+      put(v.data);
+      put(ascii('\nendstream\nendobj\n'));
+    } else put(ascii(n + ' 0 obj\n' + ser(v) + '\nendobj\n'));
+  }
+  const xrefAt = size;
+  let x = 'xref\n0 ' + objs.length + '\n0000000000 65535 f \n';
+  for (let n = 1; n < objs.length; n++) x += String(offsets[n]).padStart(10, '0') + ' 00000 n \n';
+  x += 'trailer\n<</Size ' + objs.length + '/Root 1 0 R>>\nstartxref\n' + xrefAt + '\n%%EOF\n';
+  put(ascii(x));
+  const out = new Uint8Array(size);
+  let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+// ---------- zip (stored, no compression)
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(b) {
+  let c = 0xffffffff;
+  for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+function zip(files) {
+  const enc = new TextEncoder(), locals = [], central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true);
+    h.setUint32(14, crc, true); h.setUint32(18, size, true); h.setUint32(22, size, true); h.setUint16(26, name.length, true);
+    locals.push(new Uint8Array(h.buffer), name, f.data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint32(16, crc, true); c.setUint32(20, size, true); c.setUint32(24, size, true); c.setUint16(28, name.length, true);
+    c.setUint32(42, offset, true);
+    central.push(new Uint8Array(c.buffer), name);
+    offset += 30 + name.length + size;
+  }
+  const cdSize = central.reduce((a, p) => a + p.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...locals, ...central, new Uint8Array(end.buffer)], { type: 'application/zip' });
+}
+
+// ---------- page list
+
+const FILE_COLORS = ['#d8392f', '#2f6fd8', '#1f9d6a', '#c98a12', '#8e44ad', '#0e8f9a', '#c2417a', '#6b6b2a'];
+const files = [];   // { doc, name, color }
+let pages = [];     // { id, file, k, rot, sel }
+let nextId = 1;
+
+async function addFile(bytes, name) {
+  const doc = await openPdf(bytes, name);
+  const file = { doc, name, color: FILE_COLORS[files.length % FILE_COLORS.length] };
+  files.push(file);
+  for (let k = 0; k < doc.pages.length; k++) pages.push({ id: nextId++, file, k, rot: 0, sel: false });
+  return file;
+}
+
+function move(id, to) {
+  const from = pages.findIndex(p => p.id === id);
+  if (from < 0) return;
+  const [p] = pages.splice(from, 1);
+  pages.splice(Math.max(0, Math.min(pages.length, to)), 0, p);
+}
+function rotate(p) { p.rot = (p.rot + 90) % 360; }
+function remove(id) { pages = pages.filter(p => p.id !== id); }
+
+const itemsOf = list => list.map(p => ({ doc: p.file.doc, k: p.k, rot: p.rot }));
+
+const MM = 25.4 / 72;
+const SIZES = [['A3', 297, 420], ['A4', 210, 297], ['A5', 148, 210], ['Letter', 215.9, 279.4], ['Legal', 215.9, 355.6], ['Tabloid', 279.4, 431.8]];
+function sizeLabel(w, h) {
+  const a = Math.min(w, h) * MM, b = Math.max(w, h) * MM;
+  for (const [name, x, y] of SIZES) if (Math.abs(a - x) < 2 && Math.abs(b - y) < 2) return name;
+  return Math.round(w * MM) + ' x ' + Math.round(h * MM) + ' mm';
+}
+function pageShape(p) {
+  const info = p.file.doc.pageInfo(p.k);
+  const turned = ((info.rot + p.rot) / 90) % 2 === 1;
+  return { w: turned ? info.h : info.w, h: turned ? info.w : info.h, info, turn: (info.rot + p.rot) % 360 };
+}
+
+// ---------- UI
+
+const $ = id => document.getElementById(id);
+const baseName = n => n.replace(/\.pdf$/i, '');
+function outName(suffix) {
+  const names = [...new Set(pages.map(p => p.file.name))];
+  return (names.length === 1 ? baseName(names[0]) + '-' + suffix : suffix === 'edited' ? 'merged' : 'merged-' + suffix);
+}
+
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+}
+
+function showErrors(list) {
+  const ul = $('errors');
+  ul.hidden = !list.length;
+  ul.innerHTML = '';
+  for (const t of list) { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }
+}
+
+async function openFiles(list) {
+  const errs = [];
+  for (const f of list) {
+    try {
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      await addFile(bytes, f.name);
+    } catch (e) {
+      errs.push(e instanceof EncryptedError || /is not a PDF/.test(e.message) ? e.message : f.name + ' couldn\'t be read as a PDF.');
+    }
+  }
+  showErrors(errs);
+  render();
+}
+
+let dragId = 0;
+
+function render() {
+  const work = $('work');
+  work.hidden = !pages.length;
+  const sel = pages.filter(p => p.sel).length;
+  const fileCount = new Set(pages.map(p => p.file)).size;
+  $('summary').textContent = pages.length + (pages.length === 1 ? ' page' : ' pages') + ' from ' + fileCount + (fileCount === 1 ? ' file' : ' files') +
+    (sel ? ', ' + sel + ' selected' : '');
+  $('saveSel').disabled = $('rotSel').disabled = $('delSel').disabled = !sel;
+  $('saveAll').disabled = $('split').disabled = !pages.length;
+
+  const ul = $('tiles');
+  ul.innerHTML = '';
+  pages.forEach((p, i) => {
+    const { w, h, info, turn } = pageShape(p);
+    const scale = 110 / Math.max(w, h);
+    const li = document.createElement('li');
+    li.className = 'tile' + (p.sel ? ' sel' : '');
+    li.draggable = true;
+    li.dataset.id = p.id;
+    li.innerHTML =
+      '<div class="stage"><div class="sheet" style="width:' + Math.round(w * scale) + 'px;height:' + Math.round(h * scale) + 'px">' +
+      '<i class="stripe" style="background:' + p.file.color + '"></i><i class="lines"></i><span>' + (i + 1) + '</span></div></div>' +
+      '<label><input type="checkbox"' + (p.sel ? ' checked' : '') + '> Page ' + (i + 1) + '</label>' +
+      '<div class="meta"><div></div><div></div></div>' +
+      '<div class="tools"><button data-a="left" title="Move left" aria-label="Move left">&larr;</button>' +
+      '<button data-a="right" title="Move right" aria-label="Move right">&rarr;</button>' +
+      '<button data-a="rot" title="Rotate 90 degrees" aria-label="Rotate">&#8635;</button>' +
+      '<button data-a="view">View</button>' +
+      '<button data-a="del" title="Delete page" aria-label="Delete">&times;</button></div>';
+    const meta = li.querySelectorAll('.meta div');
+    meta[0].textContent = p.file.name + ', p. ' + (p.k + 1);
+    meta[1].textContent = sizeLabel(info.w, info.h) + ', ' + (w > h ? 'landscape' : w < h ? 'portrait' : 'square') + (p.rot ? ', turned ' + p.rot + '°' : '');
+    const sheet = li.querySelector('.stripe');
+    sheet.style.cssText += turn === 90 ? ';left:auto;right:0;top:0;bottom:0;width:5px;height:auto' : turn === 180 ? ';top:auto;bottom:0' : turn === 270 ? ';right:auto;left:0;top:0;bottom:0;width:5px;height:auto' : '';
+    li.querySelector('input').onchange = e => { p.sel = e.target.checked; render(); };
+    li.querySelector('.tools').onclick = e => {
+      const a = e.target.closest('button');
+      if (!a) return;
+      const at = pages.indexOf(p);
+      if (a.dataset.a === 'left') move(p.id, at - 1);
+      else if (a.dataset.a === 'right') move(p.id, at + 1);
+      else if (a.dataset.a === 'rot') rotate(p);
+      else if (a.dataset.a === 'del') remove(p.id);
+      else if (a.dataset.a === 'view') return view(p);
+      render();
+      const again = ul.querySelector('[data-id="' + p.id + '"] [data-a="' + a.dataset.a + '"]');
+      if (again) again.focus();
+    };
+    li.addEventListener('dragstart', e => { dragId = p.id; li.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/x-pdf-page', String(p.id)); });
+    li.addEventListener('dragend', () => { dragId = 0; render(); });
+    li.addEventListener('dragover', e => {
+      if (!dragId || dragId === p.id) return;
+      e.preventDefault();
+      const r = li.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+      li.classList.toggle('after', after);
+      li.classList.toggle('before', !after);
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('before', 'after'));
+    li.addEventListener('drop', e => {
+      if (!dragId) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const r = li.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+      const moving = dragId;
+      dragId = 0;
+      const from = pages.findIndex(q => q.id === moving);
+      let to = pages.indexOf(p) + (after ? 1 : 0);
+      if (from < to) to--;
+      move(moving, to);
+      render();
+    });
+    ul.appendChild(li);
+  });
+}
+
+function view(p) {
+  const bytes = buildPdf(itemsOf([p]));
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+  $('viewTitle').textContent = 'Page ' + (pages.indexOf(p) + 1) + ', from ' + p.file.name + ' page ' + (p.k + 1) + '. Shown by your browser\'s PDF viewer.';
+  $('viewFrame').src = url + '#page=1';
+  $('view').hidden = false;
+  $('viewClose').focus();
+}
+function closeView() {
+  const f = $('viewFrame');
+  if (f.src.startsWith('blob:')) URL.revokeObjectURL(f.src.split('#')[0]);
+  f.removeAttribute('src');
+  $('view').hidden = true;
+}
+
+function pdfBlob(list) { return new Blob([buildPdf(itemsOf(list))], { type: 'application/pdf' }); }
+
+function splitZip() {
+  const width = String(pages.length).length;
+  const base = outName('page');
+  return zip(pages.map((p, i) => ({ name: base + '-' + String(i + 1).padStart(Math.max(2, width), '0') + '.pdf', data: buildPdf(itemsOf([p])) })));
+}
+
+$('drop').onclick = () => $('file').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } };
+$('file').onchange = () => { openFiles([...$('file').files]); $('file').value = ''; };
+addEventListener('dragover', e => {
+  if (dragId) return;
+  e.preventDefault();
+  $('drop').classList.add('over');
+});
+addEventListener('dragleave', e => { if (!e.relatedTarget) $('drop').classList.remove('over'); });
+addEventListener('drop', e => {
+  if (dragId) return;
+  e.preventDefault();
+  $('drop').classList.remove('over');
+  const list = [...(e.dataTransfer.files || [])];
+  if (list.length) openFiles(list);
+});
+$('selAll').onclick = () => { pages.forEach(p => { p.sel = true; }); render(); };
+$('selNone').onclick = () => { pages.forEach(p => { p.sel = false; }); render(); };
+$('rotSel').onclick = () => { pages.filter(p => p.sel).forEach(rotate); render(); };
+$('delSel').onclick = () => { pages = pages.filter(p => !p.sel); render(); };
+$('saveAll').onclick = () => save(pdfBlob(pages), outName('edited') + '.pdf');
+$('saveSel').onclick = () => save(pdfBlob(pages.filter(p => p.sel)), outName('selected') + '.pdf');
+$('split').onclick = () => save(splitZip(), outName('pages') + '.zip');
+$('clear').onclick = () => { files.length = 0; pages = []; showErrors([]); render(); };
+$('viewClose').onclick = closeView;
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('view').hidden) closeView(); });
+render();
+</script>
+</body>
+</html>

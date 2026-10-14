@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffb703'/%3E%3Ctext x='16' y='24' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='22' text-anchor='middle' fill='%2312202a'%3E%3F%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Trivia Night</title>
+<style>
+  :root { --bg: #10202a; --panel: #18303d; --ink: #f1efe6; --muted: #93a6b0; --rule: #27424f; --gold: #ffb703; --good: #3ccf7a; --bad: #ff6b6b;
+          --o0: #ff6b6b; --o1: #4ea8ff; --o2: #ffb703; --o3: #3ccf7a;
+          --lp-bg: #10202a; --lp-panel: #18303d; --lp-veil: rgba(16, 32, 42, .95); --lp-accent: #ffb703; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #app { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; max-width: 1060px; margin: 0 auto; padding: 48px 16px 24px; }
+  #main { min-width: 0; }
+  #meta { display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: 14px; min-height: 24px; }
+  #meta .cat { background: var(--panel); color: var(--gold); padding: 3px 10px; border-radius: 99px; font-weight: 600; }
+  #timer { height: 8px; background: var(--panel); border-radius: 99px; margin: 12px 0 18px; overflow: hidden; }
+  #timer i { display: block; height: 100%; width: 100%; background: var(--gold); border-radius: 99px; transform-origin: left; }
+  #q { font-size: clamp(22px, 3.4vw, 34px); font-weight: 700; line-height: 1.25; margin: 0 0 22px; min-height: 2.5em; }
+  #opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opt { font: inherit; font-size: 18px; font-weight: 600; text-align: left; display: flex; gap: 12px; align-items: center; padding: 16px;
+         border-radius: 12px; border: 2px solid var(--rule); background: var(--panel); color: var(--ink); cursor: pointer; min-height: 72px; position: relative; }
+  .opt b { flex: none; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: #10202a; font-size: 16px; }
+  .opt:hover:not(:disabled) { border-color: var(--ink); }
+  .opt:disabled { cursor: default; }
+  .opt.mine { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold) inset; }
+  .opt.right { border-color: var(--good); background: #1f4a3a; }
+  .opt.wrong { border-color: var(--bad); background: #4a2630; }
+  .opt.dim { opacity: .5; }
+  .opt .n { margin-left: auto; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .opt:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #note { min-height: 30px; margin-top: 16px; font-size: 18px; font-weight: 600; }
+  #note.good { color: var(--good); } #note.bad { color: var(--bad); }
+  aside { display: flex; flex-direction: column; gap: 12px; }
+  #board { list-style: none; margin: 0; padding: 0; background: var(--panel); border-radius: 12px; }
+  #board li { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--bg); font-variant-numeric: tabular-nums; }
+  #board li:last-child { border-bottom: 0; }
+  #board i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  #board .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #board .gain { color: var(--good); font-size: 13px; }
+  #board .done { font-size: 12px; color: var(--muted); }
+  #board .pts { font-weight: 700; min-width: 4ch; text-align: right; }
+  #setup { background: var(--panel); border-radius: 12px; padding: 18px; }
+  #setup h2 { margin: 0 0 8px; }
+  #setup p { color: var(--muted); margin: 0 0 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip { font: inherit; font-size: 14px; padding: 7px 12px; border-radius: 99px; border: 1.5px solid var(--rule); background: none; color: var(--ink); cursor: pointer; }
+  .chip.on { background: var(--gold); border-color: var(--gold); color: #10202a; font-weight: 700; }
+  .act { font: inherit; font-weight: 700; font-size: 16px; padding: 11px 18px; border-radius: 10px; border: 0; background: var(--gold); color: #10202a; cursor: pointer; }
+  .quiet { font: inherit; border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px 0; }
+  .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  #final h2 { font-size: 30px; margin: 0 0 6px; }
+  #final p { color: var(--muted); margin: 0 0 16px; }
+  [hidden] { display: none !important; }
+  @media (max-width: 760px) {
+    #app { grid-template-columns: 1fr; padding-top: 42px; }
+    #opts { grid-template-columns: 1fr; gap: 8px; }
+    .opt { min-height: 56px; padding: 11px 12px; font-size: 16px; }
+    aside { order: 2; }
+  }
+  @media (prefers-reduced-motion: reduce) { #timer i { transition: none !important; } }
+</style>
+<meta property="og:title" content="Trivia Night">
+<meta property="og:description" content="A trivia quiz for friends, played over a link with no server. Eight categories, a timer, and points for fast answers. Or play alone.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/trivia-night/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/trivia-night/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A trivia quiz for friends, played over a link with no server. Eight categories, a timer, and points for fast answers. Or play alone.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="app">
+  <div id="main">
+    <div id="setup" hidden></div>
+    <div id="play" hidden>
+      <div id="meta"></div>
+      <div id="timer"><i></i></div>
+      <h1 id="q"></h1>
+      <div id="opts"></div>
+      <div id="note"></div>
+    </div>
+    <div id="final" hidden></div>
+  </div>
+  <aside>
+    <ul id="board"></ul>
+    <div class="row" id="actions"></div>
+  </aside>
+</div>
+<div id="lobby" class="lp-panel"></div>
+<script src="questions.js"></script>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const CATS = [...new Set(QUESTIONS.map(q => q[0]))];
+const Q_MS = 15000, REVEAL_MS = 4500, COUNTS = [10, 15, 20];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const now = () => performance.now();
+const ME_SOLO = { id: 0, name: 'You', color: '#ffb703' };
+
+let room = null, solo = false;
+
+// --- the host (or the solo player) runs the quiz
+
+const H = { cat: 'Mixed', count: 10, list: [], n: -1, correct: -1, endsAt: 0, answers: new Map(), asked: new Set(), scores: {}, streaks: {}, phase: 'setup', recent: [] };
+
+function everyone() { return room ? room.players : solo ? [ME_SOLO] : []; }
+function isHost() { return solo || (room && room.isHost); }
+function myId() { return room ? room.me : 0; }
+function toAll(m) { if (room) room.send(m); handle(m); }
+function toPlayer(id, m) { if (id === myId()) handle(m); else if (room) room.sendTo(id, m); }
+
+function shuffle(a, rand = Math.random) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function pickQuestions(cat, count, rand = Math.random) {
+  let pool = QUESTIONS.filter(q => cat === 'Mixed' || q[0] === cat);
+  const fresh = pool.filter(q => !H.recent.includes(q[1]));
+  if (fresh.length >= count) pool = fresh;
+  const out = shuffle(pool, rand).slice(0, count);
+  H.recent = H.recent.concat(out.map(q => q[1])).slice(-200);
+  return out;
+}
+
+function hostStart(rand = Math.random) {
+  H.list = pickQuestions(H.cat, H.count, rand);
+  H.scores = {}; H.streaks = {};
+  for (const p of everyone()) { H.scores[p.id] = 0; H.streaks[p.id] = 0; }
+  H.n = -1;
+  nextQuestion(rand);
+}
+
+function nextQuestion(rand = Math.random) {
+  H.n++;
+  if (H.n >= H.list.length) {
+    H.phase = 'over';
+    toAll({ t: 'over', scores: H.scores });
+    return;
+  }
+  const [cat, text, right, ...wrong] = H.list[H.n];
+  const opts = shuffle([right, ...wrong], rand);
+  H.correct = opts.indexOf(right);
+  H.answers = new Map();
+  H.asked = new Set(everyone().map(p => p.id));
+  H.phase = 'q';
+  H.endsAt = now() + Q_MS;
+  toAll({ t: 'q', n: H.n, total: H.list.length, cat, text, opts, ms: Q_MS });
+}
+
+function answer(id, n, i, ms) {
+  if (H.phase !== 'q' || n !== H.n || H.answers.has(id) || !(i >= 0 && i < 4)) return;
+  H.answers.set(id, { i, ms: Math.max(0, Math.min(Q_MS, +ms || Q_MS)) });
+  toAll({ t: 'locked', ids: [...H.answers.keys()] });
+  if (allIn()) reveal();
+}
+
+function allIn() { return everyone().filter(p => H.asked.has(p.id)).every(p => H.answers.has(p.id)); }
+
+function points(ms, streak) {
+  return Math.round((500 + 500 * (1 - ms / Q_MS)) / 10) * 10 + 50 * Math.min(Math.max(0, streak - 1), 4);
+}
+
+function reveal() {
+  H.phase = 'reveal';
+  H.endsAt = now() + REVEAL_MS;
+  const counts = [0, 0, 0, 0], gains = {};
+  for (const p of everyone()) {
+    const a = H.answers.get(p.id);
+    if (a) counts[a.i]++;
+    if (a && a.i === H.correct) {
+      H.streaks[p.id] = (H.streaks[p.id] || 0) + 1;
+      gains[p.id] = points(a.ms, H.streaks[p.id]);
+      H.scores[p.id] = (H.scores[p.id] || 0) + gains[p.id];
+    } else H.streaks[p.id] = 0;
+  }
+  toAll({ t: 'r', n: H.n, correct: H.correct, counts, gains, scores: H.scores, streaks: H.streaks });
+}
+
+function hostTick() {
+  if (!isHost()) return;
+  if (H.phase === 'q' && now() > H.endsAt) reveal();
+  else if (H.phase === 'reveal' && now() > H.endsAt) nextQuestion();
+}
+
+// --- what each player sees
+
+const V = { phase: 'setup', q: null, shownAt: 0, mine: -1, locked: [], r: null, scores: {}, streaks: {} };
+
+function handle(m) {
+  if (m.t === 'q') { Object.assign(V, { phase: 'q', q: m, shownAt: now(), mine: -1, locked: [], r: null }); }
+  else if (m.t === 'locked') V.locked = m.ids;
+  else if (m.t === 'r') { V.phase = 'reveal'; V.r = m; V.scores = m.scores; V.streaks = m.streaks; }
+  else if (m.t === 'over') { V.phase = 'over'; V.scores = m.scores; V.best = solo ? bestNote(m.scores[0] || 0) : ''; }
+  else if (m.t === 'setup') { V.phase = 'setup'; V.scores = {}; V.cat = m.cat; V.count = m.count; }
+  render();
+}
+
+function choose(i) {
+  if (V.phase !== 'q' || V.mine >= 0) return;
+  V.mine = i;
+  const ms = Math.round(now() - V.shownAt);
+  if (isHost()) answer(myId(), V.q.n, i, ms);
+  else room.send({ t: 'a', n: V.q.n, i, ms });
+  render();
+}
+
+function attach(r) {
+  room = r; solo = false;
+  room.on('message', (m, from) => {
+    if (room.isHost) { if (m.t === 'a') answer(from, m.n, m.i, m.ms); }
+    else handle(m);
+  });
+  room.on('roster', players => {
+    if (room.isHost) {
+      for (const p of players) if (!(p.id in H.scores)) { H.scores[p.id] = 0; H.streaks[p.id] = 0; }
+      if (H.phase === 'q' && allIn()) reveal();
+      for (const p of players) if (p.id !== room.me && !synced.has(p.id)) {
+        synced.add(p.id);
+        room.sendTo(p.id, H.phase === 'setup' ? { t: 'setup', cat: H.cat, count: H.count } : { t: 'r', n: H.n, correct: -1, counts: [0, 0, 0, 0], gains: {}, scores: H.scores, streaks: H.streaks });
+      }
+    }
+    render();
+  });
+  room.on('close', () => { room = null; V.phase = 'setup'; lobby.start(); render(); });
+  synced.clear();
+  if (room.isHost) { H.phase = 'setup'; for (const p of room.players) synced.add(p.id); toAll({ t: 'setup', cat: H.cat, count: H.count }); }
+  else { V.phase = 'setup'; render(); }
+}
+const synced = new Set();
+
+function startSolo() {
+  if (room) { try { room.close(); } catch (e) { } room = null; }
+  solo = true;
+  H.phase = 'setup';
+  handle({ t: 'setup', cat: H.cat, count: H.count });
+}
+
+// --- rendering
+
+function playerList() {
+  const ps = everyone().map(p => ({ ...p, pts: V.scores[p.id] || 0 }));
+  return ps.sort((a, b) => b.pts - a.pts);
+}
+
+function render() {
+  const active = solo || !!room;
+  $('setup').hidden = !(active && V.phase === 'setup');
+  $('play').hidden = !(active && (V.phase === 'q' || V.phase === 'reveal') && V.q);
+  $('final').hidden = !(active && V.phase === 'over');
+  if (active && V.phase === 'setup') renderSetup();
+  if (active && V.phase === 'reveal' && !V.q) { $('setup').hidden = false; $('setup').innerHTML = '<h2>Joining…</h2><p>You\'ll be in from the next question.</p>'; }
+  if (!$('play').hidden) renderQuestion();
+  if (!$('final').hidden) renderFinal();
+  renderBoard();
+  renderActions();
+}
+
+function renderSetup() {
+  const s = $('setup');
+  if (!isHost()) {
+    s.innerHTML = '<h2>Waiting for the host</h2><p>They\'re picking a category. Questions have 15 seconds each, and faster right answers score more.</p>';
+    return;
+  }
+  s.innerHTML = '<h2>' + (solo ? 'Play alone' : 'Set up the quiz') + '</h2>' +
+    '<p>Pick a category and how many questions. Each one has 15 seconds. A right answer scores 500 to 1000 points, more the faster you are, plus a bonus for answering several right in a row.</p>' +
+    '<div class="chips">' + ['Mixed', ...CATS].map(c => '<button class="chip' + (H.cat === c ? ' on' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>').join('') + '</div>' +
+    '<div class="chips">' + COUNTS.map(n => '<button class="chip' + (H.count === n ? ' on' : '') + '" data-n="' + n + '">' + n + ' questions</button>').join('') + '</div>' +
+    '<div class="row"><button class="act" id="goBtn">Start</button>' + (room ? '<span style="color:var(--muted)">' + room.players.length + ' playing</span>' : '') + '</div>';
+  for (const b of s.querySelectorAll('[data-cat]')) b.onclick = () => { H.cat = b.dataset.cat; renderSetup(); };
+  for (const b of s.querySelectorAll('[data-n]')) b.onclick = () => { H.count = +b.dataset.n; renderSetup(); };
+  const go = s.querySelector('#goBtn');
+  if (go) go.onclick = () => hostStart();
+}
+
+function renderQuestion() {
+  const q = V.q;
+  $('meta').innerHTML = '<span class="cat">' + esc(q.cat) + '</span><span>Question ' + (q.n + 1) + ' of ' + q.total + '</span>' +
+    (V.phase === 'q' && room ? '<span>' + V.locked.length + ' of ' + everyone().length + ' answered</span>' : '');
+  $('q').textContent = q.text;
+  const r = V.phase === 'reveal' && V.r && V.r.n === q.n ? V.r : null;
+  $('opts').innerHTML = q.opts.map((o, i) => {
+    let cls = 'opt';
+    if (V.mine === i) cls += ' mine';
+    if (r) cls += i === r.correct ? ' right' : V.mine === i ? ' wrong' : ' dim';
+    return '<button class="' + cls + '" data-i="' + i + '"' + (V.phase !== 'q' || V.mine >= 0 ? ' disabled' : '') + '><b style="background:var(--o' + i + ')">' +
+      'ABCD'[i] + '</b><span>' + esc(o) + '</span>' + (r && room ? '<span class="n">' + r.counts[i] + '</span>' : '') + '</button>';
+  }).join('');
+  for (const b of $('opts').querySelectorAll('.opt')) b.onclick = () => choose(+b.dataset.i);
+  const note = $('note');
+  note.className = '';
+  if (r) {
+    const g = r.gains[myId()];
+    if (g) { note.className = 'good'; note.textContent = 'Right! +' + g + ((V.streaks[myId()] || 0) > 1 ? ', ' + V.streaks[myId()] + ' in a row' : ''); }
+    else { note.className = 'bad'; note.textContent = V.mine < 0 ? 'Time\'s up. The answer was ' + q.opts[r.correct] + '.' : 'Not quite. The answer was ' + q.opts[r.correct] + '.'; }
+  } else note.textContent = V.mine >= 0 ? 'Locked in.' : '';
+}
+
+function renderFinal() {
+  const ps = playerList();
+  const top = ps[0];
+  const f = $('final');
+  if (solo) f.innerHTML = '<h2>' + top.pts + ' points</h2><p>' + esc(V.best) + '</p>';
+  else {
+    const winners = ps.filter(p => p.pts === top.pts).map(p => (p.id === myId() ? 'You' : p.name));
+    f.innerHTML = '<h2>' + esc(winners.join(' and ')) + (winners.length > 1 || winners[0] === 'You' ? ' win' : ' wins') + '</h2><p>with ' + top.pts + ' points.</p>';
+  }
+  if (isHost()) {
+    f.innerHTML += '<div class="row"><button class="act" id="againBtn">Play again</button><button class="quiet" id="setupBtn">Change category</button></div>';
+    f.querySelector('#againBtn').onclick = () => hostStart();
+    f.querySelector('#setupBtn').onclick = () => { H.phase = 'setup'; toAll({ t: 'setup', cat: H.cat, count: H.count }); };
+  } else f.innerHTML += '<p>Waiting for the host to start another round.</p>';
+}
+
+function bestNote(pts) {
+  const key = 'trivia_best_' + H.cat + '_' + H.count;
+  let best = 0;
+  try { best = +(localStorage.getItem(key) || 0); } catch (e) { }
+  if (pts > best) { try { localStorage.setItem(key, String(pts)); } catch (e) { } return best ? 'A new best for ' + H.cat + ', ' + H.count + ' questions. The old one was ' + best + '.' : 'Your first score for ' + H.cat + ', ' + H.count + ' questions.'; }
+  return 'Your best for ' + H.cat + ', ' + H.count + ' questions is ' + best + '.';
+}
+
+function renderBoard() {
+  const ul = $('board');
+  if (!room) { ul.hidden = true; return; }
+  ul.hidden = false;
+  const r = V.phase === 'reveal' ? V.r : null;
+  ul.innerHTML = playerList().map(p =>
+    '<li><i style="background:' + p.color + '"></i><span class="nm">' + esc(p.name) + (p.id === myId() ? ' (you)' : '') + '</span>' +
+    (r && r.gains[p.id] ? '<span class="gain">+' + r.gains[p.id] + '</span>' : '') +
+    (V.phase === 'q' && V.locked.includes(p.id) ? '<span class="done">answered</span>' : '') +
+    '<span class="pts">' + p.pts + '</span></li>').join('');
+}
+
+function renderActions() {
+  const a = $('actions');
+  let html = '';
+  if (room && room.isHost) html += '<button class="quiet" id="inviteBtn">Invite more</button>';
+  if (room || solo) html += '<button class="quiet" id="leaveBtn">Leave</button>';
+  if (a.dataset.html === html) return;
+  a.innerHTML = html; a.dataset.html = html;
+  const iv = a.querySelector('#inviteBtn'), lv = a.querySelector('#leaveBtn');
+  if (iv) iv.onclick = () => lobby.reopen();
+  if (lv) lv.onclick = () => { room = null; solo = false; H.phase = 'setup'; V.phase = 'setup'; lobby.start(); render(); };
+}
+
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  const i = '1234'.indexOf(k) >= 0 ? '1234'.indexOf(k) : 'abcd'.indexOf(k);
+  if (i >= 0 && V.phase === 'q' && document.activeElement.tagName !== 'INPUT') choose(i);
+});
+
+let lastBar = -1;
+function frame() {
+  hostTick();
+  if (V.phase === 'q' && V.q) {
+    const left = Math.max(0, 1 - (now() - V.shownAt) / V.q.ms);
+    if (Math.abs(left - lastBar) > 0.004) { lastBar = left; $('timer').querySelector('i').style.transform = 'scaleX(' + left.toFixed(3) + ')'; }
+  } else if (lastBar !== 0) { lastBar = 0; $('timer').querySelector('i').style.transform = 'scaleX(0)'; }
+  requestAnimationFrame(frame);
+}
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'trivia-night',
+  title: 'Trivia Night',
+  blurb: 'Everyone gets the same question at the same time. Answer right, and fast, to score. ' + QUESTIONS.length + ' questions in ' + CATS.length + ' categories.',
+  min: 2,
+  extra: [{ label: 'Play alone', note: 'Same questions and timer. Your best score is saved.', onClick: startSolo }],
+  onStart: attach,
+  onJoin: attach,
+});
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

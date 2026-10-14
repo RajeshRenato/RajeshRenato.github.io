@@ -2,7 +2,7 @@
 
 A small kit for making a browser game multiplayer with no server of your own. Players connect by sending each other links. This folder's `index.html` is the demo: invite friends and you see each other's cursors.
 
-Cycle Duel, Type Race, Sketch & Guess, Four in a Row, Checkers, and Clue Grid are built on it.
+Cycle Duel, Type Race, Sketch & Guess, Four in a Row, Checkers, Clue Grid, Trivia Night, and Whiteboard are built on it.
 
 ## How the connection works
 

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffffff'/%3E%3Cpath d='M6 22 C10 10 14 26 18 14 S24 12 26 20' stroke='%231e88e5' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Whiteboard</title>
+<style>
+  :root { --bg: #e4e8ee; --ink: #1b2230; --muted: #5d6779; --rule: #c4cbd6;
+          --lp-bg: #e4e8ee; --lp-panel: #ffffff; --lp-field: #ffffff; --lp-ink: #1b2230; --lp-muted: #5d6779; --lp-rule: #c4cbd6;
+          --lp-veil: rgba(228, 232, 238, .97); --lp-accent: #1e88e5; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-direction: column; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 38px 12px 8px; justify-content: center; }
+  #bar .grp { display: flex; gap: 4px; align-items: center; background: #fff; border-radius: 10px; padding: 4px; }
+  #bar button { font: inherit; font-size: 14px; border: 0; background: none; color: var(--ink); border-radius: 7px; padding: 6px 9px; cursor: pointer; min-width: 34px; height: 34px; }
+  #bar button:hover { background: #eef1f5; }
+  #bar button.on { background: var(--ink); color: #fff; }
+  #bar button:focus-visible { outline: 2px solid #1e88e5; outline-offset: 1px; }
+  #bar .sw { width: 26px; min-width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--rule); }
+  #bar .sw.on { box-shadow: 0 0 0 2px var(--ink); background-clip: padding-box; }
+  #bar .sz i { display: block; margin: auto; border-radius: 50%; background: currentColor; }
+  #who { font-size: 13px; color: var(--muted); padding: 0 6px; }
+  #wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 12px 12px; position: relative; }
+  canvas { background: #fff; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.08); touch-action: none; display: block; }
+  canvas.pen { cursor: crosshair; } canvas.text { cursor: text; } canvas.erase { cursor: cell; }
+  #textIn { position: absolute; display: none; font: 600 18px system-ui, sans-serif; border: 1.5px dashed #1e88e5; background: rgba(255,255,255,.9);
+            padding: 2px 4px; outline: none; min-width: 120px; }
+  @media (max-width: 600px) { #bar { gap: 4px; padding-top: 34px; } #bar button { padding: 5px 7px; min-width: 30px; height: 30px; font-size: 13px; } #textIn { font-size: 16px; } }
+</style>
+<meta property="og:title" content="Whiteboard">
+<meta property="og:description" content="A shared whiteboard. Draw, sketch shapes, and write notes together with friends over a link, no server and no sign-up. Save it as a PNG.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/whiteboard/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/whiteboard/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A shared whiteboard. Draw, sketch shapes, and write notes together with friends over a link, no server and no sign-up. Save it as a PNG.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="bar"></div>
+<div id="wrap"><canvas id="c"></canvas><input id="textIn" maxlength="120" autocomplete="off"></div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const BW = 1600, BH = 1000;
+const COLORS = ['#1b2230', '#e5383b', '#ff9f1c', '#2a9d4b', '#1e88e5', '#8e44ad', '#ff8fab', '#8d5a3b'];
+const SIZES = [3, 7, 16];
+const TOOLS = [['pen', 'Pen'], ['hl', 'Marker'], ['line', 'Line'], ['arrow', 'Arrow'], ['rect', 'Box'], ['ellipse', 'Circle'], ['text', 'Text'], ['erase', 'Eraser']];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const now = () => performance.now();
+
+let room = null;
+let items = [];            // { id, by, kind, c, w, p, text }
+let dirty = true;
+let counter = 0;
+const tool = { kind: 'pen', c: COLORS[0], w: SIZES[1] };
+const cursors = new Map();  // player id -> { x, y, t }
+const synced = new Set();
+const myId = () => (room ? room.me : 0);
+
+// --- shared edits. The host keeps the full board and passes every change on.
+
+function addItem(it) { if (!items.some(x => x.id === it.id)) { items.push(it); dirty = true; } }
+function addPoints(id, p) { const it = items.find(x => x.id === id); if (it) { it.p.push(...p); dirty = true; } }
+function removeItems(ids) { const n = items.length; items = items.filter(x => !ids.includes(x.id)); if (items.length !== n) dirty = true; }
+
+function applyEdit(m) {
+  if (m.t === 'add') addItem(m.item);
+  else if (m.t === 'pts') addPoints(m.id, m.p);
+  else if (m.t === 'del') removeItems(m.ids);
+  else if (m.t === 'clear') { items = []; dirty = true; }
+  else if (m.t === 'all') { items = m.items; dirty = true; }
+}
+
+function share(m) {
+  applyEdit(m);
+  if (!room) return;
+  if (room.isHost) relay(m, room.me);
+  else room.send(m);
+}
+
+function relay(m, from) {
+  for (const p of room.players) if (p.id !== from && p.id !== room.me) room.sendTo(p.id, m);
+}
+
+function attach(r) {
+  room = r;
+  cursors.clear();
+  room.on('message', (m, from) => {
+    if (room.isHost) {
+      if (m.t === 'clear') return;
+      if (m.t === 'cur') { m.id = from; relay(m, from); cursors.set(from, { x: m.x, y: m.y, t: now() }); return; }
+      if (m.t === 'add' && m.item) m.item.by = from;
+      if (m.t === 'del') m.ids = (m.ids || []).filter(id => { const it = items.find(x => x.id === id); return it && (it.by === from || m.erase); });
+      applyEdit(m);
+      relay(m, from);
+      return;
+    }
+    if (m.t === 'cur') cursors.set(m.id, { x: m.x, y: m.y, t: now() });
+    else applyEdit(m);
+  });
+  room.on('roster', players => {
+    if (room.isHost) for (const p of players) if (p.id !== room.me && !synced.has(p.id)) { synced.add(p.id); room.sendTo(p.id, { t: 'all', items }); }
+    for (const id of cursors.keys()) if (!players.some(p => p.id === id)) cursors.delete(id);
+    buildBar();
+  });
+  room.on('close', () => { room = null; cursors.clear(); buildBar(); });
+  synced.clear();
+  if (room.isHost) for (const p of room.players) if (p.id !== room.me) { synced.add(p.id); room.sendTo(p.id, { t: 'all', items }); }
+  buildBar();
+}
+
+// --- toolbar
+
+function buildBar() {
+  const bar = $('bar');
+  const online = !!room;
+  bar.innerHTML =
+    '<div class="grp">' + TOOLS.map(([k, label]) => '<button data-tool="' + k + '" class="' + (tool.kind === k ? 'on' : '') + '">' + label + '</button>').join('') + '</div>' +
+    '<div class="grp">' + COLORS.map(c => '<button class="sw' + (tool.c === c ? ' on' : '') + '" data-c="' + c + '" style="background:' + c + '" aria-label="Color ' + c + '"></button>').join('') + '</div>' +
+    '<div class="grp">' + SIZES.map(s => '<button class="sz' + (tool.w === s ? ' on' : '') + '" data-w="' + s + '" aria-label="Size ' + s + '"><i style="width:' + (s / 2 + 3) + 'px;height:' + (s / 2 + 3) + 'px"></i></button>').join('') + '</div>' +
+    '<div class="grp"><button id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>' +
+    (!online || room.isHost ? '<button id="clearBtn">Clear</button>' : '') + '<button id="saveBtn">Save PNG</button></div>' +
+    '<div class="grp">' + (online ? '<span id="who">' + room.players.length + (room.players.length === 1 ? ' person' : ' people') + '</span>' +
+      (room.isHost ? '<button id="inviteBtn">Invite</button>' : '') + '<button id="leaveBtn">Leave</button>'
+      : '<button id="inviteBtn">Draw with friends</button>') + '</div>';
+  for (const b of bar.querySelectorAll('[data-tool]')) b.onclick = () => { tool.kind = b.dataset.tool; buildBar(); };
+  for (const b of bar.querySelectorAll('[data-c]')) b.onclick = () => { tool.c = b.dataset.c; buildBar(); };
+  for (const b of bar.querySelectorAll('[data-w]')) b.onclick = () => { tool.w = +b.dataset.w; buildBar(); };
+  const on = (sel, fn) => { const b = bar.querySelector(sel); if (b) b.onclick = fn; };
+  on('#undoBtn', undo);
+  on('#clearBtn', () => { if (items.length && confirmClear()) share({ t: 'clear' }); });
+  on('#saveBtn', savePng);
+  on('#inviteBtn', () => (room ? lobby.reopen() : lobby.start()));
+  on('#leaveBtn', () => { lobby.leave(); room = null; cursors.clear(); buildBar(); });
+  cv.className = tool.kind === 'text' ? 'text' : tool.kind === 'erase' ? 'erase' : 'pen';
+  resize();
+}
+
+function confirmClear() {
+  try { return window.confirm('Clear the whole board' + (room ? ' for everyone' : '') + '?'); } catch (e) { return true; }
+}
+
+function undo() {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (items[i].by === myId()) { share({ t: 'del', ids: [items[i].id] }); return; }
+  }
+}
+
+// --- drawing input
+
+const cv = $('c'), ctx = cv.getContext('2d');
+let scale = 1, dpr = 1;
+function resize() {
+  const wrap = $('wrap').getBoundingClientRect();
+  scale = Math.min((wrap.width - 24) / BW, (wrap.height - 12) / BH);
+  if (!(scale > 0)) scale = 0.5;
+  dpr = devicePixelRatio || 1;
+  cv.style.width = BW * scale + 'px'; cv.style.height = BH * scale + 'px';
+  cv.width = Math.round(BW * scale * dpr); cv.height = Math.round(BH * scale * dpr);
+  dirty = true;
+}
+addEventListener('resize', resize);
+
+function boardPoint(e) {
+  const r = cv.getBoundingClientRect();
+  return [Math.round((e.clientX - r.left) / r.width * BW), Math.round((e.clientY - r.top) / r.height * BH)];
+}
+
+let draft = null, lastSend = 0, buf = [], lastCur = 0;
+
+cv.addEventListener('pointerdown', e => {
+  if ($('textIn').style.display === 'block') commitText();
+  const [x, y] = boardPoint(e);
+  try { cv.setPointerCapture(e.pointerId); } catch (err) { }
+  if (tool.kind === 'text') { startText(x, y, e); return; }
+  if (tool.kind === 'erase') { draft = { erase: true }; eraseAt(x, y); return; }
+  const id = myId() + '-' + (++counter) + '-' + Math.floor(Math.random() * 1e6).toString(36);
+  const w = tool.kind === 'hl' ? tool.w * 3 + 10 : tool.w;
+  draft = { id, by: myId(), kind: tool.kind, c: tool.c, w, p: [x, y, x, y] };
+  if (tool.kind === 'pen' || tool.kind === 'hl') {
+    draft.p = [x, y];
+    share({ t: 'add', item: draft });
+    draft = items.find(i => i.id === id);
+    buf = []; lastSend = now();
+  }
+});
+
+cv.addEventListener('pointermove', e => {
+  const [x, y] = boardPoint(e);
+  if (room && now() - lastCur > 60) { lastCur = now(); if (room.isHost) relay({ t: 'cur', id: room.me, x, y }, room.me); else room.send({ t: 'cur', x, y }); }
+  if (!draft) return;
+  if (draft.erase) { eraseAt(x, y); return; }
+  if (draft.kind === 'pen' || draft.kind === 'hl') {
+    const p = draft.p;
+    if (Math.hypot(x - p[p.length - 2], y - p[p.length - 1]) < 2) return;
+    p.push(x, y); buf.push(x, y); dirty = true;
+    if (now() - lastSend > 45) flushPoints();
+  } else {
+    draft.p[2] = x; draft.p[3] = y; dirty = true;
+    if (e.shiftKey && (draft.kind === 'rect' || draft.kind === 'ellipse')) {
+      const s = Math.max(Math.abs(x - draft.p[0]), Math.abs(y - draft.p[1]));
+      draft.p[2] = draft.p[0] + Math.sign(x - draft.p[0]) * s; draft.p[3] = draft.p[1] + Math.sign(y - draft.p[1]) * s;
+    }
+  }
+});
+
+function flushPoints() {
+  if (!buf.length || !draft) return;
+  const m = { t: 'pts', id: draft.id, p: buf };
+  buf = []; lastSend = now();
+  if (!room) return;
+  if (room.isHost) relay(m, room.me); else room.send(m);
+}
+
+function endStroke() {
+  if (!draft) return;
+  if (draft.erase) { draft = null; return; }
+  if (draft.kind === 'pen' || draft.kind === 'hl') flushPoints();
+  else if (Math.hypot(draft.p[2] - draft.p[0], draft.p[3] - draft.p[1]) > 4) share({ t: 'add', item: draft });
+  draft = null; dirty = true;
+}
+cv.addEventListener('pointerup', endStroke);
+cv.addEventListener('pointercancel', endStroke);
+
+function distToSeg(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
+  const t = l ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)) : 0;
+  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+}
+
+function hits(it, x, y) {
+  const r = it.w / 2 + 10, p = it.p;
+  if (it.kind === 'pen' || it.kind === 'hl') {
+    if (p.length === 2) return Math.hypot(x - p[0], y - p[1]) < r;
+    for (let i = 2; i < p.length; i += 2) if (distToSeg(x, y, p[i - 2], p[i - 1], p[i], p[i + 1]) < r) return true;
+    return false;
+  }
+  if (it.kind === 'line' || it.kind === 'arrow') return distToSeg(x, y, p[0], p[1], p[2], p[3]) < r;
+  if (it.kind === 'text') { ctx.font = textFont(it.w); const w = ctx.measureText(it.text).width; return x > p[0] - 6 && x < p[0] + Math.max(40, w) && y > p[1] - textSize(it.w) && y < p[1] + 8; }
+  const x0 = Math.min(p[0], p[2]), x1 = Math.max(p[0], p[2]), y0 = Math.min(p[1], p[3]), y1 = Math.max(p[1], p[3]);
+  if (it.kind === 'rect') {
+    return x > x0 - r && x < x1 + r && y > y0 - r && y < y1 + r && !(x > x0 + r && x < x1 - r && y > y0 + r && y < y1 - r);
+  }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = Math.max(1, (x1 - x0) / 2), ry = Math.max(1, (y1 - y0) / 2);
+  const d = Math.hypot((x - cx) / rx, (y - cy) / ry);
+  return Math.abs(d - 1) * Math.min(rx, ry) < r;
+}
+
+function eraseAt(x, y) {
+  const ids = items.filter(it => hits(it, x, y)).map(it => it.id);
+  if (ids.length) share({ t: 'del', ids, erase: true });
+}
+
+// --- text
+
+let textAt = null;
+function startText(x, y) {
+  const inp = $('textIn');
+  textAt = [x, y];
+  const r = cv.getBoundingClientRect(), wr = $('wrap').getBoundingClientRect();
+  inp.style.left = (r.left - wr.left + x * scale) + 'px';
+  inp.style.top = (r.top - wr.top + y * scale - 22) + 'px';
+  inp.style.color = tool.c;
+  inp.value = '';
+  inp.style.display = 'block';
+  setTimeout(() => inp.focus(), 0);
+}
+function commitText() {
+  const inp = $('textIn');
+  const text = inp.value.trim();
+  inp.style.display = 'none';
+  if (text && textAt) share({ t: 'add', item: { id: myId() + '-' + (++counter) + '-' + Math.floor(Math.random() * 1e6).toString(36), by: myId(), kind: 'text', c: tool.c, w: tool.w, p: textAt, text } });
+  textAt = null;
+}
+$('textIn').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); commitText(); }
+  else if (e.key === 'Escape') { $('textIn').value = ''; commitText(); }
+});
+$('textIn').addEventListener('blur', () => { if ($('textIn').style.display === 'block') commitText(); });
+
+const textSize = w => (w <= 3 ? 22 : w <= 7 ? 34 : 56);
+const textFont = w => '600 ' + textSize(w) + 'px system-ui, -apple-system, sans-serif';
+
+addEventListener('keydown', e => {
+  if (document.activeElement === $('textIn')) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+});
+
+// --- rendering
+
+function drawItem(g, it) {
+  const p = it.p;
+  g.strokeStyle = it.c; g.fillStyle = it.c; g.lineWidth = it.w;
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  g.globalAlpha = it.kind === 'hl' ? 0.35 : 1;
+  if (it.kind === 'pen' || it.kind === 'hl') {
+    if (p.length === 2) { g.beginPath(); g.arc(p[0], p[1], it.w / 2, 0, Math.PI * 2); g.fill(); }
+    else {
+      g.beginPath(); g.moveTo(p[0], p[1]);
+      for (let i = 2; i < p.length - 2; i += 2) g.quadraticCurveTo(p[i], p[i + 1], (p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2);
+      g.lineTo(p[p.length - 2], p[p.length - 1]);
+      g.stroke();
+    }
+  } else if (it.kind === 'line' || it.kind === 'arrow') {
+    g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(p[2], p[3]); g.stroke();
+    if (it.kind === 'arrow') {
+      const a = Math.atan2(p[3] - p[1], p[2] - p[0]), L = 14 + it.w * 2.2;
+      g.beginPath();
+      g.moveTo(p[2] - L * Math.cos(a - 0.45), p[3] - L * Math.sin(a - 0.45));
+      g.lineTo(p[2], p[3]);
+      g.lineTo(p[2] - L * Math.cos(a + 0.45), p[3] - L * Math.sin(a + 0.45));
+      g.stroke();
+    }
+  } else if (it.kind === 'rect') {
+    g.beginPath(); g.rect(Math.min(p[0], p[2]), Math.min(p[1], p[3]), Math.abs(p[2] - p[0]), Math.abs(p[3] - p[1])); g.stroke();
+  } else if (it.kind === 'ellipse') {
+    g.beginPath();
+    g.ellipse((p[0] + p[2]) / 2, (p[1] + p[3]) / 2, Math.abs(p[2] - p[0]) / 2, Math.abs(p[3] - p[1]) / 2, 0, 0, Math.PI * 2);
+    g.stroke();
+  } else if (it.kind === 'text') {
+    g.font = textFont(it.w); g.textBaseline = 'alphabetic';
+    g.fillText(it.text, p[0], p[1]);
+  }
+  g.globalAlpha = 1;
+}
+
+function drawBoard(g) {
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, BW, BH);
+  for (const it of items) drawItem(g, it);
+}
+
+function frame() {
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+  drawBoard(ctx);
+  if (draft && !draft.erase && !items.includes(draft)) drawItem(ctx, draft);
+  const t = now();
+  ctx.font = '600 15px system-ui, sans-serif';
+  for (const [id, c] of cursors) {
+    if (t - c.t > 8000) continue;
+    const p = room && room.players.find(p => p.id === id);
+    if (!p) continue;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x + 5, c.y + 20); ctx.lineTo(c.x + 10, c.y + 13); ctx.lineTo(c.x + 18, c.y + 13); ctx.closePath(); ctx.fill();
+    ctx.fillText(p.name, c.x + 16, c.y + 30);
+  }
+  dirty = false;
+  requestAnimationFrame(frame);
+}
+
+function savePng() {
+  const out = document.createElement('canvas');
+  out.width = BW; out.height = BH;
+  drawBoard(out.getContext('2d'));
+  out.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'whiteboard.png';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, 'image/png');
+}
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'whiteboard',
+  title: 'Whiteboard',
+  blurb: 'A board to draw and write on together. Everyone sees each other\'s strokes and cursors as they happen.',
+  min: 1,
+  extra: [{ label: 'Draw alone', note: 'You can invite people later.', onClick: () => buildBar() }],
+  onStart: attach,
+  onJoin: attach,
+});
+buildBar();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -32,7 +32,7 @@
   #text .cur { border-left: 2px solid #ffd166; margin-left: -2px; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { border-color: transparent; } }
   #text.wait { opacity: .45; }
-  #inp { position: fixed; left: -9999px; top: 0; opacity: 0; width: 10px; height: 10px; }
+  #inp { display: block; width: 1px; height: 1px; opacity: 0; font-size: 16px; border: 0; padding: 0; margin: 0; resize: none; }
   #results { margin-top: 26px; }
   #results table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
   #results td, #results th { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--rule); }
