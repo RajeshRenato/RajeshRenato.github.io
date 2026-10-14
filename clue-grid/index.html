@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314171f'/%3E%3Crect x='5' y='5' width='10' height='10' rx='2' fill='%23e5484d'/%3E%3Crect x='17' y='5' width='10' height='10' rx='2' fill='%23eceae4'/%3E%3Crect x='5' y='17' width='10' height='10' rx='2' fill='%23eceae4'/%3E%3Crect x='17' y='17' width='10' height='10' rx='2' fill='%233e7bfa'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Clue Grid</title>
+<style>
+  :root { --bg: #14171f; --panel: #1d2130; --ink: #ecebe4; --muted: #8e94a6; --rule: #2b3042;
+          --r: #e5484d; --b: #3e7bfa; --n: #cfc6b0; --x: #0b0b0e; --card: #eceae4;
+          --lp-bg: #14171f; --lp-panel: #1d2130; --lp-veil: rgba(20, 23, 31, .95); --lp-accent: #3e7bfa; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #app { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; max-width: 1120px; margin: 0 auto; padding: 46px 16px 24px; }
+  #head { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .left { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .left.r { color: var(--r); } .left.b { color: var(--b); }
+  #turn { flex: 1; font-size: 18px; font-weight: 600; }
+  #clueBar { grid-column: 1 / -1; min-height: 48px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+             background: var(--panel); border-radius: 10px; padding: 8px 14px; }
+  #clueBar .clue { font-size: 22px; font-weight: 800; letter-spacing: .04em; }
+  #clueBar .muted { color: var(--muted); }
+  #clueBar input { font: inherit; font-size: 16px; padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--rule); background: #0e1018; color: var(--ink); }
+  #clueBar input[type=number] { width: 64px; }
+  #clueBar .err { color: var(--r); }
+  #grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  .card { aspect-ratio: 8 / 5; border-radius: 8px; border: 0; background: var(--card); color: #1c1e26; font: inherit; font-weight: 700;
+          font-size: clamp(11px, 1.9vw, 18px); text-transform: uppercase; letter-spacing: .03em; display: flex; align-items: center;
+          justify-content: center; text-align: center; padding: 4px; cursor: default; overflow-wrap: anywhere; position: relative;
+          box-shadow: inset 0 -4px 0 rgba(0,0,0,.12); }
+  .card.can { cursor: pointer; }
+  .card.can:hover { outline: 3px solid var(--ink); outline-offset: -3px; }
+  .card.k-r { box-shadow: inset 0 0 0 4px var(--r); color: #7d1f22; }
+  .card.k-b { box-shadow: inset 0 0 0 4px var(--b); color: #1c3f8c; }
+  .card.k-x { box-shadow: inset 0 0 0 4px var(--x); background: #b9b5ab; }
+  .card.v-r { background: var(--r); color: #fff; box-shadow: none; }
+  .card.v-b { background: var(--b); color: #fff; box-shadow: none; }
+  .card.v-n { background: #8a8370; color: #f3efe4; box-shadow: none; }
+  .card.v-x { background: var(--x); color: #f3efe4; box-shadow: none; }
+  .card.v-r, .card.v-b, .card.v-n, .card.v-x { opacity: .92; }
+  .card.over-r::after, .card.over-b::after, .card.over-n::after, .card.over-x::after { content: ''; position: absolute; inset: 5px; border-radius: 5px;
+          border: 3px dashed; opacity: .55; }
+  .card.over-r::after { border-color: var(--r); } .card.over-b::after { border-color: var(--b); } .card.over-x::after { border-color: var(--x); }
+  .card.over-n::after { border-color: #8a8370; }
+  aside { display: flex; flex-direction: column; gap: 12px; }
+  .team { background: var(--panel); border-radius: 10px; padding: 10px 12px; border-top: 4px solid; }
+  .team.r { border-color: var(--r); } .team.b { border-color: var(--b); }
+  .team h3 { margin: 0 0 6px; font-size: 15px; }
+  .team ul { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+  .team li { padding: 3px 0; display: flex; gap: 6px; align-items: baseline; }
+  .team li small { color: var(--muted); }
+  .team .you { font-weight: 700; }
+  #log { background: var(--panel); border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--muted);
+         max-height: 260px; overflow-y: auto; list-style: none; margin: 0; }
+  #log b.r { color: var(--r); } #log b.b { color: var(--b); }
+  button.act { font: inherit; font-weight: 600; font-size: 14px; padding: 8px 13px; border-radius: 8px; cursor: pointer;
+               border: 1.5px solid var(--ink); background: var(--panel); color: var(--ink); }
+  button.act:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
+  button.act:disabled { opacity: .4; cursor: default; }
+  button.act.r { border-color: var(--r); } button.act.b { border-color: var(--b); }
+  button.quiet { font: inherit; border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px 0; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--b); outline-offset: 2px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  #setup { grid-column: 1 / -1; background: var(--panel); border-radius: 10px; padding: 16px; }
+  #setup h2 { margin: 0 0 6px; font-size: 22px; }
+  #setup p { color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
+  [hidden] { display: none !important; }
+  @media (max-width: 820px) {
+    #app { grid-template-columns: 1fr; }
+    #grid { gap: 5px; }
+    .card { font-size: clamp(9px, 2.9vw, 15px); letter-spacing: 0; }
+  }
+</style>
+<meta property="og:title" content="Clue Grid">
+<meta property="og:description" content="A Codenames-style word game for 4 to 8 players in two teams. Spymasters give one-word clues, teammates find the words. Connected by links with no server.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/clue-grid/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/clue-grid/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A Codenames-style word game for 4 to 8 players in two teams. Spymasters give one-word clues, teammates find the words. Connected by links with no server.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="app">
+  <div id="head"><span class="left r" id="leftR"></span><span class="left b" id="leftB"></span><span id="turn"></span></div>
+  <div id="setup" hidden></div>
+  <div id="clueBar"></div>
+  <div id="grid"></div>
+  <aside>
+    <div class="team r"><h3>Red team</h3><ul id="teamR"></ul></div>
+    <div class="team b"><h3>Blue team</h3><ul id="teamB"></ul></div>
+    <ul id="log"></ul>
+    <div class="row" id="actions"></div>
+  </aside>
+</div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const WORDS = ('anchor apple arrow atlas badge bakery balloon bamboo band bank bark barrel bat battery beach beam bean bear bed bee bell belt bench ' +
+  'berry bill bird blade blanket block board boat bolt bomb bone book boot bottle bow bowl box brain branch brick bridge brush bubble bucket ' +
+  'bug bulb bus butter button cabin cable cake camel camera camp candle cane cannon canyon cap capital card carpet carrot castle cat cave cell ' +
+  'chain chair chalk charge check cheese chest chicken chip circle circus city clay cliff clock cloud club coach coal coast coat code coin cold ' +
+  'comet compass concert cook copper coral cotton court cover cow crab crane crash crown crystal cube cup curry curtain cycle dance date deck ' +
+  'desert diamond dice dinner disk doctor dog doll dolphin door dragon drain dream dress drill drum duck dust eagle earth echo egg engine ' +
+  'eye fair fall fan farm feather fence field file film fire fish flag flame flash flood floor flower flute fog foot forest fork fort fountain ' +
+  'fox frame frog frost fruit game garden gas gate gem ghost giant gift glass glove glue goal gold golf grape grass grid guitar gum hammer ' +
+  'hand harbor hat hawk head heart helmet hill hole honey hook horn horse hospital hotel ice ink iron island jacket jam jar jazz jelly jet ' +
+  'jewel joke judge juice jungle key kid king kitchen kite knife knight knot ladder lake lamp land laser lava lead leaf lemon letter level ' +
+  'library light lime line lion lock log luck lunch magnet mail map marble market mask match maze medal memory metal milk mill mint mirror ' +
+  'model money monkey moon motor mountain mouse mouth mud mug museum music nail needle nest net night note nurse nut ocean office oil olive ' +
+  'onion orange orbit organ owl paint palace palm pan panda paper parade park party pass paste path pearl pen pencil penguin pepper piano ' +
+  'pie pig pilot pin pipe pirate pit pitch planet plant plate play plot pocket point poison pole police pool port post pot potato powder ' +
+  'press prince prison pump pumpkin puzzle queen race radio rain ranch ray record ring river road robot rock rocket roll roof root rope rose ' +
+  'round ruler saddle sail salt sand satellite saw scale school score screen seal season seed shadow shark sheep shell ship shoe shop shot ' +
+  'signal silk silver sink skate sketch skull slide slip smoke snake snow soap sock soldier soup space spark spider spike spine spirit spoon ' +
+  'spot spring spy square stadium staff stage stamp star station steam steel stick stone storm straw stream street string sugar suit sun ' +
+  'swing sword table tail tank tape tea team temple tent thread throne thunder ticket tiger time toast tooth torch tower track train trap ' +
+  'tree triangle trip truck trumpet trunk tube tunnel turtle umbrella unicorn valley van vase violin volcano wagon wall watch water wave web ' +
+  'wedding well whale wheel whip whistle wind window wing wire witch wolf wood wool yard yarn zebra zero').split(' ')
+  .filter((w, i, all) => all.indexOf(w) === i);
+
+const TEAM_NAME = { r: 'Red', b: 'Blue' };
+const other = t => (t === 'r' ? 'b' : 'r');
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+let room = null;
+let V = { phase: 'wait' };   // what this player sees, sent by the host
+let clueError = '';
+
+// --- host
+
+const H = { phase: 'teams', words: [], key: [], revealed: [], team: {}, spy: { r: -1, b: -1 }, turn: 'r', starter: 'r',
+            clue: null, left: 0, winner: '', reason: '', log: [] };
+
+function shuffled(a, rand = Math.random) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function members(t) { return room.players.filter(p => H.team[p.id] === t); }
+
+function balanceNewcomers() {
+  for (const p of room.players) {
+    if (!H.team[p.id]) H.team[p.id] = members('r').length <= members('b').length ? 'r' : 'b';
+  }
+  for (const id of Object.keys(H.team)) if (!room.players.some(p => p.id === +id)) delete H.team[id];
+  for (const t of ['r', 'b']) {
+    if (!members(t).some(p => p.id === H.spy[t])) H.spy[t] = members(t).length ? members(t)[0].id : -1;
+  }
+}
+
+function shuffleTeams() {
+  const ids = shuffled(room.players.map(p => p.id));
+  H.team = {};
+  ids.forEach((id, i) => { H.team[id] = i % 2 ? 'b' : 'r'; });
+  H.spy = { r: -1, b: -1 };
+  balanceNewcomers();
+}
+
+function canStart() {
+  return ['r', 'b'].every(t => members(t).length >= 2 && H.spy[t] >= 0);
+}
+
+function newGame(rand = Math.random) {
+  H.words = shuffled(WORDS, rand).slice(0, 25);
+  const s = H.starter;
+  H.key = shuffled([...Array(9).fill(s), ...Array(8).fill(other(s)), ...Array(7).fill('n'), 'x'], rand);
+  H.revealed = Array(25).fill(false);
+  H.turn = s;
+  H.phase = 'clue';
+  H.clue = null; H.left = 0; H.winner = ''; H.reason = '';
+  H.log = [];
+  note(TEAM_NAME[s] + ' starts with 9 words.');
+}
+
+function remaining(t) { return H.key.filter((k, i) => k === t && !H.revealed[i]).length; }
+function note(text, team) { H.log.push({ text, team: team || '' }); if (H.log.length > 40) H.log.shift(); }
+function nameOf(id) { const p = room.players.find(p => p.id === id); return p ? p.name : 'Someone'; }
+
+function checkClue(word, n) {
+  word = String(word || '').trim().toLowerCase();
+  if (!/^[a-z]{2,20}$/.test(word)) return 'A clue is one word, letters only.';
+  if (!(n >= 0 && n <= 9) || n !== Math.floor(n)) return 'The number is 0 to 9.';
+  for (let i = 0; i < 25; i++) {
+    if (H.revealed[i]) continue;
+    const w = H.words[i];
+    if (word === w || (w.length >= 3 && word.includes(w)) || (word.length >= 3 && w.includes(word))) return 'You can\'t use a word on the board, or part of one.';
+  }
+  return '';
+}
+
+function giveClue(id, word, n) {
+  if (H.phase !== 'clue' || H.spy[H.turn] !== id) return;
+  n = +n;
+  const err = checkClue(word, n);
+  if (err) { toPlayer(id, { t: 'err', text: err }); return; }
+  H.clue = { word: word.trim().toLowerCase(), n, team: H.turn };
+  H.left = n === 0 ? 25 : n + 1;
+  H.phase = 'guess';
+  note(nameOf(id) + ' gave the clue ' + H.clue.word.toUpperCase() + ' ' + n + '.', H.turn);
+  sendAll();
+}
+
+function endTurn() {
+  H.turn = other(H.turn);
+  H.phase = 'clue';
+  H.clue = null;
+  H.left = 0;
+}
+
+function finish(winner, reason) {
+  H.phase = 'over';
+  H.winner = winner;
+  H.reason = reason;
+  note(TEAM_NAME[winner] + ' wins. ' + reason, winner);
+}
+
+function tap(id, i) {
+  if (H.phase !== 'guess' || H.team[id] !== H.turn || H.spy[H.turn] === id || H.revealed[i] || !(i >= 0 && i < 25)) return;
+  H.revealed[i] = true;
+  const k = H.key[i], t = H.turn;
+  note(nameOf(id) + ' picked ' + H.words[i].toUpperCase() + ': ' + (k === 'x' ? 'the assassin' : k === 'n' ? 'a bystander' : TEAM_NAME[k].toLowerCase()) + '.', t);
+  if (k === 'x') finish(other(t), TEAM_NAME[t] + ' found the assassin.');
+  else if (k !== 'n' && remaining(k) === 0) finish(k, TEAM_NAME[k] + ' found all their words.');
+  else if (k === t) { if (--H.left === 0) endTurn(); }
+  else endTurn();
+  sendAll();
+}
+
+function pass(id) {
+  if (H.phase !== 'guess' || H.team[id] !== H.turn || H.spy[H.turn] === id) return;
+  note(nameOf(id) + ' ended the turn.', H.turn);
+  endTurn();
+  sendAll();
+}
+
+function setRole(id, team, spy) {
+  if (H.phase !== 'teams' || (team !== 'r' && team !== 'b')) return;
+  H.team[id] = team;
+  if (spy) H.spy[team] = id;
+  balanceNewcomers();
+  sendAll();
+}
+
+function hostStart() {
+  if (H.phase !== 'teams' || !canStart()) return;
+  newGame();
+  sendAll();
+}
+
+function hostNext(changeTeams) {
+  if (H.phase !== 'over') return;
+  H.starter = other(H.starter);
+  if (changeTeams) { H.phase = 'teams'; H.log = []; }
+  else newGame();
+  sendAll();
+}
+
+// Each player gets their own copy: only spymasters (and everyone after the game) see the key.
+function viewFor(id) {
+  const spy = H.spy[H.team[id]] === id && H.phase !== 'teams';
+  const showKey = spy || H.phase === 'over';
+  return {
+    t: 'view', phase: H.phase, words: H.words, team: H.team, spy: H.spy, turn: H.turn, clue: H.clue, left: H.left,
+    winner: H.winner, reason: H.reason, log: H.log, canStart: room.isHost ? canStart() : false,
+    revealed: H.revealed.map((r, i) => (r ? H.key[i] : null)),
+    key: showKey ? H.key : null,
+    remaining: { r: H.words.length ? remaining('r') : 0, b: H.words.length ? remaining('b') : 0 },
+  };
+}
+
+function toPlayer(id, m) {
+  if (id === room.me) handle(m);
+  else room.sendTo(id, m);
+}
+function sendAll() {
+  balanceNewcomers();
+  if (H.phase !== 'teams' && H.phase !== 'over') {
+    for (const t of ['r', 'b']) if (!members(t).length) { finish(other(t), TEAM_NAME[t] + ' has no players left.'); break; }
+  }
+  for (const p of room.players) toPlayer(p.id, viewFor(p.id));
+}
+
+// --- everyone
+
+function attach(r) {
+  room = r;
+  V = { phase: 'wait' };
+  room.on('message', (m, from) => {
+    if (!room.isHost) return handle(m);
+    if (m.t === 'clue') giveClue(from, m.word, m.n);
+    else if (m.t === 'tap') tap(from, m.i);
+    else if (m.t === 'pass') pass(from);
+    else if (m.t === 'role') setRole(from, m.team, !!m.spy);
+  });
+  room.on('roster', () => { if (room.isHost) sendAll(); render(); });
+  room.on('close', () => { room = null; V = { phase: 'wait' }; lobby.start(); render(); });
+  if (room.isHost) { H.phase = 'teams'; H.team = {}; H.spy = { r: -1, b: -1 }; shuffleTeams(); sendAll(); }
+  render();
+}
+
+function handle(m) {
+  if (m.t === 'view') { V = m; clueError = ''; render(); }
+  else if (m.t === 'err') { clueError = m.text; render(); }
+}
+
+function act(m) {
+  if (!room) return;
+  if (room.isHost) {
+    if (m.t === 'clue') giveClue(room.me, m.word, m.n);
+    else if (m.t === 'tap') tap(room.me, m.i);
+    else if (m.t === 'pass') pass(room.me);
+    else if (m.t === 'role') setRole(room.me, m.team, !!m.spy);
+  } else room.send(m);
+}
+
+// --- rendering
+
+const myTeam = () => (room && V.team ? V.team[room.me] : '');
+const amSpy = () => !!room && V.spy && V.spy[myTeam()] === room.me;
+const canGuess = () => V.phase === 'guess' && myTeam() === V.turn && !amSpy();
+
+function render() {
+  const inGame = room && V.phase && V.phase !== 'wait';
+  $('setup').hidden = !(inGame && V.phase === 'teams');
+  $('grid').hidden = $('clueBar').hidden = !(inGame && V.phase !== 'teams');
+  $('leftR').textContent = inGame && V.phase !== 'teams' ? V.remaining.r : '';
+  $('leftB').textContent = inGame && V.phase !== 'teams' ? V.remaining.b : '';
+
+  const me = room ? room.me : -1, team = myTeam();
+  let turn = '';
+  if (!inGame) turn = room ? 'Waiting for the host…' : '';
+  else if (V.phase === 'teams') turn = 'Pick teams';
+  else if (V.phase === 'over') turn = TEAM_NAME[V.winner] + ' wins. ' + V.reason;
+  else {
+    const spyName = playerName(V.spy[V.turn]);
+    turn = V.phase === 'clue'
+      ? (V.spy[V.turn] === me ? 'Your turn to give a clue' : TEAM_NAME[V.turn] + ' spymaster ' + spyName + ' is thinking of a clue')
+      : (V.turn === team && !amSpy() ? 'Your team is guessing' : TEAM_NAME[V.turn] + ' team is guessing');
+  }
+  $('turn').textContent = turn;
+  $('turn').style.color = inGame && V.phase !== 'teams' ? (V.phase === 'over' ? `var(--${V.winner})` : `var(--${V.turn})`) : '';
+
+  if (inGame && V.phase === 'teams') renderSetup();
+  if (inGame && V.phase !== 'teams') { renderClueBar(); renderGrid(); }
+  renderTeams();
+  renderLog();
+  renderActions();
+}
+
+function playerName(id) {
+  const p = room && room.players.find(p => p.id === id);
+  return p ? p.name : '…';
+}
+
+function renderSetup() {
+  const team = myTeam();
+  const host = room.isHost;
+  const s = $('setup');
+  s.innerHTML = '<h2>Pick teams</h2><p>Each team needs a spymaster, who sees which words are theirs and gives one-word clues, ' +
+    'and at least one guesser. Pick a side, or let the host shuffle.</p><div class="row">' +
+    '<button class="act r" data-role="r">Join red</button><button class="act b" data-role="b">Join blue</button>' +
+    '<button class="act" data-spy="1"' + (team ? '' : ' disabled') + '>Be ' + (team ? TEAM_NAME[team].toLowerCase() + ' ' : '') + 'spymaster</button>' +
+    (host ? '<span style="flex:1"></span><button class="act" id="shuffleBtn">Shuffle teams</button><button class="act" id="startBtn"' + (V.canStart ? '' : ' disabled') + '>Start game</button>' : '') +
+    '</div>' + (host && !V.canStart ? '<p style="margin:10px 0 0">Starting needs 2 or more players on each team, 4 in all.</p>' : '');
+  for (const b of s.querySelectorAll('[data-role]')) b.onclick = () => act({ t: 'role', team: b.dataset.role, spy: false });
+  for (const b of s.querySelectorAll('[data-spy]')) b.onclick = () => act({ t: 'role', team: myTeam(), spy: true });
+  const sh = s.querySelector('#shuffleBtn'), st = s.querySelector('#startBtn');
+  if (sh) sh.onclick = () => { shuffleTeams(); sendAll(); };
+  if (st) st.onclick = hostStart;
+}
+
+function renderClueBar() {
+  const bar = $('clueBar');
+  const me = room.me;
+  if (V.phase === 'clue' && V.spy[V.turn] === me) {
+    if (!bar.querySelector('#clueForm')) {
+      bar.innerHTML = '<form id="clueForm" class="row"><input id="clueWord" maxlength="20" autocomplete="off" placeholder="One word">' +
+        '<input id="clueN" type="number" min="0" max="9" value="1" aria-label="Number of words"><button class="act">Give clue</button>' +
+        '<span class="muted">The number is how many words it points to.</span><span class="err" id="clueErr"></span></form>';
+      bar.querySelector('#clueForm').onsubmit = e => {
+        e.preventDefault();
+        act({ t: 'clue', word: bar.querySelector('#clueWord').value, n: +bar.querySelector('#clueN').value });
+      };
+    }
+    const er = bar.querySelector('#clueErr');
+    if (er) er.textContent = clueError;
+    return;
+  }
+  if (V.phase === 'guess') {
+    bar.innerHTML = '<span class="muted">Clue</span><span class="clue" style="color:var(--' + V.clue.team + ')">' + esc(V.clue.word.toUpperCase()) + ' ' + V.clue.n + '</span>' +
+      '<span class="muted">' + (V.left >= 25 ? 'any number of guesses' : V.left + (V.left === 1 ? ' guess' : ' guesses') + ' left') + '</span>' +
+      (canGuess() ? '<span style="flex:1"></span><button class="act" id="passBtn">End guessing</button>' : '');
+    const pb = bar.querySelector('#passBtn');
+    if (pb) pb.onclick = () => act({ t: 'pass' });
+    return;
+  }
+  bar.innerHTML = V.phase === 'over' ? '<span class="muted">Every card is shown with its color now.</span>' : '<span class="muted">Waiting for a clue.</span>';
+}
+
+function renderGrid() {
+  const g = $('grid');
+  const guess = canGuess();
+  g.innerHTML = V.words.map((w, i) => {
+    const rev = V.revealed[i];
+    let cls = 'card';
+    if (rev) cls += ' v-' + rev;
+    else if (V.key && V.phase === 'over') cls += ' over-' + V.key[i];
+    else if (V.key && V.key[i] !== 'n') cls += ' k-' + V.key[i];
+    if (!rev && guess) cls += ' can';
+    return '<button class="' + cls + '" data-i="' + i + '"' + (!rev && guess ? '' : ' tabindex="-1"') + '>' + esc(w) + '</button>';
+  }).join('');
+  if (guess) for (const b of g.querySelectorAll('.card.can')) b.onclick = () => act({ t: 'tap', i: +b.dataset.i });
+}
+
+function renderTeams() {
+  for (const t of ['r', 'b']) {
+    const ul = $(t === 'r' ? 'teamR' : 'teamB');
+    if (!room || !V.team) { ul.innerHTML = ''; continue; }
+    ul.innerHTML = room.players.filter(p => V.team[p.id] === t).map(p =>
+      '<li class="' + (p.id === room.me ? 'you' : '') + '">' + esc(p.name) + (p.id === room.me ? ' (you)' : '') +
+      (V.spy[t] === p.id ? ' <small>spymaster</small>' : '') + '</li>').join('') || '<li><small>nobody yet</small></li>';
+  }
+}
+
+function renderLog() {
+  const ul = $('log');
+  if (!room || !V.log || !V.log.length) { ul.hidden = true; return; }
+  ul.hidden = false;
+  ul.innerHTML = V.log.map(e => '<li>' + (e.team ? '<b class="' + e.team + '">■</b> ' : '') + esc(e.text) + '</li>').join('');
+  ul.scrollTop = ul.scrollHeight;
+}
+
+function renderActions() {
+  const a = $('actions');
+  let html = '';
+  if (room && room.isHost && V.phase === 'over') html += '<button class="act" id="againBtn">New game</button><button class="act" id="teamsBtn">Change teams</button>';
+  if (room && room.isHost) html += '<button class="quiet" id="inviteBtn">Invite more</button>';
+  if (room) html += '<button class="quiet" id="leaveBtn">Leave</button>';
+  if (a.dataset.html === html) return;
+  a.innerHTML = html;
+  a.dataset.html = html;
+  const ag = a.querySelector('#againBtn'), tb = a.querySelector('#teamsBtn'), iv = a.querySelector('#inviteBtn'), lv = a.querySelector('#leaveBtn');
+  if (ag) ag.onclick = () => hostNext(false);
+  if (tb) tb.onclick = () => hostNext(true);
+  if (iv) iv.onclick = () => lobby.reopen();
+  if (lv) lv.onclick = () => { room = null; V = { phase: 'wait' }; lobby.start(); render(); };
+}
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'clue-grid',
+  title: 'Clue Grid',
+  blurb: 'Two teams, 25 words. Each spymaster knows which words are their team\'s and gives one-word clues. Find all of yours first, and stay away from the assassin. Best with 4 to 8 players.',
+  min: 4,
+  onStart: attach,
+  onJoin: attach,
+});
+render();
+</script>
+</body>
+</html>

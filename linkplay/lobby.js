@@ -60,7 +60,7 @@ const Lobby = (() => {
       panel(
         '<h1>' + esc(opts.title) + '</h1>' +
         '<p>' + esc(opts.blurb) + '</p>' + nameField() +
-        '<div class="lp-modes"><button id="lpCreate">Play with friends<span>Up to ' + max + ' players. Send each friend their own link.</span></button>' +
+        '<div class="lp-modes"><button id="lpCreate">' + (max === 2 ? 'Play a friend online<span>Send a link, they send one back, and you\'re connected.</span>' : 'Play with friends<span>Up to ' + max + ' players. Send each friend their own link.</span>') + '</button>' +
         (opts.extra || []).map((x, i) => '<button data-extra="' + i + '">' + esc(x.label) + (x.note ? '<span>' + esc(x.note) + '</span>' : '') + '</button>').join('') +
         '</div>' +
         '<p class="lp-small">Players connect browser to browser, with no game server. A public STUN service helps the browsers find each other. Some strict office or mobile networks block direct connections; if a friend can\'t connect, try another network.</p>'
@@ -75,7 +75,7 @@ const Lobby = (() => {
       room.on('fail', () => setStatus("A friend couldn't connect. One of your networks may block direct connections; send them a new invite or try another network."));
       panel(
         '<h2>Invite friends</h2>' +
-        '<p>Send each friend their own invite. They\'ll get a reply link to send back: open it in this browser, or paste it below.</p>' +
+        '<p>' + (max === 2 ? 'Send your friend this invite.' : 'Send each friend their own invite.') + ' They\'ll get a reply link to send back: open it in this browser, or paste it below.' + (max === 2 ? ' The game starts as soon as they\'re in.' : '') + '</p>' +
         '<div id="lpInvites"></div>' +
         '<button id="lpMore" class="lp-link">Invite another player</button>' +
         '<div class="lp-code"><input id="lpReply" placeholder="Paste a reply link"><button id="lpConnect">Connect</button></div>' +
@@ -86,6 +86,7 @@ const Lobby = (() => {
       $('#lpMore').onclick = () => addInvite();
       $('#lpConnect').onclick = () => accept($('#lpReply').value);
       $('#lpReply').onkeydown = e => { if (e.key === 'Enter') accept($('#lpReply').value); };
+      if (max === 2) { $('#lpStart').hidden = true; $('#lpMore').hidden = true; }
       $('#lpStart').onclick = () => { if (room.players.length >= min) { el.hidden = true; opts.onStart(room); } };
       $('#lpCancel').onclick = start;
       drawRoster();
@@ -125,6 +126,7 @@ const Lobby = (() => {
       ul.innerHTML = room.players.map(p => '<li><i style="background:' + p.color + '"></i>' + esc(p.name) + (p.id === room.me ? ' (you)' : '') + '</li>').join('');
       const ok = room.players.length >= min;
       $('#lpStart').disabled = !ok;
+      if (max === 2 && ok && !el.hidden) { el.hidden = true; opts.onStart(room); return; }
       if (room.players.length > 1) setStatus(ok ? 'Start when everyone is in.' : '');
     }
 

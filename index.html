@@ -125,7 +125,7 @@
 <div class="page">
 <header>
   <h1 aria-label="Playground"><i style="--t:#ff4fa3">P</i><i style="--t:#28e0ff">L</i><i style="--t:#ffd166">A</i><i style="--t:#64ffb4">Y</i><i style="--t:#c77bff">G</i><i style="--t:#ff8a5c">R</i><i style="--t:#7f8cff">O</i><i style="--t:#39ff9c">U</i><i style="--t:#ff6fb0">N</i><i style="--t:#45d9e8">D</i></h1>
-  <p class="lede">62 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.</p>
+  <p class="lede">65 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.</p>
   <p class="lede">Every thumbnail below is drawn live by the page. Hover one and it moves. The source is <a href="https://github.com/RajeshRenato/playground">on GitHub</a> and pull requests are welcome.</p>
 </header>
 
@@ -142,11 +142,18 @@
   <li><a href="arrow-flux/" style="--c:#28e0ff" data-t="arrow"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arrow Flux</strong><span>Slide tangled arrows off a packed board. The generator builds every board in solution order, so each one is provably solvable.</span></div></a></li>
 </ul>
 
-<h2>Games<small>16</small></h2>
+<h2>Play online<small>6</small></h2>
 <ul class="list">
   <li><a href="cycle-duel/" style="--c:#28e0ff" data-t="cycle"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cycle Duel</strong><span>Light-cycle duels. Play a friend online with just a link, or on one keyboard.</span></div></a></li>
   <li><a href="type-race/" style="--c:#ffd166" data-t="typerace"><canvas width="304" height="171"></canvas><div class="txt"><strong>Type Race</strong><span>Typing races with friends over a link, no server. Or race your own best pace.</span></div></a></li>
   <li><a href="sketch-guess/" style="--c:#ff4fa3" data-t="sketch"><canvas width="304" height="171"></canvas><div class="txt"><strong>Sketch &amp; Guess</strong><span>Take turns drawing a word while friends guess it. Up to 8 players, connected by links.</span></div></a></li>
+  <li><a href="four-in-a-row/" style="--c:#ffc93c" data-t="four"><canvas width="304" height="171"></canvas><div class="txt"><strong>Four in a Row</strong><span>Connect Four-style. Play a friend online with a link, on one screen, or against a bot.</span></div></a></li>
+  <li><a href="checkers/" style="--c:#e04848" data-t="checkers"><canvas width="304" height="171"></canvas><div class="txt"><strong>Checkers</strong><span>Forced captures, multi-jumps, and kings. Play a friend online, on one screen, or against a bot.</span></div></a></li>
+  <li><a href="clue-grid/" style="--c:#3e7bfa" data-t="cluegrid"><canvas width="304" height="171"></canvas><div class="txt"><strong>Clue Grid</strong><span>A Codenames-style word game for two teams. Spymasters give one-word clues. 4 to 8 players.</span></div></a></li>
+</ul>
+
+<h2>Games<small>13</small></h2>
+<ul class="list">
   <li><a href="dune-drift/" style="--c:#ff8a5c" data-t="drift"><canvas width="304" height="171"></canvas><div class="txt"><strong>Dune Drift</strong><span>One-button endless ride over rolling dunes, with backflips at sunset.</span></div></a></li>
   <li><a href="pixel-logic/" style="--c:#ffd166" data-t="pixlog"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pixel Logic</strong><span>Nonograms, solver-verified so pure deduction always wins.</span></div></a></li>
   <li><a href="glow-out/" style="--c:#39ff9c" data-t="glowout"><canvas width="304" height="171"></canvas><div class="txt"><strong>Glow Out</strong><span>Lights Out with hints computed from a live solution set.</span></div></a></li>
@@ -176,7 +183,7 @@
 
 <h2>Tools<small>25</small></h2>
 <ul class="list">
-  <li><a href="linkplay/" style="--c:#7dffc9" data-t="linkplay"><canvas width="304" height="171"></canvas><div class="txt"><strong>LinkPlay</strong><span>A small kit for making browser games multiplayer with links and no server. Cycle Duel, Type Race, and Sketch &amp; Guess use it.</span></div></a></li>
+  <li><a href="linkplay/" style="--c:#7dffc9" data-t="linkplay"><canvas width="304" height="171"></canvas><div class="txt"><strong>LinkPlay</strong><span>A small kit for making browser games multiplayer with links and no server. All the online games here use it.</span></div></a></li>
   <li><a href="file-send/" style="--c:#39ff9c" data-t="filesend"><canvas width="304" height="171"></canvas><div class="txt"><strong>File Send</strong><span>Send files straight to a friend's browser. Nothing is uploaded.</span></div></a></li>
   <li><a href="secret-note/" style="--c:#c77bff" data-t="secret"><canvas width="304" height="171"></canvas><div class="txt"><strong>Secret Note</strong><span>Write a note and get a link with it encrypted inside. Nothing is stored.</span></div></a></li>
   <li><a href="qr-studio/" style="--c:#7f8cff" data-t="qr"><canvas width="304" height="171"></canvas><div class="txt"><strong>QR Studio</strong><span>QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark.</span></div></a></li>
@@ -675,6 +682,69 @@ linkplay(g, w, h, c, t) {
   });
   g.fillStyle = '#9a9aa6'; g.font = '11px ui-monospace, Menlo, monospace'; g.textAlign = 'center';
   g.fillText('#offer=k3v9qa.zeJyNkk1v…', w / 2, h - 12);
+},
+
+four(g, w, h, c, t) {
+  bgFill(g, w, h, '#0f1424');
+  const cols = 7, rows = 6, cs = 22, bx = (w - cols * cs) / 2, by = 22;
+  const B = [[1,2,1,0,0,0],[2,1,0,0,0,0],[1,2,1,2,0,0],[2,1,2,1,0,0],[1,0,0,0,0,0],[2,0,0,0,0,0],[0,0,0,0,0,0]];
+  const k = t ? Math.floor(t * 0.8) % 4 : 3;
+  const drops = [[4, 1, 1], [5, 1, 2], [4, 2, 1], [5, 2, 2]];
+  const disc = (x, y, p) => { g.fillStyle = p === 1 ? '#ff5a5f' : '#ffc93c'; g.beginPath(); g.arc(x, y, cs * 0.38, 0, 7); g.fill(); };
+  for (let col = 0; col < cols; col++) for (let r = 0; r < rows; r++) {
+    let p = B[col][r];
+    drops.forEach(([dc, dr, dp], i) => { if (dc === col && dr === r && i < k) p = dp; });
+    if (p) disc(bx + col * cs + cs / 2, by + (rows - 1 - r) * cs + cs / 2, p);
+  }
+  const [dc, dr, dp] = drops[k] || drops[0];
+  if (t) {
+    const f = (t * 0.8) % 1, ty = by + (rows - 1 - dr) * cs + cs / 2;
+    disc(bx + dc * cs + cs / 2, Math.min(ty, by - 10 + f * f * 200), dp);
+  }
+  g.fillStyle = '#2f5fd0';
+  g.beginPath(); g.rect(bx - 4, by, cols * cs + 8, rows * cs + 4);
+  for (let col = 0; col < cols; col++) for (let r = 0; r < rows; r++) { const x = bx + col * cs + cs / 2, y = by + r * cs + cs / 2; g.moveTo(x + cs * 0.38, y); g.arc(x, y, cs * 0.38, 0, 7, true); }
+  g.fill();
+},
+
+checkers(g, w, h, c, t) {
+  bgFill(g, w, h, '#16191a');
+  const cs = 19, bx = (w - 8 * cs) / 2, by = (h - 8 * cs) / 2;
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { g.fillStyle = (x + y) % 2 ? '#4f7a52' : '#e8dfc4'; g.fillRect(bx + x * cs, by + y * cs, cs, cs); }
+  const pieces = [[1,0,2],[3,0,2],[5,0,2],[0,1,2],[4,1,2],[6,1,2],[1,2,2],[7,2,2],[2,3,2],[3,6,1],[5,6,1],[7,6,1],[0,7,1],[2,7,1],[6,5,1],[4,7,1]];
+  const ph = t ? (t * 0.6) % 2 : 0;
+  const pc = (x, y, p, king) => {
+    const cx = bx + x * cs + cs / 2, cy = by + y * cs + cs / 2;
+    g.fillStyle = p === 1 ? '#e04848' : '#f1efe8'; g.beginPath(); g.arc(cx, cy, cs * 0.38, 0, 7); g.fill();
+    g.strokeStyle = p === 1 ? '#a52f2f' : '#bdb8a8'; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, cs * 0.25, 0, 7); g.stroke();
+    if (king) { g.fillStyle = '#ffd65a'; g.fillRect(cx - 4, cy - 2, 8, 4); }
+  };
+  for (const [x, y, p] of pieces) if (!(x === 2 && y === 3 && ph > 1)) pc(x, y, p);
+  const jx = ph < 1 ? 1 : 1 + Math.min(1, ph - 1) * 2, jy = ph < 1 ? 4 : 4 - Math.min(1, ph - 1) * 2;
+  pc(jx, jy, 1, true);
+  if (ph < 1) { g.fillStyle = 'rgba(255,214,90,.85)'; g.beginPath(); g.arc(bx + 3 * cs + cs / 2, by + 2 * cs + cs / 2, 3, 0, 7); g.fill(); }
+},
+
+cluegrid(g, w, h, c, t) {
+  bgFill(g, w, h, '#14171f');
+  const words = ['ocean','tiger','bank','crown','moon','engine','glove','spy','wave','pilot','honey','frost','lamp','shell','tower'];
+  const types = ['b','r','n','r','b','n','r','x','b','r','n','b','r','n','b'];
+  const cw = 52, ch = 32, gx = (w - 5 * (cw + 4)) / 2 + 2, gy = 40;
+  const shown = t ? Math.floor(t * 1.1) % 7 : 4;
+  const order = [0, 8, 14, 11, 4, 2];
+  g.font = 'bold 9px system-ui, sans-serif'; g.textAlign = 'center';
+  words.forEach((wd, i) => {
+    const x = gx + (i % 5) * (cw + 4), y = gy + Math.floor(i / 5) * (ch + 4);
+    const rev = order.indexOf(i) >= 0 && order.indexOf(i) < shown;
+    const col = { r: '#e5484d', b: '#3e7bfa', n: '#8a8370', x: '#0b0b0e' }[types[i]];
+    g.fillStyle = rev ? col : '#eceae4';
+    g.beginPath(); g.roundRect(x, y, cw, ch, 4); g.fill();
+    g.fillStyle = rev ? '#fff' : '#1c1e26';
+    g.fillText(wd.toUpperCase(), x + cw / 2, y + ch / 2 + 3);
+  });
+  g.font = 'bold 15px system-ui, sans-serif'; g.fillStyle = '#3e7bfa'; g.textAlign = 'left';
+  g.fillText('WATER 3', gx, 26);
+  g.fillStyle = '#8e94a6'; g.font = '11px system-ui, sans-serif'; g.fillText('blue is guessing', gx + 72, 26);
 },
 
 snake(g, w, h, c, t) {

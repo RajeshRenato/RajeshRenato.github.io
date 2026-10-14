@@ -2,7 +2,7 @@
 
 A small kit for making a browser game multiplayer with no server of your own. Players connect by sending each other links. This folder's `index.html` is the demo: invite friends and you see each other's cursors.
 
-Cycle Duel, Type Race, and Sketch & Guess are built on it.
+Cycle Duel, Type Race, Sketch & Guess, Four in a Row, Checkers, and Clue Grid are built on it.
 
 ## How the connection works
 
@@ -21,7 +21,7 @@ Each link is around 800 characters. The ID ties a reply to its invite, so a host
 | --- | --- | --- |
 | `linkplay.js` | The handshake: invites, replies, link codes | nothing |
 | `room.js` | Rooms of up to 8: player list, names, colors, host relay | `linkplay.js` |
-| `lobby.js` | The invite screens: name, invite links, paste box, Start | both of the above |
+| `lobby.js` | The invite screens: name, invite links, paste box, Start. With `max: 2` it starts by itself once the friend is in. | both of the above |
 | `lobby.css` | Styles for `lobby.js`; recolor with `--lp-*` variables | |
 
 Copy the folder, or link the files from `../linkplay/` as the games here do.

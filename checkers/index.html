@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f7a52'/%3E%3Ccircle cx='12' cy='12' r='6' fill='%23e04848'/%3E%3Ccircle cx='20' cy='20' r='6' fill='%23f1efe8'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Checkers</title>
+<style>
+  :root { --bg: #16191a; --ink: #ecebe4; --muted: #8f9693;
+          --lp-bg: #16191a; --lp-panel: #212625; --lp-veil: rgba(22, 25, 26, .94); --lp-accent: #e04848; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+         display: flex; flex-direction: column; align-items: center; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #top { margin-top: 44px; display: flex; gap: 22px; align-items: center; font-size: 15px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
+  #top .p { display: flex; align-items: center; gap: 7px; font-variant-numeric: tabular-nums; }
+  #top .p i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  #top .p.on { color: var(--ink); font-weight: 700; }
+  #status { margin: 10px 0 12px; min-height: 26px; font-size: 20px; font-weight: 700; text-align: center; padding: 0 16px; }
+  canvas { display: block; touch-action: manipulation; cursor: pointer; border-radius: 6px; }
+  .actions { display: flex; gap: 12px; margin: 16px 0 24px; flex-wrap: wrap; justify-content: center; }
+  .actions button { font: inherit; font-weight: 600; font-size: 15px; padding: 9px 15px; border-radius: 8px; cursor: pointer;
+                    border: 1.5px solid var(--ink); background: #212625; color: var(--ink); }
+  .actions button:hover { background: var(--ink); color: var(--bg); }
+  .actions button.quiet { border: 0; background: none; color: var(--muted); text-decoration: underline; font-weight: 500; }
+  .actions button:focus-visible { outline: 2px solid #e04848; outline-offset: 2px; }
+</style>
+<meta property="og:title" content="Checkers">
+<meta property="og:description" content="Checkers with forced captures, multi-jumps, and kings. Play a friend online with a link, on one screen, or against a bot.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/checkers/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/checkers/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Checkers with forced captures, multi-jumps, and kings. Play a friend online with a link, on one screen, or against a bot.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="top"></div>
+<div id="status"></div>
+<canvas id="c"></canvas>
+<div class="actions" id="actions"></div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const COLOR = [null, '#e04848', '#f1efe8'];
+const NAME = [null, 'Red', 'White'];
+const DRAW_PLIES = 80;
+
+// --- rules. Squares are y * 8 + x. 1/2 are men, 3/4 kings. Red (1) starts at the bottom and moves up.
+
+const owner = v => (v === 1 || v === 3 ? 1 : v === 2 || v === 4 ? 2 : 0);
+const isKing = v => v >= 3;
+const dark = i => ((i >> 3) + (i & 7)) % 2 === 1;
+
+function startBoard() {
+  const b = new Array(64).fill(0);
+  for (let i = 0; i < 64; i++) {
+    if (!dark(i)) continue;
+    const y = i >> 3;
+    if (y < 3) b[i] = 2;
+    else if (y > 4) b[i] = 1;
+  }
+  return b;
+}
+
+function dirsFor(v) {
+  if (isKing(v)) return [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+  return owner(v) === 1 ? [[-1, -1], [1, -1]] : [[-1, 1], [1, 1]];
+}
+const inside = (x, y) => x >= 0 && x < 8 && y >= 0 && y < 8;
+const promotes = (v, to) => !isKing(v) && (owner(v) === 1 ? to >> 3 === 0 : to >> 3 === 7);
+
+function jumpsFrom(b, from, v, path, taken, out) {
+  let more = false;
+  const x = from & 7, y = from >> 3;
+  for (const [dx, dy] of dirsFor(v)) {
+    if (!inside(x + 2 * dx, y + 2 * dy)) continue;
+    const over = (y + dy) * 8 + x + dx, land = (y + 2 * dy) * 8 + x + 2 * dx;
+    if (owner(b[over]) !== 3 - owner(v) || taken.includes(over) || b[land]) continue;
+    more = true;
+    const next = path.concat(land);
+    if (promotes(v, land)) out.push(next);
+    else jumpsFrom(b, land, v, next, taken.concat(over), out);
+  }
+  if (!more && path.length > 1) out.push(path);
+}
+
+// Every legal move for player p as a list of squares visited. Captures are forced.
+function legalMoves(b, p) {
+  const jumps = [], steps = [];
+  for (let i = 0; i < 64; i++) {
+    const v = b[i];
+    if (owner(v) !== p) continue;
+    const saved = b[i];
+    b[i] = 0;
+    jumpsFrom(b, i, saved, [i], [], jumps);
+    b[i] = saved;
+    if (jumps.length) continue;
+    const x = i & 7, y = i >> 3;
+    for (const [dx, dy] of dirsFor(v)) {
+      if (inside(x + dx, y + dy) && !b[(y + dy) * 8 + x + dx]) steps.push([i, (y + dy) * 8 + x + dx]);
+    }
+  }
+  return jumps.length ? jumps : steps;
+}
+
+function applyMove(b, path) {
+  const v = b[path[0]];
+  let captured = 0;
+  b[path[0]] = 0;
+  for (let k = 1; k < path.length; k++) {
+    const a = path[k - 1], c = path[k];
+    if (Math.abs((c >> 3) - (a >> 3)) === 2) { b[(a + c) / 2] = 0; captured++; }
+  }
+  const to = path[path.length - 1];
+  b[to] = promotes(v, to) ? v + 2 : v;
+  return captured;
+}
+
+// --- bot: alpha-beta over whole moves
+
+function evaluate(b, p) {
+  let s = 0;
+  for (let i = 0; i < 64; i++) {
+    const v = b[i];
+    if (!v) continue;
+    const y = i >> 3, x = i & 7;
+    let val = isKing(v) ? 175 : 100 + 4 * (owner(v) === 1 ? 7 - y : y);
+    if (!isKing(v) && (owner(v) === 1 ? y === 7 : y === 0)) val += 8;
+    if (x >= 2 && x <= 5 && y >= 2 && y <= 5) val += 6;
+    s += owner(v) === p ? val : -val;
+  }
+  return s;
+}
+
+function search(b, p, depth, alpha, beta) {
+  const moves = legalMoves(b, p);
+  if (!moves.length) return -100000 - depth;
+  if (depth === 0) return evaluate(b, p);
+  let best = -Infinity;
+  for (const m of moves) {
+    const nb = b.slice();
+    applyMove(nb, m);
+    const v = -search(nb, 3 - p, depth - 1, -beta, -alpha);
+    if (v > best) best = v;
+    if (v > alpha) alpha = v;
+    if (alpha >= beta) break;
+  }
+  return best;
+}
+
+const LEVELS = { easy: 2, normal: 4, hard: 6 };
+function botMove(b, p, level = 'normal', rand = Math.random) {
+  const moves = legalMoves(b, p);
+  const depth = LEVELS[level] || 4;
+  let best = -Infinity, choices = [];
+  for (const m of moves) {
+    const nb = b.slice();
+    applyMove(nb, m);
+    let v = -search(nb, 3 - p, depth - 1, -Infinity, Infinity);
+    if (level === 'easy') v += rand() * 60;
+    if (v > best) { best = v; choices = [m]; } else if (v === best) choices.push(m);
+  }
+  return choices[Math.floor(rand() * choices.length)];
+}
+
+// --- game state
+
+let mode = 'idle';   // idle | bot | local | online
+let room = null;
+let level = 'normal';
+const G = { board: startBoard(), turn: 1, starter: 1, last: null, quiet: 0, over: false, winner: 0, score: [0, 0, 0] };
+let sel = [];
+
+function newGame(starter) {
+  Object.assign(G, { board: startBoard(), turn: starter, starter, last: null, quiet: 0, over: false, winner: 0 });
+  sel = [];
+}
+
+const samePath = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+
+function apply(path) {
+  if (G.over || !legalMoves(G.board, G.turn).some(m => samePath(m, path))) return false;
+  const man = !isKing(G.board[path[0]]);
+  const caps = applyMove(G.board, path);
+  G.last = path;
+  G.quiet = caps || man ? 0 : G.quiet + 1;
+  G.turn = 3 - G.turn;
+  sel = [];
+  if (!legalMoves(G.board, G.turn).length) { G.over = true; G.winner = 3 - G.turn; G.score[G.winner]++; }
+  else if (G.quiet >= DRAW_PLIES) { G.over = true; G.winner = 0; G.score[0]++; }
+  return true;
+}
+
+function me() { return mode === 'online' ? (room.isHost ? 1 : 2) : mode === 'bot' ? 1 : G.turn; }
+function myTurn() { return mode !== 'idle' && !G.over && (mode === 'local' || G.turn === me()); }
+function flipped() { return mode === 'online' && !room.isHost; }
+
+function commit(path) {
+  if (mode === 'online' && !room.isHost) { room.send({ t: 'move', path }); sel = []; return; }
+  if (apply(path)) afterMove();
+}
+
+function afterMove() {
+  if (mode === 'online') broadcast();
+  if (mode === 'bot' && !G.over && G.turn === 2) {
+    setTimeout(() => {
+      if (mode !== 'bot' || G.turn !== 2 || G.over) return;
+      apply(botMove(G.board.slice(), 2, level));
+      render();
+    }, 420);
+  }
+  render();
+}
+
+function tapSquare(i) {
+  if (!myTurn()) return;
+  const moves = legalMoves(G.board, G.turn);
+  const starts = moves.filter(m => m[0] === i);
+  if (sel.length <= 1 && starts.length) { sel = [i]; render(); return; }
+  if (!sel.length) return;
+  const cands = moves.filter(m => m.length > sel.length && sel.every((s, k) => m[k] === s));
+  const next = cands.filter(m => m[sel.length] === i);
+  if (!next.length) { sel = []; render(); return; }
+  sel = sel.concat(i);
+  const done = next.find(m => m.length === sel.length);
+  if (done && next.length === 1) commit(done);
+  render();
+}
+
+function rematch() {
+  if (mode === 'online' && !room.isHost) { room.send({ t: 'again' }); return; }
+  newGame(3 - G.starter);
+  afterMove();
+}
+
+// --- online
+
+function broadcast() {
+  room.send({ t: 'state', board: G.board, turn: G.turn, starter: G.starter, last: G.last, quiet: G.quiet, over: G.over, winner: G.winner, score: G.score });
+}
+
+function attach(r) {
+  room = r;
+  mode = 'online';
+  G.score = [0, 0, 0];
+  room.on('message', m => {
+    if (room.isHost) {
+      if (m.t === 'move' && G.turn === 2 && Array.isArray(m.path)) { if (apply(m.path)) afterMove(); }
+      else if (m.t === 'again' && G.over) rematch();
+      return;
+    }
+    if (m.t === 'state') {
+      Object.assign(G, { board: m.board, turn: m.turn, starter: m.starter, last: m.last, quiet: m.quiet, over: m.over, winner: m.winner, score: m.score });
+      sel = [];
+      render();
+    }
+  });
+  room.on('roster', () => render());
+  room.on('leave', () => leave());
+  room.on('close', () => { mode = 'idle'; room = null; lobby.start(); render(); });
+  if (room.isHost) { newGame(1); broadcast(); }
+  render();
+}
+
+function startLocal(m) {
+  if (room) { try { room.close(); } catch (e) { } room = null; }
+  mode = m;
+  G.score = [0, 0, 0];
+  newGame(1);
+  render();
+}
+
+function leave() {
+  mode = 'idle';
+  room = null;
+  lobby.start();
+  render();
+}
+
+// --- drawing
+
+const cv = $('c'), ctx = cv.getContext('2d');
+let cell = 60, S = 480;
+function resize() {
+  cell = Math.max(36, Math.min(72, Math.floor(Math.min(innerWidth - 24, innerHeight - 200) / 8)));
+  S = cell * 8;
+  const d = devicePixelRatio || 1;
+  cv.width = S * d; cv.height = S * d;
+  cv.style.width = S + 'px'; cv.style.height = S + 'px';
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener('resize', resize);
+resize();
+
+function names() {
+  if (mode === 'bot') return [null, 'You', 'Bot (' + level + ')'];
+  if (mode === 'online') {
+    const host = room.players.find(p => p.id === 0), guest = room.players.find(p => p.id !== 0);
+    const tag = id => (id === room.me ? ' (you)' : '');
+    return [null, (host ? host.name : 'Host') + tag(0), guest ? guest.name + tag(guest.id) : 'Waiting…'];
+  }
+  return NAME;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+function render() {
+  const n = names();
+  const count = p => G.board.filter(v => owner(v) === p).length;
+  $('top').innerHTML = mode === 'idle' ? '' : [1, 2].map(p =>
+    '<span class="p' + (!G.over && G.turn === p ? ' on' : '') + '"><i style="background:' + COLOR[p] + '"></i>' + esc(n[p]) +
+    ' ' + G.score[p] + '</span>').join('') + '<span class="p">pieces ' + count(1) + ' : ' + count(2) + '</span>';
+  let st = '';
+  if (mode === 'idle') st = '';
+  else if (G.over) st = G.winner ? (mode === 'local' ? n[G.winner] + ' wins!' : G.winner === me() ? 'You win!' : n[G.winner] + ' wins.') : 'Draw: 40 moves each without a capture.';
+  else if (mode === 'local') st = n[G.turn] + ' to play';
+  else st = G.turn === me() ? 'Your move' : mode === 'bot' ? 'Bot is thinking…' : 'Waiting for ' + n[G.turn] + '…';
+  if (myTurn() && isJump(legalMoves(G.board, G.turn)[0])) st += '. You must capture.';
+  $('status').textContent = st;
+
+  let a = '';
+  if (G.over && mode !== 'idle') a += '<button id="again">' + (mode === 'online' && !room.isHost ? 'Ask for a rematch' : 'Play again') + '</button>';
+  if (mode === 'bot') a += '<button class="quiet" id="lvl">Bot: ' + level + '</button>';
+  if (mode !== 'idle') a += '<button class="quiet" id="leave">Leave</button>';
+  if ($('actions').dataset.html !== a) {
+    $('actions').innerHTML = a;
+    $('actions').dataset.html = a;
+    const again = $('actions').querySelector('#again'), lvl = $('actions').querySelector('#lvl'), lv = $('actions').querySelector('#leave');
+    if (again) again.onclick = rematch;
+    if (lvl) lvl.onclick = () => { level = level === 'easy' ? 'normal' : level === 'normal' ? 'hard' : 'easy'; G.score = [0, 0, 0]; newGame(1); render(); };
+    if (lv) lv.onclick = leave;
+  }
+}
+const isJump = m => !!m && Math.abs((m[1] >> 3) - (m[0] >> 3)) === 2;
+
+function toScreen(i) {
+  let x = i & 7, y = i >> 3;
+  if (flipped()) { x = 7 - x; y = 7 - y; }
+  return [x * cell, y * cell];
+}
+
+function draw() {
+  for (let i = 0; i < 64; i++) {
+    const [x, y] = toScreen(i);
+    ctx.fillStyle = dark(i) ? '#4f7a52' : '#e8dfc4';
+    ctx.fillRect(x, y, cell, cell);
+  }
+  if (G.last) {
+    ctx.fillStyle = 'rgba(255, 214, 90, .28)';
+    for (const i of [G.last[0], G.last[G.last.length - 1]]) { const [x, y] = toScreen(i); ctx.fillRect(x, y, cell, cell); }
+  }
+
+  const shown = G.board.slice();
+  if (sel.length > 1) applyMove(shown, sel);
+  const moves = myTurn() ? legalMoves(G.board, G.turn) : [];
+  if (!sel.length) {
+    ctx.strokeStyle = 'rgba(255, 214, 90, .7)'; ctx.lineWidth = 3;
+    for (const s of new Set(moves.map(m => m[0]))) { const [x, y] = toScreen(s); ctx.strokeRect(x + 2, y + 2, cell - 4, cell - 4); }
+  }
+
+  for (let i = 0; i < 64; i++) if (shown[i]) piece(i, shown[i], sel.length && i === sel[sel.length - 1]);
+
+  if (sel.length) {
+    const nexts = new Set(moves.filter(m => m.length > sel.length && sel.every((s, k) => m[k] === s)).map(m => m[sel.length]));
+    ctx.fillStyle = 'rgba(255, 214, 90, .85)';
+    for (const t of nexts) { const [x, y] = toScreen(t); ctx.beginPath(); ctx.arc(x + cell / 2, y + cell / 2, cell * 0.14, 0, Math.PI * 2); ctx.fill(); }
+  }
+}
+
+function piece(i, v, lifted) {
+  const [x, y] = toScreen(i);
+  const cx = x + cell / 2, cy = y + cell / 2 - (lifted ? 3 : 0), r = cell * 0.38;
+  ctx.fillStyle = 'rgba(0,0,0,.35)';
+  ctx.beginPath(); ctx.arc(cx, cy + 3, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLOR[owner(v)];
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = owner(v) === 1 ? '#a52f2f' : '#bdb8a8'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.68, 0, Math.PI * 2); ctx.stroke();
+  if (isKing(v)) {
+    ctx.fillStyle = owner(v) === 1 ? '#ffd65a' : '#b8860b';
+    const w = r * 0.9, h = r * 0.5, bx = cx - w / 2, by = cy - h / 2 + 2;
+    ctx.beginPath();
+    ctx.moveTo(bx, by + h); ctx.lineTo(bx, by); ctx.lineTo(bx + w * 0.25, by + h * 0.5); ctx.lineTo(bx + w / 2, by - h * 0.15);
+    ctx.lineTo(bx + w * 0.75, by + h * 0.5); ctx.lineTo(bx + w, by); ctx.lineTo(bx + w, by + h);
+    ctx.closePath(); ctx.fill();
+  }
+  if (lifted) { ctx.strokeStyle = '#ffd65a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r + 3, 0, Math.PI * 2); ctx.stroke(); }
+}
+
+cv.addEventListener('click', e => {
+  const r = cv.getBoundingClientRect();
+  let x = Math.floor((e.clientX - r.left) / r.width * 8), y = Math.floor((e.clientY - r.top) / r.height * 8);
+  if (flipped()) { x = 7 - x; y = 7 - y; }
+  if (inside(x, y)) tapSquare(y * 8 + x);
+});
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { sel = []; render(); }
+  else if (e.key === 'Enter' && G.over && mode !== 'idle') rematch();
+});
+
+function frame() { draw(); requestAnimationFrame(frame); }
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'checkers',
+  title: 'Checkers',
+  blurb: 'Move diagonally, jump to capture, and reach the far side to crown a king. Captures are forced.',
+  min: 2, max: 2,
+  extra: [
+    { label: 'Play the bot', note: 'Easy, normal, or hard. You play red and go first.', onClick: () => startLocal('bot') },
+    { label: 'Two players, one screen', note: 'Red at the bottom, white at the top.', onClick: () => startLocal('local') },
+  ],
+  onStart: attach,
+  onJoin: attach,
+});
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

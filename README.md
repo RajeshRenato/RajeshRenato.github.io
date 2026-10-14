@@ -1,6 +1,6 @@
 # Playground
 
-62 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+65 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/playground/
 
@@ -8,7 +8,7 @@ MIT licensed. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRI
 
 New every day: [daily puzzles](daily/), with today's Penta, Sudoku, and Arrow Flux and one streak across all three.
 
-Play friends online with no server: [Cycle Duel](cycle-duel/), [Type Race](type-race/), and [Sketch & Guess](sketch-guess/) connect browsers directly through links. The connection code is a small kit you can reuse: [LinkPlay](linkplay/).
+Six of the games play online with friends and no server: [Cycle Duel](cycle-duel/), [Type Race](type-race/), [Sketch & Guess](sketch-guess/), [Four in a Row](four-in-a-row/), [Checkers](checkers/), and [Clue Grid](clue-grid/). Browsers connect directly through links, using a small kit you can reuse: [LinkPlay](linkplay/).
 
 ## Highlights
 
@@ -46,13 +46,23 @@ Slide tangled arrows off a packed board. The generator builds each board in solu
 
 ## Everything else
 
-### Games
+### Play online
+
+No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 
 | Project | What it is |
 | --- | --- |
 | [cycle-duel](cycle-duel/) | Light-cycle duels. Play a friend online with just a link, on one keyboard, or against a bot |
 | [type-race](type-race/) | Typing races with friends over a link, no server. Or race your own best pace |
 | [sketch-guess](sketch-guess/) | Take turns drawing a word while friends guess it. Up to 8 players, connected by links |
+| [four-in-a-row](four-in-a-row/) | Connect Four-style. Play a friend online with a link, on one screen, or against a bot |
+| [checkers](checkers/) | Forced captures, multi-jumps, and kings. Play a friend online, on one screen, or against a bot |
+| [clue-grid](clue-grid/) | A Codenames-style word game for two teams. Spymasters give one-word clues. 4 to 8 players |
+
+### Games
+
+| Project | What it is |
+| --- | --- |
 | [dune-drift](dune-drift/) | One-button endless ride over rolling dunes. Share a link and friends ride against your ghost |
 | [pixel-logic](pixel-logic/) | Nonograms, solver-verified so pure deduction always wins |
 | [glow-out](glow-out/) | Lights Out with hints computed from a live solution set |
@@ -84,7 +94,7 @@ Slide tangled arrows off a packed board. The generator builds each board in solu
 
 | Project | What it is |
 | --- | --- |
-| [linkplay](linkplay/) | A small kit for making browser games multiplayer with links and no server. Cycle Duel, Type Race, and Sketch & Guess use it |
+| [linkplay](linkplay/) | A small kit for making browser games multiplayer with links and no server. All the online games here use it |
 | [file-send](file-send/) | Send files straight to a friend's browser. Nothing is uploaded |
 | [secret-note](secret-note/) | Write a note and get a link with it encrypted inside. Nothing is stored |
 | [qr-studio](qr-studio/) | QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark |

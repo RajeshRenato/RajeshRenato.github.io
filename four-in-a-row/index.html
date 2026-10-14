@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f5fd0'/%3E%3Ccircle cx='11' cy='20' r='5' fill='%23ff5a5f'/%3E%3Ccircle cx='21' cy='20' r='5' fill='%23ffc93c'/%3E%3Ccircle cx='21' cy='10' r='5' fill='%23ff5a5f'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Four in a Row</title>
+<style>
+  :root { --bg: #0f1424; --ink: #ecebe4; --muted: #8d93a8; --p1: #ff5a5f; --p2: #ffc93c; --frame: #2f5fd0;
+          --lp-bg: #0f1424; --lp-panel: #182038; --lp-veil: rgba(15, 20, 36, .94); --lp-accent: #ffc93c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+         display: flex; flex-direction: column; align-items: center; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #top { margin-top: 44px; display: flex; gap: 22px; align-items: center; font-size: 15px; color: var(--muted); }
+  #top .p { display: flex; align-items: center; gap: 7px; font-variant-numeric: tabular-nums; }
+  #top .p i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  #top .p.on { color: var(--ink); font-weight: 700; }
+  #status { margin: 10px 0 12px; min-height: 26px; font-size: 20px; font-weight: 700; text-align: center; padding: 0 16px; }
+  canvas { display: block; touch-action: manipulation; cursor: pointer; max-width: calc(100vw - 24px); }
+  .actions { display: flex; gap: 12px; margin: 16px 0 24px; flex-wrap: wrap; justify-content: center; }
+  .actions button { font: inherit; font-weight: 600; font-size: 15px; padding: 9px 15px; border-radius: 8px; cursor: pointer;
+                    border: 1.5px solid var(--ink); background: #182038; color: var(--ink); }
+  .actions button:hover { background: var(--ink); color: var(--bg); }
+  .actions button.quiet { border: 0; background: none; color: var(--muted); text-decoration: underline; font-weight: 500; }
+  .actions button:focus-visible { outline: 2px solid var(--p2); outline-offset: 2px; }
+</style>
+<meta property="og:title" content="Four in a Row">
+<meta property="og:description" content="Connect Four-style: drop discs and line up four. Play a friend online with a link, on one screen, or against a bot.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/four-in-a-row/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/four-in-a-row/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Connect Four-style: drop discs and line up four. Play a friend online with a link, on one screen, or against a bot.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="top"></div>
+<div id="status"></div>
+<canvas id="c"></canvas>
+<div class="actions" id="actions"></div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const COLS = 7, ROWS = 6;
+const $ = id => document.getElementById(id);
+const COLOR = [null, '#ff5a5f', '#ffc93c'];
+
+// --- rules: board[c * ROWS + r], row 0 at the bottom
+
+function emptyBoard() { return new Array(COLS * ROWS).fill(0); }
+function height(b, c) { let r = 0; while (r < ROWS && b[c * ROWS + r]) r++; return r; }
+function canDrop(b, c) { return c >= 0 && c < COLS && height(b, c) < ROWS; }
+
+function findLine(b) {
+  const at = (c, r) => (c >= 0 && c < COLS && r >= 0 && r < ROWS ? b[c * ROWS + r] : 0);
+  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) {
+    const p = at(c, r);
+    if (!p) continue;
+    for (const [dc, dr] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+      if (at(c + dc, r + dr) === p && at(c + 2 * dc, r + 2 * dr) === p && at(c + 3 * dc, r + 3 * dr) === p) {
+        return { p, cells: [0, 1, 2, 3].map(k => [c + k * dc, r + k * dr]) };
+      }
+    }
+  }
+  return null;
+}
+function full(b) { return b.every(x => x); }
+
+// --- bot: negamax with alpha-beta, scored on every window of four
+
+const WINDOWS = [];
+for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) {
+  for (const [dc, dr] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+    const ce = c + 3 * dc, re = r + 3 * dr;
+    if (ce < COLS && re >= 0 && re < ROWS) WINDOWS.push([0, 1, 2, 3].map(k => (c + k * dc) * ROWS + r + k * dr));
+  }
+}
+const ORDER = [3, 2, 4, 1, 5, 0, 6];
+
+function evaluate(b, me) {
+  const you = 3 - me;
+  let s = 0;
+  for (let r = 0; r < ROWS; r++) { if (b[3 * ROWS + r] === me) s += 3; else if (b[3 * ROWS + r] === you) s -= 3; }
+  for (const w of WINDOWS) {
+    let m = 0, y = 0;
+    for (const i of w) { if (b[i] === me) m++; else if (b[i] === you) y++; }
+    if (m && y) continue;
+    if (m === 3) s += 50; else if (m === 2) s += 5;
+    if (y === 3) s -= 60; else if (y === 2) s -= 5;
+  }
+  return s;
+}
+
+function negamax(b, depth, alpha, beta, me) {
+  const line = findLine(b);
+  if (line) return line.p === me ? 100000 + depth : -100000 - depth;
+  if (full(b)) return 0;
+  if (depth === 0) return evaluate(b, me);
+  let best = -Infinity;
+  for (const c of ORDER) {
+    const h = height(b, c);
+    if (h >= ROWS) continue;
+    b[c * ROWS + h] = me;
+    const v = -negamax(b, depth - 1, -beta, -alpha, 3 - me);
+    b[c * ROWS + h] = 0;
+    if (v > best) best = v;
+    if (v > alpha) alpha = v;
+    if (alpha >= beta) break;
+  }
+  return best;
+}
+
+const LEVELS = { easy: 2, normal: 5, hard: 7 };
+function botMove(b, me, level = 'normal', rand = Math.random) {
+  const depth = LEVELS[level] || 5;
+  let best = -Infinity, choices = [];
+  for (const c of ORDER) {
+    if (!canDrop(b, c)) continue;
+    const h = height(b, c);
+    b[c * ROWS + h] = me;
+    let v = -negamax(b, depth - 1, -Infinity, Infinity, 3 - me);
+    b[c * ROWS + h] = 0;
+    if (level === 'easy') v += rand() * 40;
+    if (v > best) { best = v; choices = [c]; } else if (v === best) choices.push(c);
+  }
+  return choices[Math.floor(rand() * choices.length)];
+}
+
+// --- game state
+
+let mode = 'idle';   // idle | bot | local | online
+let room = null;
+let level = 'normal';
+const G = { board: emptyBoard(), turn: 1, starter: 1, last: -1, line: null, over: false, score: [0, 0, 0] };
+let anim = null;     // { c, r, p, y, v }
+let hover = -1;
+
+function newGame(starter) {
+  G.board = emptyBoard();
+  G.starter = starter;
+  G.turn = starter;
+  G.last = -1; G.line = null; G.over = false;
+  anim = null;
+}
+
+function apply(c) {
+  if (G.over || !canDrop(G.board, c)) return false;
+  const r = height(G.board, c);
+  G.board[c * ROWS + r] = G.turn;
+  G.last = c * ROWS + r;
+  anim = { c, r, p: G.turn, y: -1, v: 0 };
+  G.line = findLine(G.board);
+  if (G.line) { G.over = true; G.score[G.turn]++; }
+  else if (full(G.board)) { G.over = true; G.score[0]++; }
+  else G.turn = 3 - G.turn;
+  return true;
+}
+
+function me() { return mode === 'online' ? (room.isHost ? 1 : 2) : mode === 'bot' ? 1 : G.turn; }
+function myTurn() { return !G.over && (mode === 'local' || G.turn === me()); }
+
+function play(c) {
+  if (mode === 'idle' || !myTurn() || !canDrop(G.board, c)) return;
+  if (mode === 'online' && !room.isHost) { room.send({ t: 'move', c }); return; }
+  apply(c);
+  afterMove();
+}
+
+function afterMove() {
+  if (mode === 'online') broadcast();
+  if (mode === 'bot' && !G.over && G.turn === 2) setTimeout(() => { if (mode === 'bot' && G.turn === 2 && !G.over) { apply(botMove(G.board.slice(), 2, level)); render(); } }, 380);
+  render();
+}
+
+function rematch() {
+  if (mode === 'online' && !room.isHost) { room.send({ t: 'again' }); return; }
+  newGame(3 - G.starter);
+  afterMove();
+}
+
+// --- online: the host holds the game and sends it out after every move
+
+function broadcast() {
+  room.send({ t: 'state', board: G.board, turn: G.turn, starter: G.starter, last: G.last, over: G.over, score: G.score });
+}
+
+function attach(r) {
+  room = r;
+  mode = 'online';
+  G.score = [0, 0, 0];
+  room.on('message', m => {
+    if (room.isHost) {
+      if (m.t === 'move' && G.turn === 2 && !G.over) { if (apply(m.c)) afterMove(); }
+      else if (m.t === 'again' && G.over) rematch();
+      return;
+    }
+    if (m.t === 'state') {
+      const dropped = m.last >= 0 && m.last !== G.last && m.board[m.last];
+      Object.assign(G, { board: m.board, turn: m.turn, starter: m.starter, last: m.last, over: m.over, score: m.score });
+      G.line = findLine(G.board);
+      anim = dropped ? { c: Math.floor(m.last / ROWS), r: m.last % ROWS, p: m.board[m.last], y: -1, v: 0 } : null;
+      render();
+    }
+  });
+  room.on('roster', () => render());
+  room.on('leave', () => leave());
+  room.on('close', () => { mode = 'idle'; room = null; lobby.start(); render(); });
+  if (room.isHost) { newGame(1); broadcast(); }
+  render();
+}
+
+function startLocal(m) {
+  if (room) { try { room.close(); } catch (e) { } room = null; }
+  mode = m;
+  G.score = [0, 0, 0];
+  newGame(1);
+  render();
+}
+
+function leave() {
+  mode = 'idle';
+  room = null;
+  lobby.start();
+  render();
+}
+
+// --- drawing
+
+const cv = $('c'), ctx = cv.getContext('2d');
+let cell = 64, W = 0, H = 0;
+function resize() {
+  cell = Math.max(38, Math.min(76, Math.floor((Math.min(innerWidth - 24, 640)) / COLS), Math.floor((innerHeight - 230) / (ROWS + 1))));
+  W = cell * COLS; H = cell * (ROWS + 1);
+  const d = devicePixelRatio || 1;
+  cv.width = W * d; cv.height = H * d;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener('resize', resize);
+resize();
+
+function names() {
+  if (mode === 'bot') return [null, 'You', 'Bot (' + level + ')'];
+  if (mode === 'online') {
+    const host = room.players.find(p => p.id === 0), guest = room.players.find(p => p.id !== 0);
+    const tag = id => (id === room.me ? ' (you)' : '');
+    return [null, (host ? host.name : 'Host') + tag(0), guest ? guest.name + tag(guest.id) : 'Waiting…'];
+  }
+  return [null, 'Red', 'Yellow'];
+}
+
+function setStatus(t) { $('status').textContent = t; }
+
+function render() {
+  const n = names();
+  $('top').innerHTML = mode === 'idle' ? '' : [1, 2].map(p =>
+    '<span class="p' + (!G.over && G.turn === p ? ' on' : '') + '"><i style="background:' + COLOR[p] + '"></i>' + escapeHtml(n[p]) + ' ' + G.score[p] + '</span>').join('') +
+    (G.score[0] ? '<span class="p">draws ' + G.score[0] + '</span>' : '');
+  if (mode === 'idle') setStatus('');
+  else if (G.over) setStatus(G.line ? (mode === 'local' ? n[G.line.p] + ' wins!' : G.line.p === me() ? 'You win!' : n[G.line.p] + ' wins.') : 'Draw.');
+  else if (mode === 'local') setStatus(n[G.turn] + ' to play');
+  else setStatus(G.turn === me() ? 'Your move' : mode === 'bot' ? 'Bot is thinking…' : 'Waiting for ' + n[G.turn] + '…');
+
+  let a = '';
+  if (G.over && (mode !== 'online' || room)) a += '<button id="again">' + (mode === 'online' && !room.isHost ? 'Ask for a rematch' : 'Play again') + '</button>';
+  if (mode === 'bot') a += '<button class="quiet" id="lvl">Bot: ' + level + '</button>';
+  if (mode !== 'idle') a += '<button class="quiet" id="leave">Leave</button>';
+  if ($('actions').dataset.html !== a) {
+    $('actions').innerHTML = a;
+    $('actions').dataset.html = a;
+    const again = $('actions').querySelector('#again'), lvl = $('actions').querySelector('#lvl'), lv = $('actions').querySelector('#leave');
+    if (again) again.onclick = rematch;
+    if (lvl) lvl.onclick = () => { level = level === 'easy' ? 'normal' : level === 'normal' ? 'hard' : 'easy'; G.score = [0, 0, 0]; newGame(1); render(); };
+    if (lv) lv.onclick = leave;
+  }
+}
+
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const top = cell, rad = cell * 0.39;
+  if (hover >= 0 && myTurn() && canDrop(G.board, hover)) {
+    ctx.fillStyle = COLOR[mode === 'local' ? G.turn : me()];
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath(); ctx.arc(hover * cell + cell / 2, cell / 2, rad, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) {
+    const p = G.board[c * ROWS + r];
+    if (!p || (anim && anim.c === c && anim.r === r)) continue;
+    disc(c, top + (ROWS - 1 - r) * cell + cell / 2, p, rad);
+  }
+  if (anim) {
+    const target = top + (ROWS - 1 - anim.r) * cell + cell / 2;
+    if (anim.y < 0) anim.y = cell / 2;
+    anim.v += cell * 0.06;
+    anim.y += anim.v;
+    if (anim.y >= target) { anim.y = target; disc(anim.c, anim.y, anim.p, rad); anim = null; }
+    else disc(anim.c, anim.y, anim.p, rad);
+  }
+  ctx.fillStyle = '#2f5fd0';
+  ctx.beginPath();
+  ctx.roundRect(0, top, W, ROWS * cell, 12);
+  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) {
+    const x = c * cell + cell / 2, y = top + r * cell + cell / 2;
+    ctx.moveTo(x + rad, y); ctx.arc(x, y, rad, 0, Math.PI * 2, true);
+  }
+  ctx.fill();
+  if (G.line && !anim) {
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+    for (const [c, r] of G.line.cells) { ctx.beginPath(); ctx.arc(c * cell + cell / 2, top + (ROWS - 1 - r) * cell + cell / 2, rad * 0.55, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  if (G.last >= 0 && !G.line && !anim) {
+    const c = Math.floor(G.last / ROWS), r = G.last % ROWS;
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.beginPath(); ctx.arc(c * cell + cell / 2, top + (ROWS - 1 - r) * cell + cell / 2, rad * 0.18, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function disc(c, y, p, rad) {
+  const x = c * cell + cell / 2;
+  ctx.fillStyle = COLOR[p];
+  ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y, rad * 0.72, 0, Math.PI * 2); ctx.stroke();
+}
+
+function colAt(e) {
+  const r = cv.getBoundingClientRect();
+  return Math.floor((e.clientX - r.left) / r.width * COLS);
+}
+cv.addEventListener('pointermove', e => { hover = colAt(e); });
+cv.addEventListener('pointerleave', () => { hover = -1; });
+cv.addEventListener('click', e => play(colAt(e)));
+addEventListener('keydown', e => {
+  if (e.key >= '1' && e.key <= '7') play(+e.key - 1);
+  else if (e.key === 'Enter' && G.over && mode !== 'idle') rematch();
+});
+
+function frame() { draw(); requestAnimationFrame(frame); }
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'four-in-a-row',
+  title: 'Four in a Row',
+  blurb: 'Drop discs into the grid. Four in a line, across, down, or diagonal, wins.',
+  min: 2, max: 2,
+  extra: [
+    { label: 'Play the bot', note: 'Easy, normal, or hard. You go first.', onClick: () => startLocal('bot') },
+    { label: 'Two players, one screen', note: 'Take turns tapping a column, or press 1 to 7.', onClick: () => startLocal('local') },
+  ],
+  onStart: attach,
+  onJoin: attach,
+});
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
