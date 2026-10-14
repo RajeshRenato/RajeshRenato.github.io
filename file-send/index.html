@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2339ff9c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EF%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>File Send</title>
+<style>
+  :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#1f9d5c; --bad:#d8392f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121214; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; --card:#1b1b1f; --accent:#39ff9c; --bad:#ff5a52; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         line-height:1.5; padding:48px 20px 64px; }
+  main { max-width:720px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { margin:28px 0 10px; font-size:20px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--ink); border-radius:12px; padding:18px; margin-top:18px; }
+  .drop { border:2px dashed var(--rule); border-radius:12px; padding:28px 16px; text-align:center; cursor:pointer; }
+  .drop.over { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 8%, transparent); }
+  .drop strong { display:block; font-size:17px; }
+  button { font:inherit; font-weight:600; font-size:15px; padding:8px 15px; border-radius:8px; cursor:pointer;
+           border:1.5px solid var(--ink); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { background:var(--ink); color:var(--paper); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--ink); color:var(--paper); }
+  button:focus-visible, input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  ol { padding-left:22px; margin:0; }
+  ol li { margin-bottom:14px; }
+  .code { display:flex; gap:6px; margin-top:6px; }
+  .code input { flex:1; min-width:0; font:13px ui-monospace, Menlo, monospace; padding:9px 10px; border-radius:8px;
+                border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  .status { font-weight:600; min-height:1.5em; }
+  ul.files { list-style:none; margin:12px 0 0; padding:0; display:grid; gap:8px; }
+  .files li { border:1px solid var(--rule); border-radius:8px; padding:9px 12px; }
+  .files .row { display:flex; justify-content:space-between; gap:12px; }
+  .files .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .files .meta { color:var(--muted); font-size:14px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .bar { height:6px; background:var(--rule); border-radius:3px; margin-top:7px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); }
+  .files a.save { font-weight:600; color:var(--ink); }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .link { background:none; border:0; color:var(--muted); text-decoration:underline; padding:4px 0; font-weight:500; }
+  .link:hover:not(:disabled) { background:none; color:var(--ink); }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="File Send">
+<meta property="og:description" content="Send files straight from your browser to a friend's. Nothing is uploaded and there's no size cap from a server.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/file-send/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/file-send/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Send files straight from your browser to a friend's. Nothing is uploaded and there's no size cap from a server.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>File Send</h1>
+  <p class="lede">Send files straight from your browser to someone else's. Nothing is uploaded anywhere: the files go directly from your device to theirs.</p>
+
+  <section id="start">
+    <div class="card">
+      <div class="drop" id="drop0" tabindex="0" role="button">
+        <strong>Choose files to send</strong>
+        <span class="muted">or drop them here</span>
+      </div>
+      <ul class="files" id="picked"></ul>
+      <div class="actions"><button class="primary" id="createBtn">Create a send link</button></div>
+      <p class="muted small" style="margin-top:12px">You can also create a link first and pick files once you're connected. Both of you can send.</p>
+    </div>
+  </section>
+
+  <section id="hostPanel" hidden>
+    <div class="card">
+      <h2 style="margin-top:0">Connect to the other person</h2>
+      <ol>
+        <li>Send them this link.
+          <div class="code"><input id="offerLink" readonly placeholder="Creating your link…"><button id="copyOffer">Copy</button><button id="shareOffer" hidden>Share</button></div></li>
+        <li>They'll get a reply link to send back. Open it in this browser, or paste it here.
+          <div class="code"><input id="answerIn" placeholder="Paste their reply"><button id="connectBtn">Connect</button></div></li>
+      </ol>
+      <p id="hostStatus" class="status"></p>
+    </div>
+  </section>
+
+  <section id="guestPanel" hidden>
+    <div class="card">
+      <h2 style="margin-top:0">Someone wants to share files with you</h2>
+      <p id="guestStatus" class="status">Setting up the connection…</p>
+      <div id="guestReply" hidden>
+        <p>Send this reply link back to them, then keep this page open.</p>
+        <div class="code"><input id="answerLink" readonly><button id="copyAnswer">Copy</button><button id="shareAnswer" hidden>Share</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="replyPanel" hidden>
+    <div class="card">
+      <h2 id="replyTitle" style="margin-top:0">Connecting…</h2>
+      <p id="replyMsg"></p>
+      <div id="replyBox" class="code" hidden><input id="replyCode" readonly><button id="copyReply">Copy</button></div>
+    </div>
+  </section>
+
+  <section id="room" hidden>
+    <div class="card">
+      <p class="status" id="roomStatus">Connected</p>
+      <div class="drop" id="drop1" tabindex="0" role="button">
+        <strong>Send files</strong>
+        <span class="muted">choose or drop files; they'll be asked to accept</span>
+      </div>
+      <div id="incomingAsk" hidden>
+        <h2>They want to send you <span id="askCount"></span></h2>
+        <ul class="files" id="askList"></ul>
+        <div class="actions"><button class="primary" id="acceptBtn">Accept</button><button id="declineBtn">Decline</button></div>
+      </div>
+      <h2 id="transfersTitle" hidden>Transfers</h2>
+      <ul class="files" id="transfers"></ul>
+      <div class="actions"><button class="link" id="leaveBtn">Disconnect</button></div>
+    </div>
+  </section>
+
+  <p class="muted small" style="margin-top:22px">The connection is direct between your two browsers (WebRTC). A public STUN service helps them find each other; your files never touch it. Received files stay in the browser's memory until you save them, so very large files may not fit on a phone. Some strict office or mobile networks block direct connections; if it won't connect, try another network.</p>
+</main>
+<input type="file" id="filePick" multiple hidden>
+<script>
+'use strict';
+// Peer-to-peer file transfer. Links carry the WebRTC handshake; files go over a data channel in chunks.
+
+const $ = id => document.getElementById(id);
+const CHUNK = 64 * 1024;
+const HIGH_WATER = 1024 * 1024;
+const ACK_EVERY = 256 * 1024;
+const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
+
+let pc = null, chan = null, bc = null, connected = false;
+let picked = [];
+let nextId = 1;
+const outgoing = new Map();   // id -> { files, items, accept: resolver }
+const sendQueue = [];
+let sending = false;
+let incoming = null;          // { id, files, i, chunks, got, items }
+let pendingAsk = null;
+
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  const u = ['KB', 'MB', 'GB', 'TB'];
+  let i = -1;
+  do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+  return (n >= 100 ? n.toFixed(0) : n >= 10 ? n.toFixed(1) : n.toFixed(2)) + ' ' + u[i];
+}
+function fmtTime(s) {
+  if (!isFinite(s)) return '';
+  s = Math.round(s);
+  return s >= 60 ? Math.floor(s / 60) + 'm ' + (s % 60) + 's' : s + 's';
+}
+
+// file list rows
+function fileRow(name, size) {
+  const li = document.createElement('li');
+  const row = document.createElement('div'); row.className = 'row';
+  const nm = document.createElement('span'); nm.className = 'name'; nm.textContent = name;
+  const meta = document.createElement('span'); meta.className = 'meta'; meta.textContent = fmtBytes(size);
+  row.append(nm, meta);
+  li.append(row);
+  return { li, meta, setBar(frac) {
+    let bar = li.querySelector('.bar');
+    if (!bar) { bar = document.createElement('div'); bar.className = 'bar'; bar.append(document.createElement('i')); li.append(bar); }
+    bar.firstChild.style.width = (frac * 100).toFixed(1) + '%';
+  } };
+}
+
+function showPicked() {
+  const ul = $('picked');
+  ul.replaceChildren(...picked.map(f => fileRow(f.name, f.size).li));
+}
+
+// transfer protocol
+function send(obj) {
+  if (chan && chan.readyState === 'open') chan.send(JSON.stringify(obj));
+}
+
+function waitForRoom() {
+  if (chan.bufferedAmount < HIGH_WATER) return Promise.resolve();
+  return new Promise(resolve => {
+    const done = () => { chan.removeEventListener('bufferedamountlow', done); resolve(); };
+    chan.addEventListener('bufferedamountlow', done);
+  });
+}
+
+function offerFiles(files) {
+  files = Array.from(files).filter(f => f && typeof f.size === 'number');
+  if (!files.length) return null;
+  const id = nextId++;
+  const items = files.map(f => {
+    const r = fileRow(f.name, f.size);
+    r.meta.textContent = fmtBytes(f.size) + ', waiting';
+    $('transfers').append(r.li);
+    return r;
+  });
+  $('transfersTitle').hidden = false;
+  const job = { id, files, items };
+  job.accepted = new Promise(resolve => { job.accept = resolve; });
+  outgoing.set(id, job);
+  sendQueue.push(job);
+  pumpQueue();
+  return id;
+}
+
+async function pumpQueue() {
+  if (sending) return;
+  sending = true;
+  while (sendQueue.length) {
+    const job = sendQueue.shift();
+    // one batch at a time, so the receiver never has two incoming streams to untangle
+    send({ t: 'offer', id: job.id, files: job.files.map(f => ({ name: f.name, size: f.size, type: f.type || '' })) });
+    const ok = await job.accepted;
+    if (!ok) { job.items.forEach(r => { r.meta.textContent = 'declined'; }); continue; }
+    try { await sendJob(job); }
+    catch (e) { job.items.forEach(r => { if (!r.done) r.meta.textContent = 'stopped: connection lost'; }); }
+  }
+  sending = false;
+}
+
+async function sendJob(job) {
+  for (let i = 0; i < job.files.length; i++) {
+    const f = job.files[i], r = job.items[i];
+    r.t0 = performance.now();
+    r.delivered = new Promise(resolve => { r.ack = resolve; });
+    send({ t: 'start', id: job.id, i });
+    let off = 0;
+    while (off < f.size) {
+      if (!chan || chan.readyState !== 'open') throw new Error('closed');
+      const buf = await f.slice(off, off + CHUNK).arrayBuffer();
+      await waitForRoom();
+      chan.send(buf);
+      off += buf.byteLength;
+    }
+    send({ t: 'done', id: job.id, i });
+    await r.delivered;
+  }
+}
+
+function onProgress(m) {
+  const job = outgoing.get(m.id);
+  if (!job || !job.items[m.i]) return;
+  const f = job.files[m.i], r = job.items[m.i];
+  r.setBar(m.got / Math.max(1, f.size));
+  if (m.final) {
+    r.meta.textContent = fmtBytes(f.size) + ', delivered';
+    r.done = true;
+    r.ack();
+    return;
+  }
+  const rate = m.got / Math.max((performance.now() - r.t0) / 1000, 0.001);
+  r.meta.textContent = fmtBytes(m.got) + ' of ' + fmtBytes(f.size) + ', ' + fmtBytes(rate) + '/s, ' + fmtTime((f.size - m.got) / rate) + ' left';
+}
+
+function onMessage(data) {
+  if (typeof data !== 'string') { onChunk(data); return; }
+  let m;
+  try { m = JSON.parse(data); } catch (e) { return; }
+  if (m.t === 'offer') askToAccept(m);
+  else if (m.t === 'accept' || m.t === 'decline') { const job = outgoing.get(m.id); if (job) job.accept(m.t === 'accept'); }
+  else if (m.t === 'start' && incoming && incoming.id === m.id) startIncoming(m.i);
+  else if (m.t === 'done' && incoming && incoming.id === m.id) finishIncoming(m.i);
+  else if (m.t === 'got') onProgress(m);
+  else if (m.t === 'bye') closed('They disconnected.');
+}
+
+function askToAccept(m) {
+  pendingAsk = m;
+  const total = m.files.reduce((a, f) => a + f.size, 0);
+  $('askCount').textContent = m.files.length + (m.files.length === 1 ? ' file' : ' files') + ' (' + fmtBytes(total) + ')';
+  $('askList').replaceChildren(...m.files.map(f => fileRow(f.name, f.size).li));
+  $('incomingAsk').hidden = false;
+}
+
+function acceptIncoming() {
+  const m = pendingAsk;
+  if (!m) return;
+  pendingAsk = null;
+  $('incomingAsk').hidden = true;
+  $('transfersTitle').hidden = false;
+  incoming = { id: m.id, files: m.files, i: -1, chunks: [], got: 0, t0: 0, items: m.files.map(f => {
+    const r = fileRow(f.name, f.size);
+    r.meta.textContent = fmtBytes(f.size) + ', waiting';
+    $('transfers').append(r.li);
+    return r;
+  }), saved: [] };
+  send({ t: 'accept', id: m.id });
+}
+
+function declineIncoming() {
+  if (!pendingAsk) return;
+  send({ t: 'decline', id: pendingAsk.id });
+  pendingAsk = null;
+  $('incomingAsk').hidden = true;
+}
+
+function startIncoming(i) {
+  incoming.i = i; incoming.chunks = []; incoming.got = 0; incoming.acked = 0; incoming.t0 = performance.now();
+}
+
+function onChunk(buf) {
+  if (!incoming || incoming.i < 0) return;
+  const bytes = buf instanceof ArrayBuffer ? buf : buf.buffer || buf;
+  incoming.chunks.push(bytes);
+  incoming.got += bytes.byteLength;
+  if (incoming.got - incoming.acked >= ACK_EVERY) {
+    incoming.acked = incoming.got;
+    send({ t: 'got', id: incoming.id, i: incoming.i, got: incoming.got });
+  }
+  const f = incoming.files[incoming.i], r = incoming.items[incoming.i];
+  const secs = (performance.now() - incoming.t0) / 1000, rate = incoming.got / Math.max(secs, 0.001);
+  r.setBar(incoming.got / Math.max(1, f.size));
+  r.meta.textContent = fmtBytes(incoming.got) + ' of ' + fmtBytes(f.size) + ', ' + fmtBytes(rate) + '/s, ' + fmtTime((f.size - incoming.got) / rate) + ' left';
+}
+
+function finishIncoming(i) {
+  const f = incoming.files[i], r = incoming.items[i];
+  const blob = new Blob(incoming.chunks, { type: f.type || 'application/octet-stream' });
+  incoming.chunks = [];
+  incoming.saved[i] = blob;
+  send({ t: 'got', id: incoming.id, i, got: blob.size, final: true });
+  r.setBar(1);
+  if (blob.size !== f.size) { r.meta.textContent = 'incomplete, ' + fmtBytes(blob.size) + ' of ' + fmtBytes(f.size); return; }
+  const a = document.createElement('a');
+  a.className = 'save';
+  a.href = URL.createObjectURL(blob);
+  a.download = f.name;
+  a.textContent = 'Save';
+  r.meta.textContent = fmtBytes(f.size) + ', received ';
+  r.meta.append(a);
+  if (i === incoming.files.length - 1) incoming.i = -1;
+}
+
+// connection setup (same link handshake as Cycle Duel)
+function b64url(bytes) {
+  let s = '';
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function unb64url(str) {
+  const s = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(s, c => c.charCodeAt(0));
+}
+async function streamBytes(bytes, Stream) {
+  const res = new Response(new Blob([bytes]).stream().pipeThrough(new Stream('deflate')));
+  return new Uint8Array(await res.arrayBuffer());
+}
+async function pack(desc) {
+  const raw = new TextEncoder().encode(JSON.stringify({ type: desc.type, sdp: desc.sdp }));
+  if (typeof CompressionStream === 'function') return 'z' + b64url(await streamBytes(raw, CompressionStream));
+  return 'r' + b64url(raw);
+}
+async function unpack(code) {
+  const body = unb64url(code.slice(1));
+  const raw = code[0] === 'z' ? await streamBytes(body, DecompressionStream) : body;
+  return JSON.parse(new TextDecoder().decode(raw));
+}
+function waitIce(conn) {
+  return new Promise(resolve => {
+    if (conn.iceGatheringState === 'complete') return resolve();
+    const t = setTimeout(resolve, 3500);
+    conn.addEventListener('icegatheringstatechange', () => {
+      if (conn.iceGatheringState === 'complete') { clearTimeout(t); resolve(); }
+    });
+  });
+}
+const pageLink = hash => location.origin + location.pathname + '#' + hash;
+
+function wire(ch) {
+  chan = ch;
+  ch.binaryType = 'arraybuffer';
+  ch.bufferedAmountLowThreshold = 256 * 1024;
+  ch.onmessage = e => onMessage(e.data);
+  ch.onopen = onOpen;
+  ch.onclose = () => closed('The connection closed.');
+  if (ch.readyState === 'open') onOpen();
+}
+
+function onOpen() {
+  if (connected) return;
+  connected = true;
+  show('room');
+  $('roomStatus').textContent = 'Connected. Either of you can send files now.';
+  if (picked.length) { offerFiles(picked); picked = []; showPicked(); }
+}
+
+function closed(text) {
+  if (!connected) return;
+  connected = false;
+  $('roomStatus').textContent = text + ' Files you already received can still be saved.';
+  $('drop1').hidden = true;
+  $('leaveBtn').hidden = true;
+}
+
+function watch(conn, statusEl) {
+  conn.addEventListener('connectionstatechange', () => {
+    if (conn.connectionState === 'failed') {
+      if (connected) closed('The connection dropped.');
+      else statusEl.textContent = "Couldn't connect. One of your networks may block direct connections; try another network.";
+    }
+  });
+}
+
+async function hostCreate() {
+  show('hostPanel');
+  pc = new RTCPeerConnection({ iceServers: ICE });
+  watch(pc, $('hostStatus'));
+  wire(pc.createDataChannel('files', { ordered: true }));
+  await pc.setLocalDescription(await pc.createOffer());
+  await waitIce(pc);
+  const link = pageLink('offer=' + await pack(pc.localDescription));
+  $('offerLink').value = link;
+  $('hostStatus').textContent = 'Waiting for their reply.';
+  try {
+    bc = new BroadcastChannel('file-send');
+    bc.onmessage = e => { if (e.data && e.data.answer) { bc.postMessage({ ack: e.data.id }); hostAccept(e.data.answer); } };
+  } catch (e) { }
+  return link;
+}
+
+async function hostAccept(text) {
+  const m = /answer=([A-Za-z0-9_-]+)/.exec(text) || /^\s*([zr][A-Za-z0-9_-]+)\s*$/.exec(text);
+  if (!m || !pc) { $('hostStatus').textContent = "That doesn't look like a reply link. Paste the whole link they sent."; return false; }
+  try {
+    if (pc.signalingState !== 'have-local-offer') return true;
+    await pc.setRemoteDescription(await unpack(m[1]));
+    $('hostStatus').textContent = 'Connecting…';
+    return true;
+  } catch (e) {
+    $('hostStatus').textContent = "That reply didn't work. Ask them to open your link again and send the new reply.";
+    return false;
+  }
+}
+
+async function guestJoin(code) {
+  show('guestPanel');
+  try {
+    pc = new RTCPeerConnection({ iceServers: ICE });
+    watch(pc, $('guestStatus'));
+    pc.ondatachannel = e => wire(e.channel);
+    await pc.setRemoteDescription(await unpack(code));
+    await pc.setLocalDescription(await pc.createAnswer());
+    await waitIce(pc);
+    const link = pageLink('answer=' + await pack(pc.localDescription));
+    $('answerLink').value = link;
+    $('guestReply').hidden = false;
+    $('guestStatus').textContent = 'Almost there.';
+    try { history.replaceState(null, '', location.pathname); } catch (e) { }
+    return link;
+  } catch (e) {
+    $('guestStatus').textContent = "This link didn't work. Ask for a fresh one.";
+    return null;
+  }
+}
+
+function handleReplyLink(code) {
+  show('replyPanel');
+  const id = Math.random().toString(36).slice(2);
+  let acked = false;
+  const fallback = () => {
+    if (acked) return;
+    $('replyTitle').textContent = 'Paste this into your File Send tab';
+    $('replyMsg').textContent = "File Send isn't open in this browser. Copy this reply and paste it into the tab where you created the link.";
+    $('replyCode').value = pageLink('answer=' + code);
+    $('replyBox').hidden = false;
+  };
+  try {
+    const ch = new BroadcastChannel('file-send');
+    ch.onmessage = e => {
+      if (e.data && e.data.ack === id) {
+        acked = true;
+        $('replyTitle').textContent = 'Connected';
+        $('replyMsg').textContent = 'Go back to your File Send tab. You can close this one.';
+      }
+    };
+    ch.postMessage({ answer: code, id });
+    setTimeout(fallback, 1500);
+  } catch (e) { fallback(); }
+}
+
+// UI wiring
+function show(id) {
+  for (const s of ['start', 'hostPanel', 'guestPanel', 'replyPanel', 'room']) $(s).hidden = s !== id;
+}
+
+let pickTarget = 'start';
+function choose(target) { pickTarget = target; $('filePick').value = ''; $('filePick').click(); }
+function takeFiles(list, target) {
+  const files = Array.from(list || []);
+  if (!files.length) return;
+  if (target === 'room' && connected) offerFiles(files);
+  else { picked = picked.concat(files); showPicked(); }
+}
+
+$('filePick').addEventListener('change', e => takeFiles(e.target.files, pickTarget));
+for (const [id, target] of [['drop0', 'start'], ['drop1', 'room']]) {
+  const el = $(id);
+  el.addEventListener('click', () => choose(target));
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(target); } });
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('over'); takeFiles(e.dataTransfer.files, target); });
+}
+
+async function copyOrShare(input, share) {
+  if (!input.value) return;
+  if (share && navigator.share) { try { await navigator.share({ url: input.value }); return; } catch (e) { } }
+  try { await navigator.clipboard.writeText(input.value); } catch (e) { input.select(); }
+}
+
+$('createBtn').addEventListener('click', () => { hostCreate().catch(() => { $('hostStatus').textContent = "Your browser couldn't create a link. Try an up-to-date Chrome, Firefox, or Safari."; }); });
+$('copyOffer').addEventListener('click', () => copyOrShare($('offerLink'), false));
+$('shareOffer').addEventListener('click', () => copyOrShare($('offerLink'), true));
+$('copyAnswer').addEventListener('click', () => copyOrShare($('answerLink'), false));
+$('shareAnswer').addEventListener('click', () => copyOrShare($('answerLink'), true));
+$('copyReply').addEventListener('click', () => copyOrShare($('replyCode'), false));
+$('connectBtn').addEventListener('click', () => hostAccept($('answerIn').value));
+$('answerIn').addEventListener('keydown', e => { if (e.key === 'Enter') hostAccept($('answerIn').value); });
+$('acceptBtn').addEventListener('click', acceptIncoming);
+$('declineBtn').addEventListener('click', declineIncoming);
+$('leaveBtn').addEventListener('click', () => { send({ t: 'bye' }); try { pc.close(); } catch (e) { } closed('You disconnected.'); });
+if (navigator.share) { $('shareOffer').hidden = false; $('shareAnswer').hidden = false; }
+addEventListener('pagehide', () => send({ t: 'bye' }));
+addEventListener('beforeunload', e => { if (connected) { e.preventDefault(); e.returnValue = ''; } });
+
+const offerMatch = /^#offer=([A-Za-z0-9_-]+)$/.exec(location.hash || '');
+const answerMatch = /^#answer=([A-Za-z0-9_-]+)$/.exec(location.hash || '');
+if (offerMatch) guestJoin(offerMatch[1]);
+else if (answerMatch) handleReplyLink(answerMatch[1]);
+</script>
+</body>
+</html>

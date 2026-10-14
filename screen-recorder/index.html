@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5a7a'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ER%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Screen Recorder</title>
+<style>
+  :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#d43a5a; --rec:#e0283f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121214; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; --card:#1b1b1f; --accent:#ff5a7a; --rec:#ff4057; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         line-height:1.5; padding:48px 20px 64px; }
+  main { max-width:820px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  .lede { font-size:17px; margin:0 0 18px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--ink); border-radius:12px; padding:18px; margin-top:16px; }
+  .opts { display:grid; gap:10px; }
+  .check { display:flex; gap:10px; align-items:flex-start; font-size:16px; }
+  .check input { width:18px; height:18px; margin-top:3px; }
+  .check span { display:block; font-size:13px; color:var(--muted); }
+  select { font:inherit; font-size:15px; padding:7px 10px; border-radius:8px; border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  button { font:inherit; font-weight:600; font-size:16px; padding:10px 18px; border-radius:8px; cursor:pointer;
+           border:1.5px solid var(--ink); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { background:var(--ink); color:var(--paper); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.rec { background:var(--rec); border-color:var(--rec); color:#fff; }
+  button.rec:hover { filter:brightness(1.1); background:var(--rec); color:#fff; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:16px; }
+  .live { display:flex; align-items:center; gap:14px; font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .dot { width:14px; height:14px; border-radius:50%; background:var(--rec); animation:blink 1s infinite; }
+  .paused .dot { animation:none; opacity:.4; }
+  @keyframes blink { 50% { opacity:.25; } }
+  @media (prefers-reduced-motion: reduce) { .dot { animation:none; } }
+  .size { font-size:15px; font-weight:500; color:var(--muted); }
+  #countdown { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; font-size:140px; font-weight:800;
+               background:rgba(10,10,12,.7); color:#fff; z-index:5; }
+  video { display:block; width:100%; max-height:60vh; border-radius:8px; background:#000; }
+  .note { color:var(--muted); font-size:14px; }
+  .error { color:var(--accent); font-weight:600; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Screen Recorder">
+<meta property="og:description" content="Record your screen, a window, or a tab, with your voice and an optional camera bubble. No install, no watermark, nothing uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/screen-recorder/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/screen-recorder/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Record your screen, a window, or a tab, with your voice and an optional camera bubble. No install, no watermark, nothing uploaded.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Screen Recorder</h1>
+  <p class="lede">Record your screen, a window, or a browser tab. No install, no watermark, and the video never leaves your computer.</p>
+
+  <section id="setup" class="card">
+    <div class="opts">
+      <label class="check"><input type="checkbox" id="mic" checked><div>Record my microphone<span>Your browser will ask for permission.</span></div></label>
+      <label class="check"><input type="checkbox" id="sys" checked><div>Record sound from the screen or tab<span>When you pick what to share, tick "Share audio" if your browser offers it.</span></div></label>
+      <label class="check"><input type="checkbox" id="cam"><div>Show my camera in a corner<span>A round bubble in the bottom-right of the video.</span></div></label>
+      <label class="check"><input type="checkbox" id="count" checked><div>Count down from 3 before recording</div></label>
+    </div>
+    <div class="row"><button class="rec" id="startBtn">Start recording</button><span id="fmtNote" class="note"></span></div>
+    <p id="err" class="error" hidden></p>
+    <p id="unsupported" class="note" hidden>Screen recording needs a desktop browser: Chrome, Edge, Firefox, or Safari on a computer. Phones and tablets don't allow web pages to record the screen.</p>
+  </section>
+
+  <section id="recording" class="card" hidden>
+    <div class="live" id="live"><span class="dot"></span><span id="timer">0:00</span><span class="size" id="size"></span></div>
+    <div class="row"><button id="pauseBtn">Pause</button><button class="rec" id="stopBtn">Stop</button></div>
+    <p class="note" style="margin-top:12px">You can also stop from your browser's "Stop sharing" button.</p>
+  </section>
+
+  <section id="done" class="card" hidden>
+    <video id="playback" controls playsinline></video>
+    <div class="row"><button class="rec" id="saveBtn">Download</button><button id="againBtn">Record again</button><span class="note" id="doneInfo"></span></div>
+  </section>
+  <p class="muted small" style="margin-top:22px">Recordings are made with your browser's built-in recorder and saved straight to your computer. MP4 is used when your browser can record it; otherwise WebM, which plays in browsers, VLC, and most editors.</p>
+</main>
+<div id="countdown" hidden></div>
+<script>
+'use strict';
+// Records getDisplayMedia (optionally composited with a camera bubble) with MediaRecorder,
+// mixes mic and screen audio into one track, and writes the missing duration into WebM files.
+
+const $ = id => document.getElementById(id);
+
+const FORMATS = [
+  ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'mp4'],
+  ['video/mp4', 'mp4'],
+  ['video/webm;codecs=vp9,opus', 'webm'],
+  ['video/webm;codecs=vp8,opus', 'webm'],
+  ['video/webm', 'webm'],
+];
+function pickFormat(isSupported) {
+  for (const [mime, ext] of FORMATS) if (isSupported(mime)) return { mime, ext };
+  return null;
+}
+
+function fmtTime(ms) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, sec = s % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
+}
+function fmtBytes(n) {
+  if (n < 1048576) return (n / 1024).toFixed(0) + ' KB';
+  if (n < 1073741824) return (n / 1048576).toFixed(1) + ' MB';
+  return (n / 1073741824).toFixed(2) + ' GB';
+}
+function fileName(date, ext) {
+  const p = n => String(n).padStart(2, '0');
+  return 'screen-recording-' + date.getFullYear() + '-' + p(date.getMonth() + 1) + '-' + p(date.getDate()) + '-' + p(date.getHours()) + p(date.getMinutes()) + '.' + ext;
+}
+
+// WebM duration fix: MediaRecorder leaves Segment/Info without a Duration, so players can't seek.
+function readVint(b, pos) {
+  const first = b[pos];
+  let len = 1;
+  while (len <= 8 && !(first & (0x80 >> (len - 1)))) len++;
+  if (len > 8) return null;
+  let value = first & (0xff >> len), unknown = value === (0xff >> len);
+  for (let i = 1; i < len; i++) { value = value * 256 + b[pos + i]; if (b[pos + i] !== 0xff) unknown = false; }
+  return { value, len, unknown };
+}
+function readId(b, pos) {
+  const v = readVint(b, pos);
+  if (!v) return null;
+  let id = 0;
+  for (let i = 0; i < v.len; i++) id = id * 256 + b[pos + i];
+  return { id, len: v.len };
+}
+function sizeVint8(n) {
+  const out = new Uint8Array(8);
+  out[0] = 0x01;
+  for (let i = 7; i >= 1; i--) { out[i] = n % 256; n = Math.floor(n / 256); }
+  return out;
+}
+
+function setWebmDuration(bytes, durationMs) {
+  const b = bytes;
+  let pos = 0;
+  const ebml = readId(b, pos);
+  if (!ebml || ebml.id !== 0x1a45dfa3) return bytes;
+  const ebmlSize = readVint(b, pos + ebml.len);
+  pos += ebml.len + ebmlSize.len + ebmlSize.value;
+  const seg = readId(b, pos);
+  if (!seg || seg.id !== 0x18538067) return bytes;
+  const segSize = readVint(b, pos + seg.len);
+  const segSizeAt = pos + seg.len;
+  let p = segSizeAt + segSize.len;
+  while (p < b.length) {
+    const el = readId(b, p);
+    if (!el) return bytes;
+    const sz = readVint(b, p + el.len);
+    const dataStart = p + el.len + sz.len, dataEnd = dataStart + sz.value;
+    if (el.id === 0x1549a966) {
+      let scale = 1000000, q = dataStart, durAt = -1, durLen = 0;
+      while (q < dataEnd) {
+        const c = readId(b, q), cs = readVint(b, q + c.len), cStart = q + c.len + cs.len;
+        if (c.id === 0x2ad7b1) { scale = 0; for (let i = 0; i < cs.value; i++) scale = scale * 256 + b[cStart + i]; }
+        if (c.id === 0x4489) { durAt = cStart; durLen = cs.value; }
+        q = cStart + cs.value;
+      }
+      const units = durationMs / (scale / 1000000);
+      if (durAt >= 0) {
+        const out = b.slice();
+        const dv = new DataView(out.buffer, out.byteOffset);
+        if (durLen === 8) dv.setFloat64(durAt, units); else dv.setFloat32(durAt, units);
+        return out;
+      }
+      const dur = new Uint8Array(11);
+      dur.set([0x44, 0x89, 0x88]);
+      new DataView(dur.buffer).setFloat64(3, units);
+      const newSize = sz.value + dur.length;
+      const head = b.subarray(p, p + el.len);
+      const parts = [b.subarray(0, p), head, sizeVint8(newSize), b.subarray(dataStart, dataEnd), dur, b.subarray(dataEnd)];
+      const grow = el.len + 8 + newSize - (dataEnd - p);
+      const out = new Uint8Array(parts.reduce((a, x) => a + x.length, 0));
+      let o = 0;
+      for (const part of parts) { out.set(part, o); o += part.length; }
+      if (!segSize.unknown) {
+        const next = segSize.value + grow;
+        let v = next;
+        for (let i = segSize.len - 1; i >= 1; i--) { out[segSizeAt + i] = v % 256; v = Math.floor(v / 256); }
+        out[segSizeAt] = (0x80 >> (segSize.len - 1)) | v;
+      }
+      return out;
+    }
+    if (sz.unknown) return bytes;
+    p = dataEnd;
+  }
+  return bytes;
+}
+
+// recording
+let recorder = null, chunks = [], streams = [], format = null, startedAt = 0, pausedTotal = 0, pausedAt = 0, ticker = 0;
+let audioCtx = null, drawLoop = 0, result = null, recordedBytes = 0;
+
+function stopAll() {
+  streams.forEach(s => s.getTracks().forEach(t => t.stop()));
+  streams = [];
+  if (audioCtx) { audioCtx.close().catch(() => { }); audioCtx = null; }
+  cancelAnimationFrame(drawLoop);
+  clearInterval(ticker);
+}
+
+function mixAudio(sources) {
+  const withAudio = sources.filter(s => s && s.getAudioTracks().length);
+  if (withAudio.length <= 1) return withAudio.length ? withAudio[0].getAudioTracks() : [];
+  audioCtx = new AudioContext();
+  const dest = audioCtx.createMediaStreamDestination();
+  withAudio.forEach(s => audioCtx.createMediaStreamSource(s).connect(dest));
+  return dest.stream.getAudioTracks();
+}
+
+function withCameraBubble(screen, camera) {
+  const vScreen = document.createElement('video'), vCam = document.createElement('video');
+  vScreen.srcObject = screen; vCam.srcObject = camera;
+  vScreen.muted = vCam.muted = true;
+  vScreen.play(); vCam.play();
+  const settings = screen.getVideoTracks()[0].getSettings();
+  const c = document.createElement('canvas');
+  c.width = settings.width || 1280; c.height = settings.height || 720;
+  const g = c.getContext('2d');
+  const draw = () => {
+    g.drawImage(vScreen, 0, 0, c.width, c.height);
+    if (vCam.videoWidth) {
+      const d = Math.round(Math.min(c.width, c.height) * 0.24), x = c.width - d - c.width * 0.025, y = c.height - d - c.height * 0.04;
+      const side = Math.min(vCam.videoWidth, vCam.videoHeight);
+      g.save();
+      g.beginPath(); g.arc(x + d / 2, y + d / 2, d / 2, 0, Math.PI * 2); g.closePath(); g.clip();
+      g.translate(x + d, y); g.scale(-1, 1);
+      g.drawImage(vCam, (vCam.videoWidth - side) / 2, (vCam.videoHeight - side) / 2, side, side, 0, 0, d, d);
+      g.restore();
+      g.lineWidth = Math.max(3, d * 0.025); g.strokeStyle = '#ffffff';
+      g.beginPath(); g.arc(x + d / 2, y + d / 2, d / 2, 0, Math.PI * 2); g.stroke();
+    }
+    drawLoop = requestAnimationFrame(draw);
+  };
+  draw();
+  return c.captureStream(30);
+}
+
+function record(videoStream, audioTracks, fmt) {
+  const stream = new MediaStream([...videoStream.getVideoTracks(), ...audioTracks]);
+  chunks = []; recordedBytes = 0; pausedTotal = 0;
+  recorder = new MediaRecorder(stream, { mimeType: fmt.mime, videoBitsPerSecond: 6000000 });
+  recorder.ondataavailable = e => { if (e.data && e.data.size) { chunks.push(e.data); recordedBytes += e.data.size; } };
+  recorder.onstop = finish;
+  recorder.start(1000);
+  startedAt = performance.now();
+  ticker = setInterval(updateLive, 250);
+  updateLive();
+}
+
+function elapsed() {
+  const now = recorder && recorder.state === 'paused' ? pausedAt : performance.now();
+  return now - startedAt - pausedTotal;
+}
+
+function updateLive() {
+  $('timer').textContent = fmtTime(elapsed());
+  $('size').textContent = recordedBytes ? fmtBytes(recordedBytes) : '';
+}
+
+async function finish() {
+  const durationMs = elapsed();
+  stopAll();
+  let blob = new Blob(chunks, { type: format.mime.split(';')[0] });
+  if (format.ext === 'webm') {
+    const fixed = setWebmDuration(new Uint8Array(await blob.arrayBuffer()), durationMs);
+    blob = new Blob([fixed], { type: 'video/webm' });
+  }
+  result = { blob, name: fileName(new Date(), format.ext) };
+  $('playback').src = URL.createObjectURL(blob);
+  $('doneInfo').textContent = fmtTime(durationMs) + ', ' + fmtBytes(blob.size) + ', ' + format.ext.toUpperCase();
+  show('done');
+}
+
+function show(id) { for (const s of ['setup', 'recording', 'done']) $(s).hidden = s !== id; }
+
+function countdown() {
+  return new Promise(resolve => {
+    if (!$('count').checked) return resolve();
+    let n = 3;
+    const el = $('countdown');
+    el.hidden = false; el.textContent = n;
+    const t = setInterval(() => {
+      n--;
+      if (n <= 0) { clearInterval(t); el.hidden = true; resolve(); }
+      else el.textContent = n;
+    }, 1000);
+  });
+}
+
+async function start() {
+  $('err').hidden = true;
+  let screen;
+  try {
+    screen = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: $('sys').checked });
+  } catch (e) {
+    if (e.name !== 'NotAllowedError') { $('err').textContent = "Couldn't start screen capture: " + e.message; $('err').hidden = false; }
+    return;
+  }
+  streams.push(screen);
+  let mic = null, cam = null;
+  if ($('mic').checked) {
+    try { mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); streams.push(mic); }
+    catch (e) { $('err').textContent = 'No microphone access, so recording without your voice.'; $('err').hidden = false; }
+  }
+  if ($('cam').checked) {
+    try { cam = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } }); streams.push(cam); }
+    catch (e) { $('err').textContent = 'No camera access, so recording without the bubble.'; $('err').hidden = false; }
+  }
+  screen.getVideoTracks()[0].addEventListener('ended', () => { if (recorder && recorder.state !== 'inactive') recorder.stop(); });
+  await countdown();
+  const video = cam ? withCameraBubble(screen, cam) : screen;
+  show('recording');
+  $('live').classList.remove('paused');
+  $('pauseBtn').textContent = 'Pause';
+  record(video, mixAudio([screen, mic]), format);
+}
+
+$('startBtn').addEventListener('click', start);
+$('stopBtn').addEventListener('click', () => { if (recorder && recorder.state !== 'inactive') recorder.stop(); });
+$('pauseBtn').addEventListener('click', () => {
+  if (!recorder) return;
+  if (recorder.state === 'recording') {
+    recorder.pause(); pausedAt = performance.now();
+    $('pauseBtn').textContent = 'Resume'; $('live').classList.add('paused');
+  } else if (recorder.state === 'paused') {
+    recorder.resume(); pausedTotal += performance.now() - pausedAt;
+    $('pauseBtn').textContent = 'Pause'; $('live').classList.remove('paused');
+  }
+});
+$('saveBtn').addEventListener('click', () => {
+  if (!result) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(result.blob);
+  a.download = result.name;
+  a.click();
+});
+$('againBtn').addEventListener('click', () => show('setup'));
+
+const canRecord = typeof MediaRecorder !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia;
+format = canRecord ? pickFormat(m => MediaRecorder.isTypeSupported(m)) : null;
+if (!canRecord || !format) { $('unsupported').hidden = false; $('startBtn').disabled = true; }
+else $('fmtNote').textContent = 'Saves as ' + format.ext.toUpperCase();
+</script>
+</body>
+</html>

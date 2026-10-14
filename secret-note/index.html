@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c77bff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<title>Secret Note</title>
+<style>
+  :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#7b3fc4; --bad:#d8392f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121214; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; --card:#1b1b1f; --accent:#c77bff; --bad:#ff5a52; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         line-height:1.5; padding:48px 20px 64px; }
+  main { max-width:680px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--ink); border-radius:12px; padding:18px; margin-top:18px; }
+  label { display:block; font-weight:600; margin:14px 0 6px; }
+  label:first-child { margin-top:0; }
+  textarea, input[type=password], input[type=text] { width:100%; font:inherit; font-size:16px; padding:10px 12px; border-radius:8px;
+    border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  textarea { min-height:160px; resize:vertical; }
+  .note { white-space:pre-wrap; word-break:break-word; font-size:17px; padding:14px; border-radius:8px; background:var(--paper);
+          border:1.5px solid var(--rule); min-height:80px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  .grow { flex:1; }
+  button { font:inherit; font-weight:600; font-size:15px; padding:9px 15px; border-radius:8px; cursor:pointer;
+           border:1.5px solid var(--ink); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { background:var(--ink); color:var(--paper); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--ink); color:var(--paper); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .code { display:flex; gap:6px; margin-top:6px; }
+  .code input { flex:1; min-width:0; font:13px ui-monospace, Menlo, monospace; padding:9px 10px; border-radius:8px;
+                border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  .error { color:var(--bad); font-weight:600; }
+  .count { font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Secret Note">
+<meta property="og:description" content="Write a note and get a link with the note encrypted inside it. Nothing is stored anywhere. Add a password for extra safety.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/secret-note/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/secret-note/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Write a note and get a link with the note encrypted inside it. Nothing is stored anywhere. Add a password for extra safety.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Secret Note</h1>
+
+  <section id="write">
+    <p class="lede">Write a note and get a link with the note encrypted inside it. Nothing is stored anywhere, not even here.</p>
+    <div class="card">
+      <label for="text">Your note</label>
+      <textarea id="text" placeholder="Wi-Fi password, a door code, something just for them…"></textarea>
+      <div class="count" id="count"></div>
+      <label for="pw">Password <span class="muted" style="font-weight:400">(optional)</span></label>
+      <input type="password" id="pw" autocomplete="new-password" placeholder="Leave empty to let anyone with the link read it">
+      <div class="row"><button class="primary" id="makeBtn">Create link</button><span id="makeErr" class="error"></span></div>
+    </div>
+    <div class="card" id="result" hidden>
+      <label>Your link</label>
+      <div class="code"><input id="link" readonly><button id="copyLink">Copy</button><button id="shareLink" hidden>Share</button></div>
+      <p class="muted small" id="linkNote" style="margin-top:10px"></p>
+    </div>
+    <p class="muted small" style="margin-top:22px">The note is encrypted in your browser with AES-256-GCM and placed after the <code>#</code> in the link, the part browsers never send to a server. That also means it can't be deleted or expire: whoever has the link can open it, as often as they like. For anything sensitive, set a password and send it a different way than the link.</p>
+  </section>
+
+  <section id="read" hidden>
+    <div class="card">
+      <div id="askPw" hidden>
+        <label for="pwRead">This note is protected with a password</label>
+        <input type="password" id="pwRead" autocomplete="off">
+        <div class="row"><button class="primary" id="openBtn">Open note</button><span id="readErr" class="error"></span></div>
+      </div>
+      <div id="opened" hidden>
+        <label>The note</label>
+        <div class="note" id="noteText"></div>
+        <div class="row"><button id="copyNote">Copy text</button></div>
+      </div>
+      <p id="broken" class="error" hidden>This link is incomplete or damaged. Ask the sender to copy it again.</p>
+    </div>
+    <div class="row"><button id="writeOwn">Write your own note</button></div>
+  </section>
+</main>
+<script>
+'use strict';
+// Notes are compressed, then encrypted with AES-256-GCM; everything lives in the URL fragment.
+
+const $ = id => document.getElementById(id);
+const ITERATIONS = 600000;
+const enc = new TextEncoder(), dec = new TextDecoder();
+
+function b64url(bytes) {
+  let s = '';
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function unb64url(str) {
+  const s = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(s, c => c.charCodeAt(0));
+}
+async function deflate(bytes, inflate) {
+  const S = inflate ? DecompressionStream : CompressionStream;
+  const res = new Response(new Blob([bytes]).stream().pipeThrough(new S('deflate')));
+  return new Uint8Array(await res.arrayBuffer());
+}
+const random = n => crypto.getRandomValues(new Uint8Array(n));
+
+async function passwordKey(password, salt) {
+  const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: ITERATIONS, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+
+// code format: 1<mode><zip>.<parts>   mode k = key in link, p = password; zip z = deflated, r = raw
+async function encryptNote(text, password) {
+  let body = enc.encode(text), zip = 'r';
+  if (typeof CompressionStream === 'function') {
+    const packed = await deflate(body);
+    if (packed.length < body.length) { body = packed; zip = 'z'; }
+  }
+  const iv = random(12);
+  if (password) {
+    const salt = random(16);
+    const key = await passwordKey(password, salt);
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, body));
+    return '1p' + zip + '.' + [salt, iv, ct].map(b64url).join('.');
+  }
+  const raw = random(32);
+  const key = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt']);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, body));
+  return '1k' + zip + '.' + [iv, ct, raw].map(b64url).join('.');
+}
+
+function parseCode(code) {
+  const m = /^1([kp])([zr])\.([A-Za-z0-9_.-]+)$/.exec(code || '');
+  if (!m) return null;
+  const parts = m[3].split('.');
+  if (parts.length !== 3) return null;
+  try { return { mode: m[1], zip: m[2], parts: parts.map(unb64url) }; } catch (e) { return null; }
+}
+
+async function decryptNote(code, password) {
+  const c = parseCode(code);
+  if (!c) throw new Error('damaged');
+  let key, iv, ct;
+  if (c.mode === 'p') {
+    const [salt, iv0, ct0] = c.parts;
+    iv = iv0; ct = ct0;
+    key = await passwordKey(password || '', salt);
+  } else {
+    const [iv0, ct0, raw] = c.parts;
+    iv = iv0; ct = ct0;
+    key = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
+  }
+  let body;
+  try { body = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct)); }
+  catch (e) { throw new Error(c.mode === 'p' ? 'password' : 'damaged'); }
+  if (c.zip === 'z') body = await deflate(body, true);
+  return dec.decode(body);
+}
+
+const linkFor = code => location.origin + location.pathname + '#n=' + code;
+
+// writing
+function updateCount() {
+  const n = $('text').value.length;
+  $('count').textContent = n ? n + (n === 1 ? ' character' : ' characters') : '';
+}
+
+async function makeLink() {
+  const text = $('text').value;
+  $('makeErr').textContent = '';
+  if (!text.trim()) { $('makeErr').textContent = 'Write something first.'; return null; }
+  $('makeBtn').disabled = true;
+  try {
+    const pw = $('pw').value;
+    const link = linkFor(await encryptNote(text, pw));
+    $('link').value = link;
+    $('result').hidden = false;
+    $('linkNote').textContent = (pw ? 'They will also need the password. Send it some other way than the link.'
+                                     : 'Anyone with this link can read the note.') +
+      ' The link is ' + link.length + ' characters' + (link.length > 4000 ? ', long enough that some chat apps may cut it off. A shorter note keeps it safe.' : '.');
+    return link;
+  } finally {
+    $('makeBtn').disabled = false;
+  }
+}
+
+// reading
+let pendingCode = null;
+
+async function openNote(code, password) {
+  try {
+    const text = await decryptNote(code, password);
+    $('noteText').textContent = text;
+    $('askPw').hidden = true;
+    $('opened').hidden = false;
+    try { history.replaceState(null, '', location.pathname); } catch (e) { }
+    return text;
+  } catch (e) {
+    if (e.message === 'password') { $('readErr').textContent = "That password didn't work."; $('askPw').hidden = false; }
+    else { $('askPw').hidden = true; $('broken').hidden = false; }
+    return null;
+  }
+}
+
+function startRead(code) {
+  $('write').hidden = true;
+  $('read').hidden = false;
+  const c = parseCode(code);
+  if (!c) { $('broken').hidden = false; return; }
+  pendingCode = code;
+  if (c.mode === 'p') { $('askPw').hidden = false; try { $('pwRead').focus(); } catch (e) { } }
+  else openNote(code);
+}
+
+async function copy(text, btn) {
+  try { await navigator.clipboard.writeText(text); const t = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = t; }, 1500); }
+  catch (e) { }
+}
+
+$('text').addEventListener('input', updateCount);
+$('makeBtn').addEventListener('click', makeLink);
+$('copyLink').addEventListener('click', () => copy($('link').value, $('copyLink')));
+$('shareLink').addEventListener('click', async () => { try { await navigator.share({ url: $('link').value }); } catch (e) { } });
+if (typeof navigator !== 'undefined' && navigator.share) $('shareLink').hidden = false;
+$('openBtn').addEventListener('click', async () => {
+  $('readErr').textContent = '';
+  $('openBtn').disabled = true;
+  await openNote(pendingCode, $('pwRead').value);
+  $('openBtn').disabled = false;
+});
+$('pwRead').addEventListener('keydown', e => { if (e.key === 'Enter') $('openBtn').click(); });
+$('copyNote').addEventListener('click', () => copy($('noteText').textContent, $('copyNote')));
+$('writeOwn').addEventListener('click', () => {
+  try { history.replaceState(null, '', location.pathname); } catch (e) { }
+  $('read').hidden = true; $('write').hidden = false;
+});
+
+const hm = /^#n=(.+)$/.exec(location.hash || '');
+if (hm) startRead(hm[1]);
+</script>
+</body>
+</html>

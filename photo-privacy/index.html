@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff8a5c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Photo Privacy</title>
+<style>
+  :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#c4501f; --bad:#d8392f; --good:#2f9e5b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121214; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; --card:#1b1b1f; --accent:#ff8a5c; --bad:#ff5a52; --good:#39ff9c; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         line-height:1.5; padding:48px 20px 64px; }
+  main { max-width:820px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  .lede { font-size:17px; margin:0 0 18px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .drop { border:2px dashed var(--rule); border-radius:12px; padding:30px 16px; text-align:center; cursor:pointer; background:var(--card); }
+  .drop.over { border-color:var(--accent); }
+  .drop strong { display:block; font-size:17px; }
+  .photo { background:var(--card); border:1.5px solid var(--ink); border-radius:12px; padding:16px; margin-top:16px;
+           display:grid; grid-template-columns:120px minmax(0, 1fr); gap:16px; }
+  @media (max-width:560px) { .photo { grid-template-columns:1fr; } }
+  .photo img { width:120px; height:120px; object-fit:cover; border-radius:8px; background:var(--paper); }
+  .photo h2 { margin:0 0 4px; font-size:17px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .verdict { font-weight:700; margin:0 0 8px; }
+  .verdict.bad { color:var(--bad); } .verdict.good { color:var(--good); }
+  dl { margin:0; display:grid; grid-template-columns:max-content minmax(0, 1fr); gap:3px 14px; font-size:14px; }
+  dt { color:var(--muted); }
+  dd { margin:0; word-break:break-word; }
+  dd a { color:var(--ink); }
+  .group { font-weight:700; margin:10px 0 2px; font-size:14px; grid-column:1 / -1; }
+  .group.risk::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--bad); margin-right:7px; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  button { font:inherit; font-weight:600; font-size:15px; padding:8px 14px; border-radius:8px; cursor:pointer;
+           border:1.5px solid var(--ink); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { background:var(--ink); color:var(--paper); }
+  button.primary { background:var(--ink); color:var(--paper); }
+  button:focus-visible, .drop:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  #all { margin-top:16px; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Photo Privacy">
+<meta property="og:description" content="See the hidden location, date, and device details inside your photos, and remove them without re-compressing the image.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/photo-privacy/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/photo-privacy/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="See the hidden location, date, and device details inside your photos, and remove them without re-compressing the image.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Photo Privacy</h1>
+  <p class="lede">Photos often carry hidden details: where they were taken, when, and on which phone. See what yours give away, then remove it before you share. Your photos never leave this page.</p>
+  <div class="drop" id="drop" tabindex="0" role="button">
+    <strong>Choose photos</strong>
+    <span class="muted">or drop them here. JPEG, PNG, and WebP.</span>
+  </div>
+  <div id="list"></div>
+  <div class="actions" id="all" hidden><button class="primary" id="cleanAll">Download all cleaned photos (.zip)</button></div>
+  <p class="muted small" style="margin-top:22px">Cleaning removes the hidden data without re-saving the picture, so image quality is exactly the same. Only the orientation tag is kept, so photos stay the right way up, along with any color profile. HEIC photos from iPhones aren't supported yet; share them as JPEG first (most share sheets do this automatically).</p>
+</main>
+<input type="file" id="pick" multiple accept="image/jpeg,image/png,image/webp" hidden>
+<script>
+'use strict';
+// Reads and strips photo metadata at the byte level: JPEG segments, PNG chunks, WebP RIFF chunks.
+
+const $ = id => document.getElementById(id);
+
+// TIFF / EXIF
+const TYPE_SIZE = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 };
+
+function readTiff(b, base) {
+  const dv = new DataView(b.buffer, b.byteOffset + base, b.length - base);
+  const le = dv.getUint16(0) === 0x4949;
+  if (dv.getUint16(2, le) !== 42) return null;
+  const u16 = o => dv.getUint16(o, le), u32 = o => dv.getUint32(o, le), s32 = o => dv.getInt32(o, le);
+  function readIfd(off) {
+    const tags = new Map();
+    if (!off || off + 2 > dv.byteLength) return { tags, next: 0 };
+    const n = u16(off);
+    for (let i = 0; i < n; i++) {
+      const e = off + 2 + i * 12;
+      if (e + 12 > dv.byteLength) break;
+      const tag = u16(e), type = u16(e + 2), count = u32(e + 4);
+      const size = (TYPE_SIZE[type] || 1) * count;
+      const at = size <= 4 ? e + 8 : u32(e + 8);
+      if (at + size > dv.byteLength) continue;
+      let val;
+      if (type === 2) val = new TextDecoder().decode(new Uint8Array(dv.buffer, dv.byteOffset + at, count)).replace(/\0+$/, '').trim();
+      else if (type === 3) val = Array.from({ length: count }, (_, k) => u16(at + k * 2));
+      else if (type === 4) val = Array.from({ length: count }, (_, k) => u32(at + k * 4));
+      else if (type === 9) val = Array.from({ length: count }, (_, k) => s32(at + k * 4));
+      else if (type === 5 || type === 10) val = Array.from({ length: count }, (_, k) => {
+        const num = type === 5 ? u32(at + k * 8) : s32(at + k * 8), den = type === 5 ? u32(at + k * 8 + 4) : s32(at + k * 8 + 4);
+        return den ? num / den : 0;
+      });
+      else val = { bytes: size };
+      tags.set(tag, val);
+    }
+    const nextAt = off + 2 + n * 12;
+    return { tags, next: nextAt + 4 <= dv.byteLength ? u32(nextAt) : 0 };
+  }
+  const ifd0 = readIfd(u32(4));
+  const exifPtr = ifd0.tags.get(0x8769), gpsPtr = ifd0.tags.get(0x8825);
+  return {
+    ifd0: ifd0.tags,
+    exif: exifPtr ? readIfd(exifPtr[0]).tags : new Map(),
+    gps: gpsPtr ? readIfd(gpsPtr[0]).tags : new Map(),
+    thumbnail: !!ifd0.next && readIfd(ifd0.next).tags.size > 0,
+  };
+}
+
+// container parsers: each returns { type, tiff, extras: [labels], parts } for findings and stripping
+function parseJpeg(b) {
+  const segs = [];
+  let i = 2;
+  while (i + 4 <= b.length) {
+    if (b[i] !== 0xff) return null;
+    while (b[i + 1] === 0xff && i + 2 < b.length) i++;
+    const marker = b[i + 1];
+    if (marker === 0xd8 || (marker >= 0xd0 && marker <= 0xd7) || marker === 0x01) { segs.push({ marker, start: i, end: i + 2 }); i += 2; continue; }
+    const len = (b[i + 2] << 8) | b[i + 3];
+    const end = i + 2 + len;
+    if (marker === 0xda) {
+      // entropy-coded data runs to the first EOI that isn't a stuffed byte or restart marker
+      let j = end;
+      while (j + 1 < b.length && !(b[j] === 0xff && b[j + 1] === 0xd9)) {
+        j += b[j] === 0xff && (b[j + 1] === 0x00 || (b[j + 1] >= 0xd0 && b[j + 1] <= 0xd7)) ? 2 : 1;
+      }
+      const eoi = Math.min(b.length, j + 2);
+      segs.push({ marker, start: i, end: eoi });
+      segs.trailer = b.length - eoi;
+      break;
+    }
+    segs.push({ marker, start: i, end, data: b.subarray(i + 4, end) });
+    i = end;
+  }
+  const out = { type: 'JPEG', tiff: null, extras: [], segs };
+  if (segs.trailer > 0) out.extras.push('Extra data after the image (' + fmtBytes(segs.trailer) + '), often a second embedded picture');
+  for (const s of segs) {
+    if (!s.data) continue;
+    const head = new TextDecoder('latin1').decode(s.data.subarray(0, 32));
+    if (s.marker === 0xe1 && head.startsWith('Exif\0\0')) out.tiff = readTiff(s.data, 6);
+    else if (s.marker === 0xe1 && head.startsWith('http://ns.adobe.com/xap')) {
+      const xml = new TextDecoder().decode(s.data);
+      out.extras.push('XMP data (' + fmtBytes(s.data.length) + ')' + (/GPSLatitude/.test(xml) ? ', including a location' : ''));
+      out.xmpLocation = /GPSLatitude/.test(xml);
+    }
+    else if (s.marker === 0xed) out.extras.push('IPTC / Photoshop data (' + fmtBytes(s.data.length) + ')');
+    else if (s.marker === 0xfe) out.extras.push('Comment: ' + new TextDecoder().decode(s.data).slice(0, 120));
+    else if (s.marker === 0xe2 && !head.startsWith('ICC_PROFILE')) out.extras.push((head.startsWith('MPF') ? 'Multi-picture index' : 'APP2 data') + ' (' + fmtBytes(s.data.length) + ')');
+    else if (s.marker >= 0xe3 && s.marker <= 0xef && s.marker !== 0xee) out.extras.push('APP' + (s.marker - 0xe0) + ' data (' + fmtBytes(s.data.length) + ')');
+  }
+  return out;
+}
+
+const PNG_SIG = [137, 80, 78, 71, 13, 10, 26, 10];
+function parsePng(b) {
+  const chunks = [];
+  const dv = new DataView(b.buffer, b.byteOffset, b.length);
+  let i = 8;
+  while (i + 12 <= b.length) {
+    const len = dv.getUint32(i), type = String.fromCharCode(b[i + 4], b[i + 5], b[i + 6], b[i + 7]);
+    const end = i + 12 + len;
+    if (end > b.length) break;
+    chunks.push({ type, start: i, end, data: b.subarray(i + 8, i + 8 + len) });
+    i = end;
+    if (type === 'IEND') break;
+  }
+  const out = { type: 'PNG', tiff: null, extras: [], chunks };
+  for (const c of chunks) {
+    if (c.type === 'eXIf') out.tiff = readTiff(c.data, 0);
+    else if (c.type === 'tEXt' || c.type === 'iTXt' || c.type === 'zTXt') {
+      const nul = c.data.indexOf(0), key = new TextDecoder('latin1').decode(c.data.subarray(0, nul < 0 ? 0 : nul));
+      const val = c.type === 'tEXt' ? new TextDecoder('latin1').decode(c.data.subarray(nul + 1)).slice(0, 100) : '';
+      out.extras.push('Text "' + key + '"' + (val ? ': ' + val : ''));
+    }
+    else if (c.type === 'tIME') out.extras.push('Last-modified time');
+  }
+  return out;
+}
+
+function parseWebp(b) {
+  const dv = new DataView(b.buffer, b.byteOffset, b.length);
+  const chunks = [];
+  let i = 12;
+  while (i + 8 <= b.length) {
+    const type = String.fromCharCode(b[i], b[i + 1], b[i + 2], b[i + 3]), len = dv.getUint32(i + 4, true);
+    const end = i + 8 + len + (len & 1);
+    chunks.push({ type, start: i, end: Math.min(end, b.length), data: b.subarray(i + 8, i + 8 + len) });
+    i = end;
+  }
+  const out = { type: 'WebP', tiff: null, extras: [], chunks };
+  for (const c of chunks) {
+    if (c.type === 'EXIF') {
+      const off = new TextDecoder('latin1').decode(c.data.subarray(0, 6)) === 'Exif\0\0' ? 6 : 0;
+      out.tiff = readTiff(c.data, off);
+    } else if (c.type === 'XMP ') out.extras.push('XMP data (' + fmtBytes(c.data.length) + ')');
+  }
+  return out;
+}
+
+function parsePhoto(b) {
+  if (b[0] === 0xff && b[1] === 0xd8) return parseJpeg(b);
+  if (PNG_SIG.every((v, k) => b[k] === v)) return parsePng(b);
+  if (String.fromCharCode(...b.subarray(0, 4)) === 'RIFF' && String.fromCharCode(...b.subarray(8, 12)) === 'WEBP') return parseWebp(b);
+  return null;
+}
+
+// findings in plain language
+function gpsDecimal(vals, ref) {
+  if (!vals || vals.length < 3) return null;
+  const v = vals[0] + vals[1] / 60 + vals[2] / 3600;
+  return /[SW]/.test(ref || '') ? -v : v;
+}
+
+function findings(p) {
+  const groups = [];
+  const t = p.tiff;
+  if (t) {
+    const lat = gpsDecimal(t.gps.get(2), t.gps.get(1)), lon = gpsDecimal(t.gps.get(4), t.gps.get(3));
+    if (lat !== null && lon !== null) {
+      const rows = [['Coordinates', lat.toFixed(5) + ', ' + lon.toFixed(5)]];
+      const alt = t.gps.get(6);
+      if (alt) rows.push(['Altitude', Math.round(alt[0]) + ' m']);
+      groups.push({ title: 'Where it was taken', risk: true, rows, map: { lat, lon } });
+    }
+    const when = [];
+    const taken = t.exif.get(0x9003) || t.ifd0.get(0x0132);
+    if (taken) when.push(['Taken', taken.replace(/^(\d{4}):(\d\d):(\d\d)/, '$1-$2-$3')]);
+    if (t.exif.get(0x9010)) when.push(['Time zone', t.exif.get(0x9010)]);
+    if (when.length) groups.push({ title: 'When', risk: true, rows: when });
+    const dev = [];
+    const make = t.ifd0.get(0x010f), model = t.ifd0.get(0x0110);
+    if (make || model) dev.push(['Camera', [make, model].filter(Boolean).join(' ')]);
+    if (t.exif.get(0xa434)) dev.push(['Lens', t.exif.get(0xa434)]);
+    if (t.exif.get(0xa431)) dev.push(['Serial number', t.exif.get(0xa431)]);
+    if (t.exif.get(0xa420)) dev.push(['Unique image ID', t.exif.get(0xa420)]);
+    if (t.ifd0.get(0x0131)) dev.push(['Software', t.ifd0.get(0x0131)]);
+    if (t.exif.get(0x927c)) dev.push(['Maker notes', 'hidden manufacturer data, ' + fmtBytes(t.exif.get(0x927c).bytes)]);
+    if (dev.length) groups.push({ title: 'Device', risk: dev.some(r => /Serial|Unique/.test(r[0])), rows: dev });
+    const who = [];
+    if (t.ifd0.get(0x013b)) who.push(['Artist', t.ifd0.get(0x013b)]);
+    if (t.ifd0.get(0x8298)) who.push(['Copyright', t.ifd0.get(0x8298)]);
+    if (who.length) groups.push({ title: 'People', risk: true, rows: who });
+    if (t.thumbnail) groups.push({ title: 'Embedded preview', risk: false, rows: [['Thumbnail', 'a small copy of the photo, which can show the original before cropping']] });
+  }
+  if (p.extras.length) groups.push({ title: 'Other hidden data', risk: !!p.xmpLocation, rows: p.extras.map(x => ['', x]) });
+  return groups;
+}
+
+function orientation(p) {
+  const o = p.tiff && p.tiff.ifd0.get(0x0112);
+  return o ? o[0] : 1;
+}
+
+// stripping: rebuild the file without metadata, keeping the image data byte for byte
+function minimalExif(orient) {
+  const tiff = [0x49, 0x49, 42, 0, 8, 0, 0, 0, 1, 0, 0x12, 0x01, 3, 0, 1, 0, 0, 0, orient, 0, 0, 0, 0, 0, 0, 0];
+  const body = [0x45, 0x78, 0x69, 0x66, 0, 0, ...tiff];
+  const len = body.length + 2;
+  return Uint8Array.from([0xff, 0xe1, len >> 8, len & 255, ...body]);
+}
+
+const KEEP_JPEG = new Set([0xe0, 0xe2, 0xee]);   // JFIF, ICC profile, Adobe colour transform
+
+function stripPhoto(b) {
+  const p = parsePhoto(b);
+  if (!p) return null;
+  const parts = [];
+  if (p.type === 'JPEG') {
+    parts.push(b.subarray(0, 2));
+    let insertedOrient = false;
+    const orient = orientation(p);
+    for (const s of p.segs) {
+      const iccOnly = s.marker !== 0xe2 || new TextDecoder('latin1').decode(s.data.subarray(0, 11)) === 'ICC_PROFILE';
+      const isMeta = (s.marker >= 0xe1 && s.marker <= 0xef && (!KEEP_JPEG.has(s.marker) || !iccOnly)) || s.marker === 0xfe;
+      if (!isMeta) {
+        if (!insertedOrient && orient !== 1 && s.marker !== 0xe0) { parts.push(minimalExif(orient)); insertedOrient = true; }
+        parts.push(b.subarray(s.start, s.end));
+      }
+    }
+  } else if (p.type === 'PNG') {
+    parts.push(b.subarray(0, 8));
+    for (const c of p.chunks) if (!['tEXt', 'iTXt', 'zTXt', 'eXIf', 'tIME'].includes(c.type)) parts.push(b.subarray(c.start, c.end));
+  } else {
+    const keep = p.chunks.filter(c => c.type !== 'EXIF' && c.type !== 'XMP ');
+    const body = [];
+    for (const c of keep) {
+      const chunk = b.slice(c.start, c.end);
+      if (c.type === 'VP8X') chunk[8] &= ~(0x08 | 0x04);
+      body.push(chunk);
+    }
+    const size = 4 + body.reduce((a, c) => a + c.length, 0);
+    const head = b.slice(0, 12);
+    new DataView(head.buffer).setUint32(4, size, true);
+    parts.push(head, ...body);
+  }
+  const total = parts.reduce((a, c) => a + c.length, 0);
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const part of parts) { out.set(part, o); o += part.length; }
+  return out;
+}
+
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB';
+  return (n / 1048576).toFixed(1) + ' MB';
+}
+
+// zip (stored, no compression) for downloading several cleaned photos at once
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(b) {
+  let c = 0xffffffff;
+  for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+function zip(files) {
+  const enc = new TextEncoder(), locals = [], central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true);
+    h.setUint32(14, crc, true); h.setUint32(18, size, true); h.setUint32(22, size, true); h.setUint16(26, name.length, true);
+    locals.push(new Uint8Array(h.buffer), name, f.data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint32(16, crc, true); c.setUint32(20, size, true); c.setUint32(24, size, true); c.setUint16(28, name.length, true);
+    c.setUint32(42, offset, true);
+    central.push(new Uint8Array(c.buffer), name);
+    offset += 30 + name.length + size;
+  }
+  const cdSize = central.reduce((a, p) => a + p.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...locals, ...central, new Uint8Array(end.buffer)], { type: 'application/zip' });
+}
+
+// UI
+const cleaned = [];
+
+function cleanName(name) {
+  const dot = name.lastIndexOf('.');
+  return dot > 0 ? name.slice(0, dot) + '-clean' + name.slice(dot) : name + '-clean';
+}
+
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+
+function el(tag, text, cls) {
+  const e = document.createElement(tag);
+  if (text !== undefined) e.textContent = text;
+  if (cls) e.className = cls;
+  return e;
+}
+
+async function addFile(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const p = parsePhoto(bytes);
+  const card = el('div', undefined, 'photo');
+  const img = el('img');
+  img.alt = '';
+  img.src = URL.createObjectURL(file);
+  const body = el('div');
+  body.append(el('h2', file.name));
+  if (!p) {
+    body.append(el('p', "This doesn't look like a JPEG, PNG, or WebP image.", 'verdict bad'));
+    card.append(img, body);
+    $('list').prepend(card);
+    return null;
+  }
+  const groups = findings(p);
+  const risky = groups.some(g => g.risk);
+  body.append(el('p', !groups.length ? 'Nothing hidden found. This photo is clean.' :
+    risky ? 'This photo reveals personal details.' : 'Some hidden data, nothing very personal.', 'verdict ' + (risky ? 'bad' : 'good')));
+  if (groups.length) {
+    const dl = el('dl');
+    for (const g of groups) {
+      dl.append(el('div', g.title, 'group' + (g.risk ? ' risk' : '')));
+      for (const [k, v] of g.rows) { dl.append(el('dt', k), el('dd', v)); }
+      if (g.map) {
+        const dd = el('dd'), a = el('a', 'Show on a map');
+        a.href = 'https://www.openstreetmap.org/?mlat=' + g.map.lat.toFixed(5) + '&mlon=' + g.map.lon.toFixed(5) + '#map=16/' + g.map.lat.toFixed(5) + '/' + g.map.lon.toFixed(5);
+        a.target = '_blank'; a.rel = 'noopener noreferrer';
+        dd.append(a);
+        dl.append(el('dt', ''), dd);
+      }
+    }
+    body.append(dl);
+    const clean = stripPhoto(bytes);
+    const name = cleanName(file.name);
+    cleaned.push({ name, data: clean });
+    const actions = el('div', undefined, 'actions');
+    const btn = el('button', 'Download cleaned copy (' + fmtBytes(clean.length) + ')', 'primary');
+    btn.addEventListener('click', () => save(new Blob([clean], { type: file.type || 'application/octet-stream' }), name));
+    actions.append(btn);
+    body.append(actions);
+    $('all').hidden = cleaned.length < 2;
+  }
+  card.append(img, body);
+  $('list').prepend(card);
+  return groups;
+}
+
+async function takeFiles(list) { for (const f of Array.from(list || [])) await addFile(f); }
+
+$('pick').addEventListener('change', e => takeFiles(e.target.files));
+const drop = $('drop');
+drop.addEventListener('click', () => $('pick').click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pick').click(); } });
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); takeFiles(e.dataTransfer.files); });
+$('cleanAll').addEventListener('click', () => save(zip(cleaned), 'cleaned-photos.zip'));
+</script>
+</body>
+</html>
