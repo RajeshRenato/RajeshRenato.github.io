@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff4fa3'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Sketch &amp; Guess</title>
+<style>
+  :root { --bg: #dfe6ed; --card: #ffffff; --ink: #18202c; --muted: #5a6576; --rule: #c3ccd6; --accent: #ff4fa3; --good: #1f9d55;
+          --lp-bg: #dfe6ed; --lp-panel: #ffffff; --lp-field: #ffffff; --lp-ink: #18202c; --lp-muted: #5a6576; --lp-rule: #c3ccd6;
+          --lp-veil: rgba(223, 230, 237, .97); --lp-accent: #ff4fa3; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #app { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; max-width: 1180px; margin: 0 auto; padding: 44px 16px 16px; }
+  #top { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 18px; min-height: 40px; }
+  #word { font-size: 28px; font-weight: 800; letter-spacing: .18em; font-variant-numeric: tabular-nums; }
+  #word.mine { letter-spacing: .02em; color: var(--accent); }
+  #turn { color: var(--muted); flex: 1; }
+  #timer { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
+  #timer.low { color: var(--accent); }
+  #stage { position: relative; }
+  #board { display: block; width: 100%; aspect-ratio: 4 / 3; background: #fff; border-radius: 10px; box-shadow: 0 1px 0 var(--rule);
+           touch-action: none; }
+  #board.can { cursor: crosshair; }
+  #overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+             background: rgba(255, 255, 255, .9); border-radius: 10px; text-align: center; padding: 20px; }
+  #overlay[hidden] { display: none; }
+  #overlay h2 { margin: 0; font-size: 26px; }
+  #overlay p { margin: 0; color: var(--muted); }
+  #overlay .choices { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  button { font: inherit; font-weight: 600; font-size: 15px; padding: 9px 15px; border-radius: 8px; cursor: pointer;
+           border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); }
+  button:hover { background: var(--ink); color: var(--card); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; min-height: 40px; }
+  #tools[hidden] { visibility: hidden; display: flex; }
+  .sw { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid var(--rule); }
+  .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--card) inset; }
+  .sz { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; border-color: var(--rule); }
+  .sz i { display: block; border-radius: 50%; background: var(--ink); }
+  .sz.on { border-color: var(--ink); }
+  .sz:hover i { background: var(--card); }
+  #tools .gap { flex: 1; }
+  aside { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  #players { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: 10px; }
+  #players li { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--bg); }
+  #players li:last-child { border-bottom: 0; }
+  #players i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  #players .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #players .score { font-variant-numeric: tabular-nums; font-weight: 700; }
+  #players .got { background: #e3f5ea; }
+  #players .tag { font-size: 12px; color: var(--muted); }
+  #chatBox { display: flex; flex-direction: column; background: var(--card); border-radius: 10px; flex: 1; min-height: 220px; max-height: 52vh; }
+  #chat { list-style: none; margin: 0; padding: 10px 12px; overflow-y: auto; flex: 1; font-size: 14px; line-height: 1.45; }
+  #chat li { overflow-wrap: anywhere; }
+  #chat b { font-weight: 600; }
+  #chat .got { color: var(--good); font-weight: 600; }
+  #chat .close { color: #b7791f; }
+  #chat .sys { color: var(--muted); }
+  #guess { display: flex; border-top: 1px solid var(--bg); }
+  #guess input { flex: 1; min-width: 0; font: inherit; padding: 10px 12px; border: 0; background: none; color: var(--ink); border-radius: 0 0 0 10px; }
+  #guess button { border: 0; border-radius: 0 0 10px 0; }
+  .actions { display: flex; gap: 12px; }
+  .actions button.quiet { border: 0; background: none; color: var(--muted); text-decoration: underline; padding: 6px 2px; font-weight: 500; }
+  @media (max-width: 820px) {
+    #app { grid-template-columns: 1fr; padding-top: 40px; }
+    #chatBox { max-height: 34vh; min-height: 160px; }
+    #word { font-size: 22px; }
+  }
+</style>
+<meta property="og:title" content="Sketch &amp; Guess">
+<meta property="og:description" content="Take turns drawing a word while friends race to guess it. Up to 8 players, connected by links with no server.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/sketch-guess/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/sketch-guess/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Take turns drawing a word while friends race to guess it. Up to 8 players, connected by links with no server.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="app">
+  <div id="top"><span id="word"></span><span id="turn"></span><span id="timer"></span></div>
+  <div>
+    <div id="stage">
+      <canvas id="board" width="1000" height="750"></canvas>
+      <div id="overlay" hidden></div>
+    </div>
+    <div id="tools" hidden></div>
+  </div>
+  <aside>
+    <ul id="players"></ul>
+    <div id="chatBox">
+      <ul id="chat"></ul>
+      <form id="guess"><input id="guessIn" maxlength="40" autocomplete="off" placeholder="Type your guess"><button>Send</button></form>
+    </div>
+    <div class="actions" id="actions"></div>
+  </aside>
+</div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const WORDS = ('apple banana mango coconut pineapple carrot mushroom pizza burger sandwich samosa noodles cake donut cookie ' +
+  'ice-cream popcorn egg cheese tea coffee bottle cup teapot spoon fork knife plate house castle tent igloo pyramid ' +
+  'lighthouse windmill bridge tower church school hospital ladder door window key lock chair table bed sofa lamp clock ' +
+  'mirror candle bell umbrella glasses hat crown shoe sock shirt dress scarf glove ring necklace backpack wallet coin ' +
+  'phone laptop camera television radio headphones microphone battery magnet robot rocket satellite planet comet star ' +
+  'moon sun cloud rain rainbow lightning snowman tornado volcano mountain island beach wave desert cactus tree palm leaf ' +
+  'flower lotus mushroom river waterfall campfire car bus truck tractor bicycle motorcycle scooter train plane helicopter ' +
+  'boat ship submarine anchor parachute balloon kite skateboard surfboard sled cat dog fish bird owl penguin peacock ' +
+  'chicken duck cow pig horse sheep goat rabbit mouse lion tiger elephant giraffe zebra monkey bear panda kangaroo ' +
+  'camel snake turtle frog crab octopus shark whale dolphin jellyfish snail spider bee butterfly ant ladybug dragon ' +
+  'unicorn ghost alien zombie vampire wizard pirate ninja mermaid king queen knight clown chef doctor astronaut farmer ' +
+  'football basketball cricket tennis bowling trophy medal whistle helmet sword shield bow arrow hammer saw scissors ' +
+  'pencil paintbrush book newspaper envelope stamp map compass globe calendar puzzle dice yo-yo teddy-bear gift ' +
+  'guitar piano drum violin trumpet bell toothbrush soap bathtub shower toilet broom bucket vacuum fridge oven ' +
+  'kettle toaster washing-machine fan heart eye nose ear mouth hand foot tooth skeleton brain fingerprint ' +
+  'traffic-light stop-sign fountain swing slide seesaw sandcastle ferris-wheel roller-coaster carousel tent ' +
+  'auto-rickshaw hot-air-balloon spaceship treasure-chest bomb fireworks')
+  .split(' ').map(w => w.replace(/-/g, ' ')).filter((w, i, all) => all.indexOf(w) === i);
+
+const CHOOSE_MS = 12000, DRAW_MS = 80000, REVEAL_MS = 5000, ROUNDS = 2;
+const COLORS = ['#18202c', '#e5383b', '#ff9f1c', '#ffd60a', '#2a9d4b', '#1e88e5', '#8e44ad', '#8d5a3b', '#ff8fab', '#ffffff'];
+const SIZES = [4, 10, 24];
+const BW = 1000, BH = 750;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const now = () => performance.now();
+
+let room = null;
+
+// What every player sees. The host fills it by applying its own broadcasts.
+const V = { phase: 'wait', round: 0, rounds: ROUNDS, drawer: -1, deadline: 0, hint: '', word: '', myWord: '',
+            choices: [], scores: {}, guessed: [], winner: [] };
+let strokes = [];          // [{ c, w, p: [x0, y0, x1, y1, ...] }] in board units
+let dirty = true;
+const chat = [];
+
+// --- host
+
+const G = { order: [], used: new Set(), word: '', choices: [], revealed: [], guessed: new Set(), endsAt: 0, startedAt: 0 };
+
+function toAll(m) {
+  room.send(m);
+  handle(m, 0);
+}
+function toPlayer(id, m) {
+  if (id === room.me) handle(m, 0);
+  else room.sendTo(id, m);
+}
+function toAllBut(id, m) {
+  for (const p of room.players) if (p.id !== id) toPlayer(p.id, m);
+}
+
+function hint() {
+  return G.word.split('').map((ch, i) => (ch === ' ' || G.revealed.includes(i) ? ch : '_')).join('');
+}
+
+function broadcastState(extra = {}) {
+  toAll(Object.assign({
+    t: 'state', phase: V.phase, round: V.round, rounds: ROUNDS, drawer: V.drawer,
+    left: Math.max(0, Math.round(G.endsAt - now())), hint: V.phase === 'draw' ? hint() : '',
+    scores: V.scores, guessed: [...G.guessed],
+  }, extra));
+}
+
+function hostStartGame() {
+  V.scores = {};
+  for (const p of room.players) V.scores[p.id] = 0;
+  V.round = 1;
+  G.order = room.players.map(p => p.id);
+  G.used.clear();
+  toAll({ t: 'chat', kind: 'sys', text: 'New game. ' + ROUNDS + ' rounds, everyone draws once a round.' });
+  nextTurn();
+}
+
+function nextTurn() {
+  G.order = G.order.filter(id => room.players.some(p => p.id === id));
+  if (!G.order.length) {
+    V.round++;
+    G.order = room.players.map(p => p.id);
+  }
+  if (V.round > ROUNDS || room.players.length < 2) return gameOver();
+  V.drawer = G.order.shift();
+  V.phase = 'choose';
+  G.word = ''; G.revealed = []; G.guessed.clear();
+  G.choices = pickWords(3);
+  G.endsAt = now() + CHOOSE_MS;
+  toAll({ t: 'clear' });
+  broadcastState();
+  toPlayer(V.drawer, { t: 'choices', words: G.choices });
+}
+
+function pickWords(n) {
+  const out = [];
+  if (G.used.size > WORDS.length - 10) G.used.clear();
+  while (out.length < n) {
+    const w = WORDS[Math.floor(Math.random() * WORDS.length)];
+    if (!G.used.has(w) && !out.includes(w)) out.push(w);
+  }
+  return out;
+}
+
+function choose(id, word) {
+  if (V.phase !== 'choose' || id !== V.drawer || !G.choices.includes(word)) return;
+  G.used.add(word);
+  G.word = word;
+  V.phase = 'draw';
+  G.startedAt = now();
+  G.endsAt = now() + DRAW_MS;
+  broadcastState();
+  toPlayer(V.drawer, { t: 'word', word });
+}
+
+function guessers() { return room.players.filter(p => p.id !== V.drawer); }
+
+function guess(id, text) {
+  text = String(text || '').slice(0, 40).trim();
+  if (!text) return;
+  const fair = V.phase === 'draw' && id !== V.drawer && !G.guessed.has(id);
+  if (fair && norm(text) === norm(G.word)) {
+    G.guessed.add(id);
+    const left = Math.max(0, G.endsAt - now()) / DRAW_MS;
+    V.scores[id] = (V.scores[id] || 0) + Math.round(50 + 50 * left) + (G.guessed.size === 1 ? 20 : 0);
+    V.scores[V.drawer] = (V.scores[V.drawer] || 0) + 25;
+    toAll({ t: 'chat', kind: 'got', id });
+    if (guessers().every(p => G.guessed.has(p.id))) reveal();
+    else broadcastState();
+    return;
+  }
+  if (fair && near(norm(text), norm(G.word))) toPlayer(id, { t: 'chat', kind: 'close', text });
+  // the drawer and players who already got it only talk among themselves
+  if (V.phase === 'draw' && (id === V.drawer || G.guessed.has(id))) {
+    for (const p of room.players) if (p.id === V.drawer || G.guessed.has(p.id)) toPlayer(p.id, { t: 'chat', kind: 'msg', id, text });
+    return;
+  }
+  toAll({ t: 'chat', kind: 'msg', id, text });
+}
+
+function norm(s) { return s.toLowerCase().replace(/[^a-z]/g, ''); }
+function near(a, b) {
+  if (Math.abs(a.length - b.length) > 1 || a === b || b.length < 4) return false;
+  let i = 0, j = 0, edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i++;
+    else if (a.length < b.length) j++;
+    else { i++; j++; }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+function reveal() {
+  V.phase = 'reveal';
+  G.endsAt = now() + REVEAL_MS;
+  broadcastState({ word: G.word });
+}
+
+function gameOver() {
+  V.phase = 'over';
+  V.drawer = -1;
+  G.endsAt = 0;
+  broadcastState();
+}
+
+function hostTick() {
+  if (!room || !room.isHost) return;
+  const t = now();
+  if (V.phase === 'choose' && t > G.endsAt) choose(V.drawer, G.choices[0]);
+  else if (V.phase === 'draw') {
+    if (t > G.endsAt) return reveal();
+    const letters = G.word.replace(/ /g, '').length;
+    const due = letters < 4 ? 0 : Math.floor(((t - G.startedAt) / DRAW_MS) * 4) - 1;
+    if (due > G.revealed.length && G.revealed.length < Math.floor(letters / 2)) {
+      const hidden = [...G.word].map((c, i) => i).filter(i => G.word[i] !== ' ' && !G.revealed.includes(i));
+      G.revealed.push(hidden[Math.floor(Math.random() * hidden.length)]);
+      broadcastState();
+    }
+  } else if (V.phase === 'reveal' && t > G.endsAt) nextTurn();
+}
+
+function hostDraw(id, m) {
+  if (id !== V.drawer || V.phase !== 'draw') return;
+  if (!['s0', 's+', 'undo', 'clear'].includes(m.t)) return;
+  toAllBut(id, m);
+}
+
+// --- everyone
+
+function attach(r) {
+  room = r;
+  room.on('message', (m, from) => {
+    if (room.isHost) {
+      if (m.t === 'guess') guess(from, m.text);
+      else if (m.t === 'pick') choose(from, m.word);
+      else hostDraw(from, m);
+    } else handle(m, 0);
+  });
+  room.on('roster', players => {
+    if (room.isHost) {
+      for (const p of players) {
+        if (!(p.id in V.scores)) {
+          V.scores[p.id] = 0;
+          if (V.phase !== 'wait' && V.phase !== 'over') {
+            room.sendTo(p.id, { t: 'canvas', strokes });
+            broadcastState(V.phase === 'reveal' ? { word: G.word } : {});
+            if (V.phase === 'draw' || V.phase === 'choose') G.order.push(p.id);
+          }
+        }
+      }
+    }
+    renderSide();
+  });
+  room.on('leave', id => {
+    toAll({ t: 'chat', kind: 'sys', text: 'A player left.' });
+    if (room.players.length < 2 && V.phase !== 'wait' && V.phase !== 'over') gameOver();
+    else if (id === V.drawer && (V.phase === 'draw' || V.phase === 'choose')) reveal();
+    else if (V.phase === 'draw' && guessers().every(p => G.guessed.has(p.id))) reveal();
+  });
+  room.on('close', () => {
+    room = null;
+    V.phase = 'wait';
+    lobby.start();
+  });
+  if (room.isHost) hostStartGame();
+  renderAll();
+}
+
+function handle(m) {
+  switch (m.t) {
+    case 'state':
+      V.phase = m.phase; V.round = m.round; V.rounds = m.rounds; V.drawer = m.drawer;
+      V.deadline = now() + m.left; V.hint = m.hint; V.scores = m.scores; V.guessed = m.guessed;
+      V.word = m.word || '';
+      if (m.phase !== 'draw' && m.phase !== 'choose') V.myWord = '';
+      if (m.phase !== 'choose') V.choices = [];
+      if (m.phase === 'reveal') addChat({ kind: 'sys', text: 'The word was ' + m.word + '.' });
+      if (m.phase === 'over') addChat({ kind: 'sys', text: 'Game over.' });
+      renderAll();
+      break;
+    case 'choices': V.choices = m.words; renderAll(); break;
+    case 'word': V.myWord = m.word; renderAll(); break;
+    case 'chat': addChat(m); break;
+    case 'canvas': strokes = m.strokes || []; dirty = true; break;
+    default: applyDraw(m);
+  }
+}
+
+function applyDraw(m) {
+  if (m.t === 's0') strokes.push({ c: m.c, w: m.w, p: [m.x, m.y] });
+  else if (m.t === 's+' && strokes.length) strokes[strokes.length - 1].p.push(...m.p);
+  else if (m.t === 'undo') strokes.pop();
+  else if (m.t === 'clear') strokes = [];
+  else return;
+  dirty = true;
+}
+
+function playerName(id) {
+  const p = room && room.players.find(p => p.id === id);
+  return p ? p.name : 'Someone';
+}
+
+function addChat(m) {
+  chat.push(m);
+  if (chat.length > 80) chat.shift();
+  const li = document.createElement('li');
+  if (m.kind === 'got') { li.className = 'got'; li.textContent = (m.id === (room && room.me) ? 'You' : playerName(m.id)) + ' guessed the word!'; }
+  else if (m.kind === 'close') { li.className = 'close'; li.textContent = '"' + m.text + '" is close.'; }
+  else if (m.kind === 'sys') { li.className = 'sys'; li.textContent = m.text; }
+  else {
+    const b = document.createElement('b');
+    const p = room && room.players.find(p => p.id === m.id);
+    b.textContent = (p ? p.name : 'Someone') + ': ';
+    if (p) b.style.color = p.color;
+    li.append(b, m.text);
+  }
+  const ul = $('chat');
+  ul.appendChild(li);
+  while (ul.children.length > 80) ul.removeChild(ul.firstChild);
+  ul.scrollTop = ul.scrollHeight;
+}
+
+// --- drawing input
+
+const pen = { c: COLORS[0], w: SIZES[1], down: false, buf: [], lastSend: 0 };
+const board = $('board');
+const bctx = board.getContext('2d');
+const amDrawing = () => room && V.phase === 'draw' && V.drawer === room.me;
+
+function boardPoint(e) {
+  const r = board.getBoundingClientRect();
+  return [Math.round((e.clientX - r.left) / r.width * BW), Math.round((e.clientY - r.top) / r.height * BH)];
+}
+
+function sendDraw(m) {
+  applyDraw(m);
+  if (room.isHost) hostDraw(room.me, m);
+  else room.send(m);
+}
+
+function flushPen() {
+  if (!pen.buf.length) return;
+  sendDraw({ t: 's+', p: pen.buf });
+  pen.buf = [];
+  pen.lastSend = now();
+}
+
+board.addEventListener('pointerdown', e => {
+  if (!amDrawing()) return;
+  try { board.setPointerCapture(e.pointerId); } catch (err) { }
+  const [x, y] = boardPoint(e);
+  pen.down = true;
+  sendDraw({ t: 's0', c: pen.c, w: pen.w, x, y });
+});
+board.addEventListener('pointermove', e => {
+  if (!pen.down || !amDrawing()) return;
+  const [x, y] = boardPoint(e);
+  pen.buf.push(x, y);
+  if (now() - pen.lastSend > 40) flushPen();
+});
+const penUp = () => { if (pen.down) { pen.down = false; flushPen(); } };
+board.addEventListener('pointerup', penUp);
+board.addEventListener('pointercancel', penUp);
+addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && amDrawing()) { e.preventDefault(); sendDraw({ t: 'undo' }); }
+});
+
+function buildTools() {
+  const t = $('tools');
+  t.innerHTML = COLORS.map(c => '<button class="sw" data-c="' + c + '" style="background:' + c + '" aria-label="Color ' + c + '"></button>').join('') +
+    SIZES.map(s => '<button class="sz" data-w="' + s + '" aria-label="Size ' + s + '"><i style="width:' + Math.min(22, s) + 'px;height:' + Math.min(22, s) + 'px"></i></button>').join('') +
+    '<span class="gap"></span><button id="undoBtn">Undo</button><button id="clearBtn">Clear</button>';
+  for (const b of t.querySelectorAll('.sw')) b.onclick = () => { pen.c = b.dataset.c; markTools(); };
+  for (const b of t.querySelectorAll('.sz')) b.onclick = () => { pen.w = +b.dataset.w; markTools(); };
+  const u = t.querySelector('#undoBtn'), c = t.querySelector('#clearBtn');
+  if (u) u.onclick = () => amDrawing() && sendDraw({ t: 'undo' });
+  if (c) c.onclick = () => amDrawing() && sendDraw({ t: 'clear' });
+  markTools();
+}
+function markTools() {
+  for (const b of $('tools').querySelectorAll('.sw')) b.classList.toggle('on', b.dataset.c === pen.c);
+  for (const b of $('tools').querySelectorAll('.sz')) b.classList.toggle('on', +b.dataset.w === pen.w);
+}
+
+$('guess').addEventListener('submit', e => {
+  e.preventDefault();
+  const text = $('guessIn').value.trim();
+  if (!text || !room) return;
+  $('guessIn').value = '';
+  if (room.isHost) guess(room.me, text);
+  else room.send({ t: 'guess', text });
+});
+
+// --- rendering
+
+function drawBoard() {
+  bctx.fillStyle = '#fff';
+  bctx.fillRect(0, 0, BW, BH);
+  bctx.lineCap = 'round';
+  bctx.lineJoin = 'round';
+  for (const s of strokes) {
+    bctx.strokeStyle = s.c;
+    bctx.fillStyle = s.c;
+    bctx.lineWidth = s.w;
+    if (s.p.length === 2) {
+      bctx.beginPath(); bctx.arc(s.p[0], s.p[1], s.w / 2, 0, Math.PI * 2); bctx.fill();
+      continue;
+    }
+    bctx.beginPath();
+    bctx.moveTo(s.p[0], s.p[1]);
+    for (let i = 2; i < s.p.length; i += 2) bctx.lineTo(s.p[i], s.p[i + 1]);
+    bctx.stroke();
+  }
+}
+
+function renderAll() {
+  const me = room ? room.me : -1;
+  const drawerName = V.drawer === me ? 'You' : playerName(V.drawer);
+  const word = $('word');
+  word.className = '';
+  if (V.phase === 'draw' && V.drawer === me) { word.textContent = V.myWord; word.className = 'mine'; }
+  else if (V.phase === 'draw') word.textContent = V.hint;
+  else if (V.phase === 'reveal') word.textContent = V.word;
+  else word.textContent = '';
+  $('turn').textContent =
+    V.phase === 'choose' ? (V.drawer === me ? 'Pick a word to draw.' : drawerName + ' is picking a word.') :
+    V.phase === 'draw' ? (V.drawer === me ? 'Draw it! Round ' + V.round + ' of ' + V.rounds + '.' : drawerName + ' is drawing. Round ' + V.round + ' of ' + V.rounds + '.') :
+    V.phase === 'reveal' ? '' :
+    V.phase === 'over' ? '' : room ? 'Waiting for the host to start.' : '';
+
+  const ov = $('overlay');
+  ov.hidden = true;
+  if (V.phase === 'choose' && V.drawer === me && V.choices.length) {
+    ov.hidden = false;
+    ov.innerHTML = '<h2>Pick a word to draw</h2><div class="choices">' + V.choices.map(w => '<button data-w="' + esc(w) + '">' + esc(w) + '</button>').join('') + '</div>';
+    for (const b of ov.querySelectorAll('button')) b.onclick = () => pick(b.dataset.w);
+  } else if (V.phase === 'choose') {
+    ov.hidden = false;
+    ov.innerHTML = V.drawer === me ? '<h2>Getting your words…</h2>' : '<h2>' + esc(drawerName) + ' is picking a word</h2>';
+  } else if (V.phase === 'reveal') {
+    ov.hidden = false;
+    ov.innerHTML = '<p>The word was</p><h2>' + esc(V.word) + '</h2>';
+    ov.style.background = 'rgba(255,255,255,.55)';
+  } else if (V.phase === 'over') {
+    ov.hidden = false;
+    const top = Object.entries(V.scores).sort((a, b) => b[1] - a[1]);
+    const best = top.length ? top[0][1] : 0;
+    const winners = top.filter(e => e[1] === best).map(e => +e[0] === me ? 'You' : playerName(+e[0]));
+    ov.innerHTML = '<p>Game over</p><h2>' + esc(winners.join(' and ')) + (winners.length > 1 || winners[0] === 'You' ? ' win' : ' wins') + ' with ' + best + '</h2>' +
+      (room && room.isHost ? '<div class="choices"><button id="againBtn">Play again</button></div>' : '<p>Waiting for the host to start another game.</p>');
+    const again = ov.querySelector('#againBtn');
+    if (again) again.onclick = () => { if (room.players.length >= 2) hostStartGame(); };
+  } else if (V.phase === 'wait' && room) {
+    ov.hidden = false;
+    ov.innerHTML = '<h2>Waiting for the host to start</h2>';
+  }
+  if (V.phase !== 'reveal') ov.style.background = '';
+
+  $('tools').hidden = !amDrawing();
+  board.classList.toggle('can', !!amDrawing());
+  const canGuess = room && V.phase === 'draw' && V.drawer !== me && !V.guessed.includes(me);
+  $('guessIn').placeholder = canGuess ? 'Type your guess' : 'Chat';
+  renderSide();
+}
+
+function pick(word) {
+  if (room.isHost) choose(room.me, word);
+  else room.send({ t: 'pick', word });
+  V.choices = [];
+  renderAll();
+}
+
+function renderSide() {
+  if (!room) { $('players').innerHTML = ''; $('actions').innerHTML = ''; return; }
+  const list = room.players.slice().sort((a, b) => (V.scores[b.id] || 0) - (V.scores[a.id] || 0));
+  $('players').innerHTML = list.map(p =>
+    '<li class="' + (V.guessed.includes(p.id) ? 'got' : '') + '"><i style="background:' + p.color + '"></i>' +
+    '<span class="name">' + esc(p.name) + (p.id === room.me ? ' (you)' : '') + '</span>' +
+    (p.id === V.drawer && V.phase !== 'over' ? '<span class="tag">drawing</span>' : '') +
+    '<span class="score">' + (V.scores[p.id] || 0) + '</span></li>').join('');
+  const actions = (room.isHost ? '<button class="quiet" id="inviteBtn">Invite more</button>' : '') + '<button class="quiet" id="leaveBtn">Leave</button>';
+  if ($('actions').dataset.html !== actions) {
+    $('actions').innerHTML = actions;
+    $('actions').dataset.html = actions;
+    const inv = $('actions').querySelector('#inviteBtn'), lv = $('actions').querySelector('#leaveBtn');
+    if (inv) inv.onclick = () => lobby.reopen();
+    if (lv) lv.onclick = () => { room = null; V.phase = 'wait'; strokes = []; dirty = true; lobby.start(); renderAll(); };
+  }
+}
+
+let lastSec = -1;
+function frame() {
+  hostTick();
+  if (dirty) { drawBoard(); dirty = false; }
+  const left = Math.max(0, Math.ceil((V.deadline - now()) / 1000));
+  const show = V.phase === 'draw' || V.phase === 'choose';
+  if ((show ? left : -1) !== lastSec) {
+    lastSec = show ? left : -1;
+    $('timer').textContent = show ? left : '';
+    $('timer').className = show && V.phase === 'draw' && left <= 10 ? 'low' : '';
+  }
+  requestAnimationFrame(frame);
+}
+
+buildTools();
+const lobby = Lobby.mount($('lobby'), {
+  game: 'sketch-guess',
+  title: 'Sketch & Guess',
+  blurb: 'Take turns drawing a word while everyone else races to guess it. Faster guesses score more. Best with 3 to 6 players.',
+  min: 2,
+  onStart: attach,
+  onJoin: attach,
+});
+renderAll();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

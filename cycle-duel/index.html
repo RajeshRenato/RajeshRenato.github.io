@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2328e0ff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EC%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Cycle Duel</title>
+<style>
+  :root { --bg:#0e0f14; --panel:#1a1b22; --ink:#e8e8e2; --muted:#9a9aa6; --rule:#2e2f38; --p0:#28e0ff; --p1:#ff4fa3; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--bg); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; overflow:hidden; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; z-index:5; }
+  a.back:hover { color:var(--ink); }
+  canvas { position:fixed; inset:0; width:100vw; height:100vh; display:block; touch-action:none; }
+  #hud { position:fixed; top:10px; left:0; right:0; text-align:center; font-weight:700; font-size:20px; pointer-events:none;
+         font-variant-numeric:tabular-nums; }
+  #hud .p0 { color:var(--p0); } #hud .p1 { color:var(--p1); }
+  #ping { position:fixed; top:14px; right:16px; color:var(--muted); font-size:13px; pointer-events:none; }
+  #banner { position:fixed; left:0; right:0; top:42%; text-align:center; font-size:clamp(26px, 6vw, 54px); font-weight:800;
+            pointer-events:none; text-shadow:0 2px 18px rgba(0,0,0,.8); }
+  #banner small { display:block; font-size:16px; font-weight:500; color:var(--muted); margin-top:8px; }
+  .panel { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:20px;
+           background:rgba(14,15,20,.88); z-index:4; overflow:auto; }
+  .panel[hidden] { display:none; }
+  .box { max-width:560px; width:100%; }
+  h1 { margin:0 0 6px; font-size:40px; font-weight:800; }
+  h2 { margin:0 0 12px; font-size:24px; }
+  p { color:var(--muted); line-height:1.5; margin:0 0 14px; }
+  .modes { display:grid; gap:10px; margin:18px 0; }
+  button { font:inherit; font-weight:600; font-size:15px; padding:10px 16px; border-radius:8px; cursor:pointer;
+           border:1.5px solid var(--ink); background:var(--panel); color:var(--ink); }
+  button:hover { background:var(--ink); color:var(--bg); }
+  button:focus-visible, input:focus-visible { outline:2px solid var(--p0); outline-offset:2px; }
+  .modes button { text-align:left; padding:14px 16px; font-size:17px; }
+  .modes button span { display:block; font-weight:400; font-size:14px; color:var(--muted); margin-top:2px; }
+  .modes button:hover span { color:inherit; }
+  ol { padding-left:20px; margin:0 0 10px; }
+  ol li { margin-bottom:16px; color:var(--muted); }
+  .code { display:flex; gap:6px; margin-top:8px; }
+  .code input { flex:1; min-width:0; font:13px ui-monospace, Menlo, monospace; padding:9px 10px; border-radius:8px;
+                border:1.5px solid var(--rule); background:#0b0c10; color:var(--ink); }
+  .status { color:var(--ink); min-height:1.5em; }
+  .small { font-size:13px; }
+  .link { background:none; border:0; color:var(--muted); text-decoration:underline; padding:4px 0; font-weight:500; }
+  .link:hover { background:none; color:var(--ink); }
+</style>
+<meta property="og:title" content="Cycle Duel">
+<meta property="og:description" content="Light-cycle duels: cut your rival off with your trail. Play a friend online with a link, on one keyboard, or against a bot.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/cycle-duel/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/cycle-duel/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Light-cycle duels: cut your rival off with your trail. Play a friend online with a link, on one keyboard, or against a bot.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="game"></canvas>
+<div id="hud"></div>
+<div id="ping"></div>
+<div id="banner"></div>
+
+<div id="lobby" class="panel">
+  <div class="box">
+    <h1>Cycle Duel</h1>
+    <p>Your cycle leaves a wall behind it. Cut your rival off and make them crash. First to 3 rounds wins.</p>
+    <div class="modes">
+      <button id="btnOnline">Play a friend online<span>Send a link, they send one back, and you're connected.</span></button>
+      <button id="btnLocal">Two players, one keyboard<span>Blue uses W A S D, pink uses the arrow keys.</span></button>
+      <button id="btnBot">Practice against a bot<span>Arrow keys or W A S D. Swipe on a phone.</span></button>
+    </div>
+    <p class="small">Online play connects your two browsers directly, with no game server. A public STUN service helps the browsers find each other. Some strict office or mobile networks block direct connections; if it won't connect, try another network.</p>
+  </div>
+</div>
+
+<div id="hostPanel" class="panel" hidden>
+  <div class="box">
+    <h2>Invite a friend</h2>
+    <ol>
+      <li>Send your friend this link.
+        <div class="code"><input id="offerLink" readonly placeholder="Creating your invite…"><button id="copyOffer">Copy</button><button id="shareOffer" hidden>Share</button></div></li>
+      <li>They'll get a reply link to send back. Open it in this browser, or paste it here.
+        <div class="code"><input id="answerIn" placeholder="Paste their reply"><button id="connectBtn">Connect</button></div></li>
+    </ol>
+    <p id="hostStatus" class="status"></p>
+    <button class="link" data-leave>Cancel</button>
+  </div>
+</div>
+
+<div id="guestPanel" class="panel" hidden>
+  <div class="box">
+    <h2>Joining your friend's game</h2>
+    <p id="guestStatus" class="status">Setting up the connection…</p>
+    <div id="guestReply" hidden>
+      <p>Send this reply link back to your friend. The game starts as soon as they open it or paste it in. Keep this page open.</p>
+      <div class="code"><input id="answerLink" readonly><button id="copyAnswer">Copy</button><button id="shareAnswer" hidden>Share</button></div>
+    </div>
+    <button class="link" data-leave>Leave</button>
+  </div>
+</div>
+
+<div id="replyPanel" class="panel" hidden>
+  <div class="box">
+    <h2 id="replyTitle">Connecting…</h2>
+    <p id="replyMsg"></p>
+    <div id="replyBox" class="code" hidden><input id="replyCode" readonly><button id="copyReply">Copy</button></div>
+  </div>
+</div>
+
+<script src="../linkplay/linkplay.js"></script>
+<script>
+'use strict';
+// Light-cycle duel. One simulation runs on the host (or locally); a guest sends
+// its turns over a WebRTC data channel and draws the snapshots it gets back.
+
+const $ = id => document.getElementById(id);
+
+// simulation
+const GW = 64, GH = 40, TICK_MS = 70, WIN = 3, COUNTDOWN_MS = 2400, BETWEEN_MS = 1900;
+const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
+
+function newRound() {
+  const s = { grid: new Uint8Array(GW * GH), tick: 0, over: false, winner: -1, players: [
+    { x: Math.floor(GW * 0.22), y: Math.floor(GH * 0.3), dir: 1, alive: true, queue: [] },
+    { x: GW - 1 - Math.floor(GW * 0.22), y: GH - 1 - Math.floor(GH * 0.3), dir: 3, alive: true, queue: [] },
+  ] };
+  s.players.forEach((p, i) => { s.grid[p.y * GW + p.x] = i + 1; });
+  return s;
+}
+
+function queueTurn(s, i, dir) {
+  const p = s.players[i];
+  const last = p.queue.length ? p.queue[p.queue.length - 1] : p.dir;
+  if (dir === last || dir === (last + 2) % 4 || p.queue.length >= 2) return false;
+  p.queue.push(dir);
+  return true;
+}
+
+function simTick(s) {
+  if (s.over) return;
+  const next = s.players.map(p => {
+    if (!p.alive) return null;
+    if (p.queue.length) p.dir = p.queue.shift();
+    return { x: p.x + DX[p.dir], y: p.y + DY[p.dir] };
+  });
+  const crash = s.players.map((p, i) => {
+    const n = next[i];
+    if (!n) return false;
+    if (n.x < 0 || n.y < 0 || n.x >= GW || n.y >= GH || s.grid[n.y * GW + n.x]) return true;
+    return next.some((o, j) => j !== i && o && o.x === n.x && o.y === n.y);
+  });
+  s.players.forEach((p, i) => {
+    if (!p.alive) return;
+    if (crash[i]) { p.alive = false; return; }
+    p.x = next[i].x; p.y = next[i].y;
+    s.grid[p.y * GW + p.x] = i + 1;
+  });
+  s.tick++;
+  const alive = s.players.filter(p => p.alive);
+  if (alive.length <= 1) {
+    s.over = true;
+    s.winner = alive.length ? s.players.indexOf(alive[0]) : -1;
+  }
+}
+
+function freeSpace(s, x, y, cap) {
+  if (x < 0 || y < 0 || x >= GW || y >= GH || s.grid[y * GW + x]) return 0;
+  const seen = new Uint8Array(GW * GH), stack = [y * GW + x];
+  seen[y * GW + x] = 1;
+  let n = 0;
+  while (stack.length && n < cap) {
+    const c = stack.pop(); n++;
+    const cx = c % GW, cy = (c / GW) | 0;
+    for (let d = 0; d < 4; d++) {
+      const nx = cx + DX[d], ny = cy + DY[d];
+      if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
+      const k = ny * GW + nx;
+      if (seen[k] || s.grid[k]) continue;
+      seen[k] = 1; stack.push(k);
+    }
+  }
+  return n;
+}
+
+function botMove(s, i) {
+  const p = s.players[i], foe = s.players[1 - i];
+  if (!p.alive) return;
+  let best = p.dir, bestScore = -1;
+  for (const d of [p.dir, (p.dir + 1) % 4, (p.dir + 3) % 4]) {
+    const nx = p.x + DX[d], ny = p.y + DY[d];
+    let score = freeSpace(s, nx, ny, 400);
+    if (!score) continue;
+    if (d === p.dir) score += 6;
+    score -= Math.hypot(nx - foe.x, ny - foe.y) * 0.4;
+    score += Math.random() * 4;
+    if (score > bestScore) { bestScore = score; best = d; }
+  }
+  if (best !== p.dir) queueTurn(s, i, best);
+}
+
+// match flow, shared by every mode
+let mode = 'lobby';          // lobby | local | bot | host | guest
+let phase = 'idle';          // idle | countdown | play | roundOver | matchOver | gone
+let sim = null, score = [0, 0], round = 0, phaseAt = 0, clock = 0, acc = 0, lastWinner = -1;
+let view = null;             // what gets drawn: { grid, players }
+let rtt = 0, lastPing = 0;
+const sparks = [];
+
+const ME = () => (mode === 'guest' ? 1 : 0);
+
+function startMatch(m) {
+  mode = m;
+  hidePanels();
+  if (m === 'guest') return;
+  score = [0, 0]; round = 0;
+  startRound();
+}
+
+function startRound() {
+  round++;
+  sim = newRound();
+  view = sim;
+  phase = 'countdown'; phaseAt = clock; acc = 0;
+  send({ t: 'start', round, score, p: sim.players.map(p => [p.x, p.y, p.dir]) });
+}
+
+function endRound() {
+  lastWinner = sim.winner;
+  if (sim.winner >= 0) score[sim.winner]++;
+  const done = score[0] >= WIN || score[1] >= WIN;
+  phase = done ? 'matchOver' : 'roundOver';
+  phaseAt = clock;
+  send({ t: 'end', winner: sim.winner, score, match: done });
+}
+
+function rematch() {
+  if (mode === 'guest') { send({ t: 'rematch' }); return; }
+  if (phase === 'matchOver') { score = [0, 0]; round = 0; startRound(); }
+}
+
+function stepHost(dt) {
+  if (phase === 'countdown' && clock - phaseAt >= COUNTDOWN_MS) { phase = 'play'; phaseAt = clock; acc = 0; }
+  if (phase === 'roundOver' && clock - phaseAt >= BETWEEN_MS) startRound();
+  if (phase !== 'play') return;
+  acc += dt;
+  while (acc >= TICK_MS && phase === 'play') {
+    acc -= TICK_MS;
+    if (mode === 'bot') botMove(sim, 1);
+    const before = sim.players.map(p => p.alive);
+    simTick(sim);
+    sim.players.forEach((p, i) => { if (before[i] && !p.alive) burst(p, i); });
+    send({ t: 's', k: sim.tick, p: sim.players.map(p => [p.x, p.y, p.dir, p.alive ? 1 : 0]) });
+    if (sim.over) endRound();
+  }
+}
+
+function playerTurn(i, dir) {
+  if (mode === 'guest') { send({ t: 'in', d: dir }); return; }
+  if (sim && phase !== 'roundOver' && phase !== 'matchOver') queueTurn(sim, i, dir);
+}
+
+// networking
+let net = null, chan = null;
+
+function send(m) {
+  if ((mode === 'host' || mode === 'guest') && chan && chan.readyState === 'open') chan.send(JSON.stringify(m));
+}
+
+function onMessage(raw) {
+  let m;
+  try { m = JSON.parse(raw); } catch (e) { return; }
+  if (mode === 'host') {
+    if (m.t === 'in' && sim && (phase === 'countdown' || phase === 'play')) queueTurn(sim, 1, m.d);
+    else if (m.t === 'rematch' && phase === 'matchOver') rematch();
+    else if (m.t === 'pong') { rtt = Math.round(clock - m.at); send({ t: 'rtt', ms: rtt }); }
+    else if (m.t === 'sync' && sim) send({ t: 'full', k: sim.tick, grid: rle(sim.grid), p: sim.players.map(p => [p.x, p.y, p.dir, p.alive ? 1 : 0]) });
+    else if (m.t === 'bye') lost('Your friend left the game.');
+    return;
+  }
+  if (mode !== 'guest') return;
+  if (m.t === 'start') {
+    round = m.round; score = m.score;
+    const grid = new Uint8Array(GW * GH);
+    const players = m.p.map(([x, y, dir], i) => { grid[y * GW + x] = i + 1; return { x, y, dir, alive: true }; });
+    view = { grid, players, tick: 0 };
+    phase = 'countdown'; phaseAt = clock;
+  } else if (m.t === 's' && view) {
+    if (m.k !== view.tick + 1) { send({ t: 'sync' }); return; }
+    if (phase !== 'play') { phase = 'play'; phaseAt = clock; }
+    applySnapshot(m.k, m.p);
+  } else if (m.t === 'full' && view) {
+    view.grid = unrle(m.grid);
+    view.tick = m.k;
+    m.p.forEach(([x, y, dir, alive], i) => Object.assign(view.players[i], { x, y, dir, alive: !!alive }));
+  } else if (m.t === 'end') {
+    score = m.score; lastWinner = m.winner;
+    phase = m.match ? 'matchOver' : 'roundOver'; phaseAt = clock;
+  } else if (m.t === 'ping') send({ t: 'pong', at: m.at });
+  else if (m.t === 'rtt') rtt = m.ms;
+  else if (m.t === 'bye') lost('Your friend left the game.');
+}
+
+function applySnapshot(k, ps) {
+  view.tick = k;
+  ps.forEach(([x, y, dir, alive], i) => {
+    const p = view.players[i];
+    if (p.alive && !alive) burst(p, i);
+    p.x = x; p.y = y; p.dir = dir; p.alive = !!alive;
+    if (alive) view.grid[y * GW + x] = i + 1;
+  });
+}
+
+function rle(grid) {
+  const out = [];
+  for (let i = 0; i < grid.length;) {
+    let j = i;
+    while (j < grid.length && grid[j] === grid[i]) j++;
+    out.push(grid[i], j - i);
+    i = j;
+  }
+  return out;
+}
+function unrle(arr) {
+  const g = new Uint8Array(GW * GH);
+  let i = 0;
+  for (let k = 0; k < arr.length; k += 2) { g.fill(arr[k], i, i + arr[k + 1]); i += arr[k + 1]; }
+  return g;
+}
+
+function wire(ch, role) {
+  chan = ch;
+  if (role === 'guest') mode = 'guest';
+  ch.onmessage = e => onMessage(e.data);
+  ch.onopen = () => startMatch(role);
+  ch.onclose = () => { if (mode === role) lost('The connection closed.'); };
+  if (ch.readyState === 'open') startMatch(role);
+}
+
+function lost(text) {
+  if (mode !== 'host' && mode !== 'guest') return;
+  phase = 'gone';
+  mode = 'lobby';
+  setBanner(text, 'Press Enter or tap to go back');
+}
+
+function failed(statusEl) {
+  if (mode === 'host' || mode === 'guest') lost('The connection dropped.');
+  else statusEl.textContent = "Couldn't connect. One of your networks may block direct connections; try another network.";
+}
+
+async function hostCreate() {
+  showPanel('hostPanel');
+  $('hostStatus').textContent = '';
+  net = LinkPlay.host('cycle-duel', {
+    onChannel: ch => wire(ch, 'host'),
+    onFail: () => failed($('hostStatus'))
+  });
+  const { link } = await net.invite();
+  $('offerLink').value = link;
+  $('hostStatus').textContent = 'Waiting for their reply.';
+  return link;
+}
+
+async function hostAccept(text) {
+  if (!net || !net.accept) return false;
+  const err = await net.accept(text);
+  $('hostStatus').textContent = err || 'Connecting…';
+  return !err;
+}
+
+async function guestJoin(invite) {
+  showPanel('guestPanel');
+  try {
+    net = await LinkPlay.join('cycle-duel', invite, {
+      onChannel: ch => wire(ch, 'guest'),
+      onFail: () => failed($('guestStatus'))
+    });
+    $('answerLink').value = net.link;
+    $('guestReply').hidden = false;
+    $('guestStatus').textContent = 'Almost there.';
+    try { history.replaceState(null, '', location.pathname); } catch (e) { }
+    return net.link;
+  } catch (e) {
+    $('guestStatus').textContent = "This invite link didn't work. Ask your friend for a fresh one.";
+    return null;
+  }
+}
+
+async function handleReplyLink(reply) {
+  showPanel('replyPanel');
+  if (await LinkPlay.forwardReply('cycle-duel', reply)) {
+    $('replyTitle').textContent = 'Connected';
+    $('replyMsg').textContent = 'Go back to the game tab. You can close this one.';
+    return;
+  }
+  $('replyTitle').textContent = 'Paste this into the game';
+  $('replyMsg').textContent = "Your game isn't open in this browser. Copy this reply and paste it into the game tab where you created the invite.";
+  $('replyCode').value = LinkPlay.pageLink('answer=' + reply.id + '.' + reply.code);
+  $('replyBox').hidden = false;
+}
+
+// UI
+function showPanel(id) {
+  for (const p of ['lobby', 'hostPanel', 'guestPanel', 'replyPanel']) $(p).hidden = p !== id;
+}
+function hidePanels() { showPanel(null); }
+
+function leave() {
+  send({ t: 'bye' });
+  if (net) net.close();
+  net = null; chan = null;
+  mode = 'lobby'; phase = 'idle'; sim = null; view = null; rtt = 0;
+  setBanner('');
+  try { history.replaceState(null, '', location.pathname); } catch (e) { }
+  showPanel('lobby');
+}
+
+async function copyOrShare(input, share) {
+  const text = input.value;
+  if (!text) return;
+  if (share && navigator.share) {
+    try { await navigator.share({ url: text }); return; } catch (e) { }
+  }
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) { input.select(); document.execCommand && document.execCommand('copy'); }
+}
+
+function setBanner(main, sub) {
+  $('banner').innerHTML = main ? main + (sub ? '<small>' + sub + '</small>' : '') : '';
+}
+
+const names = () => mode === 'bot' ? ['You', 'Bot'] : mode === 'local' ? ['Blue', 'Pink'] :
+  mode === 'guest' ? ['Friend', 'You'] : ['You', 'Friend'];
+
+function updateText() {
+  if (mode === 'lobby' || !view) {
+    $('hud').textContent = '';
+    $('ping').textContent = '';
+    return;
+  }
+  const n = names();
+  $('hud').innerHTML = '<span class="p0">' + n[0] + ' ' + score[0] + '</span>&nbsp;&nbsp;–&nbsp;&nbsp;<span class="p1">' + score[1] + ' ' + n[1] + '</span>';
+  $('ping').textContent = (mode === 'host' || mode === 'guest') && rtt ? 'ping ' + rtt + ' ms' : '';
+  const t = clock - phaseAt;
+  if (phase === 'countdown') {
+    const left = Math.ceil((COUNTDOWN_MS - t) / 800);
+    setBanner(left > 0 ? String(Math.min(3, left)) : 'Go', 'Round ' + round);
+  } else if (phase === 'play') setBanner(t < 450 ? 'Go' : '');
+  else if (phase === 'roundOver') setBanner(lastWinner < 0 ? 'Draw' : n[lastWinner] + (n[lastWinner] === 'You' ? ' win the round' : ' wins the round'));
+  else if (phase === 'matchOver') {
+    const w = score[0] > score[1] ? 0 : 1;
+    setBanner(n[w] + (n[w] === 'You' ? ' win the match' : ' wins the match'), 'Press Enter or tap for a rematch. Esc to leave.');
+  }
+}
+
+// input
+const KEYS0 = { w: 0, d: 1, s: 2, a: 3 }, KEYS1 = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3 };
+addEventListener('keydown', e => {
+  if (e.target && e.target.tagName === 'INPUT') return;
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (k in KEYS1 || k === ' ') e.preventDefault();
+  if (k === 'Escape') { if (mode !== 'lobby' || phase === 'gone') leave(); return; }
+  if (k === 'Enter' || k === ' ') {
+    if (phase === 'gone') leave();
+    else if (phase === 'matchOver') rematch();
+    return;
+  }
+  if (mode === 'local') {
+    if (k in KEYS0) playerTurn(0, KEYS0[k]);
+    else if (k in KEYS1) playerTurn(1, KEYS1[k]);
+  } else if (mode !== 'lobby') {
+    const d = k in KEYS0 ? KEYS0[k] : KEYS1[k];
+    if (d !== undefined) playerTurn(ME(), d);
+  }
+});
+
+let touch0 = null;
+const canvas = $('game');
+canvas.addEventListener('pointerdown', e => {
+  touch0 = { x: e.clientX, y: e.clientY };
+  if (phase === 'gone') leave();
+  else if (phase === 'matchOver') rematch();
+});
+canvas.addEventListener('pointerup', e => {
+  if (!touch0 || mode === 'lobby') return;
+  const dx = e.clientX - touch0.x, dy = e.clientY - touch0.y;
+  touch0 = null;
+  if (Math.hypot(dx, dy) < 18) return;
+  const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0);
+  playerTurn(mode === 'local' ? (e.clientX < innerWidth / 2 ? 0 : 1) : ME(), dir);
+});
+
+$('btnOnline').addEventListener('click', () => { hostCreate().catch(() => { $('hostStatus').textContent = "Your browser couldn't create an invite. Try an up-to-date Chrome, Firefox, or Safari."; }); });
+$('btnLocal').addEventListener('click', () => startMatch('local'));
+$('btnBot').addEventListener('click', () => startMatch('bot'));
+$('copyOffer').addEventListener('click', () => copyOrShare($('offerLink'), false));
+$('shareOffer').addEventListener('click', () => copyOrShare($('offerLink'), true));
+$('copyAnswer').addEventListener('click', () => copyOrShare($('answerLink'), false));
+$('shareAnswer').addEventListener('click', () => copyOrShare($('answerLink'), true));
+$('copyReply').addEventListener('click', () => copyOrShare($('replyCode'), false));
+$('connectBtn').addEventListener('click', () => hostAccept($('answerIn').value));
+$('answerIn').addEventListener('keydown', e => { if (e.key === 'Enter') hostAccept($('answerIn').value); });
+document.querySelectorAll('[data-leave]').forEach(b => b.addEventListener('click', leave));
+if (typeof navigator !== 'undefined' && navigator.share) { $('shareOffer').hidden = false; $('shareAnswer').hidden = false; }
+addEventListener('pagehide', () => send({ t: 'bye' }));
+
+// drawing
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, cell = 10, ox = 0, oy = 0;
+function resize() {
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cell = Math.max(4, Math.floor(Math.min((W - 24) / GW, (H - 90) / GH)));
+  ox = Math.floor((W - GW * cell) / 2); oy = Math.floor((H - GH * cell) / 2) + 14;
+}
+addEventListener('resize', resize);
+resize();
+
+const COLORS = ['#28e0ff', '#ff4fa3'];
+const TRAIL = ['#167f94', '#9a2d63'];
+
+function burst(p, i) {
+  for (let k = 0; k < 26; k++) {
+    const a = Math.random() * Math.PI * 2, v = 40 + Math.random() * 160;
+    sparks.push({ x: ox + (p.x + 0.5) * cell, y: oy + (p.y + 0.5) * cell, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0.6 + Math.random() * 0.4, c: COLORS[i] });
+  }
+}
+
+function draw(dt) {
+  ctx.fillStyle = '#0e0f14';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#12131a';
+  ctx.fillRect(ox, oy, GW * cell, GH * cell);
+  ctx.strokeStyle = '#1b1d26';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x <= GW; x += 4) { ctx.moveTo(ox + x * cell + 0.5, oy); ctx.lineTo(ox + x * cell + 0.5, oy + GH * cell); }
+  for (let y = 0; y <= GH; y += 4) { ctx.moveTo(ox, oy + y * cell + 0.5); ctx.lineTo(ox + GW * cell, oy + y * cell + 0.5); }
+  ctx.stroke();
+  ctx.strokeStyle = '#3a3c48';
+  ctx.strokeRect(ox - 0.5, oy - 0.5, GW * cell + 1, GH * cell + 1);
+
+  if (view) {
+    const g = view.grid;
+    for (let i = 0; i < g.length; i++) {
+      if (!g[i]) continue;
+      ctx.fillStyle = TRAIL[g[i] - 1];
+      ctx.fillRect(ox + (i % GW) * cell, oy + Math.floor(i / GW) * cell, cell, cell);
+    }
+    view.players.forEach((p, i) => {
+      ctx.fillStyle = p.alive ? COLORS[i] : '#5a5a66';
+      ctx.shadowColor = COLORS[i];
+      ctx.shadowBlur = p.alive ? 14 : 0;
+      ctx.fillRect(ox + p.x * cell - 1, oy + p.y * cell - 1, cell + 2, cell + 2);
+      ctx.shadowBlur = 0;
+    });
+  }
+
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i];
+    s.t -= dt / 1000;
+    if (s.t <= 0) { sparks.splice(i, 1); continue; }
+    s.x += s.vx * dt / 1000; s.y += s.vy * dt / 1000;
+    ctx.globalAlpha = Math.min(1, s.t * 2);
+    ctx.fillStyle = s.c;
+    ctx.fillRect(s.x - 1.5, s.y - 1.5, 3, 3);
+  }
+  ctx.globalAlpha = 1;
+}
+
+let last = 0;
+function frame(t) {
+  const dt = Math.min(100, last ? t - last : 16);
+  last = t;
+  clock = t;
+  if (mode === 'local' || mode === 'bot' || mode === 'host') stepHost(dt);
+  if (mode === 'host' && clock - lastPing > 1000) { lastPing = clock; send({ t: 'ping', at: clock }); }
+  if (mode === 'guest' && phase === 'countdown' && clock - phaseAt > COUNTDOWN_MS) { phase = 'play'; phaseAt = clock; }
+  updateText();
+  draw(dt);
+  requestAnimationFrame(frame);
+}
+
+const fromLink = LinkPlay.fromHash();
+if (fromLink && fromLink.kind === 'offer') guestJoin(fromLink);
+else if (fromLink && fromLink.kind === 'answer') handleReplyLink(fromLink);
+else showPanel('lobby');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

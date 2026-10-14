@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237dffc9'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EL%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="lobby.css">
+<title>LinkPlay</title>
+<style>
+  :root { --lp-accent: #7dffc9; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: #0e0f14; color: #e8e8e2; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: #9a9aa6; font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: #e8e8e2; }
+  canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+  #bar { position: fixed; left: 0; right: 0; bottom: 14px; text-align: center; color: #9a9aa6; font-size: 14px; }
+  #bar button { font: inherit; background: none; border: 0; color: #e8e8e2; text-decoration: underline; cursor: pointer; }
+</style>
+<meta property="og:title" content="LinkPlay">
+<meta property="og:description" content="A small kit for making browser games multiplayer with links and no server. This page is its demo: invite friends and see each other's cursors.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/linkplay/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/linkplay/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A small kit for making browser games multiplayer with links and no server. This page is its demo: invite friends and see each other's cursors.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="c"></canvas>
+<div id="bar" hidden></div>
+<div id="lobby" class="lp-panel"></div>
+<script src="linkplay.js"></script>
+<script src="room.js"></script>
+<script src="lobby.js"></script>
+<script>
+'use strict';
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0;
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+addEventListener('resize', resize);
+resize();
+
+let room = null;
+const cursors = new Map();   // player id -> { x, y } in 0..1
+const taps = [];             // { x, y, color, t }
+
+const lobby = Lobby.mount(document.getElementById('lobby'), {
+  game: 'linkplay-demo',
+  title: 'LinkPlay',
+  blurb: 'The demo for a small multiplayer kit. Invite a few friends and you\'ll see each other\'s cursors. Click or tap to send a ripple.',
+  min: 1,
+  onStart: r => begin(r),
+  onJoin: r => begin(r),
+});
+
+function begin(r) {
+  room = r;
+  room.on('message', onMessage);
+  room.on('roster', players => {
+    for (const id of cursors.keys()) if (!players.some(p => p.id === id)) cursors.delete(id);
+    drawBar();
+  });
+  room.on('close', () => { room = null; cursors.clear(); lobby.start(); document.getElementById('bar').hidden = true; });
+  drawBar();
+}
+
+// The host passes every guest message on to everyone, tagged with who sent it.
+function onMessage(m, from) {
+  if (room.isHost) {
+    m.id = from;
+    room.send(m);
+  } else if (m.id === room.me) return;
+  if (m.t === 'move') cursors.set(m.id, { x: m.x, y: m.y });
+  if (m.t === 'tap') addTap(m.id, m.x, m.y);
+}
+
+function share(m) {
+  if (!room) return;
+  m.id = room.me;
+  room.send(m);
+}
+
+let lastSent = 0;
+canvas.addEventListener('pointermove', e => {
+  const now = performance.now();
+  if (now - lastSent < 40) return;
+  lastSent = now;
+  share({ t: 'move', x: e.clientX / W, y: e.clientY / H });
+});
+canvas.addEventListener('pointerdown', e => {
+  const x = e.clientX / W, y = e.clientY / H;
+  if (room) addTap(room.me, x, y);
+  share({ t: 'tap', x, y });
+});
+
+function player(id) { return room && room.players.find(p => p.id === id); }
+
+function addTap(id, x, y) {
+  const p = player(id);
+  taps.push({ x, y, color: p ? p.color : '#fff', t: 0 });
+}
+
+function drawBar() {
+  const bar = document.getElementById('bar');
+  bar.hidden = !room;
+  if (!room) return;
+  bar.textContent = room.players.length + (room.players.length === 1 ? ' player. ' : ' players. ');
+  if (room.isHost) {
+    const b = document.createElement('button');
+    b.textContent = 'Invite more';
+    b.onclick = () => lobby.reopen();
+    bar.appendChild(b);
+  }
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  ctx.fillStyle = '#0e0f14';
+  ctx.fillRect(0, 0, W, H);
+
+  for (let i = taps.length - 1; i >= 0; i--) {
+    const t = taps[i];
+    t.t += dt;
+    if (t.t > 1) { taps.splice(i, 1); continue; }
+    ctx.globalAlpha = 1 - t.t;
+    ctx.strokeStyle = t.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(t.x * W, t.y * H, 10 + t.t * 70, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.font = '13px system-ui, sans-serif';
+  for (const [id, c] of cursors) {
+    const p = player(id);
+    if (!p || id === room.me) continue;
+    const x = c.x * W, y = c.y * H;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x + 4, y + 17); ctx.lineTo(x + 8, y + 11); ctx.lineTo(x + 15, y + 11);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillText(p.name, x + 14, y + 26);
+  }
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

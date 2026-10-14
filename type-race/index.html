@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffd166'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ET%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Type Race</title>
+<style>
+  :root { --bg: #11141c; --panel: #191d28; --ink: #ecebe4; --muted: #8d91a0; --rule: #2a3040; --ok: #9be15d; --bad: #ff6b6b;
+          --lp-bg: #11141c; --lp-panel: #191d28; --lp-veil: rgba(17, 20, 28, .94); --lp-accent: #ffd166; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  main { max-width: 820px; margin: 0 auto; padding: 56px 20px 40px; }
+  #lanes { display: grid; gap: 8px; margin-bottom: 26px; }
+  .lane { position: relative; height: 34px; border-bottom: 2px dashed var(--rule); }
+  .lane .who { position: absolute; left: 0; bottom: 6px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .lane .car { position: absolute; bottom: 4px; width: 34px; height: 16px; border-radius: 5px 9px 4px 4px; transform: translateX(-100%);
+               transition: left .15s linear; }
+  .lane .car::after { content: ''; position: absolute; left: 13px; top: 3px; width: 11px; height: 6px; border-radius: 2px; background: rgba(0,0,0,.35); }
+  .lane .stat { position: absolute; right: 0; bottom: 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .lane.me .who { color: var(--ink); font-weight: 600; }
+  #status { min-height: 36px; font-size: 22px; font-weight: 700; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+  #text { font-size: 23px; line-height: 1.65; letter-spacing: .01em; color: var(--muted); cursor: text; user-select: none;
+          overflow-wrap: break-word; }
+  #text .ok { color: var(--ink); }
+  #text .bad { background: var(--bad); color: var(--bg); border-radius: 2px; }
+  #text .cur { border-left: 2px solid #ffd166; margin-left: -2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { border-color: transparent; } }
+  #text.wait { opacity: .45; }
+  #inp { position: fixed; left: -9999px; top: 0; opacity: 0; width: 10px; height: 10px; }
+  #results { margin-top: 26px; }
+  #results table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  #results td, #results th { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--rule); }
+  #results th { color: var(--muted); font-weight: 500; font-size: 14px; }
+  .actions { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  .actions button { font: inherit; font-weight: 600; font-size: 15px; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+                    border: 1.5px solid var(--ink); background: var(--panel); color: var(--ink); }
+  .actions button:hover { background: var(--ink); color: var(--bg); }
+  .actions button.quiet { border: 0; background: none; color: var(--muted); text-decoration: underline; padding: 10px 4px; }
+  .actions button:focus-visible { outline: 2px solid #ffd166; outline-offset: 2px; }
+  .hint { color: var(--muted); font-size: 14px; margin-top: 18px; }
+  @media (max-width: 560px) { #text { font-size: 19px; } main { padding-top: 48px; } }
+  @media (prefers-reduced-motion: reduce) { .lane .car { transition: none; } #text .cur { animation: none; } }
+</style>
+<meta property="og:title" content="Type Race">
+<meta property="og:description" content="A typing race with friends, connected by links with no server. Or race the pace of your own best run.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/type-race/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/type-race/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A typing race with friends, connected by links with no server. Or race the pace of your own best run.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <div id="lanes"></div>
+  <div id="status"></div>
+  <div id="text"></div>
+  <textarea id="inp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Type the passage here"></textarea>
+  <div id="results"></div>
+  <div class="actions" id="actions"></div>
+  <p class="hint" id="hint"></p>
+</main>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const PASSAGES = [
+  "The ferry left at six, whether you were on it or not. Most mornings I was, coffee in one hand and a paperback in the other, watching the gulls argue over whatever the night had washed up on the pier.",
+  "My grandmother kept every key she ever owned in a biscuit tin. None of them opened anything anymore, but she said a key you throw away is a door you've decided never to go back through.",
+  "The trick to parallel parking is to stop thinking about the car behind you. Line up your mirror with its bumper, turn the wheel all the way, and trust that the curb is exactly where it was a minute ago.",
+  "We counted the stars from the roof until we lost track around two hundred. Then my brother claimed one of them was moving, and we spent the rest of the night arguing about satellites.",
+  "A good bowl of rice needs three things: the right amount of water, a lid that fits, and the patience not to lift that lid every two minutes to see if it's done yet.",
+  "The library was quiet in the way only old buildings are quiet. The radiators ticked, a chair scraped somewhere upstairs, and the clock above the desk was eleven minutes slow, as it had been for years.",
+  "Every bug report starts the same way: it worked yesterday. The fun part is finding out what changed, because somebody always swears that nothing did, and somebody is always wrong.",
+  "The monsoon came in all at once. One minute the street was dust and car horns, and the next it was a river, with a man on a scooter holding an umbrella like a sail.",
+  "She learned to juggle with three oranges and a lot of bruised fruit. By the end of summer she could do it walking, and by the end of the year she could do it while telling a joke.",
+  "Nobody remembers who planted the mango tree behind the school, but everyone remembers which branch held the best fruit and which teacher would pretend not to see you climbing it.",
+  "The bus driver knew everyone by their stop. If you weren't there at quarter past eight, he'd wait ten seconds, honk once, and leave, and you'd hear about it from him the next morning.",
+  "Chess looks calm from the outside. Inside, both players are quietly panicking, counting the same five moves over and over, and hoping the other person hasn't seen what they've just seen.",
+  "There is a particular joy in a pencil sharpened to a perfect point. It lasts about four words, and then you're back to writing with something that looks like a small, tired mountain.",
+  "The night market opened when the sun went down. Lanterns went up, the smell of grilled corn drifted across the square, and somewhere a radio played a song everybody knew half the words to.",
+  "When the power went out, the whole street came outside. Someone brought a guitar, someone brought a cooler, and by the time the lights came back on, nobody wanted to go back in.",
+  "My first bicycle had a bell that only worked if you hit it twice. I never fixed it. Ringing it twice became the way I said hello, and my friends still do it when they see me.",
+  "The recipe said a pinch of salt, which in my family means whatever your hand decides. My aunt's pinch could season a whole pot. Mine barely covers a boiled egg.",
+  "Learning a new language is mostly about being wrong in public. You order the wrong thing, you thank the wrong person, and slowly the mistakes get smaller and the conversations get longer.",
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+const now = () => performance.now();
+const COUNTDOWN_MS = 3000, MAX_WRONG = 8;
+
+let best = 0;
+try { best = +(localStorage.getItem('typerace_best') || 0); } catch (e) { }
+
+let room = null;
+let solo = false;
+let race = null;           // the race in progress: see newRace()
+const rivals = new Map();  // player id -> { n, wpm, ms, acc }
+
+function newRace(idx) {
+  return {
+    idx, text: PASSAGES[idx], startAt: now() + COUNTDOWN_MS,
+    typed: '', ok: 0, keys: 0, mistakes: 0, doneMs: 0, wpm: 0, acc: 100,
+  };
+}
+
+function wpmOf(chars, ms) { return ms > 0 ? Math.round(chars / 5 / (ms / 60000)) : 0; }
+
+// --- starting races
+
+function startSolo() {
+  room = null;
+  solo = true;
+  begin(Math.floor(Math.random() * PASSAGES.length));
+}
+
+function begin(idx) {
+  race = newRace(idx);
+  for (const r of rivals.values()) Object.assign(r, { n: 0, wpm: 0, ms: 0, acc: 0 });
+  $('inp').value = '';
+  $('results').innerHTML = '';
+  render();
+  focusInput();
+}
+
+function hostNewRace() {
+  if (!room || !room.isHost) return;
+  let idx;
+  do idx = Math.floor(Math.random() * PASSAGES.length); while (race && idx === race.idx && PASSAGES.length > 1);
+  room.send({ t: 'go', idx });
+  begin(idx);
+}
+
+function attach(r) {
+  room = r;
+  solo = false;
+  rivals.clear();
+  room.on('message', onMessage);
+  room.on('roster', () => render());
+  room.on('leave', id => { rivals.delete(id); render(); });
+  room.on('close', () => {
+    room = null; race = null;
+    $('status').textContent = 'The host left the race.';
+    lobby.start();
+  });
+  if (room.isHost) hostNewRace();
+  else { race = null; render(); }
+}
+
+function onMessage(m, from) {
+  if (room.isHost && m.t !== 'go') {
+    m.id = from;
+    room.send(m);
+  }
+  if (m.t === 'go') { if (!room.isHost) begin(m.idx); return; }
+  if (m.id === room.me) return;
+  const r = rivals.get(m.id) || { n: 0, wpm: 0, ms: 0, acc: 0 };
+  rivals.set(m.id, r);
+  if (m.t === 'pos') { r.n = m.n; r.wpm = m.wpm; }
+  if (m.t === 'done') { r.n = race ? race.text.length : r.n; r.ms = m.ms; r.wpm = m.wpm; r.acc = m.acc; }
+  render();
+}
+
+// --- typing
+
+function focusInput() { try { $('inp').focus({ preventScroll: true }); } catch (e) { } }
+
+function onType(value) {
+  if (!race || race.doneMs || now() < race.startAt) { $('inp').value = race ? race.typed : ''; return; }
+  const text = race.text;
+  let ok = 0;
+  while (ok < value.length && ok < text.length && value[ok] === text[ok]) ok++;
+  if (value.length > ok + MAX_WRONG) value = value.slice(0, ok + MAX_WRONG);
+  if (value.length > race.typed.length) {
+    for (let i = race.typed.length; i < value.length; i++) {
+      race.keys++;
+      if (value[i] !== text[i] || i > ok) race.mistakes++;
+    }
+  }
+  race.typed = value;
+  race.ok = ok;
+  $('inp').value = value;
+  const ms = now() - race.startAt;
+  race.wpm = wpmOf(ok, ms);
+  race.acc = race.keys ? Math.max(0, Math.round(100 * (race.keys - race.mistakes) / race.keys)) : 100;
+  if (ok === text.length) finish(ms);
+  else sendPos();
+  render();
+}
+
+let lastPos = 0;
+function sendPos(force) {
+  if (!room || (!force && now() - lastPos < 150)) return;
+  lastPos = now();
+  room.send({ t: 'pos', id: room.me, n: race.ok, wpm: race.wpm });
+}
+
+function finish(ms) {
+  race.doneMs = ms;
+  race.wpm = wpmOf(race.text.length, ms);
+  if (race.wpm > best) {
+    best = race.wpm;
+    try { localStorage.setItem('typerace_best', String(best)); } catch (e) { }
+  }
+  if (room) room.send({ t: 'done', id: room.me, ms: Math.round(ms), wpm: race.wpm, acc: race.acc });
+  $('inp').blur();
+}
+
+// --- drawing
+
+function standings() {
+  const rows = [];
+  if (race) rows.push({ id: room ? room.me : 0, me: true, ms: race.doneMs, wpm: race.wpm, acc: race.acc });
+  for (const [id, r] of rivals) rows.push({ id, ms: r.ms, wpm: r.wpm, acc: r.acc });
+  return rows.sort((a, b) => (a.ms || Infinity) - (b.ms || Infinity));
+}
+
+function playerInfo(id) {
+  const p = room && room.players.find(p => p.id === id);
+  return p || { name: id === (room ? room.me : 0) ? 'You' : 'Player', color: Room.COLORS[id % Room.COLORS.length] };
+}
+
+function lane(name, color, frac, stat, me) {
+  return '<div class="lane' + (me ? ' me' : '') + '"><span class="who">' + esc(name) + '</span>' +
+    '<span class="car" style="background:' + color + ';left:calc(34px + (100% - 120px) * ' + Math.min(1, frac).toFixed(4) + ')"></span>' +
+    '<span class="stat">' + stat + '</span></div>';
+}
+
+function render() {
+  const len = race ? race.text.length : 1;
+  let lanes = '';
+  if (race) {
+    const meId = room ? room.me : 0;
+    const me = playerInfo(meId);
+    lanes += lane(room ? me.name + ' (you)' : 'You', room ? me.color : '#ffd166', race.ok / len, race.wpm + ' wpm', true);
+  }
+  if (room) {
+    for (const p of room.players) {
+      if (p.id === room.me) continue;
+      const r = rivals.get(p.id) || { n: 0, wpm: 0 };
+      lanes += lane(p.name, p.color, r.n / len, r.wpm + ' wpm');
+    }
+  } else if (solo && race && best) {
+    const t = Math.max(0, now() - race.startAt);
+    const n = race.doneMs ? Math.min(len, best * 5 * race.doneMs / 60000) : Math.min(len, best * 5 * t / 60000);
+    lanes += lane('Your best', '#8d91a0', n / len, best + ' wpm');
+  }
+  $('lanes').innerHTML = lanes;
+
+  const text = $('text');
+  if (!race) {
+    text.innerHTML = '';
+    text.className = 'wait';
+    $('status').textContent = room ? 'Waiting for the host to start the race.' : '';
+  } else {
+    const t = race.text, ok = race.ok, wrongTo = Math.min(t.length, race.typed.length);
+    text.className = now() < race.startAt ? 'wait' : '';
+    text.innerHTML = '<span class="ok">' + esc(t.slice(0, ok)) + '</span>' +
+      '<span class="bad">' + esc(t.slice(ok, wrongTo)) + '</span>' +
+      (wrongTo < t.length ? '<span class="cur">' + esc(t[wrongTo]) + '</span>' + esc(t.slice(wrongTo + 1)) : '');
+    const left = race.startAt - now();
+    if (left > 0) $('status').textContent = 'Starting in ' + Math.ceil(left / 1000) + '…';
+    else if (race.doneMs) {
+      const place = standings().findIndex(r => r.me) + 1;
+      $('status').textContent = (room ? ordinal(place) + ' place. ' : 'Done. ') + race.wpm + ' wpm, ' + race.acc + '% accuracy.';
+    } else $('status').textContent = 'Go!';
+  }
+
+  const finished = race && race.doneMs;
+  $('results').innerHTML = finished && room ? resultsTable() : '';
+  let actions = '';
+  if (finished && (solo || (room && room.isHost))) actions += '<button id="again">New race</button>';
+  if (room && room.isHost) actions += '<button class="quiet" id="invite">Invite more</button>';
+  if (room || solo) actions += '<button class="quiet" id="leave">Leave</button>';
+  if ($('actions').dataset.html !== actions) {
+    $('actions').innerHTML = actions;
+    $('actions').dataset.html = actions;
+    const again = $('actions').querySelector('#again'), invite = $('actions').querySelector('#invite'), leave = $('actions').querySelector('#leave');
+    if (again) again.onclick = () => (solo ? startSolo() : hostNewRace());
+    if (invite) invite.onclick = () => lobby.reopen();
+    if (leave) leave.onclick = () => { room = null; race = null; solo = false; rivals.clear(); lobby.start(); render(); };
+  }
+  $('hint').textContent = race && !race.doneMs ? 'Fix mistakes with backspace before moving on. Tap the text if the keyboard goes away.' : '';
+}
+
+function ordinal(n) { return n + (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th'); }
+
+function resultsTable() {
+  const rows = standings().map((r, i) => {
+    const p = playerInfo(r.id);
+    return '<tr><td>' + (r.ms ? i + 1 : '') + '</td><td>' + esc(p.name) + (r.me ? ' (you)' : '') + '</td><td>' +
+      (r.ms ? (r.ms / 1000).toFixed(1) + 's' : 'still typing') + '</td><td>' + (r.ms ? r.wpm + ' wpm' : '') + '</td><td>' + (r.ms ? r.acc + '%' : '') + '</td></tr>';
+  }).join('');
+  return '<table><tr><th></th><th>Player</th><th>Time</th><th>Speed</th><th>Accuracy</th></tr>' + rows + '</table>';
+}
+
+$('inp').addEventListener('input', () => onType($('inp').value));
+$('inp').addEventListener('paste', e => e.preventDefault());
+$('text').addEventListener('click', focusInput);
+addEventListener('keydown', e => {
+  if (e.key === 'Enter' && race && race.doneMs && (solo || (room && room.isHost))) { e.preventDefault(); solo ? startSolo() : hostNewRace(); }
+  else if (race && !race.doneMs && document.activeElement !== $('inp') && e.key.length === 1) focusInput();
+});
+
+setInterval(() => { if (race && (now() < race.startAt + 1000 || solo)) render(); }, 100);
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'type-race',
+  title: 'Type Race',
+  blurb: 'Everyone gets the same passage. First to type it all, mistakes fixed, wins.',
+  min: 2,
+  extra: [{ label: 'Practice alone', note: 'Race the pace of your best run' + (best ? ' (' + best + ' wpm).' : '.'), onClick: startSolo }],
+  onStart: attach,
+  onJoin: attach,
+});
+render();
+</script>
+</body>
+</html>

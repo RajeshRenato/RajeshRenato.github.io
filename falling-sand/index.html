@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e8c35a'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EF%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Falling Sand</title>
+<style>
+  :root { --bg:#121214; --panel:#1c1c20; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--bg); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         display:flex; flex-direction:column; overflow:hidden; }
+  a.back { color:var(--muted); font-size:13px; text-decoration:none; white-space:nowrap; }
+  a.back:hover { color:var(--ink); }
+  header { display:flex; align-items:center; gap:14px; padding:10px 14px 6px; flex-wrap:wrap; }
+  h1 { margin:0; font-size:19px; font-weight:800; }
+  #tools { display:flex; flex-wrap:wrap; gap:5px; padding:0 14px 8px; align-items:center; }
+  #tools button { font:inherit; font-size:13px; padding:5px 9px 5px 7px; border:1px solid var(--rule); border-radius:6px;
+                  background:var(--panel); color:var(--ink); cursor:pointer; display:flex; align-items:center; gap:6px; }
+  #tools button:hover { border-color:var(--muted); }
+  #tools button.on { border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+  #tools button:focus-visible { outline:2px solid #e8c35a; outline-offset:2px; }
+  #tools .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+  #tools .sep { width:1px; height:22px; background:var(--rule); margin:0 4px; }
+  #wrap { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:0 10px 10px; }
+  canvas { display:block; image-rendering:pixelated; touch-action:none; cursor:crosshair; border-radius:6px; background:#0b0b0d; }
+  #hint { font-size:12px; color:var(--muted); }
+</style>
+<meta property="og:title" content="Falling Sand">
+<meta property="og:description" content="Pour sand, water, oil, fire, lava, acid, and plants, and watch them react. A cellular sandbox in plain JavaScript.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/falling-sand/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/falling-sand/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Pour sand, water, oil, fire, lava, acid, and plants, and watch them react. A cellular sandbox in plain JavaScript.">
+</head>
+<body>
+<header>
+  <a class="back" href="../">&larr; all projects</a>
+  <h1>Falling Sand</h1>
+  <span id="hint">Draw on the canvas. Keys 1–0 pick a material, space pauses, [ and ] change the brush.</span>
+</header>
+<div id="tools"></div>
+<div id="wrap"><canvas id="sim"></canvas></div>
+<script>
+'use strict';
+// Cellular sandbox: one material per cell, updated bottom-up once per frame.
+
+const E = 0, WALL = 1, SAND = 2, WATER = 3, OIL = 4, FIRE = 5, SMOKE = 6, STEAM = 7,
+      WOOD = 8, PLANT = 9, LAVA = 10, ACID = 11, STONE = 12;
+
+const MAT = [];
+MAT[E]     = { name: 'Eraser', colors: ['#0b0b0d'] };
+MAT[WALL]  = { name: 'Wall',   colors: ['#6b6f7a', '#64687a', '#72767f'], kind: 'static' };
+MAT[SAND]  = { name: 'Sand',   colors: ['#e8c35a', '#dcb64e', '#f0cc68', '#d9b14a'], kind: 'powder', dens: 4 };
+MAT[WATER] = { name: 'Water',  colors: ['#2f7fd6', '#2b78cc', '#3687dd'], kind: 'liquid', dens: 2, disp: 5 };
+MAT[OIL]   = { name: 'Oil',    colors: ['#5a3d1e', '#533820', '#61421f'], kind: 'liquid', dens: 1, disp: 3 };
+MAT[FIRE]  = { name: 'Fire',   colors: ['#ffd166', '#ff9f43', '#ff6b3d'], kind: 'fire' };
+MAT[SMOKE] = { name: 'Smoke',  colors: ['#3a3a40', '#444449', '#35353a'], kind: 'gas', dens: 0.2 };
+MAT[STEAM] = { name: 'Steam',  colors: ['#9fb6c8', '#a9c0d0', '#94abbe'], kind: 'gas', dens: 0.1 };
+MAT[WOOD]  = { name: 'Wood',   colors: ['#7a5230', '#704b2c', '#835935'], kind: 'static' };
+MAT[PLANT] = { name: 'Plant',  colors: ['#3aa45f', '#349a57', '#43b068'], kind: 'static' };
+MAT[LAVA]  = { name: 'Lava',   colors: ['#ff5a1f', '#ff7a2a', '#f04a18'], kind: 'liquid', dens: 3, disp: 1 };
+MAT[ACID]  = { name: 'Acid',   colors: ['#9cff3d', '#8ef034', '#a8ff55'], kind: 'liquid', dens: 2, disp: 3 };
+MAT[STONE] = { name: 'Stone',  colors: ['#4a4a52', '#45454c', '#50505a'], kind: 'static' };
+
+const PALETTE = [SAND, WATER, OIL, FIRE, WOOD, PLANT, LAVA, ACID, WALL, E];
+const FLAMMABLE = { [WOOD]: 0.03, [PLANT]: 0.06, [OIL]: 0.25 };
+const DISSOLVES = { [SAND]: 1, [WOOD]: 1, [PLANT]: 1, [STONE]: 1 };
+
+function hexRGBA(hex) {
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return (255 << 24) | (b << 16) | (g << 8) | r;   // ImageData is RGBA in memory; little-endian Uint32 view
+}
+const COLORS = MAT.map(m => m.colors.map(hexRGBA));
+
+// grid
+let W = 0, H = 0;
+let cell, life, shade, stamp;
+let clock = 1;
+let rnd = Math.random;
+
+function alloc(w, h) {
+  W = w; H = h;
+  cell = new Uint8Array(W * H);
+  life = new Uint8Array(W * H);
+  shade = new Uint8Array(W * H);
+  stamp = new Uint8Array(W * H);
+}
+
+const idx = (x, y) => y * W + x;
+const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+const fluid = t => { const k = MAT[t].kind; return k === 'liquid' || k === 'gas'; };
+const densOf = t => (t === E ? 0 : MAT[t].dens || 0);
+
+function set(i, t, l) {
+  cell[i] = t;
+  life[i] = l || 0;
+  shade[i] = (rnd() * 4) | 0;
+  stamp[i] = clock;
+}
+
+function canEnter(t, x, y) {
+  if (!inside(x, y)) return false;
+  const o = cell[idx(x, y)];
+  return o === E || (fluid(o) && densOf(o) < densOf(t));
+}
+
+function swap(i, j) {
+  const t = cell[j], l = life[j], s = shade[j];
+  cell[j] = cell[i]; life[j] = life[i]; shade[j] = shade[i];
+  cell[i] = t; life[i] = l; shade[i] = s;
+  stamp[i] = stamp[j] = clock;
+}
+
+function tryMove(x, y, nx, ny) {
+  if (!canEnter(cell[idx(x, y)], nx, ny)) return false;
+  swap(idx(x, y), idx(nx, ny));
+  return true;
+}
+
+function movePowder(x, y) {
+  if (tryMove(x, y, x, y + 1)) return;
+  const d = rnd() < 0.5 ? -1 : 1;
+  if (tryMove(x, y, x + d, y + 1)) return;
+  tryMove(x, y, x - d, y + 1);
+}
+
+function moveLiquid(x, y, t) {
+  if (t === LAVA && rnd() < 0.6) return;     // lava is thick
+  if (tryMove(x, y, x, y + 1)) return;
+  const d = rnd() < 0.5 ? -1 : 1;
+  if (tryMove(x, y, x + d, y + 1)) return;
+  if (tryMove(x, y, x - d, y + 1)) return;
+  for (const dir of [d, -d]) {
+    let nx = x;
+    for (let k = 1; k <= MAT[t].disp; k++) {
+      if (!canEnter(t, x + dir * k, y)) break;
+      nx = x + dir * k;
+    }
+    if (nx !== x) { swap(idx(x, y), idx(nx, y)); return; }
+  }
+}
+
+function moveGas(x, y) {
+  const d = (rnd() * 3 | 0) - 1;
+  const ny = y - 1;
+  if (inside(x + d, ny) && cell[idx(x + d, ny)] === E) { swap(idx(x, y), idx(x + d, ny)); return; }
+  const s = rnd() < 0.5 ? -1 : 1;
+  if (inside(x + s, y) && cell[idx(x + s, y)] === E) swap(idx(x, y), idx(x + s, y));
+}
+
+const NB = [[0, -1], [1, 0], [0, 1], [-1, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+
+function react(x, y, t) {
+  const i = idx(x, y);
+  switch (t) {
+    case FIRE: {
+      let fuel = 0;
+      for (const [dx, dy] of NB) {
+        const nx = x + dx, ny = y + dy;
+        if (!inside(nx, ny)) continue;
+        const j = idx(nx, ny), o = cell[j];
+        if (o === WATER) { set(i, STEAM, 60 + rnd() * 60); if (rnd() < 0.5) set(j, STEAM, 60 + rnd() * 60); return true; }
+        const p = FLAMMABLE[o];
+        if (!p) continue;
+        fuel++;
+        if (rnd() < p) set(j, FIRE, o === WOOD ? 90 + rnd() * 80 : 30 + rnd() * 40);
+      }
+      if (life[i] <= 1) { if (rnd() < 0.6) set(i, SMOKE, 40 + rnd() * 60); else set(i, E); return true; }
+      life[i]--;
+      // flames stay on their fuel and only drift up once nothing next to them can burn
+      if (!fuel && rnd() < 0.35) {
+        const d = (rnd() * 3 | 0) - 1;
+        if (inside(x + d, y - 1) && cell[idx(x + d, y - 1)] === E) { swap(i, idx(x + d, y - 1)); return true; }
+      }
+      return true;
+    }
+    case SMOKE:
+    case STEAM:
+      if (life[i] <= 1) {
+        if (t === STEAM && rnd() < 0.25) set(i, WATER); else set(i, E);
+        return true;
+      }
+      life[i]--;
+      return false;
+    case LAVA:
+      for (const [dx, dy] of NB) {
+        const nx = x + dx, ny = y + dy;
+        if (!inside(nx, ny)) continue;
+        const j = idx(nx, ny), o = cell[j];
+        if (o === WATER) { set(i, STONE); set(j, STEAM, 60 + rnd() * 60); return true; }
+        if (FLAMMABLE[o] && rnd() < 0.1) set(j, FIRE, 60 + rnd() * 40);
+      }
+      return false;
+    case ACID:
+      for (let k = 0; k < 4; k++) {
+        const [dx, dy] = NB[k];
+        const nx = x + dx, ny = y + dy;
+        if (!inside(nx, ny)) continue;
+        const j = idx(nx, ny);
+        if (DISSOLVES[cell[j]] && rnd() < 0.08) {
+          set(j, rnd() < 0.3 ? SMOKE : E, 30);
+          if (rnd() < 0.35) { set(i, E); return true; }
+        }
+      }
+      return false;
+    case PLANT:
+      if (rnd() < 0.04) {
+        const [dx, dy] = NB[(rnd() * 8) | 0];
+        const nx = x + dx, ny = y + dy;
+        if (inside(nx, ny) && cell[idx(nx, ny)] === WATER) set(idx(nx, ny), PLANT);
+      }
+      return true;
+  }
+  return false;
+}
+
+function step() {
+  clock = clock === 255 ? 1 : clock + 1;
+  const flip = clock & 1;
+  for (let y = H - 1; y >= 0; y--) {
+    for (let k = 0; k < W; k++) {
+      const x = flip ? k : W - 1 - k;
+      const i = idx(x, y);
+      const t = cell[i];
+      if (t === E || stamp[i] === clock) continue;
+      const kind = MAT[t].kind;
+      if (kind === 'static' && t !== PLANT) continue;
+      if (react(x, y, t)) continue;
+      if (cell[i] !== t) continue;
+      if (kind === 'powder') movePowder(x, y);
+      else if (kind === 'liquid') moveLiquid(x, y, t);
+      else if (kind === 'gas') moveGas(x, y);
+    }
+  }
+}
+
+function count(t) {
+  let n = 0;
+  for (let i = 0; i < cell.length; i++) if (cell[i] === t) n++;
+  return n;
+}
+
+// painting
+let brush = 4, material = SAND, paused = false;
+
+function paint(cx, cy) {
+  const r = brush;
+  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    if (dx * dx + dy * dy > r * r) continue;
+    const x = cx + dx, y = cy + dy;
+    if (!inside(x, y)) continue;
+    const i = idx(x, y);
+    const kind = MAT[material].kind;
+    if (material === E) { set(i, E); continue; }
+    if (kind === 'static') { set(i, material); continue; }
+    if (cell[i] !== E) continue;
+    if (rnd() > 0.45) continue;
+    set(i, material, material === FIRE ? 30 + rnd() * 40 : 0);
+  }
+}
+
+function paintLine(x0, y0, x1, y1) {
+  const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
+  for (let s = 0; s <= n; s++) paint(Math.round(x0 + (x1 - x0) * s / n), Math.round(y0 + (y1 - y0) * s / n));
+}
+
+function starterScene() {
+  for (let x = 0; x < W; x++) for (let y = H - 3; y < H; y++) set(idx(x, y), STONE);
+  const cupL = Math.floor(W * 0.08), cupR = Math.floor(W * 0.34), cupTop = Math.floor(H * 0.55);
+  for (let y = cupTop; y < H - 3; y++) { set(idx(cupL, y), WALL); set(idx(cupR, y), WALL); }
+  for (let x = cupL + 1; x < cupR; x++) for (let y = Math.floor(H * 0.72); y < H - 3; y++) set(idx(x, y), WATER);
+  for (let x = Math.floor(W * 0.55); x < Math.floor(W * 0.85); x++) set(idx(x, Math.floor(H * 0.5)), WOOD);
+  for (let x = Math.floor(W * 0.6); x < Math.floor(W * 0.8); x++)
+    for (let y = Math.floor(H * 0.5) - 1 - ((x * 7) % 5 === 0 ? 1 : 0); y > Math.floor(H * 0.5) - 6; y--) if (rnd() < 0.8) set(idx(x, y), SAND);
+}
+
+// rendering and startup
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+const off = document.createElement('canvas');
+const octx = off.getContext('2d');
+let img = null, pix = null, CELLPX = 4;
+
+function draw() {
+  for (let i = 0; i < cell.length; i++) {
+    const t = cell[i];
+    if (t === FIRE) pix[i] = COLORS[FIRE][life[i] > 40 ? 0 : life[i] > 18 ? 1 : 2];
+    else if (t === LAVA) pix[i] = COLORS[LAVA][(shade[i] + (clock >> 3)) % 3];
+    else { const c = COLORS[t]; pix[i] = c[shade[i] % c.length]; }
+  }
+  octx.putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+}
+
+function layout() {
+  const wrap = document.getElementById('wrap');
+  const aw = Math.max(200, (wrap.clientWidth || 900) - 20), ah = Math.max(200, (wrap.clientHeight || 600) - 10);
+  CELLPX = aw < 700 ? 3 : 4;
+  let w = Math.floor(aw / CELLPX), h = Math.floor(ah / CELLPX);
+  const scale = Math.min(1, Math.sqrt(90000 / (w * h)));
+  w = Math.floor(w * scale); h = Math.floor(h * scale);
+  alloc(w, h);
+  off.width = W; off.height = H;
+  img = octx.createImageData(W, H);
+  pix = new Uint32Array(img.data.buffer);
+  canvas.width = W * CELLPX; canvas.height = H * CELLPX;
+  canvas.style.width = W * CELLPX + 'px'; canvas.style.height = H * CELLPX + 'px';
+  starterScene();
+}
+
+function buildTools() {
+  const bar = document.getElementById('tools');
+  PALETTE.forEach((t, n) => {
+    const b = document.createElement('button');
+    b.dataset.m = t;
+    b.title = MAT[t].name + ' (' + ((n + 1) % 10) + ')';
+    b.innerHTML = '<span class="sw" style="background:' + (t === E ? 'transparent;border:1px dashed #96968e' : MAT[t].colors[0]) + '"></span>' + MAT[t].name;
+    b.addEventListener('click', () => pick(t));
+    bar.appendChild(b);
+  });
+  const sep = document.createElement('span'); sep.className = 'sep'; bar.appendChild(sep);
+  for (const [label, fn] of [['Smaller', () => setBrush(brush - 1)], ['Bigger', () => setBrush(brush + 1)],
+                             ['Pause', togglePause], ['Clear', clearAll], ['Save PNG', savePNG]]) {
+    const b = document.createElement('button');
+    b.textContent = label;
+    if (label === 'Pause') b.id = 'pauseBtn';
+    b.addEventListener('click', fn);
+    bar.appendChild(b);
+  }
+  pick(SAND);
+}
+
+function pick(t) {
+  material = t;
+  document.querySelectorAll('#tools button[data-m]').forEach(b => b.classList.toggle('on', +b.dataset.m === t));
+}
+function setBrush(v) { brush = Math.max(1, Math.min(14, v)); }
+function togglePause() {
+  paused = !paused;
+  const b = document.getElementById('pauseBtn');
+  if (b) b.textContent = paused ? 'Resume' : 'Pause';
+}
+function clearAll() { cell.fill(0); life.fill(0); }
+function savePNG() {
+  const a = document.createElement('a');
+  a.download = 'falling-sand.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+let drawing = false, lastCell = null;
+function cellAt(e) {
+  const r = canvas.getBoundingClientRect();
+  return [Math.floor((e.clientX - r.left) / r.width * W), Math.floor((e.clientY - r.top) / r.height * H)];
+}
+canvas.addEventListener('pointerdown', e => {
+  drawing = true;
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { }
+  lastCell = cellAt(e);
+  paint(lastCell[0], lastCell[1]);
+});
+canvas.addEventListener('pointermove', e => {
+  if (!drawing) return;
+  const c = cellAt(e);
+  paintLine(lastCell[0], lastCell[1], c[0], c[1]);
+  lastCell = c;
+});
+const stopDraw = () => { drawing = false; lastCell = null; };
+canvas.addEventListener('pointerup', stopDraw);
+canvas.addEventListener('pointercancel', stopDraw);
+
+addEventListener('keydown', e => {
+  if (e.key >= '0' && e.key <= '9') { const n = (+e.key + 9) % 10; if (PALETTE[n] !== undefined) pick(PALETTE[n]); }
+  else if (e.key === ' ') { e.preventDefault(); togglePause(); }
+  else if (e.key === '[') setBrush(brush - 1);
+  else if (e.key === ']') setBrush(brush + 1);
+  else if (e.key === 'c' || e.key === 'C') clearAll();
+});
+
+function frame() {
+  if (drawing && lastCell) paint(lastCell[0], lastCell[1]);
+  if (!paused) step();
+  draw();
+  requestAnimationFrame(frame);
+}
+
+layout();
+buildTools();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2339ff9c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Daily puzzles</title>
+<style>
+  :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --good:#2f9e5b; --bad:#d8392f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121214; --ink:#e8e8e2; --muted:#96968e; --rule:#2c2c30; --card:#1b1b1f; --good:#39ff9c; --bad:#ff5a52; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif;
+         line-height:1.5; padding:48px 20px 64px; }
+  main { max-width:760px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 4px; font-size:34px; font-weight:800; }
+  .when { margin:0 0 4px; font-size:17px; }
+  .next { margin:0; color:var(--muted); }
+  .streak { display:flex; gap:28px; margin:28px 0 8px; padding:16px 0; border-top:2px solid var(--ink); border-bottom:1px solid var(--rule); }
+  .streak b { display:block; font-size:30px; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .streak span { color:var(--muted); font-size:14px; }
+  .rule { color:var(--muted); font-size:14px; margin:0 0 24px; }
+  ul.games { list-style:none; margin:0; padding:0; display:grid; gap:14px; }
+  .games li { background:var(--card); border:1.5px solid var(--ink); border-radius:12px; padding:16px 18px;
+              display:flex; align-items:center; gap:16px; box-shadow:4px 5px 0 color-mix(in srgb, var(--c) 55%, transparent); }
+  .games .dot { width:14px; height:14px; border-radius:50%; border:2px solid var(--muted); flex:none; }
+  .games li.done .dot { background:var(--good); border-color:var(--good); }
+  .games li.missed .dot { background:var(--bad); border-color:var(--bad); }
+  .games .txt { flex:1; min-width:0; }
+  .games strong { display:block; font-size:18px; }
+  .games .status { color:var(--muted); font-size:15px; }
+  .games a.play { font-weight:600; color:var(--ink); border:1.5px solid var(--ink); border-radius:8px; padding:6px 14px;
+                  text-decoration:none; white-space:nowrap; }
+  .games a.play:hover { background:var(--ink); color:var(--paper); }
+  .games li.done a.play { border-color:var(--rule); color:var(--muted); }
+  #share { margin-top:22px; font:inherit; font-weight:600; padding:9px 18px; border:1.5px solid var(--ink); border-radius:8px;
+           background:var(--card); color:var(--ink); cursor:pointer; }
+  #share:hover:not(:disabled) { background:var(--ink); color:var(--paper); }
+  #share:disabled { opacity:.45; cursor:default; }
+  #shareMsg { margin-left:10px; color:var(--muted); font-size:14px; }
+  a:focus-visible, button:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+</style>
+<meta property="og:title" content="Daily puzzles">
+<meta property="og:description" content="Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/daily/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/daily/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.">
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Daily puzzles</h1>
+  <p class="when" id="when"></p>
+  <p class="next" id="next"></p>
+
+  <div class="streak">
+    <div><b id="cur">0</b><span>day streak</span></div>
+    <div><b id="best">0</b><span>best streak</span></div>
+    <div><b id="today">0/3</b><span>done today</span></div>
+  </div>
+  <p class="rule">A day counts toward your streak when you solve all three puzzles.</p>
+
+  <ul class="games">
+    <li id="g-penta" style="--c:#39ff9c"><span class="dot"></span><div class="txt"><strong>Penta</strong><span class="status"></span></div><a class="play" href="../penta/">Play</a></li>
+    <li id="g-sudoku" style="--c:#7f8cff"><span class="dot"></span><div class="txt"><strong>Sudoku</strong><span class="status"></span></div><a class="play" href="../sudoku/#daily">Play</a></li>
+    <li id="g-arrow" style="--c:#28e0ff"><span class="dot"></span><div class="txt"><strong>Arrow Flux</strong><span class="status"></span></div><a class="play" href="../arrow-flux/#daily">Play</a></li>
+  </ul>
+
+  <button id="share" disabled>Copy today's results</button><span id="shareMsg"></span>
+</main>
+<script>
+'use strict';
+// Reads the results each game saves for the day; all pages share one origin's localStorage.
+
+const $ = id => document.getElementById(id);
+const DAY0 = Date.UTC(2026, 0, 1);
+const DAY_MS = 86400000;
+const dayNumber = (t = Date.now()) => Math.floor((t - DAY0) / DAY_MS);
+
+function readJSON(key) {
+  try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
+}
+function readRaw(key) {
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+
+function penta(day) {
+  const rec = readJSON('penta_day_' + day);
+  if (!rec || !Array.isArray(rec.words) || !rec.words.length) return { state: 'todo', text: 'Not played yet' };
+  if (!rec.done) return { state: 'todo', text: 'In progress, ' + rec.words.length + ' of 6 guesses used' };
+  let won = rec.won;
+  if (won === undefined) {
+    const ds = readJSON('penta_dstreak') || {};
+    won = rec.words.length < 6 || (ds.last === day && ds.streak > 0);
+  }
+  return won
+    ? { state: 'done', text: 'Solved in ' + rec.words.length + '/6', short: rec.words.length + '/6' }
+    : { state: 'missed', text: 'Missed it, all six guesses used', short: 'X/6' };
+}
+
+function sudoku(day) {
+  const t = readRaw('sud_day_' + day);
+  return t ? { state: 'done', text: 'Solved in ' + t, short: t } : { state: 'todo', text: 'Not played yet' };
+}
+
+function fmtTime(secs) { return Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0'); }
+
+function arrow(day) {
+  const rec = readJSON('af_day_' + day);
+  if (!rec) return { state: 'todo', text: 'Not played yet' };
+  const miss = rec.mistakes ? rec.mistakes + (rec.mistakes === 1 ? ' mistake' : ' mistakes') : 'no mistakes';
+  return { state: 'done', text: 'Cleared in ' + fmtTime(rec.secs) + ', ' + miss, short: fmtTime(rec.secs) + ', ' + miss };
+}
+
+const dayComplete = d => penta(d).state === 'done' && sudoku(d).state === 'done' && arrow(d).state === 'done';
+
+function streaks(today) {
+  let cur = 0;
+  for (let d = dayComplete(today) ? today : today - 1; d >= 0 && dayComplete(d); d--) cur++;
+  let best = 0, run = 0;
+  for (let d = 0; d <= today; d++) {
+    run = dayComplete(d) ? run + 1 : 0;
+    best = Math.max(best, run);
+  }
+  return { cur, best: Math.max(best, cur) };
+}
+
+function render() {
+  const day = dayNumber();
+  const date = new Date(DAY0 + day * DAY_MS).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  $('when').textContent = '#' + day + ', ' + date;
+
+  const nextAt = DAY0 + (day + 1) * DAY_MS, left = nextAt - Date.now();
+  const h = Math.floor(left / 3600000), m = Math.floor(left / 60000) % 60;
+  const local = new Date(nextAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  $('next').textContent = 'The same puzzles for everyone. New ones at ' + local + ' your time, in ' + (h ? h + 'h ' : '') + m + 'm.';
+
+  const results = { penta: penta(day), sudoku: sudoku(day), arrow: arrow(day) };
+  let done = 0;
+  for (const [k, r] of Object.entries(results)) {
+    const li = $('g-' + k);
+    li.className = r.state;
+    li.querySelector('.status').textContent = r.text;
+    li.querySelector('.play').textContent = r.state === 'todo' ? 'Play' : 'Open';
+    if (r.state === 'done') done++;
+  }
+  const s = streaks(day);
+  $('cur').textContent = s.cur;
+  $('best').textContent = s.best;
+  $('today').textContent = done + '/3';
+  $('share').disabled = !Object.values(results).some(r => r.state !== 'todo');
+  return { day, results };
+}
+
+function shareText() {
+  const { day, results } = render();
+  const line = (name, r) => name + ' ' + (r.short || (r.state === 'todo' ? 'not played' : r.text));
+  return 'Playground daily #' + day + '\n' + line('Penta', results.penta) + '\n' + line('Sudoku', results.sudoku) +
+    '\n' + line('Arrow Flux', results.arrow) + '\nhttps://rajeshrenato.github.io/playground/daily/';
+}
+
+$('share').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(shareText());
+    $('shareMsg').textContent = 'Copied';
+  } catch (e) {
+    $('shareMsg').textContent = 'Copying was blocked by the browser';
+  }
+});
+
+render();
+setInterval(render, 30000);
+addEventListener('pageshow', render);
+addEventListener('storage', render);
+</script>
+</body>
+</html>

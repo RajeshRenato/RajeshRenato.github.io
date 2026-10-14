@@ -1,0 +1,33 @@
+/* Styles for lobby.js. Set the --lp-* colors on the page to restyle it. */
+.lp-panel { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow: auto; background: var(--lp-veil, rgba(14, 15, 20, .9));
+  color: var(--lp-ink, #e8e8e2); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+.lp-panel[hidden] { display: none; }
+.lp-box { width: 100%; max-width: 560px; }
+.lp-box h1 { margin: 0 0 6px; font-size: 40px; font-weight: 800; }
+.lp-box h2 { margin: 0 0 12px; font-size: 24px; }
+.lp-box p { color: var(--lp-muted, #9a9aa6); line-height: 1.5; margin: 0 0 14px; }
+.lp-box button { font: inherit; font-weight: 600; font-size: 15px; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+  border: 1.5px solid var(--lp-ink, #e8e8e2); background: var(--lp-panel, #1a1b22); color: var(--lp-ink, #e8e8e2); }
+.lp-box button:hover:not(:disabled) { background: var(--lp-ink, #e8e8e2); color: var(--lp-bg, #0e0f14); }
+.lp-box button:disabled { opacity: .4; cursor: default; }
+.lp-box button:focus-visible, .lp-box input:focus-visible { outline: 2px solid var(--lp-accent, #28e0ff); outline-offset: 2px; }
+.lp-modes { display: grid; gap: 10px; margin: 18px 0; }
+.lp-modes button { text-align: left; padding: 14px 16px; font-size: 17px; }
+.lp-modes button span { display: block; font-weight: 400; font-size: 14px; color: var(--lp-muted, #9a9aa6); margin-top: 2px; }
+.lp-modes button:hover span { color: inherit; }
+.lp-name { display: flex; align-items: center; gap: 10px; color: var(--lp-muted, #9a9aa6); margin: 4px 0 6px; }
+.lp-name input, .lp-code input { font: 15px system-ui, sans-serif; padding: 9px 10px; border-radius: 8px;
+  border: 1.5px solid var(--lp-rule, #2e2f38); background: var(--lp-field, #0b0c10); color: var(--lp-ink, #e8e8e2); }
+.lp-name input { width: 180px; }
+.lp-code { display: flex; gap: 6px; margin: 8px 0 12px; }
+.lp-code input { flex: 1; min-width: 0; font: 13px ui-monospace, Menlo, monospace; }
+.lp-invite > span { font-size: 14px; color: var(--lp-muted, #9a9aa6); }
+.lp-status { color: var(--lp-ink, #e8e8e2) !important; min-height: 1.5em; }
+.lp-small { font-size: 13px; }
+.lp-row { display: flex; gap: 14px; align-items: center; margin-top: 8px; }
+.lp-box .lp-link { background: none; border: 0; color: var(--lp-muted, #9a9aa6); text-decoration: underline; padding: 4px 0; font-weight: 500; }
+.lp-box .lp-link:hover { background: none; color: var(--lp-ink, #e8e8e2); }
+.lp-roster { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.lp-roster li { display: flex; align-items: center; gap: 7px; }
+.lp-roster i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
