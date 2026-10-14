@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2339ff9c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>PENTA — five letters, six tries</title>
+<title>Penta</title>
 <style>
   :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --green:#39ff9c; --yellow:#ffd166; --gray:#3a3550; }
   * { box-sizing: border-box; }
@@ -43,7 +43,7 @@
   #actions button { background:var(--panel); color:var(--green); border:1px solid var(--green); border-radius:6px;
                     padding:8px 16px; font:inherit; cursor:pointer; }
 </style>
-<meta property="og:title" content="PENTA — browser game">
+<meta property="og:title" content="Penta">
 <meta property="og:description" content="Five letters, six tries. On-screen keyboard, emoji sharing, and win-streak stats.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/penta/">
@@ -93,7 +93,8 @@ function dailyState() {
 function saveDaily() {
   try {
     localStorage.setItem('penta_day_' + dayNumber(),
-      JSON.stringify({ words: guesses.map(g2 => g2.word), done }));
+      JSON.stringify({ words: guesses.map(g2 => g2.word), done,
+        won: done && guesses.length > 0 && guesses[guesses.length - 1].word === answer }));
   } catch (e) { }
 }
 function bumpDailyStreak(wonFlag) {
@@ -154,7 +155,7 @@ function newGame() {
     if (saved && Array.isArray(saved.words)) {
       for (const w of saved.words) { cur = w; submit(true); }
     }
-    if (!done) $('msg').textContent = 'daily #' + day + ' — same word for everyone';
+    if (!done) $('msg').textContent = 'daily #' + day + ': same word for everyone';
   } else {
     answer = ANSWERS[(Math.random() * ANSWERS.length) | 0];
     $('newBtn').style.display = '';

@@ -19,6 +19,7 @@ python3 -m http.server 8899
 ## Features
 
 - Board sizes from 6×8 up to 26×37, either growing with each level or fixed
+- A daily board at `#daily`, the same for everyone that day, timed and listed on the [daily puzzles](../daily/) page
 - Hint (always points at a legal move), undo, and new puzzle
 - The seed, level, and size live in the URL, so a shared link opens the same board
 - Light and dark color schemes follow your system setting

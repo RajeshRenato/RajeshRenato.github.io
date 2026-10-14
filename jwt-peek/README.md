@@ -1,5 +1,17 @@
-# JWT PEEK
+# JWT Peek
 
-Paste a JWT and see its decoded header and payload with syntax coloring — **entirely client-side, the token never leaves the page**. Time claims (`iat`/`nbf`/`exp`) are rendered as human dates with live expiry status, and `alg:"none"` tokens get a loud warning. Signatures are *not* verified (that needs the secret/key) and the UI says so. Includes a sample-token generator.
+Paste a JSON Web Token and see its header and payload decoded. Decoding happens in your browser, so the token is never sent anywhere.
 
-Single HTML file — open `index.html` to use.
+## Use
+
+Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder.
+
+## What it does
+
+- Shows the header and payload as formatted, colored JSON.
+- Turns the `iat`, `nbf`, and `exp` claims into local dates. It also says whether the token has expired, how long until it does, and whether it is not valid yet.
+- Warns when the header has `alg: "none"` (an unsigned token) or no `alg` at all.
+- Explains what's wrong when the input isn't a three-part token or a part isn't valid JSON.
+- A button loads a sample token that expires two hours from now.
+
+It does not check the signature. That would need the secret or public key.

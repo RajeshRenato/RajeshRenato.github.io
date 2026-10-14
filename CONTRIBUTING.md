@@ -27,7 +27,7 @@ The tests check that every project is complete and linked from the hub, that all
 - Plain HTML/CSS/JS. No frameworks, npm packages, build step, or CDN scripts.
 - Each project is self-contained in its own folder.
 - Should work in Chrome, Firefox, and Safari, on desktop and mobile. Games need touch controls.
-- No analytics, ads, or third-party requests.
+- No analytics, ads, or third-party requests. The one exception: the online games (everything built on `linkplay/`) use public STUN servers to set up a direct browser-to-browser connection.
 - Keep comments short, and only where the code isn't obvious.
 
 One fix or feature per PR, and mention how you tested it.

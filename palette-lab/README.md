@@ -1,11 +1,21 @@
 # Palette Lab
 
-A spacebar-driven 5-color palette generator.
+Generate five-color palettes by pressing space. Lock the colors you like and keep rolling the rest.
 
-- **Space** / Generate — new palette (analogous, complementary, triadic, or chaos)
-- Lock swatches you like; only unlocked ones re-roll
-- Click a swatch to copy its hex
-- Export as CSS variables + JSON; palettes are shareable via the URL hash
-- Last palette is remembered in `localStorage`
+## Use
 
-Single HTML file. Open `index.html` to use.
+Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder.
+
+## What it does
+
+- Palettes follow an analogous, complementary, or triadic hue scheme, or are fully random ("chaos"). The default, auto harmony, picks one of the first three each time.
+- Locked colors stay put when you generate a new palette.
+- Click a color to copy its hex code. Each swatch also shows its HSL values.
+- Export gives the palette as CSS custom properties, a JSON array, and a share link.
+- The five hex codes are kept in the URL after `#`, so the link opens the same palette. The last palette is also saved in `localStorage`.
+
+## Shortcuts
+
+| Key | Action |
+| --- | --- |
+| Space | New palette |

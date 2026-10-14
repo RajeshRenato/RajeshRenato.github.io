@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237f8cff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ES%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>SUDOKU</title>
+<title>Sudoku</title>
 <style>
   :root { --bg:#0a0618; --blue:#7f8cff; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
@@ -38,7 +38,7 @@
   #msg { height:26px; margin-top:10px; font-size:15px; letter-spacing:2px; color:#39ff9c; }
   p.hint { opacity:.55; font-size:12px; margin-top:4px; }
 </style>
-<meta property="og:title" content="SUDOKU — browser game">
+<meta property="og:title" content="Sudoku">
 <meta property="og:description" content="Sudoku from a generator that guarantees exactly one solution.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/sudoku/">
@@ -167,7 +167,7 @@ function newGame() {
   givens = puzzle.map(v => v !== 0);
   sel = -1; mistakes = 0; done = false;
   $('mist').textContent = 0;
-  $('msg').textContent = diff === 'daily' ? 'DAILY #' + dayNumber() + ' — same puzzle for everyone' : '';
+  $('msg').textContent = diff === 'daily' ? 'DAILY #' + dayNumber() + ': same puzzle for everyone' : '';
   startT = Date.now();
   clearInterval(timer);
   timer = setInterval(() => {
@@ -204,7 +204,7 @@ function place(v) {
     if (diff === 'daily') {
       $('msg').textContent = '✦ DAILY #' + dayNumber() + ' solved in ' + $('time').textContent + ' ✦';
       try {
-        navigator.clipboard.writeText('SUDOKU daily #' + dayNumber() + ' — ' +
+        navigator.clipboard.writeText('SUDOKU daily #' + dayNumber() + ': ' +
           $('time').textContent + ', ' + mistakes + ' mistakes');
       } catch (e) { }
       try { localStorage.setItem('sud_day_' + dayNumber(), $('time').textContent); } catch (e) { }
@@ -280,7 +280,9 @@ document.querySelectorAll('#bar button[data-d]').forEach(b =>
 $('newBtn').addEventListener('click', newGame);
 
 buildDOM();
-newGame();
+const dailyBtn = document.querySelector('#bar button[data-d="daily"]');
+if (location.hash === '#daily' && dailyBtn) dailyBtn.click();
+else newGame();
 </script>
 </body>
 </html>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%239f7bff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EO%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Orbit Sandbox — n-body gravity</title>
+<title>Orbit Sandbox</title>
 <style>
   * { box-sizing: border-box; }
   body { margin:0; overflow:hidden; background:#060410; }
@@ -15,7 +15,7 @@
   a.back { position:fixed; top:12px; left:14px; color:#9f7bff; font:12px ui-monospace,monospace;
            text-decoration:none; opacity:.7; z-index:2; }
 </style>
-<meta property="og:title" content="ORBIT SANDBOX — browser game">
+<meta property="og:title" content="Orbit Sandbox">
 <meta property="og:description" content="N-body gravity sim. Slingshot planets around a star, watch them merge, trail, and escape.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/orbit-sandbox/">
@@ -26,7 +26,7 @@
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <canvas id="c"></canvas>
-<div id="ui">drag &amp; release — slingshot a planet · 1/2/3 planet size · G toggle star · P pause · C clear · S save PNG</div>
+<div id="ui">drag and release to launch a planet. 1/2/3 size, G star on/off, P pause, C clear, S save PNG</div>
 <script>
 'use strict';
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');

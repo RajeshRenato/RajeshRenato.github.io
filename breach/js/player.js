@@ -83,7 +83,7 @@ const Player = {
     if (this.ammo <= 0) {
       AudioMan.empty();
       this.fireCool = 0.3;
-      game.message('out of cells — find ammo');
+      game.message('out of cells. Find ammo.');
       return;
     }
     this.ammo--;

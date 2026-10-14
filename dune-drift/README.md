@@ -1,46 +1,33 @@
-# DUNE DRIFT — endless sunset ride
+# Dune Drift
 
-A one-button endless rider in pure HTML/CSS/JS. Roll over procedural dunes,
-jump off crests, hold to backflip, and land with the slope to keep your speed
-and combo alive. The sky moves through a full day cycle while you ride.
-No frameworks, no build step, no assets.
+A one-button endless rider. You slide over rolling sand dunes, jump off the crests, hold the button to flip in the air, and land at the angle of the slope to keep going. Land badly and the run ends. The sky moves through day, dusk, night, and dawn as you ride.
 
 ## Play
 
-Open `index.html` in a browser, or serve the folder:
-
-```bash
-python3 -m http.server 8899
-# then visit http://localhost:8899
-```
+Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder.
 
 ## Controls
 
-One button: tap, click, or hold space.
-
 | Input | Action |
 | --- | --- |
-| press (on the ground) | jump |
-| hold (in the air) | backflip |
-| ← or A (keyboard) | jump / backflip |
-| → or D (keyboard) | jump / frontflip |
-| release and level out | land clean |
+| Click, tap, or Space (on the ground) | jump |
+| Hold click, tap, or Space (in the air) | backflip |
+| Left arrow, up arrow, A, or W | same as Space |
+| Right arrow or D | jump, and frontflip while held |
+| G | copy a ghost link after a run |
 | M | mute |
-
-Landing within the slope angle keeps the run going; flips multiply your
-combo and boost speed. Land badly and the run ends.
 
 ## How it works
 
-- **Terrain** is a sum of four sine waves whose amplitude grows slowly with
-  distance, so late-run dunes throw bigger air. Slope and curvature come from
-  sampling the same function.
-- **Physics**: grounded motion is a scalar speed along the slope with gravity
-  projected onto it; crest launches happen when the ground falls away faster
-  than the board can follow. Landing compares board angle to slope angle.
-- **Day cycle**: four palettes (day, dusk, night, dawn) smoothly interpolated
-  over 110 seconds, driving sky, dune, rim-light, and star colors.
-- **The scarf** is a 14-point verlet-style chain that trails the rider.
-- **Audio** is a looped noise buffer low-pass filtered by speed for wind,
-  plus sine chimes on flips and clean landings.
-- Best score and distance persist in `localStorage`.
+- The ground is four sine waves added together. Their height grows slowly with distance, so later dunes throw you higher. Slope comes from sampling the same function.
+- On the ground, gravity along the slope speeds you up or slows you down. If you're going fast enough over a crest, the ground drops away and you launch on your own.
+- Landing compares the board's angle with the slope. Within about 60 degrees you keep riding. Each flip landed scores 100 times your combo, raises the combo (up to 8), and gives a 10% speed boost. A very flat landing with no flips scores 25. A rough landing with no flips resets the combo.
+- The sky blends between four color palettes over a 110 second day.
+- The scarf is a 14-point chain that trails behind the rider.
+- Wind is a looped noise buffer through a low-pass filter that opens up with speed. Flips and landings play short chimes.
+- Your best score and distance are saved in `localStorage`.
+- Ghosts: after a run, press G or tap "Share your ghost" to copy a link. The run is packed into the URL as position, height, and spin five times a second, 3 bytes each. Whoever opens it rides alongside your ghost and sees a flag where it wiped out.
+
+## Tests
+
+`tests/dune-drift.test.js` covers starting a run, jumping and flipping, clean and bad landings, the forward flip, and making and replaying ghost links.

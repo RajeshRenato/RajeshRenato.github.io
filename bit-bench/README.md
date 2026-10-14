@@ -1,5 +1,14 @@
-# BIT BENCH
+# Bit Bench
 
-A 32-bit number playground for developers: edit a value in decimal, hex, binary, or octal and the other bases update live; click any of the 32 bits to flip it. Shows the signed (two's complement) interpretation alongside unsigned, plus a live bitwise-ops table: AND/OR/XOR/NOT against an operand and `<<` / `>>` (arithmetic) / `>>>` (logical) shifts.
+A 32-bit number playground. Type a value in decimal, hex, binary, or octal and the other fields update as you type. Click any of the 32 bits to flip it.
 
-Single HTML file — open `index.html` to use.
+## Use
+
+Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder.
+
+## What it does
+
+- Shows the value as unsigned and as a signed 32-bit integer (two's complement).
+- Accepts `0x`, `0b`, and `0o` prefixes, and ignores spaces and underscores. A field turns red when its input isn't valid for that base.
+- Applies AND, OR, and XOR against an operand B, plus NOT, and shows each result in decimal and hex.
+- Shifts by 0 to 31 bits with `<<`, `>>` (arithmetic, keeps the sign), and `>>>` (logical, fills with zeros).

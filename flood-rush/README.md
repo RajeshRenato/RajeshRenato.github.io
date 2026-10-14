@@ -1,11 +1,16 @@
-# FLOOD RUSH
+# Flood Rush
 
-Flood-fill race: you own the top-left corner. Each move you pick a colour and your region swallows every adjacent cell of that colour. Paint the whole grid before the moves run out.
+A Flood-It puzzle. You start owning the top-left cell. Each move, pick a color from the palette: your region changes to that color and takes in every neighboring cell that already matches. Fill the whole grid before you run out of moves.
 
-**Every board is beatable by definition.** A greedy bot (always picks the colour that grows the region most) solves each board at generation time; its move count is the par and your budget is par + 2. Finish under par to out-plan the bot.
+## Play
 
-- Endless levels: grids grow 7×7 → 14×14, colours 4 → 6
-- Live "% owned" meter and a highlighted origin cell
-- The seed lives in the URL — share a link, race a friend on the identical board
+Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder.
 
-Single HTML file — open `index.html` to play.
+Click a color in the palette below the board to make a move. "New puzzle" gives you a different board, and "share seed" copies a link to the current one.
+
+## How it works
+
+- When a board is generated, a greedy bot solves it by always picking the color that grows the region the most. Its move count is the par, and your budget is par plus 2, so every board can be beaten. Finishing in fewer moves than par means you beat the bot.
+- The grid starts at 7 by 7 and grows by one every two levels, up to 14 by 14. Boards start with 4 colors and gain one every five levels, up to 6.
+- Boards come from a seeded random generator. The seed and level are kept in the URL as `#seed.level`, so a friend who opens your link gets the same board.
+- The number of boards you've cleared is saved in `localStorage`.

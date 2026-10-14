@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff4fa3'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EF%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>FLOOD RUSH — paint the grid in fewer moves than the bot</title>
+<title>Flood Rush</title>
 <style>
   :root { --bg:#0a0618; --pink:#ff4fa3; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
@@ -41,18 +41,18 @@
   p.hint { opacity:.55; font-size:12px; margin-top:12px; text-align:center; max-width:560px; }
   @media (max-width:520px) { .sq { width:20px; height:20px; } }
 </style>
-<meta property="og:title" content="FLOOD RUSH — browser game">
-<meta property="og:description" content="Flood-fill the grid from a corner and beat the greedy bot&#x27;s par — every board is winnable.">
+<meta property="og:title" content="Flood Rush">
+<meta property="og:description" content="Flood-fill the grid from a corner in fewer moves than a greedy bot. Every board can be won.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/flood-rush/">
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/flood-rush/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="Flood-fill the grid from a corner and beat the greedy bot&#x27;s par — every board is winnable.">
+<meta name="description" content="Flood-fill the grid from a corner in fewer moves than a greedy bot. Every board can be won.">
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <h1>FLOOD RUSH</h1>
-<div id="sub">flood from the top-left corner — one colour per move, swallow the whole grid</div>
+<div id="sub">flood from the top-left corner, one colour per move, until you own the whole grid</div>
 <div id="bar">
   <span class="stat">level <b id="lvl">1</b></span>
   <span class="stat">moves <b id="moves">0</b> / budget <b id="budget">0</b></span>
@@ -64,7 +64,7 @@
 </div>
 <div id="wrap"><div id="board"></div><div id="overlay"><div class="t"></div><div class="s"></div><button id="nextBtn"></button></div></div>
 <div id="palette"></div>
-<p class="hint">the budget is what a greedy bot needed plus two — so every board is beatable by definition.
+<p class="hint">the budget is what a greedy bot needed, plus two, so every board can be beaten.
 finish under the bot's par to outsmart it. seed is in the URL, send it to a friend and race.</p>
 <script>
 'use strict';
@@ -232,7 +232,7 @@ function win() {
   const o = $('overlay');
   o.querySelector('.t').textContent = moves < par ? '✦ BOT BEATEN ✦' : 'FLOODED!';
   o.querySelector('.s').textContent = moves + ' moves vs the bot’s ' + par +
-    (moves < par ? ' — you out-planned the greedy bot' : moves === par ? ' — dead even with the bot' : '');
+    (moves < par ? '. You beat the bot.' : moves === par ? '. Same as the bot.' : '');
   const btn = $('nextBtn');
   btn.textContent = 'next level';
   btn.onclick = () => { level++; loadLevel(); };
@@ -243,7 +243,7 @@ function lose() {
   over = true;
   const o = $('overlay');
   o.querySelector('.t').textContent = 'OUT OF MOVES';
-  o.querySelector('.s').textContent = ownedPct() + '% flooded — the bot did it in ' + par;
+  o.querySelector('.s').textContent = ownedPct() + '% flooded. The bot did it in ' + par;
   const btn = $('nextBtn');
   btn.textContent = 'retry';
   btn.onclick = () => loadLevel();
@@ -255,9 +255,9 @@ $('shareBtn').addEventListener('click', async () => {
   history.replaceState(null, '', '#' + seed + '.' + level);
   try {
     await navigator.clipboard.writeText(location.href);
-    $('sub').textContent = 'link copied — same seed, same board, race a friend';
+    $('sub').textContent = 'link copied. A friend who opens it gets the same board.';
   } catch (e) {
-    $('sub').textContent = 'copy blocked — grab the URL from the address bar';
+    $('sub').textContent = 'copy blocked. Copy the URL from the address bar.';
   }
 });
 

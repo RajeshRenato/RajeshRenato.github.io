@@ -86,6 +86,17 @@
   .list.big strong { font-size: 20px; }
   .list.big span { font-size: 15px; margin-top: 4px; }
   .list.big .txt { padding: 14px 16px 16px; }
+  ul.list.wide { grid-template-columns: 1fr; }
+  .list.wide a { display: grid; grid-template-columns: minmax(0, 340px) 1fr; align-items: center; }
+  .list.wide canvas { border-bottom: 0; border-right: 1.5px solid var(--ink); }
+  .list.wide .txt { padding: 14px 20px; }
+  .list.wide strong { font-size: 20px; }
+  .list.wide span { font-size: 15px; max-width: 52ch; }
+  .list .status { color: var(--ink); font-weight: 600; margin-top: 8px; }
+  @media (max-width: 640px) {
+    .list.wide a { grid-template-columns: 1fr; }
+    .list.wide canvas { border-right: 0; border-bottom: 1.5px solid var(--ink); }
+  }
   footer {
     margin-top: 68px; padding-top: 18px;
     border-top: 1px solid var(--rule);
@@ -114,21 +125,29 @@
 <div class="page">
 <header>
   <h1 aria-label="Playground"><i style="--t:#ff4fa3">P</i><i style="--t:#28e0ff">L</i><i style="--t:#ffd166">A</i><i style="--t:#64ffb4">Y</i><i style="--t:#c77bff">G</i><i style="--t:#ff8a5c">R</i><i style="--t:#7f8cff">O</i><i style="--t:#39ff9c">U</i><i style="--t:#ff6fb0">N</i><i style="--t:#45d9e8">D</i></h1>
-  <p class="lede">50 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.</p>
+  <p class="lede">62 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.</p>
   <p class="lede">Every thumbnail below is drawn live by the page. Hover one and it moves. The source is <a href="https://github.com/RajeshRenato/playground">on GitHub</a> and pull requests are welcome.</p>
 </header>
 
+<h2>Today</h2>
+<ul class="list wide">
+  <li><a href="daily/" style="--c:#39ff9c" data-t="daily"><canvas width="304" height="171"></canvas><div class="txt"><strong>Daily puzzles</strong><span>Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.</span><span id="todayStatus" class="status"></span></div></a></li>
+</ul>
+
 <h2>Highlights</h2>
 <ul class="list big">
-  <li><a href="vicecity/" style="--c:#ff4fa3" data-t="vice"><canvas width="304" height="171"></canvas><div class="txt"><strong>Vice City</strong><span>Open-world driving in a procedural city with traffic, police chases, and delivery jobs. Street-level 3D camera drawn on a plain 2D canvas.</span></div></a></li>
+  <li><a href="miami-nights/" style="--c:#ff4fa3" data-t="vice"><canvas width="304" height="171"></canvas><div class="txt"><strong>Miami Nights</strong><span>A GTA Vice City-style open world: drive a procedural Miami at night, outrun the cops, and run deliveries.</span></div></a></li>
   <li><a href="breach/" style="--c:#9f7bff" data-t="breach"><canvas width="304" height="171"></canvas><div class="txt"><strong>Breach</strong><span>First-person shooter on a raycasting engine written from scratch. Every wall texture, sprite, and sound is generated in code.</span></div></a></li>
-  <li><a href="road-rash/" style="--c:#ffd166" data-t="rash"><canvas width="304" height="171"></canvas><div class="txt"><strong>Road Rash</strong><span>Motorcycle combat racing on a pseudo-3D road: punch and kick rivals, steal their clubs, dodge two-way traffic, buy faster bikes.</span></div></a></li>
+  <li><a href="midnight-racing/" style="--c:#ffd166" data-t="rash"><canvas width="304" height="171"></canvas><div class="txt"><strong>Midnight Racing</strong><span>Road Rash-style bike combat racing at midnight: punch and kick rivals, dodge two-way traffic, race a friend's ghost.</span></div></a></li>
   <li><a href="arrow-flux/" style="--c:#28e0ff" data-t="arrow"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arrow Flux</strong><span>Slide tangled arrows off a packed board. The generator builds every board in solution order, so each one is provably solvable.</span></div></a></li>
 </ul>
 
-<h2>Games<small>13</small></h2>
+<h2>Games<small>16</small></h2>
 <ul class="list">
-  <li><a href="dune-drift/" style="--c:#ff8a5c" data-t="drift"><canvas width="304" height="171"></canvas><div class="txt"><strong>Dune Drift</strong><span>One-button endless ride over rolling dunes; backflips at sunset.</span></div></a></li>
+  <li><a href="cycle-duel/" style="--c:#28e0ff" data-t="cycle"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cycle Duel</strong><span>Light-cycle duels. Play a friend online with just a link, or on one keyboard.</span></div></a></li>
+  <li><a href="type-race/" style="--c:#ffd166" data-t="typerace"><canvas width="304" height="171"></canvas><div class="txt"><strong>Type Race</strong><span>Typing races with friends over a link, no server. Or race your own best pace.</span></div></a></li>
+  <li><a href="sketch-guess/" style="--c:#ff4fa3" data-t="sketch"><canvas width="304" height="171"></canvas><div class="txt"><strong>Sketch &amp; Guess</strong><span>Take turns drawing a word while friends guess it. Up to 8 players, connected by links.</span></div></a></li>
+  <li><a href="dune-drift/" style="--c:#ff8a5c" data-t="drift"><canvas width="304" height="171"></canvas><div class="txt"><strong>Dune Drift</strong><span>One-button endless ride over rolling dunes, with backflips at sunset.</span></div></a></li>
   <li><a href="pixel-logic/" style="--c:#ffd166" data-t="pixlog"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pixel Logic</strong><span>Nonograms, solver-verified so pure deduction always wins.</span></div></a></li>
   <li><a href="glow-out/" style="--c:#39ff9c" data-t="glowout"><canvas width="304" height="171"></canvas><div class="txt"><strong>Glow Out</strong><span>Lights Out with hints computed from a live solution set.</span></div></a></li>
   <li><a href="flood-rush/" style="--c:#ff4fa3" data-t="flood"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flood Rush</strong><span>Flood-fill the grid and beat a greedy bot's par.</span></div></a></li>
@@ -145,7 +164,7 @@
 
 <h2>Classics<small>8</small></h2>
 <ul class="list">
-  <li><a href="coil/" style="--c:#39ff9c" data-t="snake"><canvas width="304" height="171"></canvas><div class="txt"><strong>Coil</strong><span>Snake. Speeds up as you grow; swipe to steer on a phone.</span></div></a></li>
+  <li><a href="coil/" style="--c:#39ff9c" data-t="snake"><canvas width="304" height="171"></canvas><div class="txt"><strong>Coil</strong><span>Snake. It speeds up as you grow. Swipe to steer on a phone.</span></div></a></li>
   <li><a href="brickfall/" style="--c:#4f8aff" data-t="breakout"><canvas width="304" height="171"></canvas><div class="txt"><strong>Brickfall</strong><span>Brick-breaker with eight levels and angle-based paddle physics.</span></div></a></li>
   <li><a href="slide-2048/" style="--c:#ff6fb0" data-t="g2048"><canvas width="304" height="171"></canvas><div class="txt"><strong>Slide 2048</strong><span>The sliding-tile game, by keyboard or swipe.</span></div></a></li>
   <li><a href="stackfall/" style="--c:#28e0ff" data-t="blocks"><canvas width="304" height="171"></canvas><div class="txt"><strong>Stackfall</strong><span>Falling tetrominoes with hold, ghost piece, and a 7-bag randomizer.</span></div></a></li>
@@ -155,13 +174,21 @@
   <li><a href="penta/" style="--c:#39ff9c" data-t="penta"><canvas width="304" height="171"></canvas><div class="txt"><strong>Penta</strong><span>A five-letter word game with win streaks and emoji sharing.</span></div></a></li>
 </ul>
 
-<h2>Tools<small>17</small></h2>
+<h2>Tools<small>25</small></h2>
 <ul class="list">
+  <li><a href="linkplay/" style="--c:#7dffc9" data-t="linkplay"><canvas width="304" height="171"></canvas><div class="txt"><strong>LinkPlay</strong><span>A small kit for making browser games multiplayer with links and no server. Cycle Duel, Type Race, and Sketch &amp; Guess use it.</span></div></a></li>
+  <li><a href="file-send/" style="--c:#39ff9c" data-t="filesend"><canvas width="304" height="171"></canvas><div class="txt"><strong>File Send</strong><span>Send files straight to a friend's browser. Nothing is uploaded.</span></div></a></li>
+  <li><a href="secret-note/" style="--c:#c77bff" data-t="secret"><canvas width="304" height="171"></canvas><div class="txt"><strong>Secret Note</strong><span>Write a note and get a link with it encrypted inside. Nothing is stored.</span></div></a></li>
+  <li><a href="qr-studio/" style="--c:#7f8cff" data-t="qr"><canvas width="304" height="171"></canvas><div class="txt"><strong>QR Studio</strong><span>QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark.</span></div></a></li>
+  <li><a href="photo-privacy/" style="--c:#ff8a5c" data-t="photo"><canvas width="304" height="171"></canvas><div class="txt"><strong>Photo Privacy</strong><span>See and remove the hidden location, date, and device details in photos.</span></div></a></li>
+  <li><a href="image-squeeze/" style="--c:#64ffb4" data-t="squeeze"><canvas width="304" height="171"></canvas><div class="txt"><strong>Image Squeeze</strong><span>Compress, resize, and convert images, or fit them under a size limit.</span></div></a></li>
+  <li><a href="video-to-gif/" style="--c:#ffd166" data-t="gif"><canvas width="304" height="171"></canvas><div class="txt"><strong>Video to GIF</strong><span>Trim a clip and turn it into a GIF, made on your device. No watermark.</span></div></a></li>
+  <li><a href="screen-recorder/" style="--c:#ff5a7a" data-t="rec"><canvas width="304" height="171"></canvas><div class="txt"><strong>Screen Recorder</strong><span>Record your screen with your voice and a camera bubble. No install, no watermark.</span></div></a></li>
   <li><a href="json-studio/" style="--c:#28e0ff" data-t="json"><canvas width="304" height="171"></canvas><div class="txt"><strong>JSON Studio</strong><span>Format, validate, and explore JSON in a collapsible tree, offline.</span></div></a></li>
   <li><a href="regex-playground/" style="--c:#39ff9c" data-t="regex"><canvas width="304" height="171"></canvas><div class="txt"><strong>Regex Playground</strong><span>Regex tester with live highlighting, groups, and replace preview.</span></div></a></li>
   <li><a href="diff-deck/" style="--c:#28e0ff" data-t="diff"><canvas width="304" height="171"></canvas><div class="txt"><strong>Diff Deck</strong><span>Side-by-side text diff with character-level highlighting.</span></div></a></li>
-  <li><a href="csv-viewer/" style="--c:#64ffb4" data-t="csv"><canvas width="304" height="171"></canvas><div class="txt"><strong>CSV Viewer</strong><span>Sort, filter, and export CSV or TSV; handles quoted fields.</span></div></a></li>
-  <li><a href="jwt-peek/" style="--c:#ff5a7a" data-t="jwt"><canvas width="304" height="171"></canvas><div class="txt"><strong>JWT Peek</strong><span>Decode JWTs with expiry status; tokens never leave the page.</span></div></a></li>
+  <li><a href="csv-viewer/" style="--c:#64ffb4" data-t="csv"><canvas width="304" height="171"></canvas><div class="txt"><strong>CSV Viewer</strong><span>Sort, filter, and export CSV or TSV files, quoted fields included.</span></div></a></li>
+  <li><a href="jwt-peek/" style="--c:#ff5a7a" data-t="jwt"><canvas width="304" height="171"></canvas><div class="txt"><strong>JWT Peek</strong><span>Decode JWTs and check their expiry. Tokens never leave the page.</span></div></a></li>
   <li><a href="cron-sage/" style="--c:#ffd166" data-t="cron"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cron Sage</strong><span>Cron expressions in plain English, with the next six run times.</span></div></a></li>
   <li><a href="bit-bench/" style="--c:#7f8cff" data-t="bit"><canvas width="304" height="171"></canvas><div class="txt"><strong>Bit Bench</strong><span>32-bit base converter with clickable bits and live bitwise ops.</span></div></a></li>
   <li><a href="markdown-pad/" style="--c:#ffd166" data-t="md"><canvas width="304" height="171"></canvas><div class="txt"><strong>Markdown Pad</strong><span>Markdown editor with a hand-written parser and live preview.</span></div></a></li>
@@ -171,20 +198,21 @@
   <li><a href="focus-timer/" style="--c:#ff5a7a" data-t="focus"><canvas width="304" height="171"></canvas><div class="txt"><strong>Focus Timer</strong><span>Pomodoro timer with auto-cycling breaks and daily stats.</span></div></a></li>
   <li><a href="palette-lab/" style="--c:#c77bff" data-t="palette"><canvas width="304" height="171"></canvas><div class="txt"><strong>Palette Lab</strong><span>Color palette generator with locking, export, and shareable URLs.</span></div></a></li>
   <li><a href="pixel-forge/" style="--c:#ff8a5c" data-t="pixelf"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pixel Forge</strong><span>Pixel-art editor with fill, undo, autosave, and PNG export.</span></div></a></li>
-  <li><a href="beat-grid/" style="--c:#28e0ff" data-t="beat"><canvas width="304" height="171"></canvas><div class="txt"><strong>Beat Grid</strong><span>A 16-step drum machine; the whole beat fits in the URL.</span></div></a></li>
+  <li><a href="beat-grid/" style="--c:#28e0ff" data-t="beat"><canvas width="304" height="171"></canvas><div class="txt"><strong>Beat Grid</strong><span>A 16-step drum machine. The whole beat fits in the URL.</span></div></a></li>
   <li><a href="morse-coder/" style="--c:#8affc9" data-t="morse"><canvas width="304" height="171"></canvas><div class="txt"><strong>Morse Coder</strong><span>Morse translator with correctly timed audio and a trainer.</span></div></a></li>
   <li><a href="profile-banner/" style="--c:#ff4fa3" data-t="banner"><canvas width="304" height="171"></canvas><div class="txt"><strong>Profile Banner</strong><span>Animated SVG banner generator for a GitHub profile.</span></div></a></li>
 </ul>
 
-<h2>Toys &amp; simulations<small>8</small></h2>
+<h2>Toys &amp; simulations<small>9</small></h2>
 <ul class="list">
-  <li><a href="flowfield/" style="--c:#ff8a5c" data-t="flow"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flow Field</strong><span>Particles tracing a procedural vector field; save the result as a PNG.</span></div></a></li>
-  <li><a href="orbit-sandbox/" style="--c:#9f7bff" data-t="orbit"><canvas width="304" height="171"></canvas><div class="txt"><strong>Orbit Sandbox</strong><span>N-body gravity sandbox; sling planets around a star.</span></div></a></li>
+  <li><a href="flowfield/" style="--c:#ff8a5c" data-t="flow"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flow Field</strong><span>Particles tracing a procedural vector field. Save the result as a PNG.</span></div></a></li>
+  <li><a href="orbit-sandbox/" style="--c:#9f7bff" data-t="orbit"><canvas width="304" height="171"></canvas><div class="txt"><strong>Orbit Sandbox</strong><span>An n-body gravity sandbox. Sling planets around a star.</span></div></a></li>
   <li><a href="pendulum-chaos/" style="--c:#8affc9" data-t="pend"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pendulum Chaos</strong><span>Twelve double pendulums diverging from near-identical starts.</span></div></a></li>
-  <li><a href="boid-swarm/" style="--c:#64ffb4" data-t="boid"><canvas width="304" height="171"></canvas><div class="txt"><strong>Boid Swarm</strong><span>Flocking simulation with tunable instincts; your cursor is the predator.</span></div></a></li>
+  <li><a href="boid-swarm/" style="--c:#64ffb4" data-t="boid"><canvas width="304" height="171"></canvas><div class="txt"><strong>Boid Swarm</strong><span>A flocking simulation with tunable instincts. Your cursor is the predator.</span></div></a></li>
   <li><a href="life-grid/" style="--c:#8affc9" data-t="life"><canvas width="304" height="171"></canvas><div class="txt"><strong>Life Grid</strong><span>Conway's Game of Life with drawing and presets.</span></div></a></li>
   <li><a href="fractal-viewer/" style="--c:#c77bff" data-t="fractal"><canvas width="304" height="171"></canvas><div class="txt"><strong>Fractal Viewer</strong><span>Mandelbrot and Julia explorer with click-to-zoom.</span></div></a></li>
   <li><a href="neuro-pilot/" style="--c:#39ff9c" data-t="neuro"><canvas width="304" height="171"></canvas><div class="txt"><strong>Neuro Pilot</strong><span>120 small neural networks learning to fly by evolution.</span></div></a></li>
+  <li><a href="falling-sand/" style="--c:#e8c35a" data-t="sand"><canvas width="304" height="171"></canvas><div class="txt"><strong>Falling Sand</strong><span>Pour sand, water, oil, fire, lava, acid, and plants, and watch them react.</span></div></a></li>
   <li><a href="sort-arena/" style="--c:#c77bff" data-t="sort"><canvas width="304" height="171"></canvas><div class="txt"><strong>Sort Arena</strong><span>Sorting algorithms racing on identical data, with op counters.</span></div></a></li>
 </ul>
 
@@ -254,12 +282,13 @@ breach(g, w, h, c, t) {
 },
 
 rash(g, w, h, c, t) {
-  bgFill(g, w, h, '#1b0b3c');
+  bgFill(g, w, h, '#080d26');
   const hor = h * 0.42;
-  g.fillStyle = '#ffb05c'; g.beginPath(); g.arc(w / 2, hor - 12, 26, 0, 7); g.fill();
-  g.fillStyle = '#1b0b3c';
-  for (let i = 0; i < 4; i++) g.fillRect(w / 2 - 28, hor - 12 + 2 + i * 6, 56, 2 + i);
-  g.fillStyle = '#241446'; g.fillRect(0, hor, w, h - hor);
+  g.fillStyle = 'rgba(255,255,255,0.7)';
+  for (let i = 0; i < 18; i++) g.fillRect((i * 71) % w, (i * 37) % (hor - 8), 1.5, 1.5);
+  g.fillStyle = '#e9ecf5'; g.beginPath(); g.arc(w * 0.72, hor - 34, 14, 0, 7); g.fill();
+  g.fillStyle = 'rgba(150,158,182,0.5)'; g.beginPath(); g.arc(w * 0.72 - 4, hor - 37, 3.5, 0, 7); g.arc(w * 0.72 + 5, hor - 30, 2.5, 0, 7); g.fill();
+  g.fillStyle = '#232a5c'; g.fillRect(0, hor, w, h - hor);
   g.fillStyle = '#20242e';
   g.beginPath(); g.moveTo(w / 2 - 10, hor); g.lineTo(w / 2 + 10, hor); g.lineTo(w * 0.94, h); g.lineTo(w * 0.06, h); g.fill();
   g.strokeStyle = c; g.lineWidth = 2;
@@ -305,6 +334,347 @@ drift(g, w, h, c, t) {
   g.fillStyle = '#e8e6f5'; g.fillRect(rx - 10, ry, 20, 3);
   g.fillStyle = '#3b2440'; g.fillRect(rx - 4, ry - 13, 9, 11);
   g.fillStyle = '#e0b08a'; g.beginPath(); g.arc(rx + 1, ry - 16, 3.5, 0, 7); g.fill();
+},
+
+daily(g, w, h, c, t) {
+  bgFill(g, w, h, '#14151b');
+  const pw = 84, gap = 14, top = 30, x0 = (w - 3 * pw - 2 * gap) / 2;
+  const pulse = t ? Math.floor(t * 1.2) % 3 : -1;
+  ['Penta', 'Sudoku', 'Arrow Flux'].forEach((name, i) => {
+    const x = x0 + i * (pw + gap);
+    g.fillStyle = i === pulse ? '#26283a' : '#1c1d29';
+    g.beginPath(); g.roundRect(x, top, pw, pw, 8); g.fill();
+    if (i === 0) {
+      const cols = ['#3aa45f', '#c5a93b', '#2b2b3c', '#3aa45f', '#3aa45f'];
+      for (let r = 0; r < 3; r++) for (let k = 0; k < 5; k++) {
+        g.fillStyle = r === 2 ? '#3aa45f' : cols[(k + r * 2) % 5];
+        g.fillRect(x + 9 + k * 14, top + 18 + r * 16, 12, 12);
+      }
+    } else if (i === 1) {
+      g.strokeStyle = '#7f8cff'; g.lineWidth = 1.5;
+      g.strokeRect(x + 15, top + 15, 54, 54);
+      g.beginPath();
+      for (let k = 1; k < 3; k++) { g.moveTo(x + 15 + k * 18, top + 15); g.lineTo(x + 15 + k * 18, top + 69); g.moveTo(x + 15, top + 15 + k * 18); g.lineTo(x + 69, top + 15 + k * 18); }
+      g.stroke();
+      g.fillStyle = '#cfd3ea'; g.font = 'bold 11px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      [[0, 0, 5], [1, 1, 3], [2, 0, 8], [0, 2, 1], [2, 2, 9]].forEach(([a, b, n]) => g.fillText(n, x + 24 + a * 18, top + 25 + b * 18));
+    } else {
+      g.strokeStyle = '#e8e8e2'; g.fillStyle = '#e8e8e2'; g.lineWidth = 3;
+      const arrows = [[[18, 20], [18, 46], [44, 46]], [[60, 66], [60, 30]], [[30, 66], [52, 66]]];
+      for (const pts of arrows) {
+        g.beginPath(); g.moveTo(x + pts[0][0], top + pts[0][1]);
+        for (const p of pts.slice(1)) g.lineTo(x + p[0], top + p[1]);
+        g.stroke();
+        const [a, b] = [pts[pts.length - 2], pts[pts.length - 1]];
+        const dx = Math.sign(b[0] - a[0]), dy = Math.sign(b[1] - a[1]);
+        g.beginPath();
+        g.moveTo(x + b[0] + dx * 7, top + b[1] + dy * 7);
+        g.lineTo(x + b[0] - dy * 5, top + b[1] + dx * 5);
+        g.lineTo(x + b[0] + dy * 5, top + b[1] - dx * 5);
+        g.fill();
+      }
+    }
+    g.fillStyle = '#9b9bab'; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    g.fillText(name, x + pw / 2, top + pw + 18);
+  });
+  g.fillStyle = c; g.font = 'bold 12px system-ui, sans-serif';
+  g.fillText('same puzzles for everyone, every day', w / 2, h - 12);
+},
+
+sand(g, w, h, c, t) {
+  const S = 4, cw = Math.floor(w / S), ch = Math.floor(h / S);
+  const EMPTY = 0, WALL = 1, SAND = 2, WATER = 3;
+  const stepSim = st => {
+    const { grid } = st;
+    st.tick++;
+    for (let y = ch - 2; y >= 0; y--) {
+      for (let k = 0; k < cw; k++) {
+        const x = st.tick & 1 ? k : cw - 1 - k, i = y * cw + x, v = grid[i];
+        if (v !== SAND && v !== WATER) continue;
+        const below = i + cw, d = hash(i + st.tick) < 0.5 ? -1 : 1;
+        const open = j => grid[j] === EMPTY || (v === SAND && grid[j] === WATER);
+        const mv = j => { const o = grid[j]; grid[j] = v; grid[i] = o; };
+        if (open(below)) { mv(below); continue; }
+        if (x + d >= 0 && x + d < cw && open(below + d)) { mv(below + d); continue; }
+        if (v === WATER && x + d >= 0 && x + d < cw && grid[i + d] === EMPTY) mv(i + d);
+      }
+    }
+    if (st.tick % 2 === 0) {
+      const sx = Math.floor(cw * 0.3 + Math.sin(st.tick * 0.05) * 6);
+      if (grid[sx] === EMPTY) grid[sx] = SAND;
+      const wx = Math.floor(cw * 0.72);
+      if (grid[wx] === EMPTY) grid[wx] = WATER;
+    }
+  };
+  if (!this._sand) {
+    const grid = new Uint8Array(cw * ch);
+    for (let x = 0; x < cw; x++) grid[(ch - 1) * cw + x] = WALL;
+    for (let y = ch - 12; y < ch - 1; y++) { grid[y * cw + Math.floor(cw * 0.5)] = WALL; }
+    for (let x = Math.floor(cw * 0.12); x < Math.floor(cw * 0.42); x++) grid[Math.floor(ch * 0.55) * cw + x] = WALL;
+    this._sand = { grid, tick: 0, last: 0 };
+    for (let k = 0; k < 420; k++) stepSim(this._sand);
+  }
+  const st = this._sand;
+  if (t) { const n = Math.min(3, Math.floor((t - st.last) * 40)); if (n > 0) { for (let k = 0; k < n; k++) stepSim(st); st.last = t; } }
+  bgFill(g, w, h, '#0b0b0d');
+  const pal = ['#0b0b0d', '#6b6f7a', '#e8c35a', '#2f7fd6'];
+  for (let i = 0; i < st.grid.length; i++) {
+    const v = st.grid[i];
+    if (!v) continue;
+    g.fillStyle = v === SAND && hash(i) < 0.3 ? '#d9b14a' : pal[v];
+    g.fillRect((i % cw) * S, Math.floor(i / cw) * S, S, S);
+  }
+},
+
+cycle(g, w, h, c, t) {
+  const cs = 7, gw = Math.floor(w / cs), gh = Math.floor(h / cs);
+  if (!this._cy) {
+    let sd = 9;
+    const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+    const used = new Uint8Array(gw * gh), DXc = [0, 1, 0, -1], DYc = [-1, 0, 1, 0];
+    const ps = [{ x: 8, y: 6, d: 1, path: [] }, { x: gw - 9, y: gh - 7, d: 3, path: [] }];
+    const free = (x, y) => x >= 0 && y >= 0 && x < gw && y < gh && !used[y * gw + x];
+    for (let k = 0; k < 160; k++) {
+      for (const p of ps) {
+        const opts = [p.d, (p.d + 1) % 4, (p.d + 3) % 4].filter(d => free(p.x + DXc[d], p.y + DYc[d]));
+        if (!opts.length) continue;
+        if (!opts.includes(p.d) || rnd() < 0.12) p.d = opts[(rnd() * opts.length) | 0];
+        p.x += DXc[p.d]; p.y += DYc[p.d];
+        used[p.y * gw + p.x] = 1;
+        p.path.push([p.x, p.y]);
+      }
+    }
+    this._cy = ps.map(p => p.path);
+  }
+  bgFill(g, w, h, '#12131a');
+  const shown = t ? 30 + Math.floor(t * 25) % 140 : 120;
+  const cols = ['#167f94', '#9a2d63'], heads = ['#28e0ff', '#ff4fa3'];
+  this._cy.forEach((path, i) => {
+    const n = Math.min(shown, path.length);
+    g.fillStyle = cols[i];
+    for (let k = 0; k < n; k++) g.fillRect(path[k][0] * cs, path[k][1] * cs, cs, cs);
+    if (n) { g.fillStyle = heads[i]; g.fillRect(path[n - 1][0] * cs - 1, path[n - 1][1] * cs - 1, cs + 2, cs + 2); }
+  });
+},
+
+filesend(g, w, h, c, t) {
+  bgFill(g, w, h, '#12131a');
+  const dev = (x, y, dw, dh) => {
+    g.strokeStyle = '#e8e8e2'; g.lineWidth = 2.5;
+    g.beginPath(); g.roundRect(x, y, dw, dh, 8); g.stroke();
+    g.fillStyle = '#1e1f28'; g.fillRect(x + 7, y + 8, dw - 14, dh - 20);
+  };
+  dev(36, 34, 74, 110);
+  dev(204, 48, 64, 96);
+  const file = (x, y, col) => {
+    g.fillStyle = col;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + 18, y); g.lineTo(x + 26, y + 8); g.lineTo(x + 26, y + 32); g.lineTo(x, y + 32); g.closePath(); g.fill();
+  };
+  file(48, 52, c); file(62, 92, c);
+  const p = t ? (t * 0.6) % 1 : 0.45;
+  for (let i = 0; i < 6; i++) {
+    const x = 120 + i * 13;
+    g.fillStyle = i / 6 < p ? c : '#2c3d34';
+    g.beginPath(); g.arc(x, 90, 3.2, 0, 7); g.fill();
+  }
+  file(222, 74, p > 0.95 || !t ? c : '#2c3d34');
+  g.fillStyle = '#9b9bab'; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center';
+  g.fillText('direct, nothing uploaded', w / 2, h - 12);
+},
+
+secret(g, w, h, c, t) {
+  bgFill(g, w, h, '#14121a');
+  const open = t ? Math.min(1, (t % 3) / 1.2) : 0;
+  g.fillStyle = '#e8e6dc';
+  g.beginPath(); g.roundRect(48, 32, 168, 112, 10); g.fill();
+  const widths = [130, 104, 122, 72];
+  widths.forEach((bw, i) => {
+    g.fillStyle = open > 0.6 ? '#4a4558' : '#bdb9ad';
+    if (open > 0.6) { g.font = '12px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText(['gate code 4471', 'wifi: harbor-5g', 'pw: blue-otter-92', 'see you at 7'][i], 64, 58 + i * 22); }
+    else g.fillRect(64, 48 + i * 22, bw, 9);
+  });
+  const lx = 216, ly = 104;
+  g.fillStyle = c;
+  g.beginPath(); g.roundRect(lx - 24, ly - 4, 48, 42, 7); g.fill();
+  g.strokeStyle = c; g.lineWidth = 6;
+  g.beginPath(); g.arc(lx, ly - 4 - open * 10, 15, Math.PI, 0); g.stroke();
+  g.fillStyle = '#14121a';
+  g.beginPath(); g.arc(lx, ly + 14, 5, 0, 7); g.fill();
+  g.fillStyle = '#9b9bab'; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center';
+  g.fillText('encrypted inside the link', w / 2, h - 12);
+},
+
+qr(g, w, h, c, t) {
+  bgFill(g, w, h, '#14151d');
+  if (!this._qr) {
+    // a real code from QR Studio's encoder; it scans to the playground
+    const s = 29, raw = atob('/klz/BHO0G66xLt05mXbonEuwSH5B/qqr+Ad6QDvtV4jqbQSebAI7voulCagzeW+jHcmj3IhZx2/uvbVxlruplNo+Djm4equq+rm+ABMTF/6cWtwWdkbuvPPhdGAze6pDHMF4fMv7J3tgA=='), m = [];
+    for (let y = 0; y < s; y++) { m.push([]); for (let x = 0; x < s; x++) { const i = y * s + x; m[y].push((raw.charCodeAt(i >> 3) >> (7 - (i & 7))) & 1); } }
+    this._qr = m;
+  }
+  const m = this._qr, s = m.length, cell = Math.floor(132 / (s + 2)), size = s * cell, x0 = Math.round((w - size) / 2), y0 = Math.round((h - size) / 2);
+  g.fillStyle = '#ffffff';
+  g.beginPath(); g.roundRect(x0 - cell * 2, y0 - cell * 2, size + cell * 4, size + cell * 4, 8); g.fill();
+  const shown = t ? Math.floor(t * 300) % (s * s + 150) : s * s;
+  for (let y = 0, k = 0; y < s; y++) for (let x = 0; x < s; x++, k++) {
+    if (!m[y][x] || k > shown) continue;
+    const fin = (x < 7 && y < 7) || (x >= s - 7 && y < 7) || (x < 7 && y >= s - 7);
+    g.fillStyle = fin ? '#1a1a18' : '#3d47b8';
+    if (fin) g.fillRect(x0 + x * cell, y0 + y * cell, cell, cell);
+    else { g.beginPath(); g.roundRect(x0 + x * cell + 0.3, y0 + y * cell + 0.3, cell - 0.6, cell - 0.6, cell * 0.35); g.fill(); }
+  }
+},
+
+photo(g, w, h, c, t) {
+  bgFill(g, w, h, '#15131a');
+  g.fillStyle = '#406fa0';
+  g.beginPath(); g.roundRect(26, 26, 120, 92, 8); g.fill();
+  g.fillStyle = '#2e7a50';
+  g.beginPath(); g.moveTo(26, 118); g.lineTo(62, 76); g.lineTo(88, 100); g.lineTo(114, 70); g.lineTo(146, 108); g.lineTo(146, 118); g.closePath(); g.fill();
+  g.fillStyle = '#ffd166'; g.beginPath(); g.arc(126, 46, 9, 0, 7); g.fill();
+  const cleanAt = t ? (t % 4) / 4 : 0;
+  const rows = ['12.971, 77.595', '2026-09-14 18:42', 'Pixelcorp P7 Pro', 'SN12345'];
+  g.font = '11px system-ui, sans-serif'; g.textAlign = 'left';
+  rows.forEach((r, i) => {
+    const gone = t && cleanAt > 0.35 + i * 0.12;
+    g.fillStyle = gone ? '#3a3a44' : '#ff5a52';
+    g.beginPath(); g.arc(166, 42 + i * 22, 3.5, 0, 7); g.fill();
+    g.fillStyle = gone ? '#4a4a55' : '#e8e8e2';
+    g.fillText(gone ? 'removed' : r, 176, 46 + i * 22);
+  });
+  if (!(t && cleanAt > 0.6)) { g.fillStyle = c; g.beginPath(); g.arc(80, 70, 9, 0, 7); g.fill(); g.beginPath(); g.moveTo(72, 74); g.lineTo(88, 74); g.lineTo(80, 88); g.fill(); }
+  g.fillStyle = '#9b9bab'; g.textAlign = 'center';
+  g.fillText('same pixels, no hidden details', w / 2, h - 12);
+},
+
+squeeze(g, w, h, c, t) {
+  bgFill(g, w, h, '#121417');
+  const p = t ? (Math.sin(t * 1.6) + 1) / 2 : 0;
+  const full = 210, small = full * (0.18 + 0.82 * p);
+  g.fillStyle = '#3a3d48';
+  g.beginPath(); g.roundRect(46, 46, full, 26, 6); g.fill();
+  g.fillStyle = '#e8e8e2'; g.font = 'bold 13px system-ui, sans-serif'; g.textAlign = 'left';
+  g.fillText('7.7 MB  original', 56, 64);
+  g.fillStyle = c;
+  g.beginPath(); g.roundRect(46, 96, Math.max(22, small), 26, 6); g.fill();
+  g.fillStyle = '#e8e8e2';
+  const kb = Math.round(138 + p * 7000);
+  g.fillText(kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB', 56 + Math.max(22, small) + 6, 114);
+  g.fillStyle = '#9b9bab'; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center';
+  g.fillText('compress, resize, convert, nothing uploaded', w / 2, h - 14);
+},
+
+gif(g, w, h, c, t) {
+  bgFill(g, w, h, '#16140f');
+  const bars = ['#ff2d2d', '#00c853', '#ffd600', '#2962ff', '#ff40ff', '#00e5ff'];
+  const fx = 40, fy = 34, fw = 150, fh = 84;
+  bars.forEach((col, i) => { g.fillStyle = col; g.fillRect(fx + i * fw / 6, fy, fw / 6 + 0.5, fh); });
+  const a = (t || 0.4) * 1.3;
+  g.strokeStyle = '#ffffff'; g.lineWidth = 3;
+  g.beginPath();
+  g.moveTo(fx + fw / 2 - Math.cos(a) * 70, fy + fh / 2 - Math.sin(a) * 30);
+  g.lineTo(fx + fw / 2 + Math.cos(a) * 70, fy + fh / 2 + Math.sin(a) * 30);
+  g.stroke();
+  g.strokeStyle = c; g.lineWidth = 2;
+  g.strokeRect(fx - 1, fy - 1, fw + 2, fh + 2);
+  for (let i = 0; i < 4; i++) {
+    g.fillStyle = i === (Math.floor((t || 0) * 6) % 4) ? c : '#3a362a';
+    g.fillRect(fx + i * 39, fy + fh + 12, 33, 8);
+  }
+  g.fillStyle = c;
+  g.beginPath(); g.roundRect(212, 60, 58, 32, 6); g.fill();
+  g.fillStyle = '#16140f'; g.font = 'bold 15px system-ui, sans-serif'; g.textAlign = 'center';
+  g.fillText('GIF', 241, 81);
+  g.fillStyle = '#9b9bab'; g.font = '11px system-ui, sans-serif';
+  g.fillText('made on your device', w / 2, h - 12);
+},
+
+rec(g, w, h, c, t) {
+  bgFill(g, w, h, '#141418');
+  g.fillStyle = '#2a2c38'; g.beginPath(); g.roundRect(30, 22, 244, 126, 8); g.fill();
+  g.fillStyle = '#e8e6dc'; g.fillRect(40, 32, 224, 106);
+  g.fillStyle = '#c8c4b8'; g.fillRect(40, 32, 224, 12);
+  [150, 120, 170, 96].forEach((bw, i) => { g.fillStyle = '#b4b0a4'; g.fillRect(54, 56 + i * 18, bw, 8); });
+  const blink = !t || Math.floor(t * 2) % 2 === 0;
+  g.fillStyle = c; g.beginPath(); g.roundRect(40, 142, 86, 20, 10); g.fill();
+  g.fillStyle = blink ? '#ffffff' : c; g.beginPath(); g.arc(52, 152, 4, 0, 7); g.fill();
+  const secs = Math.floor(t || 84);
+  g.fillStyle = '#ffffff'; g.font = 'bold 11px system-ui, sans-serif'; g.textAlign = 'left';
+  g.fillText('REC ' + Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0'), 62, 156);
+  g.fillStyle = '#ffffff'; g.beginPath(); g.arc(242, 116, 24, 0, 7); g.fill();
+  g.fillStyle = '#f0b08a'; g.beginPath(); g.arc(242, 116, 21, 0, 7); g.fill();
+  g.fillStyle = '#5a3c32'; g.beginPath(); g.arc(242, 110, 8, 0, 7); g.fill();
+  g.beginPath(); g.arc(242, 132, 12, Math.PI, 0); g.fill();
+},
+
+typerace(g, w, h, c, t) {
+  bgFill(g, w, h, '#11141c');
+  const cars = [['#ffd166', 0.9], ['#28e0ff', 0.75], ['#ff4fa3', 0.62]];
+  cars.forEach(([col, sp], i) => {
+    const y = 30 + i * 30;
+    g.strokeStyle = '#2a3040'; g.lineWidth = 2; g.setLineDash([5, 5]);
+    g.beginPath(); g.moveTo(20, y + 10); g.lineTo(w - 20, y + 10); g.stroke();
+    g.setLineDash([]);
+    const x = 30 + ((t * sp * 0.22 + 0.25 + i * 0.12) % 1) * (w - 70);
+    g.fillStyle = col;
+    g.beginPath(); g.roundRect(x, y - 3, 30, 12, [3, 7, 3, 3]); g.fill();
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x + 12, y, 9, 5);
+  });
+  const words = 'the quick ferry left at six'.split('');
+  const done = t ? Math.floor((t * 6) % (words.length + 8)) : 14;
+  g.font = '15px system-ui, sans-serif'; g.textAlign = 'left';
+  let x = 24;
+  words.forEach((ch, i) => {
+    g.fillStyle = i < done ? '#ecebe4' : '#5d6272';
+    g.fillText(ch, x, 140);
+    if (i === done) { g.fillStyle = c; g.fillRect(x - 1, 127, 2, 17); }
+    x += g.measureText(ch).width;
+  });
+},
+
+sketch(g, w, h, c, t) {
+  bgFill(g, w, h, '#dfe6ed');
+  g.fillStyle = '#fff';
+  g.beginPath(); g.roundRect(14, 14, 186, 143, 8); g.fill();
+  const path = [[50, 120], [50, 80], [100, 45], [150, 80], [150, 120], [50, 120], [150, 80], [50, 80], [85, 120], [85, 95], [110, 95], [110, 120]];
+  const len = path.length - 1, prog = t ? (t * 2.2) % (len + 3) : len + 3;
+  g.strokeStyle = '#18202c'; g.lineWidth = 4; g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(path[0][0], path[0][1]);
+  for (let i = 1; i <= len && i - 1 < prog; i++) {
+    const f = Math.min(1, prog - (i - 1));
+    g.lineTo(path[i - 1][0] + (path[i][0] - path[i - 1][0]) * f, path[i - 1][1] + (path[i][1] - path[i - 1][1]) * f);
+  }
+  g.stroke();
+  g.fillStyle = '#e5383b'; g.beginPath(); g.arc(150, 40, 12, 0, 7); g.fill();
+  const lines = [['#28e0ff', 'tent?'], ['#ffd166', 'castle'], ['#1f9d55', 'Cy guessed it!']];
+  g.font = '12px system-ui, sans-serif'; g.textAlign = 'left';
+  lines.forEach(([col, txt], i) => {
+    if (prog < 4 + i * 3) return;
+    g.fillStyle = '#fff'; g.beginPath(); g.roundRect(208, 24 + i * 32, 84, 24, 6); g.fill();
+    g.fillStyle = col === '#1f9d55' ? col : '#18202c';
+    g.fillText(txt, 215, 40 + i * 32);
+  });
+  g.fillStyle = '#18202c'; g.font = 'bold 15px system-ui, sans-serif'; g.textAlign = 'center';
+  g.fillText('_ _ _ _ _', 250, 150);
+},
+
+linkplay(g, w, h, c, t) {
+  bgFill(g, w, h, '#0e0f14');
+  const ps = [['#28e0ff', 'Ana', 0], ['#ff4fa3', 'Bo', 2.1], ['#ffd166', 'Cy', 4.2]];
+  ps.forEach(([col, name, ph]) => {
+    const x = w / 2 + Math.cos(t * 0.9 + ph) * 90, y = h / 2 + Math.sin(t * 1.3 + ph) * 45;
+    const r = ((t * 0.8 + ph) % 1.5);
+    if (r < 1) {
+      g.globalAlpha = 1 - r; g.strokeStyle = col; g.lineWidth = 2;
+      g.beginPath(); g.arc(x, y, 6 + r * 30, 0, 7); g.stroke(); g.globalAlpha = 1;
+    }
+    g.fillStyle = col;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + 4, y + 17); g.lineTo(x + 8, y + 11); g.lineTo(x + 15, y + 11); g.closePath(); g.fill();
+    g.font = '11px system-ui, sans-serif'; g.textAlign = 'left';
+    g.fillText(name, x + 14, y + 26);
+  });
+  g.fillStyle = '#9a9aa6'; g.font = '11px ui-monospace, Menlo, monospace'; g.textAlign = 'center';
+  g.fillText('#offer=k3v9qa.zeJyNkk1v…', w / 2, h - 12);
 },
 
 snake(g, w, h, c, t) {
@@ -1147,6 +1517,24 @@ sort(g, w, h, c, t) {
   g.strokeStyle = '#2a2638'; g.beginPath(); g.moveTo(w / 2 + 2, 14); g.lineTo(w / 2 + 2, h - 14); g.stroke();
 }
 };
+
+(function todayStatus() {
+  const el = document.getElementById('todayStatus');
+  if (!el) return;
+  const day = Math.floor((Date.now() - Date.UTC(2026, 0, 1)) / 86400000);
+  const read = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const pentaWon = d => {
+    try {
+      const r = JSON.parse(read('penta_day_' + d) || 'null');
+      return !!(r && r.done && (r.won !== undefined ? r.won : r.words.length < 6));
+    } catch (e) { return false; }
+  };
+  const solved = d => [pentaWon(d), !!read('sud_day_' + d), !!read('af_day_' + d)];
+  const n = solved(day).filter(Boolean).length;
+  let streak = 0;
+  for (let d = n === 3 ? day : day - 1; d >= 0 && solved(d).every(Boolean); d--) streak++;
+  if (n || streak) el.textContent = n + ' of 3 done today' + (streak ? ', ' + streak + '-day streak' : '');
+})();
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let hovered = null, rafId = 0;

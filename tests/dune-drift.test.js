@@ -51,3 +51,28 @@ test('a bad landing ends the run, and a press restarts it', () => {
   run('press()'); step(2); run('release()');
   assert.strictEqual(run('G.state'), 'run');
 });
+
+test('a finished run becomes a ghost link that decodes back to the same path', () => {
+  assert.ok(run('myGhost && myGhost.samples.length') > 10, 'the last run should have been recorded');
+  const code = run('encodeGhost(myGhost)');
+  assert.match(code, /^[A-Za-z0-9_-]+$/);
+  run(`globalThis.back = decodeGhost(${JSON.stringify(code)});`);
+  assert.strictEqual(run('back.score'), run('myGhost.score'));
+  assert.strictEqual(run('back.dist'), run('myGhost.dist'));
+  const dx = run('Math.max(...myGhost.samples.map((s, i) => Math.abs(s[0] - back.samples[i][0])))');
+  const dy = run('Math.max(...myGhost.samples.map((s, i) => Math.abs(s[1] - back.samples[i][1])))');
+  assert.ok(dx <= 1.01 && dy <= 1.51, `position drift x ${dx}, y ${dy}`);
+  assert.strictEqual(run(`decodeGhost('xx')`), null);
+});
+
+test('a loaded ghost rides alongside and leaves a flag where it wiped out', () => {
+  run(`ghost = back; G.state = 'menu'; press(); `); step(2); run('release()');
+  assert.strictEqual(run('G.state'), 'run');
+  step(30);
+  assert.strictEqual(run('ghostAt(ghost, G.runT).done'), false);
+  run('G.runT = 9999;'); step(1);
+  assert.strictEqual(run('ghostAt(ghost, G.runT).done'), true);
+  run('P.grounded = false; P.vy = 500; P.vx = 600; P.y = groundY(P.x) - 50; P.rot = groundDir(P.x) + 2.6;');
+  step(40);
+  assert.strictEqual(run('G.state'), 'over');
+});

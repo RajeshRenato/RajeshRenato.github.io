@@ -4,7 +4,7 @@
 //   P player start      E enemy      K keycard   H medkit   A ammo   X exit portal
 const LEVELS = [
   {
-    name: 'SECTOR 1 — PERIMETER',
+    name: 'SECTOR 1: PERIMETER',
     rows: [
       '1111111111111111',
       '1P.....2.......1',
@@ -21,7 +21,7 @@ const LEVELS = [
     ],
   },
   {
-    name: 'SECTOR 2 — STORAGE VAULTS',
+    name: 'SECTOR 2: STORAGE VAULTS',
     rows: [
       '22222222222222222222',
       '2P...2.........2...2',
@@ -40,7 +40,7 @@ const LEVELS = [
     ],
   },
   {
-    name: 'SECTOR 3 — THE CORE',
+    name: 'SECTOR 3: THE CORE',
     rows: [
       '3333333333333333333333',
       '3P...3.......4...3...3',

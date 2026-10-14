@@ -1,12 +1,23 @@
-# NEURO PILOT
+# Neuro Pilot
 
-Watch a neural network **learn to fly, live** — no libraries, no training data, no backprop.
+A neuroevolution demo. Each generation, 120 birds try to fly through a row of pipes, and each bird is steered by its own small neural network. The ones that last longest become the parents of the next generation. You can watch the best bird's network fire in real time, follow the record time per generation on a graph, and speed evolution up to 10x or 60x.
 
-120 birds per generation, each piloted by a tiny from-scratch MLP (4 inputs → 6 tanh hidden → 1 output). Birds that survive longer get more offspring; children are mutated copies of the best parents (elitism + mutation — classic neuroevolution). Within ~15–30 generations the flock goes from faceplanting into the first pipe to threading gaps indefinitely.
+## Play
 
-- Live visualization of the **champion's brain**: node activations and weight signs/strengths, updating every frame
-- Record-per-generation fitness graph
-- 1× / 10× / 60× evolution speed
-- Seedable RNG so runs are reproducible (and testable)
+Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder.
 
-Single HTML file — open `index.html` and let it cook.
+## Controls
+
+| Input | Action |
+| --- | --- |
+| 1x / 10x / 60x | simulation speed |
+| restart evolution | start over from random networks |
+
+## How it works
+
+- Each network has 4 inputs, 6 tanh hidden units, and 1 tanh output. The inputs are the vertical offset to the next gap, the distance to the next pipe, the bird's vertical speed, and a constant 1. If the output is above zero, the bird flaps.
+- A bird's fitness is how many seconds it stays alive. A generation ends when every bird has crashed or after 90 seconds.
+- The top 25% become parents. The best two are copied unchanged, and the rest of the new population are mutated copies of random parents: each weight has a 15% chance of being nudged by up to 0.5.
+- There's no backpropagation and no training data. The networks only improve through selection and mutation.
+- The brain panel draws the current best bird's network. Line color shows a weight's sign, line thickness its size, and node brightness its activation.
+- The random number generator is a seedable mulberry32.

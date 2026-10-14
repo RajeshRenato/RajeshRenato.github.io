@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffd166'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>PIXEL LOGIC — neon nonograms</title>
+<title>Pixel Logic</title>
 <style>
   :root { --bg:#0a0618; --gold:#ffd166; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
@@ -46,18 +46,18 @@
   p.hint { opacity:.55; font-size:12px; margin-top:12px; text-align:center; max-width:560px; }
   @media (max-width:520px) { .cell { width:21px; height:21px; } }
 </style>
-<meta property="og:title" content="PIXEL LOGIC — browser game">
-<meta property="og:description" content="Neon nonograms — every random picture is solver-verified, so pure deduction always wins.">
+<meta property="og:title" content="Pixel Logic">
+<meta property="og:description" content="Nonograms. Every random picture is checked by a solver, so it can always be solved by logic alone.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/pixel-logic/">
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/pixel-logic/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="Neon nonograms — every random picture is solver-verified, so pure deduction always wins.">
+<meta name="description" content="Nonograms. Every random picture is checked by a solver, so it can always be solved by logic alone.">
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <h1>PIXEL LOGIC</h1>
-<div id="sub">the numbers are runs of filled cells, in order — deduce the picture</div>
+<div id="sub">the numbers are runs of filled cells, in order. Work out the picture.</div>
 <div id="bar">
   <span class="stat">level <b id="lvl">1</b></span>
   <span class="stat">size <b id="size">5</b></span>
@@ -69,7 +69,7 @@
   <button id="shareBtn">share seed</button>
 </div>
 <div id="wrap"><div id="boardGrid"></div><div id="overlay"><div class="t"></div><div class="s"></div><button id="nextBtn">next level</button></div></div>
-<p class="hint">every puzzle is generated, then verified line-solvable by the built-in solver before you see it —
+<p class="hint">every puzzle is generated, then checked by the built-in solver before you see it,
 no guessing ever needed, and the solution is unique. right-click (or the × tool) marks empties. seed is in the URL.</p>
 <script>
 'use strict';
@@ -281,7 +281,7 @@ function win() {
   hud();
   const o = $('overlay');
   o.querySelector('.t').textContent = '✦ SOLVED ✦';
-  o.querySelector('.s').textContent = N + '×' + N + ' — the picture is complete';
+  o.querySelector('.s').textContent = N + '×' + N + '. The picture is complete.';
   o.classList.add('show');
 }
 
@@ -295,7 +295,7 @@ function checkErrors() {
       el.classList.remove('bad'); void el.offsetWidth; el.classList.add('bad');
     }
   }
-  $('sub').textContent = bad === 0 ? 'no mistakes so far — keep deducing' : bad + ' filled cell(s) are wrong — flashing red';
+  $('sub').textContent = bad === 0 ? 'no mistakes so far' : bad + ' filled cell(s) are wrong, shown in red';
   return bad;
 }
 
@@ -314,9 +314,9 @@ $('shareBtn').addEventListener('click', async () => {
   history.replaceState(null, '', '#' + seed + '.' + level);
   try {
     await navigator.clipboard.writeText(location.href);
-    $('sub').textContent = 'link copied — same seed, same picture, race a friend';
+    $('sub').textContent = 'link copied. A friend who opens it gets the same picture.';
   } catch (e) {
-    $('sub').textContent = 'copy blocked — grab the URL from the address bar';
+    $('sub').textContent = 'copy blocked. Copy the URL from the address bar.';
   }
 });
 

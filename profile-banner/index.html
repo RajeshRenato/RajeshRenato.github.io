@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff4fa3'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>PROFILE BANNER — animated GitHub profile banner generator</title>
+<title>Profile Banner</title>
 <style>
   :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --pink:#ff4fa3; --dim:#7684a8; }
   * { box-sizing: border-box; }
@@ -31,7 +31,7 @@
   #how { max-width:640px; margin-top:22px; font-size:12px; color:var(--dim); line-height:1.8; }
   #how code { background:var(--panel); padding:1px 6px; border-radius:4px; color:#8affc9; }
 </style>
-<meta property="og:title" content="PROFILE BANNER — browser game">
+<meta property="og:title" content="Profile Banner">
 <meta property="og:description" content="Animated SVG banner generator for a GitHub profile.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/profile-banner/">
@@ -42,7 +42,7 @@
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <h1>PROFILE BANNER</h1>
-<div id="sub">generate an animated SVG banner for your GitHub profile README — no accounts, no tracking, yours forever</div>
+<div id="sub">make an animated SVG banner for your GitHub profile README. No account needed.</div>
 <div id="form">
   <label>NAME / HANDLE <input type="text" id="name" value="Rajesh" maxlength="24"></label>
   <label>TAGLINE <input type="text" id="tagline" value="I build things that run in your browser" maxlength="48"></label>
@@ -190,7 +190,7 @@ $('dlBtn').addEventListener('click', () => {
   a.download = 'banner.svg';
   a.click();
   URL.revokeObjectURL(a.href);
-  toast('banner.svg downloaded — commit it to your profile repo');
+  toast('banner.svg downloaded. Commit it to your profile repo.');
 });
 $('copySvg').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(update()); toast('SVG copied'); }
@@ -199,7 +199,7 @@ $('copySvg').addEventListener('click', async () => {
 $('copyMd').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText('![banner](banner.svg)\n');
-    toast('markdown copied — paste at the top of your profile README');
+    toast('markdown copied. Paste it at the top of your profile README.');
   } catch (e) { toast('copy blocked by browser'); }
 });
 

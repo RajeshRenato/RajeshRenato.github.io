@@ -1,20 +1,24 @@
 # Playground
 
-50 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+62 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/playground/
 
 MIT licensed. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+New every day: [daily puzzles](daily/), with today's Penta, Sudoku, and Arrow Flux and one streak across all three.
+
+Play friends online with no server: [Cycle Duel](cycle-duel/), [Type Race](type-race/), and [Sketch & Guess](sketch-guess/) connect browsers directly through links. The connection code is a small kit you can reuse: [LinkPlay](linkplay/).
+
 ## Highlights
 
-### [Vice City](vicecity/)
+### [Miami Nights](miami-nights/)
 
-![Vice City gameplay](docs/media/vicecity.gif)
+![Miami Nights gameplay](docs/media/miami-nights.gif)
 
-Open-world driving in a procedural city with traffic AI, police chases, and delivery jobs. The street-level 3D camera is drawn on a plain 2D canvas, with a top-down view one key away.
+A GTA Vice City-style open world: a procedural Miami with traffic AI, police chases, and delivery jobs. The street-level 3D camera is drawn on a plain 2D canvas, with a top-down view one key away.
 
-[Play Vice City](https://rajeshrenato.github.io/playground/vicecity/)
+[Play Miami Nights](https://rajeshrenato.github.io/playground/miami-nights/)
 
 ### [Breach](breach/)
 
@@ -24,13 +28,13 @@ First-person shooter on a raycasting engine written from scratch. Every wall tex
 
 [Play Breach](https://rajeshrenato.github.io/playground/breach/)
 
-### [Road Rash](road-rash/)
+### [Midnight Racing](midnight-racing/)
 
-![Road Rash gameplay](docs/media/road-rash.gif)
+![Midnight Racing gameplay](docs/media/midnight-racing.gif)
 
-Motorcycle combat racing on a pseudo-3D road. Punch and kick rivals, take their clubs, dodge two-way traffic, and spend your winnings on faster bikes. Three difficulty levels.
+Road Rash-style bike combat racing at midnight, on a pseudo-3D road. Punch and kick rivals, take their clubs, dodge two-way traffic, and spend your winnings on faster bikes. Share a link to your run and friends race your ghost.
 
-[Play Road Rash](https://rajeshrenato.github.io/playground/road-rash/)
+[Play Midnight Racing](https://rajeshrenato.github.io/playground/midnight-racing/)
 
 ### [Arrow Flux](arrow-flux/)
 
@@ -46,7 +50,10 @@ Slide tangled arrows off a packed board. The generator builds each board in solu
 
 | Project | What it is |
 | --- | --- |
-| [dune-drift](dune-drift/) | One-button endless ride over rolling dunes; backflips at sunset |
+| [cycle-duel](cycle-duel/) | Light-cycle duels. Play a friend online with just a link, on one keyboard, or against a bot |
+| [type-race](type-race/) | Typing races with friends over a link, no server. Or race your own best pace |
+| [sketch-guess](sketch-guess/) | Take turns drawing a word while friends guess it. Up to 8 players, connected by links |
+| [dune-drift](dune-drift/) | One-button endless ride over rolling dunes. Share a link and friends ride against your ghost |
 | [pixel-logic](pixel-logic/) | Nonograms, solver-verified so pure deduction always wins |
 | [glow-out](glow-out/) | Lights Out with hints computed from a live solution set |
 | [flood-rush](flood-rush/) | Flood-fill the grid and beat a greedy bot's par |
@@ -64,7 +71,7 @@ Slide tangled arrows off a packed board. The generator builds each board in solu
 
 | Project | What it is |
 | --- | --- |
-| [coil](coil/) | Snake; speeds up as you grow, swipe to steer on a phone |
+| [coil](coil/) | Snake. It speeds up as you grow. Swipe to steer on a phone |
 | [brickfall](brickfall/) | Brick-breaker with eight levels and angle-based paddle physics |
 | [slide-2048](slide-2048/) | The sliding-tile game, by keyboard or swipe |
 | [stackfall](stackfall/) | Falling tetrominoes with hold, ghost piece, and a 7-bag randomizer |
@@ -77,11 +84,19 @@ Slide tangled arrows off a packed board. The generator builds each board in solu
 
 | Project | What it is |
 | --- | --- |
+| [linkplay](linkplay/) | A small kit for making browser games multiplayer with links and no server. Cycle Duel, Type Race, and Sketch & Guess use it |
+| [file-send](file-send/) | Send files straight to a friend's browser. Nothing is uploaded |
+| [secret-note](secret-note/) | Write a note and get a link with it encrypted inside. Nothing is stored |
+| [qr-studio](qr-studio/) | QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark |
+| [photo-privacy](photo-privacy/) | See and remove the hidden location, date, and device details in photos |
+| [image-squeeze](image-squeeze/) | Compress, resize, and convert images, or fit them under a size limit |
+| [video-to-gif](video-to-gif/) | Trim a clip and turn it into a GIF, made on your device. No watermark |
+| [screen-recorder](screen-recorder/) | Record your screen with your voice and a camera bubble. No install, no watermark |
 | [json-studio](json-studio/) | Format, validate, and explore JSON in a collapsible tree, offline |
 | [regex-playground](regex-playground/) | Regex tester with live highlighting, groups, and replace preview |
 | [diff-deck](diff-deck/) | Side-by-side text diff with character-level highlighting |
-| [csv-viewer](csv-viewer/) | Sort, filter, and export CSV or TSV; handles quoted fields |
-| [jwt-peek](jwt-peek/) | Decode JWTs with expiry status; tokens never leave the page |
+| [csv-viewer](csv-viewer/) | Sort, filter, and export CSV or TSV files, quoted fields included |
+| [jwt-peek](jwt-peek/) | Decode JWTs and check their expiry. Tokens never leave the page |
 | [cron-sage](cron-sage/) | Cron expressions in plain English, with the next six run times |
 | [bit-bench](bit-bench/) | 32-bit base converter with clickable bits and live bitwise ops |
 | [markdown-pad](markdown-pad/) | Markdown editor with a hand-written parser and live preview |
@@ -91,7 +106,7 @@ Slide tangled arrows off a packed board. The generator builds each board in solu
 | [focus-timer](focus-timer/) | Pomodoro timer with auto-cycling breaks and daily stats |
 | [palette-lab](palette-lab/) | Color palette generator with locking, export, and shareable URLs |
 | [pixel-forge](pixel-forge/) | Pixel-art editor with fill, undo, autosave, and PNG export |
-| [beat-grid](beat-grid/) | A 16-step drum machine; the whole beat fits in the URL |
+| [beat-grid](beat-grid/) | A 16-step drum machine. The whole beat fits in the URL |
 | [morse-coder](morse-coder/) | Morse translator with correctly timed audio and a trainer |
 | [profile-banner](profile-banner/) | Animated SVG banner generator for a GitHub profile |
 
@@ -99,13 +114,14 @@ Slide tangled arrows off a packed board. The generator builds each board in solu
 
 | Project | What it is |
 | --- | --- |
-| [flowfield](flowfield/) | Particles tracing a procedural vector field; save the result as a PNG |
-| [orbit-sandbox](orbit-sandbox/) | N-body gravity sandbox; sling planets around a star |
+| [flowfield](flowfield/) | Particles tracing a procedural vector field. Save the result as a PNG |
+| [orbit-sandbox](orbit-sandbox/) | An n-body gravity sandbox. Sling planets around a star |
 | [pendulum-chaos](pendulum-chaos/) | Twelve double pendulums diverging from near-identical starts |
-| [boid-swarm](boid-swarm/) | Flocking simulation with tunable instincts; your cursor is the predator |
+| [boid-swarm](boid-swarm/) | A flocking simulation with tunable instincts. Your cursor is the predator |
 | [life-grid](life-grid/) | Conway's Game of Life with drawing and presets |
 | [fractal-viewer](fractal-viewer/) | Mandelbrot and Julia explorer with click-to-zoom |
 | [neuro-pilot](neuro-pilot/) | 120 small neural networks learning to fly by evolution |
+| [falling-sand](falling-sand/) | Pour sand, water, oil, fire, lava, acid, and plants, and watch them react |
 | [sort-arena](sort-arena/) | Sorting algorithms racing on identical data, with op counters |
 
 ## Run locally

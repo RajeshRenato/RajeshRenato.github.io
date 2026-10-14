@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff8a5c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EM%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>MINEFIELD</title>
+<title>Minefield</title>
 <style>
   :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --orange:#ff8a5c; }
   * { box-sizing: border-box; }
@@ -33,7 +33,7 @@
   #msg.win { color:#39ff9c; text-shadow:0 0 10px #39ff9c; }
   #msg.lose { color:#ff5a7a; text-shadow:0 0 10px #ff5a7a; }
 </style>
-<meta property="og:title" content="MINEFIELD — browser game">
+<meta property="og:title" content="Minefield">
 <meta property="og:description" content="Minesweeper with three difficulties, safe first click, and best times.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/minefield/">
@@ -56,7 +56,7 @@
 </div>
 <div id="board"></div>
 <div id="msg"></div>
-<p class="hint">left click — reveal · right click — flag · first click is always safe</p>
+<p class="hint">left click to reveal, right click to flag. The first click is always safe.</p>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);

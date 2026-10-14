@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2328e0ff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>ARROW FLUX</title>
+<title>Arrow Flux</title>
 <style>
   :root { --paper:#f6f6f2; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --accent:#0b8fb0; --bad:#d8392f; --panel:#ffffff; }
   @media (prefers-color-scheme: dark) {
@@ -35,21 +35,23 @@
                    text-align:center; box-shadow:5px 6px 0 color-mix(in srgb, var(--accent) 55%, transparent); }
   #overlay h2 { margin:0 0 6px; font-size:24px; }
   #overlay p { margin:0 0 14px; color:var(--muted); }
-  #help { font-size:13px; color:var(--muted); margin:6px 16px 12px; text-align:center; max-width:620px; }
+  #help, #dailyNote { font-size:13px; color:var(--muted); margin:6px 16px 12px; text-align:center; max-width:620px; }
+  #dailyNote { margin-top:-6px; }
+  #dailyNote a { color:var(--ink); }
 </style>
-<meta property="og:title" content="ARROW FLUX — browser game">
-<meta property="og:description" content="Slide tangled arrows off a packed board; every puzzle is provably solvable.">
+<meta property="og:title" content="Arrow Flux">
+<meta property="og:description" content="Slide tangled arrows off a packed board. Every puzzle is generated to be solvable.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/arrow-flux/">
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/arrow-flux/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="Slide tangled arrows off a packed board; every puzzle is provably solvable.">
+<meta name="description" content="Slide tangled arrows off a packed board. Every puzzle is generated to be solvable.">
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <header><h1>Arrow Flux</h1></header>
 <div id="bar">
-  <span class="stat">Level <b id="lvl">1</b></span>
+  <span class="stat"><span id="lvlLabel">Level</span> <b id="lvl">1</b></span>
   <span class="stat">Left <b id="left">0</b></span>
   <span class="stat" id="hearts" title="Blocked taps cost a heart"></span>
   <span class="stat">Cleared <b id="cleared">0</b></span>
@@ -71,6 +73,7 @@
   <div id="overlay"><div class="card"><h2 id="ovT"></h2><p id="ovS"></p><button id="ovBtn"></button></div></div>
 </div>
 <p id="help">Tap an arrow to slide it out the way its head points. Anything in the straight line ahead blocks it, and a blocked tap costs a heart.</p>
+<p id="dailyNote" hidden>Today's board is the same for everyone. <a href="../daily/">See all of today's puzzles</a>.</p>
 <script>
 'use strict';
 // Arrows puzzle: an arrow slides head-first along its own body and off the board,
@@ -179,6 +182,9 @@ function generate(cols, rows, rng, maxLen) {
 // state
 const SIZES = { s: [8, 11], m: [12, 17], l: [16, 23], xl: [20, 29], xxl: [26, 37] };
 let level = 1, seed = (Date.now() % 100000) | 0, sizeMode = 'auto', cleared = 0;
+let daily = false, dayNo = 0, startT = 0;
+const DAY0 = Date.UTC(2026, 0, 1);
+function dayNumber() { return Math.floor((Date.now() - DAY0) / 86400000); }
 try {
   cleared = +(localStorage.getItem('af_cleared') || 0);
   sizeMode = localStorage.getItem('af_size2') || 'auto';
@@ -195,6 +201,7 @@ const canvas = $('board');
 const ctx = canvas.getContext('2d');
 
 function boardDims(lv) {
+  if (daily) return SIZES.l;
   if (sizeMode !== 'auto') return SIZES[sizeMode];
   const c = Math.min(22, 5 + lv);
   return [c, Math.round(c * 1.4)];
@@ -212,8 +219,11 @@ function buildPath(a) {
 }
 
 function loadLevel() {
+  dayNo = dayNumber();
   [cols, rows] = boardDims(level);
-  const rng = mulberry32((seed * 7919 + level * 104729 + cols * 31) >>> 0);
+  const rng = daily
+    ? mulberry32((dayNo * 2654435761 + 97) >>> 0)
+    : mulberry32((seed * 7919 + level * 104729 + cols * 31) >>> 0);
   const maxLen = Math.max(4, Math.round(Math.max(cols, rows) * 0.45));
   arrows = generate(cols, rows, rng, maxLen);
   occ = new Int16Array(cols * rows).fill(-1);
@@ -229,7 +239,9 @@ function loadLevel() {
   $('overlay').classList.remove('show');
   layout();
   hud();
-  try { history.replaceState(null, '', '#' + seed + '.' + level + '.' + sizeMode); } catch (e) { }
+  startT = now();
+  $('dailyNote').hidden = !daily;
+  try { history.replaceState(null, '', '#' + (daily ? 'daily' : seed + '.' + level + '.' + sizeMode)); } catch (e) { }
 }
 
 function readColors() {
@@ -259,7 +271,8 @@ function layout() {
 }
 
 function hud() {
-  $('lvl').textContent = level;
+  $('lvlLabel').textContent = daily ? 'Daily' : 'Level';
+  $('lvl').textContent = daily ? '#' + dayNo : level;
   $('left').textContent = alive;
   $('cleared').textContent = cleared;
   $('hearts').textContent = '♥'.repeat(Math.max(0, hearts)) + '♡'.repeat(Math.max(0, maxHearts - hearts));
@@ -326,10 +339,27 @@ function overlay(title, sub, btn, fn) {
   $('overlay').classList.add('show');
 }
 
+function fmtTime(secs) { return Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0'); }
+
 function win() {
   cleared++;
   try { localStorage.setItem('af_cleared', cleared); } catch (e) { }
   hud();
+  if (daily) {
+    const secs = Math.round((now() - startT) / 1000);
+    const miss = mistakes ? mistakes + (mistakes === 1 ? ' mistake' : ' mistakes') : 'no mistakes';
+    try {
+      if (!localStorage.getItem('af_day_' + dayNo)) localStorage.setItem('af_day_' + dayNo, JSON.stringify({ mistakes, secs }));
+    } catch (e) { }
+    overlay('Daily #' + dayNo + ' cleared', fmtTime(secs) + ', ' + miss, 'Copy result', async () => {
+      try {
+        await navigator.clipboard.writeText('Arrow Flux daily #' + dayNo + ': ' + fmtTime(secs) + ', ' + miss +
+          '\nhttps://rajeshrenato.github.io/playground/arrow-flux/#daily');
+        $('ovBtn').textContent = 'Copied';
+      } catch (e) { $('ovBtn').textContent = 'Copy blocked'; }
+    });
+    return;
+  }
   overlay('Board clear',
     arrows.length + ' arrows, ' + (mistakes ? mistakes + (mistakes === 1 ? ' mistake' : ' mistakes') : 'no mistakes'),
     'Next level', () => { level++; loadLevel(); });
@@ -447,11 +477,12 @@ canvas.addEventListener('pointerdown', e => {
 });
 $('hintBtn').addEventListener('click', showHint);
 $('undoBtn').addEventListener('click', undo);
-$('newBtn').addEventListener('click', () => { seed = (Math.random() * 1e6) | 0; loadLevel(); });
+$('newBtn').addEventListener('click', () => { daily = false; seed = (Math.random() * 1e6) | 0; loadLevel(); });
 const sizeSel = $('sizeSel');
 sizeSel.value = sizeMode;
 sizeSel.addEventListener('change', () => {
   sizeMode = sizeSel.value;
+  daily = false;
   try { localStorage.setItem('af_size2', sizeMode); } catch (e) { }
   loadLevel();
 });
@@ -469,7 +500,8 @@ try {
 } catch (e) { }
 
 const hm = /^#(\d+)\.(\d+)(?:\.(\w+))?$/.exec(location.hash || '');
-if (hm) {
+if (location.hash === '#daily') daily = true;
+else if (hm) {
   seed = +hm[1];
   level = Math.max(1, Math.min(500, +hm[2]));
   if (hm[3] && (hm[3] === 'auto' || SIZES[hm[3]])) { sizeMode = hm[3]; sizeSel.value = sizeMode; }

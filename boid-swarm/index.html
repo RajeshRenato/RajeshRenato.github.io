@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2364ffb4'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EB%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>BOID SWARM — flocking simulation</title>
+<title>Boid Swarm</title>
 <style>
   * { box-sizing: border-box; }
   body { margin:0; overflow:hidden; background:#06101a; }
@@ -18,13 +18,13 @@
   #panel input[type=range] { width:110px; accent-color:#64ffb4; }
   #hint { position:fixed; left:14px; bottom:12px; color:rgba(200,230,250,.5); font:12px ui-monospace,monospace; }
 </style>
-<meta property="og:title" content="BOID SWARM — browser game">
-<meta property="og:description" content="Flocking with tunable instincts — and your cursor is the hawk the whole flock fears.">
+<meta property="og:title" content="Boid Swarm">
+<meta property="og:description" content="A flocking simulation with sliders for each instinct. Your cursor is a hawk the flock flees from.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/boid-swarm/">
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/boid-swarm/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="Flocking with tunable instincts — and your cursor is the hawk the whole flock fears.">
+<meta name="description" content="A flocking simulation with sliders for each instinct. Your cursor is a hawk the flock flees from.">
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -36,7 +36,7 @@
   <label>boids <input type="range" id="count" min="40" max="400" step="20" value="160"></label>
   <label>trails <input type="checkbox" id="trails" checked></label>
 </div>
-<div id="hint">the cursor is a hawk — boids flee it · sliders tune the flock's instincts</div>
+<div id="hint">the boids flee your cursor. The sliders tune how they flock.</div>
 <script>
 'use strict';
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');

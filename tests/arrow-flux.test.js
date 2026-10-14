@@ -92,3 +92,19 @@ test('tapping free arrows clears the board, undo restores one, and the win fires
   run('showHint(); tap(hint.id); flying = []; bumps.clear(); frame(16); frame(32);');
   assert.strictEqual(run('done'), true);
 });
+
+test('the daily board is the same on every load and records the result', () => {
+  run(`daily = true; loadLevel(); globalThis.first = arrows.map(a => a.cells.join(',') + ':' + a.dir).join('|');`);
+  assert.deepStrictEqual(run('[cols, rows]'), [16, 23]);
+  run(`seed = 999; level = 7; loadLevel();`);
+  assert.strictEqual(run(`arrows.map(a => a.cells.join(',') + ':' + a.dir).join('|')`), run('first'), 'daily board must not depend on seed or level');
+  run('hearts = 99;');
+  let taps = 0;
+  while (run('alive') > 0 && taps < 3000) { run('showHint(); tap(hint.id)'); taps++; }
+  run('flying = []; bumps.clear(); frame(16); frame(32);');
+  assert.strictEqual(run('done'), true);
+  const rec = JSON.parse(run(`localStorage.getItem('af_day_' + dayNo)`));
+  assert.strictEqual(typeof rec.secs, 'number');
+  assert.strictEqual(typeof rec.mistakes, 'number');
+  run('daily = false;');
+});

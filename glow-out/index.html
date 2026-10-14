@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2339ff9c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EG%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>GLOW OUT — switch off the grid</title>
+<title>Glow Out</title>
 <style>
   :root { --bg:#0a0618; --green:#39ff9c; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
@@ -40,18 +40,18 @@
   p.hint { opacity:.55; font-size:12px; margin-top:12px; text-align:center; max-width:560px; }
   @media (max-width:520px) { .tile { width:44px; height:44px; } }
 </style>
-<meta property="og:title" content="GLOW OUT — browser game">
-<meta property="og:description" content="Lights-out with honest hints — the game tracks a live solution set, so hints are never wrong.">
+<meta property="og:title" content="Glow Out">
+<meta property="og:description" content="Lights Out: switch off every tile. Hints come from a solver that tracks every possible solution, so they are always right.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/glow-out/">
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/glow-out/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="Lights-out with honest hints — the game tracks a live solution set, so hints are never wrong.">
+<meta name="description" content="Lights Out: switch off every tile. Hints come from a solver that tracks every possible solution, so they are always right.">
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <h1>GLOW OUT</h1>
-<div id="sub">pressing a tile flips it and its neighbours — switch the whole grid off</div>
+<div id="sub">pressing a tile flips it and its neighbours. Switch the whole grid off.</div>
 <div id="bar">
   <span class="stat">level <b id="lvl">1</b></span>
   <span class="stat">lit <b id="lit">0</b></span>
@@ -63,7 +63,7 @@
   <button id="shareBtn">share seed</button>
 </div>
 <div id="board"><div id="overlay"><div class="t"></div><div class="s"></div><button id="nextBtn">next level</button></div></div>
-<p class="hint">boards are built by pressing random tiles on a dark grid, so a solution always exists —
+<p class="hint">boards are built by pressing random tiles on a dark grid, so a solution always exists.
 and because presses cancel in pairs, the hint always points at a tile that is genuinely part of one. seed is in the URL.</p>
 <script>
 'use strict';
@@ -185,7 +185,7 @@ function win() {
   hud();
   const o = $('overlay');
   o.querySelector('.t').textContent = moves === par ? '✦ PERFECT ✦' : 'LIGHTS OUT';
-  o.querySelector('.s').textContent = moves + ' presses, par ' + par + (moves === par ? ' — flawless' : '');
+  o.querySelector('.s').textContent = moves + ' presses, par ' + par + (moves === par ? '. Perfect.' : '');
   o.classList.add('show');
 }
 
@@ -218,9 +218,9 @@ $('shareBtn').addEventListener('click', async () => {
   history.replaceState(null, '', '#' + seed + '.' + level);
   try {
     await navigator.clipboard.writeText(location.href);
-    $('sub').textContent = 'link copied — same seed, same board, race a friend';
+    $('sub').textContent = 'link copied. A friend who opens it gets the same board.';
   } catch (e) {
-    $('sub').textContent = 'copy blocked — grab the URL from the address bar';
+    $('sub').textContent = 'copy blocked. Copy the URL from the address bar.';
   }
 });
 

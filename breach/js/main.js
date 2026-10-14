@@ -97,14 +97,14 @@ function render() {
     const demo = Game.map || (Game.loadLevel(0), Game.map);
     renderWalls(ctx, demo, { x: demo.player.x, y: demo.player.y, a: Game.time * 0.3 });
     drawOverlay(ctx, 'BREACH', [
-      'a raycast shooter — every wall, sprite and sound is generated in code',
+      'a raycast shooter. Every wall, sprite and sound is generated in code.',
       '',
       'WASD move · mouse or ←→ look · click/F fire · E open doors',
       'M minimap · SHIFT run',
       '',
       'clear all three sectors. find the keycards. reach the portals.',
       '',
-      '— click or press ENTER to breach —'
+      'click or press ENTER to start'
     ], '#9f7bff');
     return;
   }

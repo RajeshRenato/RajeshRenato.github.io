@@ -1,28 +1,30 @@
-# BREACH
+# Breach
 
-A first-person raycast shooter built **completely from scratch** — no engine, no libraries, no asset files. Every wall texture, enemy sprite, and sound effect is generated in code at boot.
+A first-person shooter in the style of Wolfenstein 3D, running on a raycasting engine written in plain JavaScript. Fight through three sectors of sentinel robots, find the red keycard to open locked doors, and reach the exit portal in each one. The wall textures, sprites, and sound effects are all generated in code when the page loads.
 
 ## Play
 
-Open `index.html` (or serve the folder). Click the canvas for mouse-look (pointer lock).
+Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder. Click the game to start and to lock the mouse for looking around.
+
+## Controls
 
 | Input | Action |
 | --- | --- |
-| WASD | move / strafe |
-| mouse or ← → | look |
-| click / F | fire |
-| E / SPACE | open doors |
-| M | minimap |
-| SHIFT | run |
-
-Clear three sectors: fight sentinels, find the red keycards, reach the green exit portals.
+| W A S D | move and strafe |
+| Up / down arrows | move forward and back |
+| Mouse, or left / right arrows | turn |
+| Click, F, or Ctrl | fire |
+| E or Space | open a door you're facing |
+| Shift | run |
+| M | show or hide the minimap |
+| Enter | start, or go to the next sector |
+| R | retry the sector after dying |
 
 ## How it works
 
-- **Rendering** — classic DDA raycasting: one ray per screen column walks the tile grid, returning perpendicular distance (fisheye-free) and wall-hit coordinates. Columns are drawn as 1px-wide slices from procedurally generated 64×64 texture canvases, with side shading and distance fog. A z-buffer per column clips billboard sprites (enemies, pickups, portals) rendered via the camera-plane transform.
-- **AI** — sentinels idle until they gain line of sight (a raycast) or hear gunfire, then chase with wall-sliding collision, flock separation, and melee attacks on cooldown.
-- **Combat** — cone hitscan checked against the wall ray and enemy LOS; ammo economy, medkits, keycard-locked doors.
-- **Audio** — WebAudio-synthesized blaster, hits, hurt, pickups, door, and victory stingers.
-- **Art** — wall textures (neon brick, tech panel, stone, hazard, door) and all sprites drawn onto canvases at boot.
-
-~1,300 lines across 10 modules. Headless smoke-tested (raycast math, LOS, collision, AI, doors, pickups, level flow).
+- Walls are drawn with DDA raycasting: one ray per screen column steps through the tile grid and returns the perpendicular distance, which avoids fisheye distortion. Each column is a slice of a 64 by 64 texture, darkened by distance and on one side of each wall.
+- A depth buffer of those wall distances clips the sprites (enemies, pickups, the exit portal), which are projected onto the camera plane and drawn back to front.
+- Sentinels stay put until they can see you within 9 tiles, or within 11 when you fire. Then they chase you, slide along walls, keep a little space from each other, and hit you when they get close.
+- Shots are hitscan: the nearest sentinel in a narrow cone in front of you, with no wall in the way, takes the hit. You start each sector with 100 health and 24 energy cells. Pickups give 12 more cells or 25 health.
+- Levels are stored as rows of text in `js/maps.js`. Digits 1 to 4 are wall types, D is a locked door, P is the player start, E is an enemy, K, H, and A are keycard, medkit, and ammo, and X is the exit.
+- Sounds are synthesized with the Web Audio API.

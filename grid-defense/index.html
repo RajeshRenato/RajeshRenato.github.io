@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5a7a'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EG%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>GRID DEFENSE</title>
+<title>Grid Defense</title>
 <style>
   :root { --bg:#0a0618; --red:#ff5a7a; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
@@ -25,7 +25,7 @@
            box-shadow:0 0 30px rgba(255,90,122,.2); max-width:94vw; cursor:crosshair; }
   p.hint { opacity:.55; font-size:12px; margin-top:10px; text-align:center; }
 </style>
-<meta property="og:title" content="GRID DEFENSE — browser game">
+<meta property="og:title" content="Grid Defense">
 <meta property="og:description" content="Micro tower defense: blasters and snipers vs. ever-tougher waves snaking down the path.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/grid-defense/">
@@ -245,12 +245,12 @@ function draw() {
     x.shadowBlur = 0;
     x.font = '14px "Courier New",monospace';
     x.fillStyle = '#e8e6f5';
-    x.fillText('survived ' + Math.max(0, wave - 1) + ' waves — click to retry', 300, 222);
+    x.fillText('survived ' + Math.max(0, wave - 1) + ' waves. Click to retry.', 300, 222);
   } else if (!spawning && !creeps.length) {
     x.textAlign = 'center';
     x.font = '13px "Courier New",monospace';
     x.fillStyle = 'rgba(138,255,201,0.8)';
-    x.fillText(wave === 0 ? 'build a tower or two, then send the first wave' : 'wave cleared — build up, then send the next', 300, 388);
+    x.fillText(wave === 0 ? 'build a tower or two, then send the first wave' : 'wave cleared. Build up, then send the next one.', 300, 388);
   }
 }
 

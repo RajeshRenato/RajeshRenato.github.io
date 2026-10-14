@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%239f7bff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ER%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>ROCK BLASTER</title>
+<title>Rock Blaster</title>
 <style>
   :root { --bg:#0a0618; --violet:#9f7bff; }
   * { box-sizing: border-box; }
@@ -18,7 +18,7 @@
            box-shadow:0 0 30px rgba(159,123,255,.25); max-width:94vw; }
   p.hint { opacity:.55; font-size:12px; margin-top:10px; }
 </style>
-<meta property="og:title" content="ROCK BLASTER — browser game">
+<meta property="og:title" content="Rock Blaster">
 <meta property="og:description" content="Vector-style space shooter. Thrust, drift, wrap the screen, split the rocks to dust.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/rockblaster/">
@@ -268,7 +268,7 @@ function draw() {
   x.fillText('▲'.repeat(Math.max(0, lives)) + '  BEST ' + best, W - 12, 24);
 
   if (state === 'menu') overlay('ROCK BLASTER', 'press any key to fly');
-  else if (state === 'over') overlay('SHIP LOST', 'score ' + score + ' — R to retry');
+  else if (state === 'over') overlay('SHIP LOST', 'score ' + score + '. R to retry');
 }
 
 addEventListener('keydown', e => {

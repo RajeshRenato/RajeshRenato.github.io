@@ -1,12 +1,25 @@
-# PIXEL LOGIC
+# Pixel Logic
 
-Neon nonograms (picross): the numbers on each row and column are the runs of filled cells, in order. Deduce the hidden picture.
+Nonograms (also called Picross). The numbers beside each row and above each column give the lengths of the runs of filled cells in that line, in order. Fill in the grid until every clue matches and the picture appears. Levels start at 5x5 and grow by one each level up to 12x12, with thicker guide lines every 5 cells.
 
-**No guessing, ever.** Puzzles are generated randomly, then run through the built-in line solver before you see them — only boards it can fully deduce are served, which also guarantees the solution is unique.
+## Play
 
-- Endless levels: boards grow 5×5 → 12×12 (with 5-cell guide lines)
-- Fill and × mark tools, drag-painting, right-click to mark
-- Satisfied clue lines dim automatically; **check** flashes any wrong fills
-- The seed lives in the URL — share a link, race a friend on the identical picture
+Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder.
 
-Single HTML file — open `index.html` to play.
+## Controls
+
+| Input | Action |
+| --- | --- |
+| Click | fill a cell, or clear it if it's already filled |
+| Right click | mark a cell as empty with an x |
+| Click and drag | paint the same change across several cells |
+| Fill / mark buttons | choose what a left click does |
+| Check | flash any filled cells that are wrong |
+| New puzzle | new random seed at the current level |
+| Share seed | copy a link to this exact puzzle |
+
+## How it works
+
+- Each puzzle is a random picture that is run through a line solver before you see it. The solver works one row or column at a time, trying every legal placement of the runs and keeping the cells that agree in all of them. A picture is only used if the solver can finish it that way, which means it can be solved without guessing and has only one solution.
+- A row or column clue is marked as done once your fills match it.
+- The seed and level are kept in the URL (`#seed.level`), so a shared link gives the same picture. The number of puzzles you've solved is saved in `localStorage`.

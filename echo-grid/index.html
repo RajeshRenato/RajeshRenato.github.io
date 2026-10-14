@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c77bff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EE%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>ECHO GRID — repeat the pattern</title>
+<title>Echo Grid</title>
 <style>
   :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --violet:#c77bff; }
   * { box-sizing: border-box; }
@@ -31,7 +31,7 @@
   button#startBtn { margin-top:10px; background:var(--panel); color:var(--violet); border:1px solid var(--violet);
                     border-radius:8px; padding:10px 26px; font:inherit; font-size:15px; cursor:pointer; }
 </style>
-<meta property="og:title" content="ECHO GRID — browser game">
+<meta property="og:title" content="Echo Grid">
 <meta property="og:description" content="Simon-style memory: watch the pattern, echo it back. WebAudio tones, strict mode.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/echo-grid/">
@@ -101,7 +101,7 @@ function playback() {
   setTimeout(() => {
     phase = 'input';
     pos = 0;
-    setMsg('your turn — ' + seq.length + ' step' + (seq.length > 1 ? 's' : ''), 'go');
+    setMsg('your turn: ' + seq.length + ' step' + (seq.length > 1 ? 's' : ''), 'go');
   }, 500 + seq.length * speed);
 }
 
@@ -126,14 +126,14 @@ function press(i) {
     tone(3, 0.6);
     if ($('strict').checked) {
       phase = 'over';
-      setMsg('wrong! you reached round ' + seq.length + ' — press start', 'fail');
+      setMsg('wrong! you reached round ' + seq.length + '. Press start to try again.', 'fail');
       if (seq.length - 1 > best) {
         best = seq.length - 1;
         try { localStorage.setItem('eg_best', best); } catch (e) { }
         $('best').textContent = best;
       }
     } else {
-      setMsg('oops — watch again', 'fail');
+      setMsg('oops, watch again', 'fail');
       setTimeout(playback, 900);
     }
   } else if (r === 'next') {

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5a7a'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EJ%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>JWT PEEK — decode tokens locally</title>
+<title>JWT Peek</title>
 <style>
   :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8; --red:#ff5a7a;
           --key:#7f8cff; --str:#39ff9c; --num:#ffd166; }
@@ -33,7 +33,7 @@
   #claims b { color:var(--num); }
   #claims .ok { color:var(--str); } #claims .bad { color:var(--red); }
 </style>
-<meta property="og:title" content="JWT PEEK — browser game">
+<meta property="og:title" content="JWT Peek">
 <meta property="og:description" content="Decode JWTs locally with colored claims and live expiry status. Tokens never leave the page.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/jwt-peek/">
@@ -44,7 +44,7 @@
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <h1>JWT PEEK</h1>
-<div id="sub">decodes entirely in your browser — the token never leaves this page. Signature is NOT verified.</div>
+<div id="sub">decodes in your browser. The token never leaves this page. The signature is not verified.</div>
 <textarea id="tok" spellcheck="false" placeholder="paste a JWT (xxxxx.yyyyy.zzzzz)…"></textarea>
 <button id="sampleBtn">load a sample token</button>
 <div id="warn"></div>
@@ -68,7 +68,7 @@ function b64urlDecode(s) {
 
 function parseJwt(token) {
   const parts = token.trim().split('.');
-  if (parts.length !== 3) throw new Error('a JWT has exactly 3 dot-separated parts — got ' + parts.length);
+  if (parts.length !== 3) throw new Error('a JWT has exactly 3 dot-separated parts, this has ' + parts.length);
   const header = JSON.parse(b64urlDecode(parts[0]));
   const payload = JSON.parse(b64urlDecode(parts[1]));
   return { header, payload, sig: parts[2] };
@@ -96,10 +96,10 @@ function fmtClaim(name, ts) {
     : Math.round(Math.abs(diff) / 8.64e7) + ' days';
   let status = '';
   if (name === 'exp') status = diff > 0
-    ? ' — <span class="ok">valid, expires in ' + rel + '</span>'
-    : ' — <span class="bad">EXPIRED ' + rel + ' ago</span>';
-  if (name === 'nbf' && diff > 0) status = ' — <span class="bad">not valid yet (in ' + rel + ')</span>';
-  if (name === 'iat') status = ' — issued ' + rel + ' ago';
+    ? ' <span class="ok">valid, expires in ' + rel + '</span>'
+    : ' <span class="bad">EXPIRED ' + rel + ' ago</span>';
+  if (name === 'nbf' && diff > 0) status = ' <span class="bad">not valid yet (in ' + rel + ')</span>';
+  if (name === 'iat') status = ' issued ' + rel + ' ago';
   return '<div><b>' + name + '</b> = ' + ts + ' → ' + d.toLocaleString() + status + '</div>';
 }
 
@@ -112,7 +112,7 @@ function update() {
     $('hdr').innerHTML = colorJson(header);
     $('pay').innerHTML = colorJson(payload);
     let warns = [];
-    if (String(header.alg).toLowerCase() === 'none') warns.push('⚠ alg:"none" — this token is UNSIGNED');
+    if (String(header.alg).toLowerCase() === 'none') warns.push('⚠ alg:"none": this token is unsigned');
     if (!header.alg) warns.push('⚠ missing alg in header');
     $('warn').textContent = warns.join('   ');
     $('claims').innerHTML =
