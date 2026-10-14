@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2328e0ff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Cycle Duel</title>
+<title>Cycle Duel | Tron light cycle game, play a friend online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/cycle-duel/">
 <style>
   :root { --bg:#0e0f14; --panel:#1a1b22; --ink:#e8e8e2; --muted:#9a9aa6; --rule:#2e2f38; --p0:#28e0ff; --p1:#ff4fa3; }
   * { box-sizing:border-box; }
@@ -53,6 +55,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/cycle-duel/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Light-cycle duels: cut your rival off with your trail. Play a friend online with a link, on one keyboard, or against a bot.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Cycle Duel", "url": "https://rajeshrenato.github.io/playground/cycle-duel/", "description": "Light-cycle duels: cut your rival off with your trail. Play a friend online with a link, on one keyboard, or against a bot.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -590,5 +593,19 @@ else if (fromLink && fromLink.kind === 'answer') handleReplyLink(fromLink);
 else showPanel('lobby');
 requestAnimationFrame(frame);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Cycle Duel</h2>
+<p>Light-cycle duels, like the ones in Tron. Your cycle leaves a wall behind it. Cut your rival off and make them crash. First to 3 rounds wins.</p>
+<p>You can play a friend online, two players on one keyboard, or against a bot.</p>
+<h3>Play</h3>
+<p>To play online: click "Play a friend online" and send the invite link. Your friend opens it and sends back a reply link. Open the reply (or paste it in) and you're connected.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>W A S D</td><td>steer (blue, in a two-player game)</td></tr><tr><td>Arrow keys</td><td>steer (pink, in a two-player game)</td></tr><tr><td>Arrow keys or W A S D</td><td>steer, against the bot or online</td></tr><tr><td>Swipe</td><td>steer, on a phone</td></tr><tr><td>Enter, Space, or tap</td><td>rematch after a match ends</td></tr><tr><td>Esc</td><td>leave the match</td></tr></table>
+<h3>How online play works</h3>
+<p>There is no game server. The two browsers connect directly over a WebRTC data channel, using <a href="../linkplay/">LinkPlay</a>.</p>
+<ul><li>WebRTC needs both sides to swap a connection description first. Here that swap happens through the links: the invite carries the host's description and the reply carries the guest's, each compressed and base64url-encoded. If the host opens the reply link in the same browser, a <code>BroadcastChannel</code> hands it to the game tab automatically.</li><li>Public STUN servers (Google and Cloudflare) tell each browser its public address. Those are the only outside requests the game makes. Some strict networks block direct connections, and there's no relay to fall back on, so on those it won't connect.</li><li>The host runs the game at about 14 ticks a second. The guest sends its turns and draws the snapshots the host sends back. If a snapshot goes missing, the guest asks for a full copy of the board. The ping shown in the corner is the measured round trip.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/cycle-duel">cycle-duel on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

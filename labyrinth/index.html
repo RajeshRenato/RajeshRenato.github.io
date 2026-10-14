@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffd166'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EL%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Labyrinth</title>
+<title>Labyrinth | maze game with fog of war</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/labyrinth/">
 <style>
   :root { --bg:#0a0618; --gold:#ffd166; }
   * { box-sizing: border-box; }
@@ -27,6 +29,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/labyrinth/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Escape endless procedural mazes through fog of war. Every exit leads somewhere deeper.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Labyrinth", "url": "https://rajeshrenato.github.io/playground/labyrinth/", "description": "Escape endless procedural mazes through fog of war. Every exit leads somewhere deeper.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -204,5 +207,16 @@ requestAnimationFrame(draw);
   });
 })();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Labyrinth</h2>
+<p>A maze game with fog of war. You start in the top-left corner and need to reach the gold exit in the bottom-right, but you can only see about four cells around you, plus a faint trail of the cells you've already visited. Each exit takes you one level deeper into a bigger maze, starting at 11x11 and growing by 2 per level up to 29x29.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>WASD / arrow keys</td><td>move one cell</td></tr></table>
+<p>On a phone, on-screen arrow buttons appear in the bottom-left corner. Holding one keeps moving.</p>
+<h3>How it works</h3>
+<ul><li>Mazes are generated with a recursive backtracker (depth-first search with a stack), so every maze has exactly one path between any two cells.</li><li>The timer starts on your first move. Your best depth is saved in <code>localStorage</code>.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/labyrinth">labyrinth on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffd166'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Cron Sage</title>
+<title>Cron Sage | cron expression explained in plain English</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/cron-sage/">
 <style>
   :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8; --gold:#ffd166; }
   * { box-sizing: border-box; }
@@ -39,6 +41,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/cron-sage/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Cron expressions explained in plain English, with the next six run times counted down.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Cron Sage", "url": "https://rajeshrenato.github.io/playground/cron-sage/", "description": "Cron expressions explained in plain English, with the next six run times counted down.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -200,5 +203,13 @@ $('expr').addEventListener('input', update);
 setInterval(update, 30000);   // keep "in X min" fresh
 update();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Cron Sage</h2>
+<p>Type a five-field cron expression and get a plain English description of it, along with the next 6 times it will run and how far away each one is.</p>
+<h3>What it does</h3>
+<ul><li>Fields are minute, hour, day of month, month, and weekday.</li><li>Supports <code>*</code>, steps (<code>*/n</code>), ranges (<code>a-b</code>, optionally with a step), comma lists, and three-letter month and weekday names. Weekday 7 is treated as Sunday, like 0.</li><li>When both day of month and weekday are restricted, a day matches if either one does. This is how standard cron behaves.</li><li>If the expression is invalid, it names the field that's wrong.</li><li>Run times use your local time zone and look up to two years ahead. The countdowns refresh every 30 seconds.</li><li>Presets cover common schedules such as every 5 minutes, weekdays at 9am, and monthly.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/cron-sage">cron-sage on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

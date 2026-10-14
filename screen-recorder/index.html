@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5a7a'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ER%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Screen Recorder</title>
+<title>Screen Recorder | free online screen recorder, no watermark</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/screen-recorder/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#d43a5a; --rec:#e0283f; }
   @media (prefers-color-scheme: dark) {
@@ -55,6 +57,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/screen-recorder/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Record your screen, a window, or a tab, with your voice and an optional camera bubble. No install, no watermark, nothing uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Screen Recorder", "url": "https://rajeshrenato.github.io/playground/screen-recorder/", "description": "Record your screen, a window, or a tab, with your voice and an optional camera bubble. No install, no watermark, nothing uploaded.", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -356,5 +359,17 @@ format = canRecord ? pickFormat(m => MediaRecorder.isTypeSupported(m)) : null;
 if (!canRecord || !format) { $('unsupported').hidden = false; $('startBtn').disabled = true; }
 else $('fmtNote').textContent = 'Saves as ' + format.ext.toUpperCase();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Screen Recorder</h2>
+<p>Record your screen, a window, or a browser tab, with your microphone, the screen's own sound, and an optional camera bubble. No install, no watermark, and the video is saved straight to your computer.</p>
+<p>Needs a desktop browser (Chrome, Edge, Firefox, or Safari). Phones and tablets don't let web pages record the screen.</p>
+<h3>Features</h3>
+<ul><li>Microphone and screen audio, mixed into one track</li><li>A round camera bubble in the corner, mirrored like a selfie view</li><li>3-second countdown, pause and resume, live timer and file size</li><li>Stop from the page or from the browser's own "Stop sharing" button</li><li>Preview before downloading</li></ul>
+<h3>How it works</h3>
+<p>The screen comes from <code>getDisplayMedia</code> and the microphone and camera from <code>getUserMedia</code>. With the camera on, both videos are drawn onto a canvas each frame and the canvas stream is recorded; otherwise the screen stream is recorded directly. When there's more than one audio source, they're mixed through a Web Audio <code>MediaStreamDestination</code>, since recorders only reliably keep one audio track.</p>
+<p><code>MediaRecorder</code> writes MP4 when the browser supports it, and WebM otherwise. Browsers write WebM recordings without a duration, which leaves many players unable to show the length or seek. After recording, the page walks the file's EBML structure, finds <code>Segment &gt; Info</code>, and inserts a <code>Duration</code> element (or updates one that's there), resizing <code>Info</code> and, if needed, the <code>Segment</code>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/screen-recorder">screen-recorder on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

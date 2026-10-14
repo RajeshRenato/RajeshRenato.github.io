@@ -6,7 +6,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f5fd0'/%3E%3Ccircle cx='11' cy='20' r='5' fill='%23ff5a5f'/%3E%3Ccircle cx='21' cy='20' r='5' fill='%23ffc93c'/%3E%3Ccircle cx='21' cy='10' r='5' fill='%23ff5a5f'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="stylesheet" href="../linkplay/lobby.css">
-<title>Four in a Row</title>
+<title>Four in a Row | play Connect Four online with a friend</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/four-in-a-row/">
 <style>
   :root { --bg: #0f1424; --ink: #ecebe4; --muted: #8d93a8; --p1: #ff5a5f; --p2: #ffc93c; --frame: #2f5fd0;
           --lp-bg: #0f1424; --lp-panel: #182038; --lp-veil: rgba(15, 20, 36, .94); --lp-accent: #ffc93c; }
@@ -36,6 +38,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/four-in-a-row/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Connect Four-style: drop discs and line up four. Play a friend online with a link, on one screen, or against a bot.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Four in a Row", "url": "https://rajeshrenato.github.io/playground/four-in-a-row/", "description": "Connect Four-style: drop discs and line up four. Play a friend online with a link, on one screen, or against a bot.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -364,5 +367,21 @@ const lobby = Lobby.mount($('lobby'), {
 render();
 requestAnimationFrame(frame);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Four in a Row</h2>
+<p>A Connect Four-style game. Take turns dropping discs into a 7 by 6 grid. The first to line up four, across, down, or diagonally, wins.</p>
+<p>Play a friend online, two players on one screen, or the bot.</p>
+<h3>Play</h3>
+<p>To play online: click "Play a friend online" and send the invite. Your friend sends back a reply link; open it in your browser or paste it in. The game starts as soon as they're in.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Click or tap a column</td><td>drop a disc</td></tr><tr><td>1 to 7</td><td>drop a disc in that column</td></tr><tr><td>Enter</td><td>play again after a game</td></tr></table>
+<p>Players take turns going first. Scores are kept until you leave.</p>
+<h3>The bot</h3>
+<p>The bot searches ahead with negamax and alpha-beta pruning: 2 moves on easy, 5 on normal, 7 on hard. When it can't see a win, it scores the board by counting every window of four cells that only one player has discs in, plus a bonus for the center column. Easy also adds some randomness to its choices.</p>
+<h3>How online play works</h3>
+<p>It uses <a href="../linkplay/">LinkPlay</a>. The host's browser holds the game: the guest sends the column they picked, the host checks it's their turn and that the column has room, and sends the whole board back after every move.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/four-in-a-row">four-in-a-row on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

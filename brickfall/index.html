@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f8aff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EB%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Brickfall</title>
+<title>Brickfall | brick breaker game online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/brickfall/">
 <style>
   :root { --bg:#0a0618; --cyan:#4f8aff; --pink:#ff2d95; }
   * { box-sizing: border-box; }
@@ -25,6 +27,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/brickfall/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Brick-breaker with eight levels and angle-based paddle physics.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Brickfall", "url": "https://rajeshrenato.github.io/playground/brickfall/", "description": "Brick-breaker with eight levels and angle-based paddle physics.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -221,5 +224,15 @@ function loop(t) {
 reset();
 requestAnimationFrame(loop);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Brickfall</h2>
+<p>A Breakout-style brick breaker. Bounce the ball off your paddle to clear every brick across 8 levels. You have 3 lives for the whole run, and each brick is worth 10 points.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Mouse, or left / right arrows, or A / D</td><td>move the paddle</td></tr><tr><td>Click or Space</td><td>launch the ball</td></tr><tr><td>R</td><td>play again after a game over or a win</td></tr></table>
+<h3>How it works</h3>
+<ul><li>Where the ball hits the paddle sets the angle it leaves at, up to about 60 degrees from straight up at the edges.</li><li>Each level adds a row of bricks, up to 8 rows, with a few gaps that depend on the level number. The ball gets a little faster every level.</li><li>Your best score is saved in <code>localStorage</code>.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/brickfall">brickfall on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

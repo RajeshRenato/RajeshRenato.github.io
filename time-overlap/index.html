@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2339ff9c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ET%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Time Overlap</title>
+<title>Time Overlap | time zone meeting planner</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/time-overlap/">
 <style>
   :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8; --green:#39ff9c; }
   * { box-sizing: border-box; }
@@ -43,6 +45,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/time-overlap/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Plan a meeting across timezones. See when everyone is awake, with the hours that work for all highlighted.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Time Overlap", "url": "https://rajeshrenato.github.io/playground/time-overlap/", "description": "Plan a meeting across timezones. See when everyone is awake, with the hours that work for all highlighted.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -159,5 +162,15 @@ load();
 render();
 setInterval(render, 30000);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Time Overlap</h2>
+<p>Plan a meeting across time zones. Add the cities people are in and see a grid of everyone's local time for each hour of your day, with the hours that suit everyone outlined in green.</p>
+<h3>What it does</h3>
+<ul><li>Choose from a list of 30 cities and add up to 8, along with your own time zone.</li><li>Each cell is colored by the local hour there: working (9:00 to 18:00), stretch (7:00 to 9:00 and 18:00 to 22:00), or probably asleep.</li><li>Columns where every city is in working hours get a green outline. The current hour is highlighted.</li><li>Each city shows its current time. The grid refreshes every 30 seconds.</li><li>Your city list is saved in <code>localStorage</code>.</li></ul>
+<h3>How it works</h3>
+<p>Times come from the browser's <code>Intl</code> time zone data, so daylight saving changes are handled without any time zone tables in the page.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/time-overlap">time-overlap on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

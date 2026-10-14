@@ -1,0 +1,22 @@
+/* The "about" text on every project page. Inline at the bottom of pages that
+   already scroll, or as a panel opened from the top-left link on pages that fit
+   the screen, so games never become scrollable. */
+.pg-about { font: 15px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif; text-align: left; }
+.pg-about h2 { font-size: 20px; margin: 0 0 10px; line-height: 1.3; }
+.pg-about h3 { font-size: 15px; margin: 18px 0 6px; }
+.pg-about p, .pg-about ul, .pg-about table { margin: 0 0 10px; }
+.pg-about ul { padding-left: 20px; }
+.pg-about li { margin-bottom: 4px; }
+.pg-about table { border-collapse: collapse; font-size: 14px; }
+.pg-about td, .pg-about th { border-bottom: 1px solid currentColor; border-bottom-color: rgba(128, 128, 128, .3); padding: 4px 14px 4px 0; text-align: left; vertical-align: top; }
+.pg-about code { font: 13px ui-monospace, Menlo, monospace; }
+.pg-about a { color: inherit; }
+.pg-about .pg-src { opacity: .75; font-size: 13px; margin-top: 16px; }
+.pg-about.inline { max-width: 760px; margin: 48px auto 32px; padding: 20px 20px 0; border-top: 1px solid rgba(128, 128, 128, .3); opacity: .9; }
+.pg-about.panel { position: fixed; inset: 0; z-index: 1000; overflow: auto; background: rgba(10, 10, 14, .6); padding: 24px 16px; }
+.pg-about.panel > .pg-in { max-width: 680px; margin: 24px auto; background: #fbfbf8; color: #1c1c1f; border-radius: 12px; padding: 22px 24px; position: relative; }
+.pg-about.panel .pg-x { position: absolute; top: 10px; right: 12px; font: inherit; font-size: 22px; line-height: 1; background: none; border: 0; cursor: pointer; color: inherit; padding: 4px 8px; }
+.pg-about[hidden] { display: none; }
+.pg-about-link { position: fixed; top: 12px; z-index: 12; font: 13px system-ui, -apple-system, 'Segoe UI', sans-serif; background: none; border: 0; padding: 0;
+  color: inherit; opacity: .65; text-decoration: none; cursor: pointer; }
+.pg-about-link:hover { opacity: 1; }

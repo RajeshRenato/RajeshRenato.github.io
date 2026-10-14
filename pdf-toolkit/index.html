@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e5484d'/%3E%3Ctext x='16' y='22' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='13' text-anchor='middle' fill='%23ffffff'%3EPDF%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>PDF Toolkit</title>
+<title>PDF Toolkit | merge, split, and reorder PDF pages without uploading</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/pdf-toolkit/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#d8392f; --sheet:#ffffff; }
   @media (prefers-color-scheme: dark) {
@@ -72,6 +74,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/pdf-toolkit/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Merge, split, reorder, rotate, and delete PDF pages in your browser. Nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "PDF Toolkit", "url": "https://rajeshrenato.github.io/playground/pdf-toolkit/", "description": "Merge, split, reorder, rotate, and delete PDF pages in your browser. Nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -936,5 +939,20 @@ $('viewClose').onclick = closeView;
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('view').hidden) closeView(); });
 render();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>PDF Toolkit</h2>
+<p>Merge PDFs, save some of their pages as a new file, split a file into single pages, and reorder, rotate, or delete pages. Everything happens in your browser. The files are never uploaded.</p>
+<h3>Use</h3>
+<p>Drop one or more PDFs on the page, or click to open them. All their pages go into one list, each tile showing the file it came from, its page number there, its size, and its orientation. Then:</p>
+<ul><li>Drag tiles to reorder them, or use the arrow buttons on each tile.</li><li>Rotate a page by 90 degrees, delete it, or tick it to select it. Rotate and delete also work on the whole selection.</li><li>View shows the page as it will come out, in your browser's own PDF viewer.</li><li>Save as one PDF writes every page in the current order. Save selected pages writes only the ticked ones. Split into single pages saves a ZIP with one PDF per page.</li></ul>
+<h3>What is kept</h3>
+<p>Pages are copied as they are: text, fonts, images, and vector drawings come across byte for byte, so text stays sharp and searchable. Links to websites and other annotations stay. These are not kept:</p>
+<ul><li>Bookmarks (the outline).</li><li>Form fields as a working form.</li><li>Links that jump to another page in the file, since that page may not be in the output.</li><li>Document info such as title and author.</li></ul>
+<p>Password-protected or encrypted PDFs can't be opened.</p>
+<h3>How it works</h3>
+<ul><li>The reader is written from scratch. A tokenizer handles every PDF object type: numbers, names with #xx escapes, literal strings with nesting and escapes, hex strings, arrays, dictionaries, references, and streams.</li><li>It finds the cross-reference data through startxref. It reads both classic xref tables and compressed xref streams (including the PNG predictors they use), follows the /Prev chain of incremental updates so the newest version of each object wins, and unpacks objects stored inside object streams. Compressed data is inflated with the browser's DecompressionStream.</li><li>If the cross-reference data is broken, it rebuilds it by scanning the file for every "N G obj" and keeping the last one of each number.</li><li>It walks the page tree from the catalog and works out each page's inherited resources, media box, crop box, and rotation.</li><li>The writer builds a new PDF 1.7 file with a classic xref table. For each page it copies the page and everything the page refers to, giving the objects new numbers. Objects shared by several pages of the same file, like fonts, are copied once per output file. Inherited values are written onto each page, rotation is added to the page's /Rotate, and stream data is copied without decoding.</li><li>The ZIP for splitting is written by hand, stored without compression, with a CRC-32 per file.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/pdf-toolkit">pdf-toolkit on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

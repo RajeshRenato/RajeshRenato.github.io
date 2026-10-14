@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2328e0ff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ES%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Stackfall</title>
+<title>Stackfall | falling blocks game, Tetris-style</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/stackfall/">
 <style>
   :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --cyan:#28e0ff; }
   * { box-sizing: border-box; }
@@ -31,6 +33,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/stackfall/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Falling tetrominoes with hold, ghost piece, and a 7-bag randomizer.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Stackfall", "url": "https://rajeshrenato.github.io/playground/stackfall/", "description": "Falling tetrominoes with hold, ghost piece, and a 7-bag randomizer.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -326,5 +329,16 @@ requestAnimationFrame(loop);
   });
 })();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Stackfall</h2>
+<p>A Tetris-style falling block game. Pieces made of four squares drop into a 10x20 well. Move and rotate them so they fill complete rows, which then clear. The game ends when a new piece has no room to appear. It has a ghost piece that shows where the current piece will land, a next-piece preview, and a hold slot.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Left / right</td><td>move</td></tr><tr><td>Up or X</td><td>rotate clockwise</td></tr><tr><td>Z</td><td>rotate counter-clockwise</td></tr><tr><td>Down</td><td>soft drop</td></tr><tr><td>Space</td><td>hard drop</td></tr><tr><td>C</td><td>hold the current piece (once per piece)</td></tr><tr><td>P</td><td>pause or resume</td></tr><tr><td>R or Enter</td><td>after game over: restart</td></tr><tr><td>Any key</td><td>on the title screen: start</td></tr></table>
+<p>On a phone, on-screen buttons for move, rotate, soft drop, hold, and drop appear at the bottom.</p>
+<h3>How it works</h3>
+<ul><li>Pieces come from a shuffled bag of all seven shapes, so you see each one once before any repeats.</li><li>If a rotation would hit a wall or another block, the game tries shifting the piece 1 or 2 cells sideways before giving up.</li><li>Clearing 1, 2, 3, or 4 lines at once scores 100, 300, 500, or 800, multiplied by the level plus one. Soft drop adds 1 point per row and hard drop adds 2.</li><li>The level goes up every 10 lines, and pieces fall faster with each level.</li><li>Your best score is saved in <code>localStorage</code>.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/stackfall">stackfall on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

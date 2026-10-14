@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff4fa3'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EF%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Flood Rush</title>
+<title>Flood Rush | Flood-It puzzle game online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/flood-rush/">
 <style>
   :root { --bg:#0a0618; --pink:#ff4fa3; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
@@ -48,6 +50,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/flood-rush/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Flood-fill the grid from a corner in fewer moves than a greedy bot. Every board can be won.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Flood Rush", "url": "https://rajeshrenato.github.io/playground/flood-rush/", "description": "Flood-fill the grid from a corner in fewer moves than a greedy bot. Every board can be won.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -265,5 +268,15 @@ const hm = /^#(\d+)\.(\d+)$/.exec(location.hash);
 if (hm) { seed = +hm[1]; level = Math.max(1, Math.min(200, +hm[2])); }
 loadLevel();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Flood Rush</h2>
+<p>A Flood-It puzzle. You start owning the top-left cell. Each move, pick a color from the palette: your region changes to that color and takes in every neighboring cell that already matches. Fill the whole grid before you run out of moves.</p>
+<h3>Play</h3>
+<p>Click a color in the palette below the board to make a move. "New puzzle" gives you a different board, and "share seed" copies a link to the current one.</p>
+<h3>How it works</h3>
+<ul><li>When a board is generated, a greedy bot solves it by always picking the color that grows the region the most. Its move count is the par, and your budget is par plus 2, so every board can be beaten. Finishing in fewer moves than par means you beat the bot.</li><li>The grid starts at 7 by 7 and grows by one every two levels, up to 14 by 14. Boards start with 4 colors and gain one every five levels, up to 6.</li><li>Boards come from a seeded random generator. The seed and level are kept in the URL as <code>#seed.level</code>, so a friend who opens your link gets the same board.</li><li>The number of boards you've cleared is saved in <code>localStorage</code>.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/flood-rush">flood-rush on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

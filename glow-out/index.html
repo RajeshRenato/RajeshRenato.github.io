@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2339ff9c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EG%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Glow Out</title>
+<title>Glow Out | Lights Out puzzle game online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/glow-out/">
 <style>
   :root { --bg:#0a0618; --green:#39ff9c; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
@@ -47,6 +49,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/glow-out/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Lights Out: switch off every tile. Hints come from a solver that tracks every possible solution, so they are always right.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Glow Out", "url": "https://rajeshrenato.github.io/playground/glow-out/", "description": "Lights Out: switch off every tile. Hints come from a solver that tracks every possible solution, so they are always right.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -228,5 +231,15 @@ const hm = /^#(\d+)\.(\d+)$/.exec(location.hash);
 if (hm) { seed = +hm[1]; level = Math.max(1, Math.min(200, +hm[2])); }
 loadLevel();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Glow Out</h2>
+<p>A Lights Out puzzle. Pressing a tile flips it and the tiles directly above, below, left, and right of it. Turn every tile off to clear the level.</p>
+<h3>Play</h3>
+<p>Click a tile to press it. The buttons above the board show a hint, reset the board to its starting state, give you a new puzzle, or copy a link to the current one.</p>
+<h3>How it works</h3>
+<ul><li>Each board starts dark, and the game presses some random tiles to light it up. Those presses are a known solution, so every board can be solved.</li><li>Pressing a tile twice cancels out, and the order of presses doesn't matter. So the game keeps the solution up to date as you play: each press adds that tile to the set or removes it. The hint button highlights a tile from that set.</li><li>Par is the number of presses used to build the board. Clearing it in exactly par presses counts as perfect.</li><li>The grid starts at 3 by 3 and grows by one every three levels, up to 7 by 7. Each level uses one more scrambling press than the last.</li><li>Boards come from a seeded random generator. The seed and level are kept in the URL as <code>#seed.level</code>, so a friend who opens your link gets the same board.</li><li>The number of boards you've cleared is saved in <code>localStorage</code>.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/glow-out">glow-out on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

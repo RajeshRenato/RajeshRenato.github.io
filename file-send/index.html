@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2339ff9c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EF%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>File Send</title>
+<title>File Send | send large files browser to browser, no upload</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/file-send/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#1f9d5c; --bad:#d8392f; }
   @media (prefers-color-scheme: dark) {
@@ -59,6 +61,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/file-send/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Send files straight from your browser to a friend's. Nothing is uploaded and there's no size cap from a server.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "File Send", "url": "https://rajeshrenato.github.io/playground/file-send/", "description": "Send files straight from your browser to a friend's. Nothing is uploaded and there's no size cap from a server.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -540,5 +543,17 @@ const answerMatch = /^#answer=([A-Za-z0-9_-]+)$/.exec(location.hash || '');
 if (offerMatch) guestJoin(offerMatch[1]);
 else if (answerMatch) handleReplyLink(answerMatch[1]);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>File Send</h2>
+<p>Send files from your browser straight to someone else's. Nothing is uploaded: the files go directly from one device to the other.</p>
+<h3>Use</h3>
+<ul><li>Choose the files, click "Create a send link", and send the link. 2. The other person opens it and gets a reply link to send back. 3. Open the reply link (or paste it in) and you're connected. 4. They see the file names and sizes and choose Accept or Decline. Once connected, either of you can send.</li></ul>
+<h3>How it works</h3>
+<ul><li>The two browsers connect over a WebRTC data channel. The send link and the reply link carry each side's connection details in compressed form, so there's no signaling server. A public STUN service helps the browsers find each other, but file data never goes through it.</li><li>Files are read in 64 KB chunks and sent in order. At most about 1 MB waits in the send buffer at once, so memory use stays low and the connection isn't flooded.</li><li>The receiver reports how much it has every 256 KB. The sender's progress bar, speed, and time left come from those reports. A file is only marked delivered once the receiver confirms it has every byte.</li><li>Nothing is transferred until the receiver accepts the batch.</li></ul>
+<h3>Limits</h3>
+<ul><li>Received files are held in the browser's memory until you save them, so very large files (several GB) may not fit, especially on phones.</li><li>Both pages need to stay open during the transfer.</li><li>Some strict office or mobile networks block direct connections, and there's no relay to fall back on. Trying another network usually works.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/file-send">file-send on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

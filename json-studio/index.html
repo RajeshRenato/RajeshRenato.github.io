@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2328e0ff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EJ%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>JSON Studio</title>
+<title>JSON Studio | JSON formatter, validator, and viewer</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/json-studio/">
 <style>
   :root {
     --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8;
@@ -50,6 +52,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/json-studio/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Format, minify, validate (with line/col errors), and explore JSON in a collapsible tree. Fully offline.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "JSON Studio", "url": "https://rajeshrenato.github.io/playground/json-studio/", "description": "Format, minify, validate (with line/col errors), and explore JSON in a collapsible tree. Fully offline.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <header>
@@ -253,5 +256,13 @@ $('bClear').addEventListener('click', () => {
 
 refresh();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>JSON Studio</h2>
+<p>Paste JSON to check that it's valid, format or minify it, and browse it as a tree. It all runs in your browser, so the data never leaves the page.</p>
+<h3>What it does</h3>
+<ul><li>Checks the input as you type. When it's invalid, it shows the parser's error with the line and column.</li><li>The pretty view shows the JSON with colored keys, strings, numbers, and other values. The tree view lets you fold objects and arrays, opens the first two levels, and stops after 4,000 nodes.</li><li>Format rewrites the input with two-space indentation. Minify shows the output on one line.</li><li>Copy takes the output as shown (pretty or minified). Download saves it pretty-printed as <code>data.json</code>.</li><li>Stats show the total number of keys and array items, the nesting depth, and the size in characters, pretty and minified.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/json-studio">json-studio on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%238affc9'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EL%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Life Grid</title>
+<title>Life Grid | Conway's Game of Life online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/life-grid/">
 <style>
   :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --green:#8affc9; }
   * { box-sizing: border-box; }
@@ -31,6 +33,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/life-grid/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Conway&#39;s Game of Life. Draw cells, drop in a glider gun, and watch the colony grow.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Life Grid", "url": "https://rajeshrenato.github.io/playground/life-grid/", "description": "Conway's Game of Life. Draw cells, drop in a glider gun, and watch the colony grow.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -201,5 +204,15 @@ function loop(t) {
 randomize();
 requestAnimationFrame(loop);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Life Grid</h2>
+<p>Conway's Game of Life on a 96 by 60 grid whose edges wrap around. Draw cells with the mouse or load a preset, then run it, step through it one generation at a time, or change the speed. Cells that just died leave a blue glow that fades out.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Click or drag on the grid</td><td>draw cells (starting on a live cell erases instead)</td></tr><tr><td>Space or play</td><td>run or pause</td></tr><tr><td>step</td><td>advance one generation</td></tr><tr><td>random</td><td>fill about 22% of cells at random</td></tr><tr><td>clear</td><td>stop and empty the grid</td></tr><tr><td>Presets menu</td><td>glider, pulsar, or Gosper glider gun</td></tr><tr><td>speed slider</td><td>2 to 40 generations per second</td></tr></table>
+<h3>How it works</h3>
+<ul><li>Each generation counts the eight neighbors of every cell, wrapping across the edges. A live cell with 2 or 3 neighbors survives, and a dead cell with exactly 3 comes alive.</li><li>A cell that dies gets a glow value that shrinks a little every frame until it's gone.</li><li>The bar shows the generation number and the current population. The page opens with a random grid.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/life-grid">life-grid on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

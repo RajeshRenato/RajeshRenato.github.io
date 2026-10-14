@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5a7a'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EJ%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>JWT Peek</title>
+<title>JWT Peek | JWT decoder that keeps tokens on your device</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/jwt-peek/">
 <style>
   :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8; --red:#ff5a7a;
           --key:#7f8cff; --str:#39ff9c; --num:#ffd166; }
@@ -40,6 +42,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/jwt-peek/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Decode JWTs locally with colored claims and live expiry status. Tokens never leave the page.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "JWT Peek", "url": "https://rajeshrenato.github.io/playground/jwt-peek/", "description": "Decode JWTs locally with colored claims and live expiry status. Tokens never leave the page.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -143,5 +146,14 @@ $('sampleBtn').addEventListener('click', () => {
 $('tok').addEventListener('input', update);
 update();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>JWT Peek</h2>
+<p>Paste a JSON Web Token and see its header and payload decoded. Decoding happens in your browser, so the token is never sent anywhere.</p>
+<h3>What it does</h3>
+<ul><li>Shows the header and payload as formatted, colored JSON.</li><li>Turns the <code>iat</code>, <code>nbf</code>, and <code>exp</code> claims into local dates. It also says whether the token has expired, how long until it does, and whether it is not valid yet.</li><li>Warns when the header has <code>alg: "none"</code> (an unsigned token) or no <code>alg</code> at all.</li><li>Explains what's wrong when the input isn't a three-part token or a part isn't valid JSON.</li><li>A button loads a sample token that expires two hours from now.</li></ul>
+<p>It does not check the signature. That would need the secret or public key.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/jwt-peek">jwt-peek on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

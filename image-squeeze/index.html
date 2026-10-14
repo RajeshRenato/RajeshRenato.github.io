@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2364ffb4'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EI%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Image Squeeze</title>
+<title>Image Squeeze | compress images, resize, convert to WebP or AVIF</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/image-squeeze/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#1f9d6a; --bad:#d8392f; --good:#1f9d6a; }
   @media (prefers-color-scheme: dark) {
@@ -64,6 +66,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/image-squeeze/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Compress, resize, and convert images to JPEG, WebP, PNG, or AVIF, or fit them under a size limit. Nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Image Squeeze", "url": "https://rajeshrenato.github.io/playground/image-squeeze/", "description": "Compress, resize, and convert images to JPEG, WebP, PNG, or AVIF, or fit them under a size limit. Nothing is uploaded.", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -338,5 +341,17 @@ $('dlAll').addEventListener('click', async () => {
   } catch (e) { }
 })();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Image Squeeze</h2>
+<p>Make images smaller. Compress them, resize them, convert them to JPEG, WebP, PNG, or AVIF, or fit them under a size limit. Nothing is uploaded, and everything runs on your device.</p>
+<h3>What it does</h3>
+<ul><li>Fit under a size: type a limit like 200 KB and it finds the highest quality that fits. It shrinks the image only if quality alone isn't enough.</li><li>Resize to a maximum width and height. Proportions are kept and images are never enlarged.</li><li>Convert between JPEG, WebP, and PNG. AVIF appears as an option when the browser can encode it.</li><li>Click a thumbnail to compare before and after with a slider.</li><li>If re-saving in the same format and size would make a file bigger, it keeps the original and says so.</li><li>Download all results as a <code>.zip</code>.</li></ul>
+<p>Re-saving also drops hidden photo details like location. Photos taken sideways come out upright.</p>
+<h3>How it works</h3>
+<p>Images are decoded with <code>createImageBitmap</code> (which applies the EXIF rotation), drawn to a canvas, and re-encoded with <code>canvas.toBlob</code>. Large reductions are done in halving steps first, which keeps edges sharper than one big downscale. Transparent images converted to JPEG are flattened onto white.</p>
+<p>"Fit under" runs a binary search on quality (7 steps between 0.3 and your quality setting). If nothing fits, it scales the image down by the square root of how far over the limit it was and searches again. Lossless PNG skips straight to scaling.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/image-squeeze">image-squeeze on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

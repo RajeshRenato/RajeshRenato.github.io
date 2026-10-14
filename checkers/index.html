@@ -6,7 +6,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f7a52'/%3E%3Ccircle cx='12' cy='12' r='6' fill='%23e04848'/%3E%3Ccircle cx='20' cy='20' r='6' fill='%23f1efe8'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="stylesheet" href="../linkplay/lobby.css">
-<title>Checkers</title>
+<title>Checkers | play checkers online with a friend or the computer</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/checkers/">
 <style>
   :root { --bg: #16191a; --ink: #ecebe4; --muted: #8f9693;
           --lp-bg: #16191a; --lp-panel: #212625; --lp-veil: rgba(22, 25, 26, .94); --lp-accent: #e04848; }
@@ -36,6 +38,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/checkers/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Checkers with forced captures, multi-jumps, and kings. Play a friend online with a link, on one screen, or against a bot.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Checkers", "url": "https://rajeshrenato.github.io/playground/checkers/", "description": "Checkers with forced captures, multi-jumps, and kings. Play a friend online with a link, on one screen, or against a bot.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -424,5 +427,18 @@ const lobby = Lobby.mount($('lobby'), {
 render();
 requestAnimationFrame(frame);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Checkers</h2>
+<p>Checkers (American rules, also called English draughts) on an 8 by 8 board. Play a friend online, two players on one screen, or the bot.</p>
+<h3>Play</h3>
+<p>Tap one of your pieces, then the square to move to. The pieces that can move are outlined, and dots show where the selected piece can go. For a multi-jump, tap each landing square in turn. Escape cancels a selection, and Enter starts a new game when one ends.</p>
+<p>When playing online, the guest plays white and sees the board turned around, so your own pieces are always at the bottom.</p>
+<h3>Rules</h3>
+<ul><li>Men move one square diagonally forward. Kings move one square diagonally in any direction.</li><li>If you can capture, you must. When a piece can keep jumping, it has to continue, but you can choose which capture to make.</li><li>A man that reaches the far row becomes a king, and that ends its move, even if it could jump again as a king.</li><li>You lose when you have no pieces left or no legal move.</li><li>The game is a draw after 40 moves each with no capture and no man moved.</li></ul>
+<h3>The bot</h3>
+<p>The bot uses alpha-beta search over whole moves: 2 moves ahead on easy, 4 on normal, 6 on hard. It values a king at 1.75 men and adds small bonuses for advancing men, keeping the back row, and holding the center.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/checkers">checkers on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

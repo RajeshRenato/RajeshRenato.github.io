@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%238affc9'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EM%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Morse Coder</title>
+<title>Morse Coder | Morse code translator with sound</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/morse-coder/">
 <style>
   :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --green:#8affc9; --dim:#7684a8; }
   * { box-sizing: border-box; }
@@ -41,6 +43,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/morse-coder/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Two-way morse translator with proper-timing audio playback, screen flash, and a trainer.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Morse Coder", "url": "https://rajeshrenato.github.io/playground/morse-coder/", "description": "Two-way morse translator with proper-timing audio playback, screen flash, and a trainer.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -188,5 +191,15 @@ $('tNew').addEventListener('click', newDrill);
 
 $('morse').value = encode($('text').value);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Morse Coder</h2>
+<p>Translate text to Morse code and back as you type, then play it as sound. It also has a trainer that plays a random character for you to name.</p>
+<h3>What it does</h3>
+<ul><li>Covers letters, digits, and common punctuation. In the Morse box, letters are separated by spaces and words by <code>/</code>. A code it doesn't recognize shows up as <code>�</code>.</li><li>Plays the code as a 620 Hz tone at 8 to 30 words per minute, and can flash the screen in time with it.</li><li>The trainer plays a random letter or digit and shows its code. Type the character on your keyboard. It tracks your streak and keeps your best streak in <code>localStorage</code>.</li></ul>
+<h3>How it works</h3>
+<p>Timing follows the PARIS standard: one unit lasts 1.2 / WPM seconds. A dot is 1 unit and a dash is 3. The gap is 1 unit inside a letter, 3 between letters, and 7 between words.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/morse-coder">morse-coder on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

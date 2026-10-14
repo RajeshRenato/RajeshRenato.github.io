@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2328e0ff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Arrow Flux</title>
+<title>Arrow Flux | arrow puzzle game with huge boards</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/arrow-flux/">
 <style>
   :root { --paper:#f6f6f2; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --accent:#0b8fb0; --bad:#d8392f; --panel:#ffffff; }
   @media (prefers-color-scheme: dark) {
@@ -46,6 +48,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/arrow-flux/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Slide tangled arrows off a packed board. Every puzzle is generated to be solvable.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Arrow Flux", "url": "https://rajeshrenato.github.io/playground/arrow-flux/", "description": "Slide tangled arrows off a packed board. Every puzzle is generated to be solvable.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -509,5 +512,18 @@ else if (hm) {
 loadLevel();
 requestAnimationFrame(frame);
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Arrow Flux</h2>
+<p>A packed board of bent arrows. Tap one and it slides out head-first, its body following its own path like a snake, as long as nothing sits in the straight line ahead of its head. Clear every arrow to finish the board.</p>
+<p>A blocked tap bumps into whatever is in the way and costs a heart (3 on small boards, 5 from 16 columns up).</p>
+<h3>Features</h3>
+<ul><li>Board sizes from 6×8 up to 26×37, either growing with each level or fixed</li><li>A daily board at <code>#daily</code>, the same for everyone that day, timed and listed on the <a href="../daily/">daily puzzles</a> page</li><li>Hint (always points at a legal move), undo, and new puzzle</li><li>The seed, level, and size live in the URL, so a shared link opens the same board</li><li>Light and dark color schemes follow your system setting</li></ul>
+<h3>How the boards are generated</h3>
+<p>Every cell is covered, and every board is solvable.</p>
+<p>The generator builds the board in the order you could solve it. At each step it picks a cell and a direction whose straight line to the edge crosses only cells that are already taken by earlier arrows, then grows the arrow's body backwards from there through unassigned cells. So the arrows, removed in the order they were made, always have a clear way out.</p>
+<p>Removing an arrow can only ever open space, never block anything, so no tap order can reach a dead end: if you could tap it before, you still can.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/arrow-flux">arrow-flux on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

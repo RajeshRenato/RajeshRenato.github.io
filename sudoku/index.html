@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237f8cff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ES%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Sudoku</title>
+<title>Sudoku | free sudoku puzzles online, daily and by difficulty</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/sudoku/">
 <style>
   :root { --bg:#0a0618; --blue:#7f8cff; --panel:#17122e; --line:#2b2250; }
   * { box-sizing: border-box; }
@@ -45,6 +47,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/sudoku/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Sudoku from a generator that guarantees exactly one solution.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Sudoku", "url": "https://rajeshrenato.github.io/playground/sudoku/", "description": "Sudoku from a generator that guarantees exactly one solution.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -284,5 +287,16 @@ const dailyBtn = document.querySelector('#bar button[data-d="daily"]');
 if (location.hash === '#daily' && dailyBtn) dailyBtn.click();
 else newGame();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Sudoku</h2>
+<p>Sudoku with generated puzzles. Fill the 9x9 grid so every row, column, and 3x3 box has the digits 1 to 9 once each. Pick easy, medium, or hard, or the daily puzzle, which is the same for everyone that day.</p>
+<p>Open <code>#daily</code> (for example <code>sudoku/#daily</code>) to go straight to today's puzzle. It's also listed on the <a href="../daily/">daily puzzles</a> page.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Click a cell</td><td>select it</td></tr><tr><td>Arrow keys</td><td>move the selection</td></tr><tr><td>1 to 9, or the number pad under the board</td><td>enter a digit</td></tr><tr><td>0, Backspace, Delete, or the ⌫ button</td><td>clear the cell</td></tr><tr><td>New button</td><td>new puzzle at the current difficulty</td></tr></table>
+<h3>How it works</h3>
+<ul><li>The generator fills a complete grid with randomized backtracking, then removes digits one at a time in random order. A digit is only removed if a solver still finds exactly one solution afterwards, so every puzzle has a single answer.</li><li>Removal stops at 40 clues for easy, 32 for medium and daily, and 27 for hard. A puzzle keeps more clues than that if no further digit can be removed safely.</li><li>The daily puzzle seeds the random generator from the number of days since 1 January 2026. Solving it copies your time and mistake count to the clipboard and saves the time in <code>localStorage</code>.</li><li>Selecting a cell highlights its row, column, and box. Digits that clash with another digit in the same row, column, or box turn red.</li><li>Entering a digit that doesn't match the solution adds one to the mistake counter.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/sudoku">sudoku on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

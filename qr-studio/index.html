@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237f8cff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EQ%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>QR Studio</title>
+<title>QR Studio | free QR code generator with logo, no watermark</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/qr-studio/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#4f5bd5; --bad:#d8392f; }
   @media (prefers-color-scheme: dark) {
@@ -56,6 +58,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/qr-studio/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Make QR codes for links, Wi-Fi, contacts, and more, with your own colors and logo. The encoder is written from scratch. No watermark, no tracking.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "QR Studio", "url": "https://rajeshrenato.github.io/playground/qr-studio/", "description": "Make QR codes for links, Wi-Fi, contacts, and more, with your own colors and logo. The encoder is written from scratch. No watermark, no tracking.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -573,5 +576,16 @@ $('dlSvg').addEventListener('click', () => {
 
 render();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>QR Studio</h2>
+<p>QR codes for links, Wi-Fi, contacts, email, text messages, and phone calls, with your own colors, shapes, and logo. Download as PNG or SVG. No watermark and no tracking: the code points straight at your content, not at a redirect.</p>
+<h3>How it works</h3>
+<p>The encoder is written from scratch, following ISO/IEC 18004:</p>
+<ul><li>picks numeric, alphanumeric, or byte (UTF-8) mode automatically</li><li>chooses the smallest of the 40 versions that fits, at the error correction level you pick</li><li>adds Reed-Solomon error correction over GF(256), split into blocks and interleaved as the standard specifies</li><li>places function patterns, format and version information, and data, then tries all 8 masks and keeps the one with the lowest penalty score</li></ul>
+<p>Adding a logo raises error correction to the highest level so the covered modules can be recovered. Finder patterns are always drawn square, even in the dot and rounded styles, so scanners lock on quickly.</p>
+<p>Wi-Fi codes use the <code>WIFI:</code> format with special characters escaped, contacts use vCard 3.0, and email and phone codes use <code>mailto:</code> and <code>tel:</code> links.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/qr-studio">qr-studio on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

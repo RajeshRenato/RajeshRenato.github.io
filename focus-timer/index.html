@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5a7a'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EF%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Focus Timer</title>
+<title>Focus Timer | Pomodoro timer online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/focus-timer/">
 <style>
   :root { --bg:#0b0e16; --panel:#121726; --line:#232c45; --text:#dde4f5; --dim:#7684a8;
           --focus:#ff5a7a; --short:#39ff9c; --long:#28e0ff; }
@@ -43,6 +45,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/focus-timer/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Pomodoro with a glowing progress ring, auto-cycling breaks, chimes, and daily session stats.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Focus Timer", "url": "https://rajeshrenato.github.io/playground/focus-timer/", "description": "Pomodoro with a glowing progress ring, auto-cycling breaks, chimes, and daily session stats.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -195,5 +198,15 @@ addEventListener('keydown', e => {
 
 render();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Focus Timer</h2>
+<p>A pomodoro timer. Work in focus sessions with short breaks in between, and a long break after every fourth focus session.</p>
+<h3>What it does</h3>
+<ul><li>Focus, short break, and long break default to 25, 5, and 15 minutes. You can change each one, and your choices are saved.</li><li>When a phase ends, a short chime plays and the next phase is set up. Press start to begin it.</li><li>Skip ends the current phase early and moves on. Reset restarts it.</li><li>While the timer runs, the countdown shows in the tab title.</li><li>The number of focus sessions you finish each day is kept in <code>localStorage</code>.</li></ul>
+<h3>Shortcuts</h3>
+<table><tr><td>Key</td><td>Action</td></tr><tr><td>Space</td><td>Start or pause</td></tr></table>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/focus-timer">focus-timer on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

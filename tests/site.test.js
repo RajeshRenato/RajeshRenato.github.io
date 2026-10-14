@@ -9,7 +9,7 @@ const vm = require('vm');
 const { ROOT, ctx2d, load, run, pageScripts } = require('./helpers/browser');
 
 const BASE = 'https://rajeshrenato.github.io/playground';
-const NOT_PROJECTS = new Set(['tests', 'template', 'docs', 'node_modules']);
+const NOT_PROJECTS = new Set(['tests', 'template', 'docs', 'node_modules', 'common']);
 
 const projects = fs.readdirSync(ROOT, { withFileTypes: true })
   .filter(d => d.isDirectory() && !d.name.startsWith('.') && !NOT_PROJECTS.has(d.name))
@@ -88,4 +88,24 @@ test('every hub card has a thumbnail that draws without errors', () => {
       assert.doesNotThrow(() => TH[k].call(state, ctx2d, 304, 171, '#28e0ff', t), k + ' thumbnail failed at t=' + t);
     }
   }
+});
+
+test('search basics: canonical URL, structured data, an about section, and the sitemap', () => {
+  const problems = [];
+  for (const p of projects) {
+    const html = read(p + '/index.html');
+    if (!html.includes(`<link rel="canonical" href="${BASE}/${p}/">`)) problems.push(p + ': canonical');
+    const ld = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html);
+    try { if (JSON.parse(ld[1]).url !== `${BASE}/${p}/`) problems.push(p + ': json-ld url'); } catch (e) { problems.push(p + ': json-ld'); }
+    if (!/<div class="pg-about" id="pg-about" hidden>\n<h2>/.test(html)) problems.push(p + ': about section');
+    const title = /<title>([^<]*)<\/title>/.exec(html)[1];
+    if (!title.includes(' | ') || title.length > 80) problems.push(p + ': title ' + title);
+  }
+  assert.deepStrictEqual(problems, []);
+  const sitemap = read('sitemap.xml');
+  const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+  assert.deepStrictEqual(locs.slice(1).map(u => u.slice(BASE.length + 1, -1)).sort(), projects);
+  const count = +/(\d+) games, tools, and toys that run straight/.exec(hub)[1];
+  assert.ok(hub.includes(`<title>Rajesh's Playground | ${count} free browser games and tools</title>`), 'hub title count is stale');
+  assert.ok(new RegExp('<meta name="description" content="' + count + ' free').test(hub), 'hub description count is stale');
 });

@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffd166'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EV%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Video to GIF</title>
+<title>Video to GIF | convert video to GIF in your browser, no watermark</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/video-to-gif/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#b8860b; --bad:#d8392f; }
   @media (prefers-color-scheme: dark) {
@@ -55,6 +57,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/video-to-gif/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Trim a video clip and turn it into a GIF, with control over size, frame rate, and speed. Everything runs in your browser and nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Video to GIF", "url": "https://rajeshrenato.github.io/playground/video-to-gif/", "description": "Trim a video clip and turn it into a GIF, with control over size, frame rate, and speed. Everything runs in your browser and nothing is uploaded.", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -388,5 +391,14 @@ $('dl').addEventListener('click', () => {
   a.click();
 });
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Video to GIF</h2>
+<p>Trim a clip from a video and turn it into a GIF, with control over width, frame rate, speed, and looping. It runs on your device, so nothing is uploaded and there's no watermark.</p>
+<h3>How it works</h3>
+<ul><li>Frames: the video plays in a <code>&lt;video&gt;</code> element. The tool seeks to each frame time in the clip and copies it to a canvas at the chosen width. Speed changes how far apart in the video the frames are taken, not the delay between them.</li><li>Palette: pixels sampled from all frames go through median cut to build one shared palette of 255 colors. The 256th slot is kept for transparency. Colors are matched with a weighted distance that follows how the eye sees them, and the matches are cached by 15-bit color.</li><li>Dithering is optional and uses Floyd-Steinberg error diffusion.</li><li>Smaller files: each frame after the first stores only the pixels that changed. Unchanged pixels become transparent and the frame is cropped to the changed area. Frames that didn't change at all are merged into the previous frame's delay.</li><li>Encoding: GIF89a with LZW compression (variable code size up to 12 bits, dictionary reset at 4096 codes) and a NETSCAPE2.0 block for looping. The encoder runs in a Web Worker built from the same functions, so the page stays responsive.</li></ul>
+<p>Clips are capped at 400 frames to keep files and memory use reasonable.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/video-to-gif">video-to-gif on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>

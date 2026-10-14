@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2339ff9c'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Penta</title>
+<title>Penta | five-letter word game, Wordle-style</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/penta/">
 <style>
   :root { --bg:#0a0618; --panel:#17122e; --line:#2b2250; --green:#39ff9c; --yellow:#ffd166; --gray:#3a3550; }
   * { box-sizing: border-box; }
@@ -50,6 +52,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/penta/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Five letters, six tries. On-screen keyboard, emoji sharing, and win-streak stats.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Penta", "url": "https://rajeshrenato.github.io/playground/penta/", "description": "Five letters, six tries. On-screen keyboard, emoji sharing, and win-streak stats.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -293,5 +296,17 @@ renderStats();
 renderDaily();
 newGame();
 </script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Penta</h2>
+<p>A Wordle-style word game. Guess the five-letter word in six tries. After each guess, green means the letter is in the right spot, yellow means it's in the word but somewhere else, and gray means it isn't in the word.</p>
+<p>There are two modes. Daily gives everyone the same word each day, and free play picks a random word with a "new word" button. The daily word is also part of the <a href="../daily/">daily puzzles</a> page.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Letter keys</td><td>type a letter</td></tr><tr><td>Enter</td><td>submit the guess</td></tr><tr><td>Backspace</td><td>delete a letter</td></tr></table>
+<p>The on-screen keyboard does the same thing, and its keys are colored by the best result you've had for each letter.</p>
+<h3>How it works</h3>
+<ul><li>Answers come from a list of 551 common words in the page. Any five letters are accepted as a guess, so there's no dictionary check.</li><li>Repeated letters are scored the same way as Wordle: exact matches are marked first, then yellows are handed out only as many times as the letter is left in the answer.</li><li>The daily word is picked by hashing the number of days since 1 January 2026. Your daily guesses are saved, so reloading the page restores the board.</li><li>Played, won, and current streak are saved in <code>localStorage</code>, along with a separate streak for daily puzzles.</li><li>After a game, "share result" copies a grid of colored squares to the clipboard.</li></ul>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/penta">penta on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
 </body>
 </html>
