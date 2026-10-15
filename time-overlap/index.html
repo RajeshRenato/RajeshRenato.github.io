@@ -45,6 +45,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/time-overlap/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Plan a meeting across timezones. See when everyone is awake, with the hours that work for all highlighted.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "Time Overlap", "item": "https://rajeshrenato.github.io/playground/time-overlap/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Time Overlap", "url": "https://rajeshrenato.github.io/playground/time-overlap/", "description": "Plan a meeting across timezones. See when everyone is awake, with the hours that work for all highlighted.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -169,6 +170,7 @@ setInterval(render, 30000);
 <ul><li>Choose from a list of 30 cities and add up to 8, along with your own time zone.</li><li>Each cell is colored by the local hour there: working (9:00 to 18:00), stretch (7:00 to 9:00 and 18:00 to 22:00), or probably asleep.</li><li>Columns where every city is in working hours get a green outline. The current hour is highlighted.</li><li>Each city shows its current time. The grid refreshes every 30 seconds.</li><li>Your city list is saved in <code>localStorage</code>.</li></ul>
 <h3>How it works</h3>
 <p>Times come from the browser's <code>Intl</code> time zone data, so daylight saving changes are handled without any time zone tables in the page.</p>
+<p class="pg-more">More like this: <a href="../focus-timer/">Focus Timer</a>, <a href="../palette-lab/">Palette Lab</a>, <a href="../pixel-forge/">Pixel Forge</a>, <a href="../beat-grid/">Beat Grid</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/time-overlap">time-overlap on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

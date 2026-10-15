@@ -27,6 +27,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/brickfall/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Brick-breaker with eight levels and angle-based paddle physics.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Classics", "item": "https://rajeshrenato.github.io/playground/#classics"}, {"@type": "ListItem", "position": 3, "name": "Brickfall", "item": "https://rajeshrenato.github.io/playground/brickfall/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Brickfall", "url": "https://rajeshrenato.github.io/playground/brickfall/", "description": "Brick-breaker with eight levels and angle-based paddle physics.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -231,6 +232,7 @@ requestAnimationFrame(loop);
 <table><tr><td>Input</td><td>Action</td></tr><tr><td>Mouse, or left / right arrows, or A / D</td><td>move the paddle</td></tr><tr><td>Click or Space</td><td>launch the ball</td></tr><tr><td>R</td><td>play again after a game over or a win</td></tr></table>
 <h3>How it works</h3>
 <ul><li>Where the ball hits the paddle sets the angle it leaves at, up to about 60 degrees from straight up at the edges.</li><li>Each level adds a row of bricks, up to 8 rows, with a few gaps that depend on the level number. The ball gets a little faster every level.</li><li>Your best score is saved in <code>localStorage</code>.</li></ul>
+<p class="pg-more">More like this: <a href="../slide-2048/">Slide 2048</a>, <a href="../stackfall/">Stackfall</a>, <a href="../rockblaster/">Rock Blaster</a>, <a href="../minefield/">Minefield</a>. Or see <a href="../#classics">all classics</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/brickfall">brickfall on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

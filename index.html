@@ -56,6 +56,7 @@
     padding-bottom: 8px;
     border-bottom: 2px solid var(--ink);
   }
+  p.sec { margin: -8px 0 18px; color: var(--muted); font-size: 15px; max-width: 64ch; }
   h2 small { font-weight: 400; font-size: 15px; color: var(--muted); margin-left: 8px; }
   ul.list {
     list-style: none; margin: 0; padding: 0;
@@ -146,12 +147,13 @@
 </header>
 <p id="nothing" hidden></p>
 
-<h2>Today</h2>
+<h2 id="today">Today</h2>
 <ul class="list wide">
   <li><a href="daily/" style="--c:#39ff9c" data-t="daily" data-k="free daily word, sudoku, and logic puzzles"><canvas width="304" height="171"></canvas><div class="txt"><strong>Daily puzzles</strong><span>Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.</span><span id="todayStatus" class="status"></span></div></a></li>
 </ul>
 
-<h2>Highlights</h2>
+<h2 id="highlights">Highlights</h2>
+<p class="sec">The biggest builds: an open world, a racer, a shooter, and a puzzle with huge boards.</p>
 <ul class="list big">
   <li><a href="miami-nights/" style="--c:#ff4fa3" data-t="vice" data-k="GTA Vice City-style open world game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Miami Nights</strong><span>A GTA Vice City-style open world: drive a procedural Miami at night, outrun the cops, and run deliveries.</span></div></a></li>
   <li><a href="breach/" style="--c:#9f7bff" data-t="breach" data-k="retro first-person shooter in your browser"><canvas width="304" height="171"></canvas><div class="txt"><strong>Breach</strong><span>First-person shooter on a raycasting engine written from scratch. Every wall texture, sprite, and sound is generated in code.</span></div></a></li>
@@ -159,7 +161,8 @@
   <li><a href="arrow-flux/" style="--c:#28e0ff" data-t="arrow" data-k="arrow puzzle game with huge boards"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arrow Flux</strong><span>Slide tangled arrows off a packed board. The generator builds every board in solution order, so each one is provably solvable.</span></div></a></li>
 </ul>
 
-<h2>Play online<small>10</small></h2>
+<h2 id="online">Play online<small>10</small></h2>
+<p class="sec">Games for two or more people, connected by links. No server, no accounts.</p>
 <ul class="list">
   <li><a href="cycle-duel/" style="--c:#28e0ff" data-t="cycle" data-k="Tron light cycle game, play a friend online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cycle Duel</strong><span>Light-cycle duels. Play a friend online with just a link, or on one keyboard.</span></div></a></li>
   <li><a href="type-race/" style="--c:#ffd166" data-t="typerace" data-k="typing race with friends online, no sign-up"><canvas width="304" height="171"></canvas><div class="txt"><strong>Type Race</strong><span>Typing races with friends over a link, no server. Or race your own best pace.</span></div></a></li>
@@ -173,7 +176,8 @@
   <li><a href="whiteboard/" style="--c:#1e88e5" data-t="whiteboard" data-k="free online whiteboard to draw together, no sign-up"><canvas width="304" height="171"></canvas><div class="txt"><strong>Whiteboard</strong><span>Draw, sketch shapes, and write notes together over a link. Save the board as a PNG.</span></div></a></li>
 </ul>
 
-<h2>Games<small>13</small></h2>
+<h2 id="games">Games<small>13</small></h2>
+<p class="sec">Games to play on your own, from puzzles to arcade.</p>
 <ul class="list">
   <li><a href="dune-drift/" style="--c:#ff8a5c" data-t="drift" data-k="one-button dune riding game"><canvas width="304" height="171"></canvas><div class="txt"><strong>Dune Drift</strong><span>One-button endless ride over rolling dunes, with backflips at sunset.</span></div></a></li>
   <li><a href="pixel-logic/" style="--c:#ffd166" data-t="pixlog" data-k="free nonogram puzzles (picross) online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pixel Logic</strong><span>Nonograms, solver-verified so pure deduction always wins.</span></div></a></li>
@@ -190,7 +194,8 @@
   <li><a href="reflex-lab/" style="--c:#ff6fb0" data-t="reflex" data-k="reaction time test, aim and choice speed"><canvas width="304" height="171"></canvas><div class="txt"><strong>Reflex Lab</strong><span>Reaction, aim, and choice-speed tests with ratings and bests.</span></div></a></li>
 </ul>
 
-<h2>Classics<small>8</small></h2>
+<h2 id="classics">Classics<small>8</small></h2>
+<p class="sec">Familiar games, rebuilt from scratch.</p>
 <ul class="list">
   <li><a href="coil/" style="--c:#39ff9c" data-t="snake" data-k="classic snake game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Coil</strong><span>Snake. It speeds up as you grow. Swipe to steer on a phone.</span></div></a></li>
   <li><a href="brickfall/" style="--c:#4f8aff" data-t="breakout" data-k="brick breaker game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Brickfall</strong><span>Brick-breaker with eight levels and angle-based paddle physics.</span></div></a></li>
@@ -202,7 +207,8 @@
   <li><a href="penta/" style="--c:#39ff9c" data-t="penta" data-k="five-letter word game, Wordle-style"><canvas width="304" height="171"></canvas><div class="txt"><strong>Penta</strong><span>A five-letter word game with win streaks and emoji sharing.</span></div></a></li>
 </ul>
 
-<h2>Tools<small>27</small></h2>
+<h2 id="tools">Tools<small>27</small></h2>
+<p class="sec">Everyday tools that keep your files on your device.</p>
 <ul class="list">
   <li><a href="pdf-toolkit/" style="--c:#e5484d" data-t="pdf" data-k="merge and split PDFs without uploading"><canvas width="304" height="171"></canvas><div class="txt"><strong>PDF Toolkit</strong><span>Merge, split, reorder, rotate, and delete PDF pages. Everything stays on your device.</span></div></a></li>
   <li><a href="images-to-pdf/" style="--c:#e5484d" data-t="img2pdf" data-k="convert JPG and PNG to PDF, no upload"><canvas width="304" height="171"></canvas><div class="txt"><strong>Images to PDF</strong><span>Turn photos and scans into one PDF, with JPEGs kept at full quality. Nothing is uploaded.</span></div></a></li>
@@ -233,7 +239,8 @@
   <li><a href="profile-banner/" style="--c:#ff4fa3" data-t="banner" data-k="animated GitHub profile README banner generator"><canvas width="304" height="171"></canvas><div class="txt"><strong>Profile Banner</strong><span>Animated SVG banner generator for a GitHub profile.</span></div></a></li>
 </ul>
 
-<h2>Toys &amp; simulations<small>9</small></h2>
+<h2 id="toys">Toys &amp; simulations<small>9</small></h2>
+<p class="sec">Things to play with: physics, generative art, and algorithms.</p>
 <ul class="list">
   <li><a href="flowfield/" style="--c:#ff8a5c" data-t="flow" data-k="generative art flow field"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flow Field</strong><span>Particles tracing a procedural vector field. Save the result as a PNG.</span></div></a></li>
   <li><a href="orbit-sandbox/" style="--c:#9f7bff" data-t="orbit" data-k="gravity simulator, planets and orbits"><canvas width="304" height="171"></canvas><div class="txt"><strong>Orbit Sandbox</strong><span>An n-body gravity sandbox. Sling planets around a star.</span></div></a></li>
@@ -1817,8 +1824,15 @@ function tick(now) {
   function apply(q) {
     const words = q.toLowerCase().replace(/-/g, ' ').split(/\s+/).filter(Boolean).map(w => (w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w));
     let shown = 0;
+    const exact = cards.filter(c => words.every(w => c.text.includes(w))).length;
+    const loose = !exact && words.length > 1;
+    // with no exact match, rare words count for more than common ones like "game"
+    const weight = {};
+    for (const w of words) { const n = cards.filter(c => c.text.includes(w)).length; weight[w] = w.length > 2 && n ? 1 / n : 0; }
+    const score = c => words.reduce((t, w) => t + (c.text.includes(w) ? weight[w] : 0), 0);
+    const best = loose ? Math.max(0, ...cards.map(score)) : 0;
     for (const c of cards) {
-      const hit = words.every(w => c.text.includes(w));
+      const hit = loose ? best > 0 && score(c) >= best * 0.5 : words.every(w => c.text.includes(w));
       c.li.hidden = !hit;
       if (hit) shown++;
     }
@@ -1829,7 +1843,7 @@ function tick(now) {
       if (h && h.tagName === 'H2') h.hidden = !any;
     }
     document.body.classList.toggle('searching', words.length > 0);
-    count.textContent = words.length ? shown + (shown === 1 ? ' match' : ' matches') : '';
+    count.textContent = words.length ? (loose && shown ? 'close matches: ' + shown : shown + (shown === 1 ? ' match' : ' matches')) : '';
     nothing.hidden = !(words.length && !shown);
     nothing.textContent = 'Nothing matches "' + q.trim() + '". Try a shorter word, or something like "puzzle", "online", or "image".';
   }

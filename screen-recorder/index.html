@@ -57,6 +57,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/screen-recorder/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Record your screen, a window, or a tab, with your voice and an optional camera bubble. No install, no watermark, nothing uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "Screen Recorder", "item": "https://rajeshrenato.github.io/playground/screen-recorder/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Screen Recorder", "url": "https://rajeshrenato.github.io/playground/screen-recorder/", "description": "Record your screen, a window, or a tab, with your voice and an optional camera bubble. No install, no watermark, nothing uploaded.", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -368,6 +369,7 @@ else $('fmtNote').textContent = 'Saves as ' + format.ext.toUpperCase();
 <h3>How it works</h3>
 <p>The screen comes from <code>getDisplayMedia</code> and the microphone and camera from <code>getUserMedia</code>. With the camera on, both videos are drawn onto a canvas each frame and the canvas stream is recorded; otherwise the screen stream is recorded directly. When there's more than one audio source, they're mixed through a Web Audio <code>MediaStreamDestination</code>, since recorders only reliably keep one audio track.</p>
 <p><code>MediaRecorder</code> writes MP4 when the browser supports it, and WebM otherwise. Browsers write WebM recordings without a duration, which leaves many players unable to show the length or seek. After recording, the page walks the file's EBML structure, finds <code>Segment &gt; Info</code>, and inserts a <code>Duration</code> element (or updates one that's there), resizing <code>Info</code> and, if needed, the <code>Segment</code>.</p>
+<p class="pg-more">More like this: <a href="../json-studio/">JSON Studio</a>, <a href="../regex-playground/">Regex Playground</a>, <a href="../diff-deck/">Diff Deck</a>, <a href="../csv-viewer/">CSV Viewer</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/screen-recorder">screen-recorder on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

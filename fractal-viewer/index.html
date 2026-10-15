@@ -30,6 +30,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/fractal-viewer/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Zoom into the Mandelbrot set or four Julia sets with three palettes and chunked rendering.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Toys & simulations", "item": "https://rajeshrenato.github.io/playground/#toys"}, {"@type": "ListItem", "position": 3, "name": "Fractal Viewer", "item": "https://rajeshrenato.github.io/playground/fractal-viewer/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Fractal Viewer", "url": "https://rajeshrenato.github.io/playground/fractal-viewer/", "description": "Zoom into the Mandelbrot set or four Julia sets with three palettes and chunked rendering.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -164,6 +165,7 @@ render();
 <table><tr><td>Input</td><td>Action</td></tr><tr><td>Click</td><td>zoom in 2.4x, centered on the click</td></tr><tr><td>Right-click</td><td>zoom out 2.4x</td></tr><tr><td>R or reset view</td><td>go back to the starting view</td></tr><tr><td>mode button</td><td>cycle Mandelbrot, then Julia 1 to 4</td></tr><tr><td>Palette menu</td><td>neon, ember, or ice</td></tr><tr><td>detail slider</td><td>maximum iterations, 60 to 600</td></tr></table>
 <h3>How it works</h3>
 <ul><li>Each pixel runs z = z² + c until |z| passes 2 or the iteration limit is hit. For the Mandelbrot set z starts at 0 and c is the pixel. For a Julia set z starts at the pixel and c is fixed.</li><li>The Julia constants are -0.7 + 0.27015i, -0.8 + 0.156i, 0.285 + 0.01i, and -0.4 + 0.6i.</li><li>The image is drawn into canvas <code>ImageData</code> 36 rows at a time, with a short break between chunks so the page stays responsive. Starting a new zoom cancels the render in progress.</li><li>The line under the canvas shows the current center and zoom level.</li></ul>
+<p class="pg-more">More like this: <a href="../neuro-pilot/">Neuro Pilot</a>, <a href="../falling-sand/">Falling Sand</a>, <a href="../sort-arena/">Sort Arena</a>, <a href="../flowfield/">Flow Field</a>. Or see <a href="../#toys">all toys and simulations</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/fractal-viewer">fractal-viewer on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

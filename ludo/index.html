@@ -60,6 +60,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/ludo/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Ludo for 2 to 4 players. Play friends online with a link, on one phone, or against bots. Need a six to start, captures send tokens home.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/playground/#online"}, {"@type": "ListItem", "position": 3, "name": "Ludo", "item": "https://rajeshrenato.github.io/playground/ludo/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Ludo", "url": "https://rajeshrenato.github.io/playground/ludo/", "description": "Ludo for 2 to 4 players. Play friends online with a link, on one phone, or against bots. Need a six to start, captures send tokens home.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -617,6 +618,7 @@ requestAnimationFrame(frame);
 <p>The 52 track squares are listed once, in order. Each seat starts 13 squares after the previous one, so a token's position is just a number from its own start, and the board square comes from adding the seat's offset.</p>
 <p>Bots score every legal move: capturing, getting home, leaving the yard, and reaching the home column count for a move, and ending up within six squares in front of an opponent counts against it.</p>
 <p>Online, it uses <a href="../linkplay/">LinkPlay</a>. The host's browser rolls the dice for everyone, so nobody can choose their roll, and checks that each move is legal. If a player leaves, a bot takes their seat and the game goes on.</p>
+<p class="pg-more">More like this: <a href="../trivia-night/">Trivia Night</a>, <a href="../whiteboard/">Whiteboard</a>, <a href="../cycle-duel/">Cycle Duel</a>, <a href="../type-race/">Type Race</a>. Or see <a href="../#online">all online games</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/ludo">ludo on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

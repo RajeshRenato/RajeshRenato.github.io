@@ -42,6 +42,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/jwt-peek/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Decode JWTs locally with colored claims and live expiry status. Tokens never leave the page.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "JWT Peek", "item": "https://rajeshrenato.github.io/playground/jwt-peek/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "JWT Peek", "url": "https://rajeshrenato.github.io/playground/jwt-peek/", "description": "Decode JWTs locally with colored claims and live expiry status. Tokens never leave the page.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -152,6 +153,7 @@ update();
 <h3>What it does</h3>
 <ul><li>Shows the header and payload as formatted, colored JSON.</li><li>Turns the <code>iat</code>, <code>nbf</code>, and <code>exp</code> claims into local dates. It also says whether the token has expired, how long until it does, and whether it is not valid yet.</li><li>Warns when the header has <code>alg: "none"</code> (an unsigned token) or no <code>alg</code> at all.</li><li>Explains what's wrong when the input isn't a three-part token or a part isn't valid JSON.</li><li>A button loads a sample token that expires two hours from now.</li></ul>
 <p>It does not check the signature. That would need the secret or public key.</p>
+<p class="pg-more">More like this: <a href="../cron-sage/">Cron Sage</a>, <a href="../bit-bench/">Bit Bench</a>, <a href="../markdown-pad/">Markdown Pad</a>, <a href="../unit-converter/">Unit Converter</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/jwt-peek">jwt-peek on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

@@ -27,6 +27,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/boid-swarm/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="A flocking simulation with sliders for each instinct. Your cursor is a hawk the flock flees from.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Toys & simulations", "item": "https://rajeshrenato.github.io/playground/#toys"}, {"@type": "ListItem", "position": 3, "name": "Boid Swarm", "item": "https://rajeshrenato.github.io/playground/boid-swarm/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Boid Swarm", "url": "https://rajeshrenato.github.io/playground/boid-swarm/", "description": "A flocking simulation with sliders for each instinct. Your cursor is a hawk the flock flees from.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -165,6 +166,7 @@ requestAnimationFrame(frame);
 <table><tr><td>Input</td><td>Action</td></tr><tr><td>Move the mouse</td><td>the boids flee the cursor</td></tr><tr><td>separation, alignment, cohesion</td><td>weight of each rule, 0 to 3</td></tr><tr><td>boids</td><td>number of boids, 40 to 400</td></tr><tr><td>trails</td><td>turn motion trails on or off</td></tr></table>
 <h3>How it works</h3>
 <ul><li>Each boid looks at every other boid within 62 pixels. Cohesion pulls it toward their average position, alignment toward their average velocity, and separation pushes it away from any that are very close.</li><li>Boids within 150 pixels of the cursor get pushed directly away from it.</li><li>Speed is kept between 60 and 175 pixels per second. Boids that leave one edge come back on the opposite side.</li><li>Each boid's color comes from its heading. Trails come from painting a mostly transparent background over the last frame instead of clearing it.</li></ul>
+<p class="pg-more">More like this: <a href="../life-grid/">Life Grid</a>, <a href="../fractal-viewer/">Fractal Viewer</a>, <a href="../neuro-pilot/">Neuro Pilot</a>, <a href="../falling-sand/">Falling Sand</a>. Or see <a href="../#toys">all toys and simulations</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/boid-swarm">boid-swarm on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

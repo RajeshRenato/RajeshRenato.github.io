@@ -53,6 +53,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/daily/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Today", "item": "https://rajeshrenato.github.io/playground/#today"}, {"@type": "ListItem", "position": 3, "name": "Daily puzzles", "item": "https://rajeshrenato.github.io/playground/daily/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Daily puzzles", "url": "https://rajeshrenato.github.io/playground/daily/", "description": "Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -187,6 +188,7 @@ addEventListener('storage', render);
 <p>One page for the three daily puzzles: Penta, Sudoku, and Arrow Flux. Everyone gets the same puzzles on the same day, and the page tracks a streak of days where you solved all three.</p>
 <h3>How it works</h3>
 <p>Each game saves its own result for the day in <code>localStorage</code> (<code>penta_day_N</code>, <code>sud_day_N</code>, <code>af_day_N</code>), and this page reads them, since every page on the site shares one origin. Day <code>N</code> counts from 1 January 2026 and rolls over at midnight UTC, so everyone's day number matches. Nothing is sent anywhere.</p>
+<p class="pg-more">More like this: <a href="../penta/">Penta</a>, <a href="../sudoku/">Sudoku</a>, <a href="../arrow-flux/">Arrow Flux</a>, <a href="../pixel-logic/">Pixel Logic</a>. Or see <a href="../">everything in the playground</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/daily">daily on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

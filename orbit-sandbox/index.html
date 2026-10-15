@@ -24,6 +24,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/orbit-sandbox/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="N-body gravity sim. Slingshot planets around a star, watch them merge, trail, and escape.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Toys & simulations", "item": "https://rajeshrenato.github.io/playground/#toys"}, {"@type": "ListItem", "position": 3, "name": "Orbit Sandbox", "item": "https://rajeshrenato.github.io/playground/orbit-sandbox/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Orbit Sandbox", "url": "https://rajeshrenato.github.io/playground/orbit-sandbox/", "description": "N-body gravity sim. Slingshot planets around a star, watch them merge, trail, and escape.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -188,6 +189,7 @@ requestAnimationFrame(frame);
 <table><tr><td>Input</td><td>Action</td></tr><tr><td>Drag and release</td><td>launch a planet. Pull back like a slingshot: longer drags launch faster</td></tr><tr><td>1 / 2 / 3</td><td>planet size: small, medium, large</td></tr><tr><td>G</td><td>remove or bring back the star</td></tr><tr><td>P</td><td>pause</td></tr><tr><td>C</td><td>clear all planets</td></tr><tr><td>S</td><td>save the canvas as a PNG</td></tr></table>
 <h3>How it works</h3>
 <ul><li>Gravity is computed for every pair of bodies, with a softening term added to the squared distance so close passes don't blow up.</li><li>Each frame runs three substeps of 1/180 of a second, updating velocity first and then position.</li><li>When two bodies overlap, the smaller one is absorbed. The merged body keeps the combined mass and momentum, and its radius grows with the cube root of its mass. The star stays fixed in the center.</li><li>Planets that drift more than 2000 pixels off screen are removed.</li><li>Trails come from painting a faint layer of background over each frame instead of clearing it.</li></ul>
+<p class="pg-more">More like this: <a href="../pendulum-chaos/">Pendulum Chaos</a>, <a href="../boid-swarm/">Boid Swarm</a>, <a href="../life-grid/">Life Grid</a>, <a href="../fractal-viewer/">Fractal Viewer</a>. Or see <a href="../#toys">all toys and simulations</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/orbit-sandbox">orbit-sandbox on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

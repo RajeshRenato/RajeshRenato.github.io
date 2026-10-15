@@ -58,6 +58,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/qr-studio/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Make QR codes for links, Wi-Fi, contacts, and more, with your own colors and logo. The encoder is written from scratch. No watermark, no tracking.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "QR Studio", "item": "https://rajeshrenato.github.io/playground/qr-studio/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "QR Studio", "url": "https://rajeshrenato.github.io/playground/qr-studio/", "description": "Make QR codes for links, Wi-Fi, contacts, and more, with your own colors and logo. The encoder is written from scratch. No watermark, no tracking.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -584,6 +585,7 @@ render();
 <ul><li>picks numeric, alphanumeric, or byte (UTF-8) mode automatically</li><li>chooses the smallest of the 40 versions that fits, at the error correction level you pick</li><li>adds Reed-Solomon error correction over GF(256), split into blocks and interleaved as the standard specifies</li><li>places function patterns, format and version information, and data, then tries all 8 masks and keeps the one with the lowest penalty score</li></ul>
 <p>Adding a logo raises error correction to the highest level so the covered modules can be recovered. Finder patterns are always drawn square, even in the dot and rounded styles, so scanners lock on quickly.</p>
 <p>Wi-Fi codes use the <code>WIFI:</code> format with special characters escaped, contacts use vCard 3.0, and email and phone codes use <code>mailto:</code> and <code>tel:</code> links.</p>
+<p class="pg-more">More like this: <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>, <a href="../video-to-gif/">Video to GIF</a>, <a href="../screen-recorder/">Screen Recorder</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/qr-studio">qr-studio on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

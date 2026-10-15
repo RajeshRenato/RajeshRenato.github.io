@@ -41,6 +41,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/cron-sage/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Cron expressions explained in plain English, with the next six run times counted down.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "Cron Sage", "item": "https://rajeshrenato.github.io/playground/cron-sage/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Cron Sage", "url": "https://rajeshrenato.github.io/playground/cron-sage/", "description": "Cron expressions explained in plain English, with the next six run times counted down.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -208,6 +209,7 @@ update();
 <p>Type a five-field cron expression and get a plain English description of it, along with the next 6 times it will run and how far away each one is.</p>
 <h3>What it does</h3>
 <ul><li>Fields are minute, hour, day of month, month, and weekday.</li><li>Supports <code>*</code>, steps (<code>*/n</code>), ranges (<code>a-b</code>, optionally with a step), comma lists, and three-letter month and weekday names. Weekday 7 is treated as Sunday, like 0.</li><li>When both day of month and weekday are restricted, a day matches if either one does. This is how standard cron behaves.</li><li>If the expression is invalid, it names the field that's wrong.</li><li>Run times use your local time zone and look up to two years ahead. The countdowns refresh every 30 seconds.</li><li>Presets cover common schedules such as every 5 minutes, weekdays at 9am, and monthly.</li></ul>
+<p class="pg-more">More like this: <a href="../bit-bench/">Bit Bench</a>, <a href="../markdown-pad/">Markdown Pad</a>, <a href="../unit-converter/">Unit Converter</a>, <a href="../key-forge/">Key Forge</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/cron-sage">cron-sage on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

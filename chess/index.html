@@ -64,6 +64,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/chess/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Play chess with a friend online over a link, on one screen, or against a bot with three levels. Full rules, no sign-up, no server.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/playground/#online"}, {"@type": "ListItem", "position": 3, "name": "Chess", "item": "https://rajeshrenato.github.io/playground/chess/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Chess", "url": "https://rajeshrenato.github.io/playground/chess/", "description": "Play chess with a friend online over a link, on one screen, or against a bot with three levels. Full rules, no sign-up, no server.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -841,6 +842,7 @@ render();
 <h3>How it works</h3>
 <p>The board is a 0x88 array: 128 squares where a square is off the board when its index ANDed with 0x88 is not zero, which makes edge checks one operation. Move generation is checked against the standard perft counts (the number of positions after every possible sequence of moves) for the starting position and several tricky test positions.</p>
 <p>Online play uses <a href="../linkplay/">LinkPlay</a>. The guest sends each move in coordinate form, the host checks it against the legal moves, and sends back the whole move list. Both sides replay it from the start, so they always agree on the position.</p>
+<p class="pg-more">More like this: <a href="../clue-grid/">Clue Grid</a>, <a href="../ludo/">Ludo</a>, <a href="../trivia-night/">Trivia Night</a>, <a href="../whiteboard/">Whiteboard</a>. Or see <a href="../#online">all online games</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/chess">chess on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

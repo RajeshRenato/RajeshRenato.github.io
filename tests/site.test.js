@@ -95,8 +95,14 @@ test('search basics: canonical URL, structured data, an about section, and the s
   for (const p of projects) {
     const html = read(p + '/index.html');
     if (!html.includes(`<link rel="canonical" href="${BASE}/${p}/">`)) problems.push(p + ': canonical');
-    const ld = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html);
-    try { if (JSON.parse(ld[1]).url !== `${BASE}/${p}/`) problems.push(p + ': json-ld url'); } catch (e) { problems.push(p + ': json-ld'); }
+    let blocks = [];
+    try { blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1])); } catch (e) { problems.push(p + ': json-ld does not parse'); }
+    const app = blocks.find(b => b['@type'] === 'WebApplication'), crumbs = blocks.find(b => b['@type'] === 'BreadcrumbList');
+    if (!app || app.url !== `${BASE}/${p}/`) problems.push(p + ': json-ld app');
+    if (!crumbs || crumbs.itemListElement.length !== 3 || crumbs.itemListElement[2].item !== `${BASE}/${p}/`) problems.push(p + ': breadcrumbs');
+    const more = /<p class="pg-more">([\s\S]*?)<\/p>/.exec(html);
+    if (!more) problems.push(p + ': related links');
+    else for (const m of more[1].matchAll(/href="\.\.\/([a-z0-9-]+)\/"/g)) if (!projects.includes(m[1]) || m[1] === p) problems.push(p + ': related link ' + m[1]);
     if (!/<div class="pg-about" id="pg-about" hidden>\n<h2>/.test(html)) problems.push(p + ': about section');
     const title = /<title>([^<]*)<\/title>/.exec(html)[1];
     if (!title.includes(' | ') || title.length > 80) problems.push(p + ': title ' + title);

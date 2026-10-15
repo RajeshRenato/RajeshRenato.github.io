@@ -43,6 +43,7 @@
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/morse-coder/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Two-way morse translator with proper-timing audio playback, screen flash, and a trainer.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "Morse Coder", "item": "https://rajeshrenato.github.io/playground/morse-coder/"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Morse Coder", "url": "https://rajeshrenato.github.io/playground/morse-coder/", "description": "Two-way morse translator with proper-timing audio playback, screen flash, and a trainer.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
@@ -198,6 +199,7 @@ $('morse').value = encode($('text').value);
 <ul><li>Covers letters, digits, and common punctuation. In the Morse box, letters are separated by spaces and words by <code>/</code>. A code it doesn't recognize shows up as <code>�</code>.</li><li>Plays the code as a 620 Hz tone at 8 to 30 words per minute, and can flash the screen in time with it.</li><li>The trainer plays a random letter or digit and shows its code. Type the character on your keyboard. It tracks your streak and keeps your best streak in <code>localStorage</code>.</li></ul>
 <h3>How it works</h3>
 <p>Timing follows the PARIS standard: one unit lasts 1.2 / WPM seconds. A dot is 1 unit and a dash is 3. The gap is 1 unit inside a letter, 3 between letters, and 7 between words.</p>
+<p class="pg-more">More like this: <a href="../profile-banner/">Profile Banner</a>, <a href="../pdf-toolkit/">PDF Toolkit</a>, <a href="../images-to-pdf/">Images to PDF</a>, <a href="../linkplay/">LinkPlay</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/morse-coder">morse-coder on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>
