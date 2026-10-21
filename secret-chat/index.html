@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230c1517'/%3E%3Cpath d='M9 14v-3a7 7 0 0 1 14 0v3' stroke='%23ffb84d' stroke-width='3' fill='none'/%3E%3Crect x='7' y='14' width='18' height='13' rx='3' fill='%23ffb84d'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Secret Chat | end-to-end encrypted chat with no server or sign-up</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/secret-chat/">
+<style>
+  :root { --bg: #0c1517; --deep: #081012; --panel: #132124; --line: #22363a; --ink: #e9f0ec; --muted: #8aa39c;
+          --mine: #d9f2e2; --mine-ink: #0f2a1d; --theirs: #1a2c30; --amber: #ffb84d; --good: #5fd39a; --bad: #ff6b6b; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: radial-gradient(1200px 700px at 80% -10%, #12302b 0%, transparent 60%), var(--bg); color: var(--ink);
+         font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; overflow: hidden; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 20; }
+  a.back:hover { color: var(--ink); }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+
+  /* start screens */
+  .screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 48px 18px 24px; overflow: auto; }
+  .card { width: 100%; max-width: 520px; }
+  .lockmark { width: 58px; height: 58px; margin-bottom: 18px; }
+  h1 { font-size: clamp(34px, 6vw, 46px); line-height: 1.05; margin: 0 0 12px; letter-spacing: -.02em; }
+  h2 { margin: 0 0 10px; font-size: 24px; }
+  .lede { color: var(--muted); font-size: 17px; line-height: 1.55; margin: 0 0 22px; }
+  .facts { list-style: none; padding: 0; margin: 0 0 26px; display: grid; gap: 10px; }
+  .facts li { display: flex; gap: 12px; align-items: baseline; color: var(--ink); font-size: 15px; line-height: 1.45; }
+  .facts b { color: var(--amber); font-weight: 600; min-width: 1.2em; }
+  .big { font-weight: 700; font-size: 17px; padding: 14px 20px; border-radius: 12px; border: 0; background: var(--amber); color: #1d1405; }
+  .big:hover { filter: brightness(1.06); }
+  .plain { padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--panel); color: var(--ink); font-weight: 600; }
+  .plain:hover { border-color: var(--muted); }
+  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 6px 0; }
+  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 0 0 12px; }
+  .step .n { color: var(--amber); font-weight: 700; margin-right: 6px; }
+  .step p { margin: 0 0 10px; color: var(--muted); line-height: 1.5; }
+  .code { display: flex; gap: 8px; }
+  .code input { flex: 1; min-width: 0; font: 14px ui-monospace, Menlo, monospace; padding: 11px 12px; border-radius: 10px; border: 1.5px solid var(--line);
+                background: var(--deep); color: var(--ink); }
+  .status { min-height: 1.5em; color: var(--ink); margin: 10px 0 0; }
+  .small { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* chat */
+  #chat { position: fixed; inset: 0; display: flex; flex-direction: column; }
+  header.bar { display: flex; align-items: center; gap: 12px; padding: 40px 16px 12px; border-bottom: 1px solid var(--line);
+               background: linear-gradient(var(--bg), rgba(12, 21, 23, .92)); flex-wrap: wrap; }
+  .who { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 180px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 4px rgba(95, 211, 154, .15); flex: none; }
+  .dot.off { background: var(--bad); box-shadow: 0 0 0 4px rgba(255, 107, 107, .15); }
+  .who strong { display: block; font-size: 16px; }
+  .who small { color: var(--muted); font-size: 12.5px; }
+  .sas { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; border: 1.5px dashed var(--amber); background: rgba(255, 184, 77, .07);
+         color: var(--amber); font-weight: 600; font-size: 14px; }
+  .sas.ok { border-style: solid; border-color: var(--good); color: var(--good); background: rgba(95, 211, 154, .08); }
+  .tools { display: flex; gap: 6px; }
+  #log { flex: 1; overflow-y: auto; padding: 18px 16px 10px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth; }
+  .sys { align-self: center; max-width: 520px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.5; padding: 4px 10px; }
+  .sys.warn { color: var(--amber); }
+  .msg { max-width: min(78%, 560px); padding: 10px 13px 8px; border-radius: 16px; position: relative; line-height: 1.45; font-size: 15.5px;
+         overflow-wrap: anywhere; white-space: pre-wrap; animation: pop .18s ease-out; }
+  @keyframes pop { from { transform: translateY(6px) scale(.98); opacity: 0; } }
+  .msg.me { align-self: flex-end; background: var(--mine); color: var(--mine-ink); border-bottom-right-radius: 5px; }
+  .msg.them { align-self: flex-start; background: var(--theirs); color: var(--ink); border-bottom-left-radius: 5px; }
+  .msg .meta { display: flex; gap: 8px; align-items: center; justify-content: flex-end; font-size: 11.5px; opacity: .65; margin-top: 4px; white-space: normal; }
+  .msg.secret .body { filter: blur(7px); user-select: none; transition: filter .2s; cursor: pointer; }
+  .msg.secret.shown .body { filter: none; user-select: text; }
+  .msg .tag { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; font-weight: 600; margin-bottom: 4px; opacity: .8; }
+  .msg .acts { display: flex; gap: 6px; margin-top: 6px; }
+  .msg .acts button { font-size: 12.5px; padding: 4px 9px; border-radius: 8px; border: 1px solid currentColor; background: transparent; color: inherit; opacity: .8; }
+  .msg .acts button:hover { opacity: 1; }
+  .ring { width: 14px; height: 14px; flex: none; }
+  .msg.gone { animation: vanish .4s ease-in forwards; }
+  @keyframes vanish { to { transform: scale(.9); opacity: 0; filter: blur(4px); } }
+  .file { display: flex; flex-direction: column; gap: 6px; }
+  .file img { max-width: 100%; max-height: 300px; border-radius: 10px; display: block; }
+  .file .bar { height: 5px; border-radius: 3px; background: rgba(128, 128, 128, .3); overflow: hidden; }
+  .file .bar i { display: block; height: 100%; background: currentColor; width: 0; }
+  .file a { color: inherit; font-weight: 600; }
+  #typing { min-height: 20px; padding: 0 18px; color: var(--muted); font-size: 13px; }
+  footer.compose { padding: 8px 12px 14px; border-top: 1px solid var(--line); background: var(--deep); }
+  .opts { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--panel);
+          color: var(--muted); font-size: 13.5px; font-weight: 600; }
+  .chip.on { border-color: var(--amber); color: var(--amber); background: rgba(255, 184, 77, .08); }
+  .chip select { font: inherit; background: transparent; color: inherit; border: 0; padding: 0; }
+  .row { display: flex; gap: 8px; align-items: flex-end; }
+  #input { flex: 1; min-width: 0; resize: none; max-height: 140px; font: inherit; font-size: 16px; line-height: 1.4; padding: 11px 13px; border-radius: 14px;
+           border: 1.5px solid var(--line); background: var(--panel); color: var(--ink); }
+  #send { width: 48px; height: 46px; border-radius: 14px; border: 0; background: var(--amber); color: #1d1405; font-weight: 800; font-size: 18px; }
+  #send:disabled { opacity: .4; cursor: default; }
+  #attach { width: 46px; height: 46px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--panel); color: var(--muted); font-size: 18px; }
+  .drop { outline: 3px dashed var(--amber); outline-offset: -12px; }
+
+  /* sheets */
+  .sheet { position: fixed; inset: 0; background: rgba(4, 8, 9, .72); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 30; }
+  .sheet .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; max-width: 460px; }
+  .words { font-size: clamp(22px, 5vw, 30px); font-weight: 800; letter-spacing: .01em; color: var(--amber); margin: 6px 0 4px; }
+  .digits { font-size: 22px; letter-spacing: .3em; color: var(--ink); }
+  .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  dl.details { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; margin: 12px 0 0; }
+  dl.details dt { color: var(--muted); }
+  dl.details dd { margin: 0; overflow-wrap: anywhere; }
+  @media (max-width: 600px) {
+    header.bar { padding-top: 38px; gap: 8px; }
+    .who small { display: none; }
+    .sas { font-size: 13px; padding: 6px 10px; }
+    .tools .plain { padding: 8px 10px; }
+    .msg { max-width: 88%; }
+    .who { min-width: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .msg, .msg.gone { animation: none; } #log { scroll-behavior: auto; } }
+</style>
+<meta property="og:title" content="Secret Chat">
+<meta property="og:description" content="An encrypted chat between two browsers with no server. Send passwords as hidden messages, set messages to disappear, share files. Nothing is stored anywhere.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/secret-chat/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/secret-chat/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="An encrypted chat between two browsers with no server. Send passwords as hidden messages, set messages to disappear, share files. Nothing is stored anywhere.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "Secret Chat", "item": "https://rajeshrenato.github.io/playground/secret-chat/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Secret Chat", "url": "https://rajeshrenato.github.io/playground/secret-chat/", "description": "An encrypted chat between two browsers with no server. Send passwords as hidden messages, set messages to disappear, share files. Nothing is stored anywhere.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+
+<div class="screen" id="start">
+  <div class="card">
+    <svg class="lockmark" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 14v-3a7 7 0 0 1 14 0v3" stroke="#ffb84d" stroke-width="2.6" fill="none"/><rect x="6.5" y="14" width="19" height="13.5" rx="3.5" fill="#ffb84d"/><circle cx="16" cy="20" r="2" fill="#0c1517"/><rect x="15.1" y="20.5" width="1.8" height="4" rx=".9" fill="#0c1517"/></svg>
+    <h1>Secret Chat</h1>
+    <p class="lede">A private line between two browsers. No server, no account, and nothing left behind when you close the tab.</p>
+    <ul class="facts">
+      <li><b>1</b><span>Your browsers connect directly. Messages are encrypted on the way and never stored.</span></li>
+      <li><b>2</b><span>Compare a short safety code on a call to be sure nobody is in the middle.</span></li>
+      <li><b>3</b><span>Send passwords as hidden messages, and set messages to disappear.</span></li>
+    </ul>
+    <button class="big" id="startBtn">Start a secret chat</button>
+    <p class="small" style="margin-top:18px">You both need this page open at the same time. Some strict office or mobile networks block direct connections; if yours does, try another network.</p>
+  </div>
+</div>
+
+<div class="screen" id="hostScreen" hidden>
+  <div class="card">
+    <h2>Invite your friend</h2>
+    <div class="step"><p><span class="n">1</span>Send them this link. It only works once.</p>
+      <div class="code"><input id="offerLink" readonly placeholder="Making your invite…"><button class="plain" id="copyOffer">Copy</button><button class="plain" id="shareOffer" hidden>Share</button></div></div>
+    <div class="step"><p><span class="n">2</span>They'll get a reply link to send back. Open it in this browser, or paste it here.</p>
+      <div class="code"><input id="replyIn" placeholder="Paste their reply"><button class="plain" id="connectBtn">Connect</button></div></div>
+    <p class="status" id="hostStatus"></p>
+    <button class="link" data-quit>Cancel</button>
+  </div>
+</div>
+
+<div class="screen" id="guestScreen" hidden>
+  <div class="card">
+    <h2>Someone invited you to a secret chat</h2>
+    <p class="status" id="guestStatus">Setting up a direct connection…</p>
+    <div id="guestReply" hidden>
+      <div class="step"><p><span class="n">→</span>Send this reply link back to them. The chat opens as soon as they open it or paste it in. Keep this page open.</p>
+        <div class="code"><input id="answerLink" readonly><button class="plain" id="copyAnswer">Copy</button><button class="plain" id="shareAnswer" hidden>Share</button></div></div>
+    </div>
+    <button class="link" data-quit>Leave</button>
+  </div>
+</div>
+
+<div class="screen" id="replyScreen" hidden>
+  <div class="card">
+    <h2 id="replyTitle">Connecting…</h2>
+    <p class="status" id="replyMsg"></p>
+    <div class="code" id="replyBox" hidden><input id="replyCode" readonly><button class="plain" id="copyReply">Copy</button></div>
+  </div>
+</div>
+
+<div id="chat" hidden>
+  <header class="bar">
+    <div class="who"><span class="dot" id="dot"></span><div><strong id="peerName">Your friend</strong><small id="peerState">connected directly, end-to-end encrypted</small></div></div>
+    <button class="sas" id="sasChip" title="Compare this code with your friend">⚠ <span id="sasShort"></span></button>
+    <div class="tools"><button class="plain" id="detailsBtn" title="Connection details">ⓘ</button><button class="plain" id="wipeBtn">Wipe</button><button class="plain" id="leaveBtn">Leave</button></div>
+  </header>
+  <div id="log" aria-live="polite"></div>
+  <div id="typing"></div>
+  <footer class="compose">
+    <div class="opts">
+      <button class="chip" id="secretChip" aria-pressed="false">🔒 Hidden</button>
+      <label class="chip" id="timerChip">⏱ <select id="timer" aria-label="Disappear after"><option value="0">Keep</option><option value="30">30 s</option><option value="300">5 min</option><option value="3600">1 hour</option></select></label>
+      <span class="small" id="optHint"></span>
+    </div>
+    <div class="row">
+      <button id="attach" title="Send a file" aria-label="Send a file">📎</button>
+      <textarea id="input" rows="1" placeholder="Message" autocomplete="off" aria-label="Message"></textarea>
+      <button id="send" aria-label="Send" disabled>↑</button>
+    </div>
+    <input type="file" id="fileIn" hidden multiple>
+  </footer>
+</div>
+
+<div class="sheet" id="sasSheet" hidden>
+  <div class="card">
+    <h2>Safety code</h2>
+    <p class="small">Read this out on a call or video. If your friend sees the same words and number, nobody is between you. If they differ, leave the chat.</p>
+    <div class="words" id="sasWords"></div>
+    <div class="digits mono" id="sasDigits"></div>
+    <div class="btns"><button class="big" id="sasYes">It matches</button><button class="plain" id="sasNo">It doesn't match</button><button class="link" id="sasLater">Later</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="detailsSheet" hidden>
+  <div class="card">
+    <h2>Connection details</h2>
+    <p class="small">Read from your browser's own WebRTC statistics, not assumed.</p>
+    <dl class="details" id="detailsList"></dl>
+    <div class="btns"><button class="plain" id="detailsClose">Close</button></div>
+  </div>
+</div>
+
+<script src="../linkplay/linkplay.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const now = () => Date.now();
+const MAX_FILE = 100 * 1024 * 1024, CHUNK = 16 * 1024, HIGH_WATER = 1024 * 1024;
+
+// --- safety code: three words and four digits from both connection fingerprints
+
+const SAS_WORDS = ('amber anchor apple arrow aspen badger bamboo banjo beacon bison blossom bramble breeze bronze cactus canyon cedar ' +
+  'cherry cobalt comet copper coral cricket crystal cypress dawn delta desert dolphin ember falcon fern fjord flint ' +
+  'forest fossil galaxy garnet geyser ginger glacier granite harbor hazel heron horizon indigo iris island ivory ' +
+  'jasmine jungle kayak kestrel lagoon lantern lemon lotus lunar maple marble meadow meteor mint').split(' ');
+
+function fingerprints(sdp) {
+  return [...String(sdp || '').matchAll(/a=fingerprint:(\S+) ([0-9A-Fa-f:]+)/g)].map(m => m[1].toLowerCase() + ' ' + m[2].toUpperCase());
+}
+
+async function safetyCode(localSdp, remoteSdp) {
+  const fps = [...fingerprints(localSdp), ...fingerprints(remoteSdp)].sort();
+  if (fps.length < 2) return null;
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fps.join('|'))));
+  const words = [0, 1, 2].map(i => SAS_WORDS[hash[i] % 64]);
+  const digits = String(((hash[3] << 8) | hash[4]) % 10000).padStart(4, '0');
+  return { words, digits };
+}
+
+// --- state
+
+let chan = null, pc = null, net = null, role = '';
+let verified = false, sas = null, open = false;
+const msgs = new Map();      // id -> { el, mine, secret, ttl, expiresAt, urls: [] }
+const incoming = new Map();  // file id -> { meta, parts, got, el }
+let counter = 0;
+const newId = () => (role || 'x') + '-' + (++counter) + '-' + Math.random().toString(36).slice(2, 7);
+
+function show(id) {
+  for (const s of ['start', 'hostScreen', 'guestScreen', 'replyScreen', 'chat']) $(s).hidden = s !== id;
+}
+
+// --- connecting
+
+function failed(where) {
+  if (open) { peerGone('The connection dropped.'); return; }
+  $(where).textContent = "Couldn't connect. One of your networks may block direct connections; try another network.";
+}
+
+async function startHost() {
+  show('hostScreen');
+  role = 'h';
+  net = LinkPlay.host('secret-chat', {
+    onChannel: (ch, id) => { pc = net.invites.get(id).pc; attach(ch); },
+    onFail: () => failed('hostStatus'),
+  });
+  try {
+    const { link } = await net.invite();
+    $('offerLink').value = link;
+    $('hostStatus').textContent = 'Waiting for their reply.';
+  } catch (e) {
+    $('hostStatus').textContent = "Your browser couldn't create an invite. Try an up-to-date Chrome, Firefox, or Safari.";
+  }
+}
+
+async function accept(text) {
+  if (!net || !net.accept) return;
+  const err = await net.accept(text);
+  $('hostStatus').textContent = err || 'Connecting…';
+}
+
+async function joinAsGuest(invite) {
+  show('guestScreen');
+  role = 'g';
+  try {
+    net = await LinkPlay.join('secret-chat', invite, {
+      onChannel: ch => attach(ch),
+      onFail: () => failed('guestStatus'),
+    });
+    pc = net.pc;
+    try { history.replaceState(null, '', location.pathname); } catch (e) { }
+    $('answerLink').value = net.link;
+    $('guestReply').hidden = false;
+    $('guestStatus').textContent = 'Almost there.';
+  } catch (e) {
+    $('guestStatus').textContent = "This invite didn't work. It may have been used already. Ask for a fresh one.";
+  }
+}
+
+async function handleReply(reply) {
+  show('replyScreen');
+  try { history.replaceState(null, '', location.pathname); } catch (e) { }
+  if (await LinkPlay.forwardReply('secret-chat', reply)) {
+    $('replyTitle').textContent = 'Connected';
+    $('replyMsg').textContent = 'Go back to your chat tab. You can close this one.';
+    return;
+  }
+  $('replyTitle').textContent = 'Paste this into your chat tab';
+  $('replyMsg').textContent = "The tab where you started the chat isn't open in this browser. Copy this reply and paste it there.";
+  $('replyCode').value = LinkPlay.pageLink('answer=' + reply.id + '.' + reply.code);
+  $('replyBox').hidden = false;
+}
+
+// --- the open channel
+
+function attach(ch) {
+  chan = ch;
+  try { ch.binaryType = 'arraybuffer'; } catch (e) { }
+  ch.onmessage = e => receive(e.data);
+  ch.onclose = () => peerGone('Your friend left. Everything here disappears when you close this tab.');
+  if (ch.readyState === 'open' || ch.readyState === undefined) opened();
+  else ch.onopen = opened;
+}
+
+async function opened() {
+  if (open) return;
+  open = true;
+  show('chat');
+  sys('You\'re connected directly. Messages are encrypted between your two browsers and never stored.');
+  if (pc && pc.localDescription && pc.remoteDescription) sas = await safetyCode(pc.localDescription.sdp, pc.remoteDescription.sdp);
+  renderSas();
+  if (sas) sys('Compare the safety code with your friend before sending anything sensitive.', true);
+  $('input').focus();
+}
+
+function send(m) {
+  if (chan && (chan.readyState === 'open' || chan.readyState === undefined)) { chan.send(JSON.stringify(m)); return true; }
+  return false;
+}
+
+function peerGone(text) {
+  if (!open) return;
+  open = false;
+  $('dot').classList.add('off');
+  $('peerState').textContent = 'disconnected';
+  $('send').disabled = true;
+  sys(text, true);
+}
+
+// --- messages
+
+function receive(data) {
+  if (typeof data !== 'string') { fileChunk(data); return; }
+  let m;
+  try { m = JSON.parse(data); } catch (e) { return; }
+  if (m.t === 'msg') { addMessage({ id: m.id, text: String(m.text || '').slice(0, 20000), mine: false, secret: !!m.secret, ttl: +m.ttl || 0 }); send({ t: 'seen', id: m.id }); showTyping(false); }
+  else if (m.t === 'seen') markSeen(m.id);
+  else if (m.t === 'typing') showTyping(true);
+  else if (m.t === 'wipe') { wipe(); sys('Your friend wiped the chat.'); }
+  else if (m.t === 'bye') peerGone('Your friend left. Everything here disappears when you close this tab.');
+  else if (m.t === 'gone') removeMessage(m.id);
+  else if (m.t === 'file') fileStart(m);
+  else if (m.t === 'verified') sys('Your friend says the safety code matches.', false);
+}
+
+function sendText() {
+  const text = $('input').value;
+  if (!text.trim() || !open) return;
+  const secret = $('secretChip').getAttribute('aria-pressed') === 'true';
+  const ttl = +$('timer').value;
+  const id = newId();
+  if (!send({ t: 'msg', id, text, secret, ttl })) return;
+  addMessage({ id, text, mine: true, secret, ttl });
+  $('input').value = '';
+  autosize();
+  $('send').disabled = true;
+  if (secret) setSecret(false);
+}
+
+function addMessage({ id, text, mine, secret, ttl }) {
+  if (msgs.has(id)) return;
+  const el = document.createElement('div');
+  el.className = 'msg ' + (mine ? 'me' : 'them') + (secret ? ' secret' : '');
+  if (secret) {
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.textContent = mine ? '🔒 Hidden message' : '🔒 Hidden message, tap to show';
+    el.appendChild(tag);
+  }
+  const body = document.createElement('div');
+  body.className = 'body';
+  body.textContent = text;
+  el.appendChild(body);
+  if (secret) {
+    body.addEventListener('click', () => reveal(el));
+    const acts = document.createElement('div');
+    acts.className = 'acts';
+    const showBtn = document.createElement('button');
+    showBtn.textContent = 'Show';
+    showBtn.onclick = () => reveal(el, showBtn);
+    const copy = document.createElement('button');
+    copy.textContent = 'Copy';
+    copy.onclick = () => copyText(text, copy);
+    acts.append(showBtn, copy);
+    el.appendChild(acts);
+  }
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const when = document.createElement('span');
+  when.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  meta.appendChild(when);
+  if (mine) { const st = document.createElement('span'); st.className = 'st'; st.textContent = 'sent'; meta.appendChild(st); }
+  el.appendChild(meta);
+  const rec = { el, mine, secret, ttl, expiresAt: 0, urls: [] };
+  msgs.set(id, rec);
+  if (ttl) startTimer(id, rec, meta);
+  $('log').appendChild(el);
+  scrollDown();
+  return rec;
+}
+
+function reveal(el, btn) {
+  const shown = el.classList.toggle('shown');
+  if (btn) btn.textContent = shown ? 'Hide' : 'Show';
+  if (shown) setTimeout(() => { if (el.classList.contains('shown')) { el.classList.remove('shown'); if (btn) btn.textContent = 'Show'; } }, 15000);
+}
+
+function markSeen(id) {
+  const r = msgs.get(id);
+  if (!r) return;
+  const st = r.el.querySelector('.st');
+  if (st) st.textContent = 'seen';
+}
+
+function startTimer(id, rec, meta) {
+  rec.expiresAt = now() + rec.ttl * 1000;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 20 20');
+  svg.setAttribute('class', 'ring');
+  svg.innerHTML = '<circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="50.3" stroke-dashoffset="0" transform="rotate(-90 10 10)"/>';
+  rec.ringArc = svg.lastChild;
+  rec.label = document.createElement('span');
+  meta.prepend(svg, rec.label);
+}
+
+function tickTimers() {
+  const t = now();
+  for (const [id, r] of msgs) {
+    if (!r.expiresAt) continue;
+    const left = Math.max(0, r.expiresAt - t);
+    if (r.ringArc && r.ringArc.setAttribute) r.ringArc.setAttribute('stroke-dashoffset', String(50.3 * (1 - left / (r.ttl * 1000))));
+    if (r.label) r.label.textContent = left > 60000 ? Math.ceil(left / 60000) + ' min' : Math.ceil(left / 1000) + ' s';
+    if (left === 0) removeMessage(id);
+  }
+}
+
+function removeMessage(id) {
+  const r = msgs.get(id);
+  if (!r) return;
+  msgs.delete(id);
+  for (const u of r.urls) { try { URL.revokeObjectURL(u); } catch (e) { } }
+  r.el.classList.add('gone');
+  setTimeout(() => r.el.remove(), 400);
+}
+
+function wipe() {
+  for (const id of [...msgs.keys()]) removeMessage(id);
+  for (const el of [...$('log').children]) if (el.classList && el.classList.contains('sys')) el.remove();
+  incoming.clear();
+}
+
+function sys(text, warn) {
+  const el = document.createElement('div');
+  el.className = 'sys' + (warn ? ' warn' : '');
+  el.textContent = text;
+  $('log').appendChild(el);
+  scrollDown();
+}
+
+function scrollDown() { const l = $('log'); l.scrollTop = l.scrollHeight; }
+
+let typingTimer = 0, lastTypingSent = 0;
+function showTyping(on) {
+  clearTimeout(typingTimer);
+  $('typing').textContent = on ? 'Your friend is typing…' : '';
+  if (on) typingTimer = setTimeout(() => { $('typing').textContent = ''; }, 3000);
+}
+
+async function copyText(text, btn) {
+  try { await navigator.clipboard.writeText(text); if (btn) { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1500); } } catch (e) { }
+}
+
+// --- files: a header message, then the bytes in order on the same channel
+
+let sending = Promise.resolve();
+function sendFiles(files) {
+  for (const f of files) sending = sending.then(() => sendFile(f)).catch(() => sys('A file could not be sent.', true));
+}
+
+async function sendFile(file) {
+  if (!open) return;
+  if (file.size > MAX_FILE) { sys(file.name + ' is over 100 MB. Use File Send for big files.', true); return; }
+  const id = newId();
+  const ttl = +$('timer').value;
+  send({ t: 'file', id, name: file.name, size: file.size, mime: file.type, ttl });
+  const rec = fileBubble(id, { name: file.name, size: file.size, mime: file.type, ttl }, true);
+  const buf = new Uint8Array(await file.arrayBuffer());
+  for (let off = 0; off < buf.length; off += CHUNK) {
+    if (!open) return;
+    if (chan.bufferedAmount > HIGH_WATER) await new Promise(r => { chan.bufferedAmountLowThreshold = HIGH_WATER / 4; chan.onbufferedamountlow = () => { chan.onbufferedamountlow = null; r(); }; });
+    chan.send(buf.slice(off, off + CHUNK).buffer);
+    rec.setProgress(Math.min(1, (off + CHUNK) / buf.length));
+  }
+  rec.done(new Blob([buf], { type: file.type || 'application/octet-stream' }));
+}
+
+function fileStart(m) {
+  const size = Math.max(0, Math.min(+m.size || 0, MAX_FILE));
+  const meta = { name: String(m.name || 'file').slice(0, 200), size, mime: String(m.mime || ''), ttl: +m.ttl || 0 };
+  const rec = fileBubble(m.id, meta, false);
+  incoming.set('current', { id: m.id, meta, parts: [], got: 0, rec });
+  if (size === 0) fileChunk(new ArrayBuffer(0));
+}
+
+function fileChunk(data) {
+  const f = incoming.get('current');
+  if (!f) return;
+  const bytes = data instanceof ArrayBuffer ? data : data.buffer || data;
+  f.parts.push(bytes);
+  f.got += bytes.byteLength || 0;
+  f.rec.setProgress(f.meta.size ? f.got / f.meta.size : 1);
+  if (f.got >= f.meta.size) {
+    incoming.delete('current');
+    f.rec.done(new Blob(f.parts, { type: f.meta.mime || 'application/octet-stream' }));
+  }
+}
+
+function fileBubble(id, meta, mine) {
+  const rec = addMessage({ id, text: '', mine, secret: false, ttl: meta.ttl });
+  const box = document.createElement('div');
+  box.className = 'file';
+  const name = document.createElement('div');
+  name.textContent = '📄 ' + meta.name + ' · ' + fmtSize(meta.size);
+  const bar = document.createElement('div');
+  bar.className = 'bar';
+  const fill = document.createElement('i');
+  bar.appendChild(fill);
+  box.append(name, bar);
+  rec.el.insertBefore(box, rec.el.firstChild);
+  rec.setProgress = p => { fill.style.width = Math.round(p * 100) + '%'; };
+  rec.done = blob => {
+    bar.remove();
+    const url = URL.createObjectURL(blob);
+    rec.urls.push(url);
+    if (/^image\/(png|jpe?g|gif|webp|avif)$/.test(meta.mime)) {
+      const img = document.createElement('img');
+      img.src = url; img.alt = meta.name;
+      box.insertBefore(img, name);
+    }
+    const a = document.createElement('a');
+    a.href = url; a.download = meta.name;
+    a.textContent = mine ? 'Sent' : 'Save file';
+    box.appendChild(a);
+    scrollDown();
+  };
+  return rec;
+}
+
+function fmtSize(n) {
+  return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+}
+
+// --- safety code and connection details
+
+function renderSas() {
+  const chip = $('sasChip');
+  if (!sas) { chip.hidden = true; return; }
+  chip.hidden = false;
+  chip.classList.toggle('ok', verified);
+  chip.firstChild.textContent = verified ? '✓ ' : '⚠ ';
+  $('sasShort').textContent = verified ? 'Verified' : sas.words.join(' · ');
+  $('sasWords').textContent = sas.words.join(' · ');
+  $('sasDigits').textContent = sas.digits;
+}
+
+async function showDetails() {
+  const rows = [['Encryption', 'DTLS, required by every browser for WebRTC']];
+  try {
+    const stats = await pc.getStats();
+    let transport = null, pair = null;
+    const byId = {};
+    stats.forEach(s => { byId[s.id] = s; if (s.type === 'transport') transport = s; });
+    if (transport && transport.selectedCandidatePairId) pair = byId[transport.selectedCandidatePairId];
+    if (!pair) stats.forEach(s => { if (s.type === 'candidate-pair' && (s.selected || s.nominated) && s.state === 'succeeded') pair = s; });
+    if (transport && transport.tlsVersion) rows.push(['DTLS version', ({ FEFD: '1.2', FEFC: '1.3' })[transport.tlsVersion] || transport.tlsVersion]);
+    if (transport && transport.dtlsCipher) rows.push(['Cipher', transport.dtlsCipher]);
+    if (pair) {
+      const l = byId[pair.localCandidateId], r = byId[pair.remoteCandidateId];
+      const kind = t => (t === 'host' ? 'same network' : t === 'srflx' || t === 'prflx' ? 'across the internet' : t === 'relay' ? 'through a relay' : t || '?');
+      rows.push(['Route', 'Direct, ' + kind(r && r.candidateType)]);
+      if (pair.currentRoundTripTime) rows.push(['Round trip', Math.round(pair.currentRoundTripTime * 1000) + ' ms']);
+    }
+  } catch (e) { }
+  rows.push(['Server', 'None. A public STUN server only told each browser its own address.']);
+  rows.push(['Stored', 'Nothing. Closing the tab ends the chat for good.']);
+  if (sas) rows.push(['Safety code', sas.words.join(' · ') + ' ' + sas.digits + (verified ? ' (verified)' : ' (not compared yet)')]);
+  const dl = $('detailsList');
+  dl.innerHTML = '';
+  for (const [k, v] of rows) { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); }
+  $('detailsSheet').hidden = false;
+}
+
+// --- composer
+
+function autosize() { const t = $('input'); t.style.height = 'auto'; t.style.height = Math.min(140, t.scrollHeight) + 'px'; }
+function setSecret(on) {
+  $('secretChip').setAttribute('aria-pressed', String(on));
+  $('secretChip').classList.toggle('on', on);
+  hint();
+}
+function hint() {
+  const s = $('secretChip').getAttribute('aria-pressed') === 'true', t = +$('timer').value;
+  $('timerChip').classList.toggle('on', t > 0);
+  $('optHint').textContent = s ? 'Arrives blurred. They tap to see it or copy it without showing it.' : t ? 'Disappears on both screens when the timer runs out.' : '';
+}
+
+$('startBtn').onclick = startHost;
+$('connectBtn').onclick = () => accept($('replyIn').value);
+$('replyIn').addEventListener('keydown', e => { if (e.key === 'Enter') accept($('replyIn').value); });
+for (const [btn, input] of [['copyOffer', 'offerLink'], ['copyAnswer', 'answerLink'], ['copyReply', 'replyCode']]) $(btn).onclick = () => copyText($(input).value, null).then(() => { $(btn).textContent = 'Copied'; setTimeout(() => { $(btn).textContent = 'Copy'; }, 1500); });
+for (const [btn, input] of [['shareOffer', 'offerLink'], ['shareAnswer', 'answerLink']]) $(btn).onclick = async () => { try { await navigator.share({ url: $(input).value }); } catch (e) { } };
+if (typeof navigator !== 'undefined' && navigator.share) { $('shareOffer').hidden = false; $('shareAnswer').hidden = false; }
+for (const b of document.querySelectorAll('[data-quit]')) b.onclick = () => location.replace(location.pathname);
+
+$('input').addEventListener('input', () => {
+  autosize();
+  $('send').disabled = !$('input').value.trim() || !open;
+  if (open && Date.now() - lastTypingSent > 1500) { lastTypingSent = Date.now(); send({ t: 'typing' }); }
+});
+$('input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendText(); } });
+$('send').onclick = sendText;
+$('secretChip').onclick = () => setSecret($('secretChip').getAttribute('aria-pressed') !== 'true');
+$('timer').onchange = hint;
+$('attach').onclick = () => $('fileIn').click();
+$('fileIn').onchange = () => { sendFiles([...$('fileIn').files]); $('fileIn').value = ''; };
+$('log').addEventListener('dragover', e => { e.preventDefault(); $('log').classList.add('drop'); });
+$('log').addEventListener('dragleave', () => $('log').classList.remove('drop'));
+$('log').addEventListener('drop', e => { e.preventDefault(); $('log').classList.remove('drop'); if (open && e.dataTransfer) sendFiles([...e.dataTransfer.files]); });
+$('input').addEventListener('paste', e => {
+  const files = [...((e.clipboardData && e.clipboardData.files) || [])];
+  if (files.length && open) { e.preventDefault(); sendFiles(files); }
+});
+
+$('sasChip').onclick = () => { $('sasSheet').hidden = false; };
+$('sasYes').onclick = () => { verified = true; renderSas(); $('sasSheet').hidden = true; sys('You marked the safety code as matching.'); send({ t: 'verified' }); };
+$('sasNo').onclick = () => {
+  $('sasSheet').hidden = true;
+  sys('The codes don\'t match, so someone may be between you. The chat is closed. Start a new one and send the links a different way.', true);
+  send({ t: 'bye' });
+  try { pc && pc.close(); } catch (e) { }
+  peerGone('Closed because the safety codes didn\'t match.');
+};
+$('sasLater').onclick = () => { $('sasSheet').hidden = true; };
+$('detailsBtn').onclick = showDetails;
+$('detailsClose').onclick = () => { $('detailsSheet').hidden = true; };
+$('wipeBtn').onclick = () => { wipe(); send({ t: 'wipe' }); sys('You wiped the chat on both screens.'); };
+$('leaveBtn').onclick = () => { send({ t: 'bye' }); try { pc && pc.close(); } catch (e) { } location.replace(location.pathname); };
+addEventListener('pagehide', () => { if (open) send({ t: 'bye' }); });
+addEventListener('keydown', e => { if (e.key === 'Escape') { $('sasSheet').hidden = true; $('detailsSheet').hidden = true; } });
+
+setInterval(tickTimers, 250);
+
+const fromLink = LinkPlay.fromHash();
+if (fromLink && fromLink.kind === 'offer') joinAsGuest(fromLink);
+else if (fromLink && fromLink.kind === 'answer') handleReply(fromLink);
+else show('start');
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Secret Chat</h2>
+<p>A private chat between two browsers. There's no server and no account, and nothing is left behind when you close the tab. Made for passing a password or anything else sensitive to someone who's online at the same time.</p>
+<h3>Use</h3>
+<p>Click "Start a secret chat" and send your friend the invite link. They get a reply link to send back. Open it in your browser or paste it in, and you're connected. An invite only works once.</p>
+<h3>What it does</h3>
+<ul><li>Messages go straight from one browser to the other, encrypted on the way, and are never stored anywhere, not even in the browser.</li><li>Hidden messages arrive blurred. Tap to show one, or copy it without showing it. A shown message blurs again after 15 seconds.</li><li>Messages can disappear after 30 seconds, 5 minutes, or an hour. They're removed from both screens.</li><li>Files and images up to 100 MB can be sent, with a progress bar.</li><li>Wipe clears the chat on both screens at once.</li><li>Connection details shows what your browser reports: the DTLS version, the cipher, whether the route is direct, and the round trip time.</li></ul>
+<h3>The safety code</h3>
+<p>Both screens show the same three words and four digits, made from both browsers' connection keys. Read them out to each other on a call. If they match, nobody is in the middle. If someone had swapped the links on their way, the codes would differ, so "It doesn't match" closes the chat.</p>
+<h3>How it works</h3>
+<p>It uses <a href="../linkplay/">LinkPlay</a>: the invite and reply links carry the two browsers' connection details, and the browsers then talk over a WebRTC data channel. Browsers always encrypt these channels with DTLS, with fresh keys for each connection, so a recording of the traffic can't be decrypted later.</p>
+<p>The safety code is a SHA-256 hash of the two DTLS certificate fingerprints, which the browser checks against the real connection. A public STUN server tells each browser its own address and sees nothing else. There's no relay, so the two browsers see each other's IP address, and networks that block direct connections won't connect.</p>
+<p>The page sets a Content Security Policy so the browser blocks it from loading or sending anything else, even if a script were somehow added to it.</p>
+<p>What it can't protect against: malware or a browser extension on either device, someone reading over your shoulder, or a screenshot.</p>
+<p class="pg-more">More like this: <a href="../qr-studio/">QR Studio</a>, <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>, <a href="../video-to-gif/">Video to GIF</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/secret-chat">secret-chat on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

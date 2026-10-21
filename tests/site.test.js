@@ -9,7 +9,7 @@ const vm = require('vm');
 const { ROOT, ctx2d, load, run, pageScripts } = require('./helpers/browser');
 
 const BASE = 'https://rajeshrenato.github.io/playground';
-const NOT_PROJECTS = new Set(['tests', 'template', 'docs', 'node_modules', 'common']);
+const NOT_PROJECTS = new Set(['tests', 'template', 'docs', 'node_modules', 'common', 'scripts']);
 
 const projects = fs.readdirSync(ROOT, { withFileTypes: true })
   .filter(d => d.isDirectory() && !d.name.startsWith('.') && !NOT_PROJECTS.has(d.name))

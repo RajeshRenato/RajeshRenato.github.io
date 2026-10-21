@@ -39,10 +39,12 @@ Include the project, your browser and device, and steps to reproduce. For the pu
 ## Adding a project
 
 - Copy `template/` to a new folder, lowercase-hyphenated and named after what it is. The template's README lists what to rename.
-- Add a 1200×630 `og.png`.
+- Set the page's `<title>` to "Name | the words people would search for", for example "Chess | play chess online with a friend or the computer".
+- Add a 1200×630 `og.png`. `python3 scripts/og-card.py project ...` makes one from a screenshot (it needs Pillow).
 - Prefix localStorage keys with something short and unique to the project, and wrap access in try/catch.
-- Add a card to the root `index.html`, and a thumbnail function to `TH` keyed by the card's `data-t`. It gets `(g, w, h, c, t)` and draws a full frame; `t` is 0 for the still image and counts up on hover.
-- Add it to the README table and update the counts. `node --test` will tell you if anything is missing.
+- Write a thumbnail function that draws the hub card's live preview. It gets `(g, w, h, c, t)` and draws a full frame; `t` is 0 for the still image and counts up on hover. See the `TH` object in the root `index.html` for examples.
+- Run `node scripts/site.js add <folder> --section "Games" --color "#28e0ff" --thumb <key> --thumb-file <file.js> --desc "One line."`. It adds the hub card and README row, updates the counts, and builds the page's about section, search tags, and sitemap entry from your README.
+- `node --test` will tell you if anything is missing.
 
 ## Open tasks
 
@@ -50,7 +52,6 @@ Include the project, your browser and device, and steps to reproduce. For the pu
 - Type Velocity with mobile keyboards
 - Colorblind palettes for Penta and Flood Rush
 - Keyboard focus and screen reader labels in the tools
-- Cleaning up the wording in the older READMEs
 
 ## License
 

@@ -1,6 +1,6 @@
 # Playground
 
-71 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+72 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/playground/
 
@@ -103,6 +103,7 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | [linkplay](linkplay/) | A small kit for making browser games multiplayer with links and no server. All the online games here use it |
 | [file-send](file-send/) | Send files straight to a friend's browser. Nothing is uploaded |
 | [secret-note](secret-note/) | Write a note and get a link with it encrypted inside. Nothing is stored |
+| [secret-chat](secret-chat/) | A private chat between two browsers, no server. Hidden and disappearing messages, and a safety code |
 | [qr-studio](qr-studio/) | QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark |
 | [photo-privacy](photo-privacy/) | See and remove the hidden location, date, and device details in photos |
 | [image-squeeze](image-squeeze/) | Compress, resize, and convert images, or fit them under a size limit |
