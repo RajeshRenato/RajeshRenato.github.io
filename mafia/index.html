@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1026'/%3E%3Ccircle cx='20' cy='11' r='6' fill='%23f3e6b3'/%3E%3Ccircle cx='23' cy='9' r='5' fill='%230b1026'/%3E%3Cpath d='M6 27c2-7 5-10 10-10s8 3 10 10z' fill='%23c8323c'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Mafia | party game online for 5 to 12 players, no app</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/mafia/">
+<style>
+  :root { --night: #0b1026; --night2: #141b3d; --day: #f3e9d2; --day2: #fffaf0; --blood: #c8323c; --moon: #f3e6b3;
+          --ink: #eef0fa; --muted: #9aa3c7; --card: #1a2350; --line: #2c3770;
+          --lp-bg: #0b1026; --lp-panel: #1a2350; --lp-veil: rgba(11, 16, 38, .95); --lp-accent: #c8323c; }
+  body.day { --ink: #2a2116; --muted: #7d6e58; --card: #fffaf0; --line: #e1d3b6; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--night); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; transition: background .8s, color .8s; }
+  body.day { background: var(--day); }
+  body::before { content: ''; position: fixed; top: -60px; right: -40px; width: 220px; height: 220px; border-radius: 50%; pointer-events: none;
+                 background: radial-gradient(circle at 40% 40%, var(--moon), #d9c98a 60%, transparent 61%); opacity: .14; transition: opacity .8s, background .8s; }
+  body.day::before { background: radial-gradient(circle at 50% 50%, #ffd27a, #ffb347 55%, transparent 56%); opacity: .35; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  #app { max-width: 720px; margin: 0 auto; padding: 46px 16px 32px; position: relative; }
+  #top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  #phase { font-size: 30px; font-weight: 800; letter-spacing: -.01em; }
+  #timer { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); margin-left: auto; }
+  #timer.low { color: var(--blood); }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .panel h2 { margin: 0 0 8px; font-size: 20px; }
+  .panel p { margin: 0 0 10px; color: var(--muted); line-height: 1.5; }
+  .news { font-size: 19px; font-weight: 600; line-height: 1.45; color: var(--ink) !important; }
+  #roleCard { position: relative; user-select: none; -webkit-user-select: none; touch-action: none; cursor: pointer; text-align: center;
+              padding: 22px 16px; border-radius: 18px; border: 2px dashed var(--line); background: var(--card); margin-bottom: 14px; }
+  #roleCard .cover { font-weight: 700; font-size: 17px; }
+  #roleCard .cover small { display: block; font-weight: 400; color: var(--muted); margin-top: 4px; font-size: 13px; }
+  #roleCard .secret { display: none; }
+  #roleCard.peek .cover { display: none; }
+  #roleCard.peek .secret { display: block; }
+  #roleCard.peek { border-style: solid; }
+  .role { font-size: 34px; font-weight: 800; margin: 2px 0 6px; }
+  .role.mafia { color: var(--blood); }
+  .secret p { color: var(--muted); margin: 6px 0; line-height: 1.45; }
+  .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .name { font: inherit; font-size: 16px; font-weight: 600; text-align: left; padding: 12px 12px; border-radius: 12px; border: 2px solid var(--line);
+          background: transparent; color: var(--ink); cursor: pointer; display: flex; justify-content: space-between; gap: 6px; align-items: center; min-height: 50px; }
+  .name:disabled { cursor: default; opacity: .5; }
+  .name.sel { border-color: var(--blood); background: rgba(200, 50, 60, .14); }
+  .name small { color: var(--muted); font-weight: 500; font-size: 13px; }
+  .name.dead { text-decoration: line-through; opacity: .45; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .act { font: inherit; font-weight: 700; font-size: 16px; padding: 11px 18px; border-radius: 12px; border: 0; background: var(--blood); color: #fff; cursor: pointer; }
+  .act:disabled { opacity: .45; cursor: default; }
+  .ghost { font: inherit; font-weight: 600; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+  .quiet { font: inherit; border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px 0; }
+  button:focus-visible { outline: 2px solid var(--blood); outline-offset: 2px; }
+  #log { list-style: none; margin: 0; padding: 0; font-size: 14.5px; line-height: 1.5; color: var(--muted); }
+  #log li { padding: 3px 0; }
+  #roster { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; color: var(--muted); }
+  #roster .gone { text-decoration: line-through; opacity: .6; }
+  .setting { display: flex; gap: 10px; align-items: center; margin: 8px 0; color: var(--ink); }
+  .setting select { font: inherit; padding: 4px 6px; border-radius: 8px; background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+  .tv #phase { font-size: 52px; }
+  .tv .news { font-size: 28px; }
+  [hidden] { display: none !important; }
+  @media (max-width: 520px) { #phase { font-size: 26px; } .names { grid-template-columns: 1fr 1fr; } }
+</style>
+<meta property="og:title" content="Mafia">
+<meta property="og:description" content="Mafia party game for 5 to 12 players on everyone's phone. Secret roles dealt by the host's browser, night and day phases, voting. Connected by links, no app or server.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/mafia/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/mafia/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Mafia party game for 5 to 12 players on everyone's phone. Secret roles dealt by the host's browser, night and day phases, voting. Connected by links, no app or server.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/playground/#online"}, {"@type": "ListItem", "position": 3, "name": "Mafia", "item": "https://rajeshrenato.github.io/playground/mafia/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Mafia", "url": "https://rajeshrenato.github.io/playground/mafia/", "description": "Mafia party game for 5 to 12 players on everyone's phone. Secret roles dealt by the host's browser, night and day phases, voting. Connected by links, no app or server.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="app">
+  <div id="top"><span id="phase">Mafia</span><span id="timer"></span></div>
+  <div id="roleCard" hidden tabindex="0" role="button" aria-label="Hold to see your role">
+    <div class="cover">Hold to see your role<small>Keep your screen away from others</small></div>
+    <div class="secret" id="roleSecret"></div>
+  </div>
+  <div id="main"></div>
+  <div class="panel" id="logPanel" hidden><h2>What happened</h2><ul id="log"></ul></div>
+  <div class="panel" id="rosterPanel" hidden><div id="roster"></div></div>
+  <div class="row" id="actions"></div>
+</div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const now = () => Date.now();
+const ROLE = {
+  mafia: { name: 'Mafia', tell: 'Each night, agree with the other mafia on someone to remove. In the day, blend in.' },
+  doctor: { name: 'Doctor', tell: 'Each night, pick someone to save. If the mafia pick them, nobody dies. You can pick yourself.' },
+  detective: { name: 'Detective', tell: 'Each night, pick someone and learn whether they are mafia. Only you see the answer.' },
+  villager: { name: 'Villager', tell: 'Find the mafia by talking and voting. At night, tap any name so your screen looks like everyone else\'s.' },
+};
+
+let room = null;
+let V = { phase: 'wait' };
+
+// --- host: holds every secret, sends each player only their own view
+
+const H = {
+  phase: 'setup', settings: { narrator: false, reveal: true, deadSee: true, discuss: 120, night: 60, vote: 60 },
+  seats: [], roles: {}, alive: new Set(), round: 0, endsAt: 0,
+  night: { mafia: {}, save: null, check: null, done: new Set(), picks: {} },
+  votes: {}, log: [], checks: {}, winner: '',
+};
+
+function shuffle(a, rand = Math.random) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function nameOf(id) { const p = room && room.players.find(p => p.id === id); return p ? p.name : 'Someone'; }
+function mafiaCount(n) { return Math.max(1, Math.floor(n / 4)); }
+function rolesFor(n) {
+  const r = Array(mafiaCount(n)).fill('mafia').concat(['doctor', 'detective']);
+  while (r.length < n) r.push('villager');
+  return r;
+}
+function living() { return H.seats.filter(id => H.alive.has(id)); }
+function note(text) { H.log.push(text); if (H.log.length > 60) H.log.shift(); }
+
+function canStart() {
+  const n = room.players.filter(p => !(H.settings.narrator && p.id === room.me)).length;
+  return n >= 5 && n <= 12;
+}
+
+function startGame(rand = Math.random) {
+  if (!canStart()) return false;
+  H.seats = shuffle(room.players.filter(p => !(H.settings.narrator && p.id === room.me)).map(p => p.id), rand);
+  const roles = shuffle(rolesFor(H.seats.length), rand);
+  H.roles = {};
+  H.seats.forEach((id, i) => { H.roles[id] = roles[i]; });
+  H.alive = new Set(H.seats);
+  H.round = 1; H.log = []; H.checks = {}; H.winner = '';
+  note('The game begins with ' + H.seats.length + ' players and ' + mafiaCount(H.seats.length) + ' mafia.');
+  beginNight();
+  return true;
+}
+
+function beginNight() {
+  H.phase = 'night';
+  H.night = { mafia: {}, save: null, check: null, done: new Set(), picks: {} };
+  H.endsAt = now() + H.settings.night * 1000;
+  sendAll();
+}
+
+// Every living player picks a name at night, so every screen looks the same.
+function nightPick(id, target) {
+  if (H.phase !== 'night' || !H.alive.has(id) || !H.alive.has(target)) return;
+  const role = H.roles[id];
+  if (role === 'mafia' && H.roles[target] === 'mafia') return;
+  if (role === 'detective' && target === id) return;
+  H.night.picks[id] = target;
+  if (role === 'mafia') H.night.mafia[id] = target;
+  else if (role === 'doctor') H.night.save = target;
+  else if (role === 'detective') H.night.check = target;
+  H.night.done.add(id);
+  if (living().every(x => H.night.done.has(x))) resolveNight();
+  else sendAll();
+}
+
+function topPick(votes, rand = Math.random) {
+  const count = {};
+  for (const t of Object.values(votes)) count[t] = (count[t] || 0) + 1;
+  const best = Math.max(0, ...Object.values(count));
+  const tied = Object.keys(count).filter(k => count[k] === best).map(Number);
+  return { target: tied.length ? tied[Math.floor(rand() * tied.length)] : null, count: best };
+}
+
+function resolveNight(rand = Math.random) {
+  if (H.phase !== 'night') return;
+  const mafiaVotes = {};
+  for (const [id, t] of Object.entries(H.night.mafia)) if (H.alive.has(+id) && H.alive.has(t)) mafiaVotes[id] = t;
+  const victim = topPick(mafiaVotes, rand).target;
+  const det = living().find(id => H.roles[id] === 'detective');
+  if (det !== undefined && H.night.check !== null && H.alive.has(H.night.check)) {
+    (H.checks[det] = H.checks[det] || []).push({ round: H.round, target: H.night.check, mafia: H.roles[H.night.check] === 'mafia' });
+  }
+  if (victim !== null && victim !== H.night.save) {
+    H.alive.delete(victim);
+    note('Night ' + H.round + ': ' + nameOf(victim) + ' was killed.' + (H.settings.reveal ? ' They were ' + article(H.roles[victim]) + '.' : ''));
+  } else note('Night ' + H.round + ': nobody died.');
+  if (checkWin()) return;
+  H.phase = 'day';
+  H.endsAt = now() + H.settings.discuss * 1000;
+  sendAll();
+}
+
+function article(role) { return role === 'villager' ? 'a Villager' : 'the ' + ROLE[role].name; }
+
+function startVote() {
+  if (H.phase !== 'day') return;
+  H.phase = 'vote';
+  H.votes = {};
+  H.endsAt = now() + H.settings.vote * 1000;
+  sendAll();
+}
+
+function castVote(id, target) {
+  if (H.phase !== 'vote' || !H.alive.has(id)) return;
+  if (target !== 'skip' && (!H.alive.has(target) || target === id)) return;
+  H.votes[id] = target;
+  if (living().every(x => x in H.votes)) resolveVote();
+  else sendAll();
+}
+
+function resolveVote() {
+  if (H.phase !== 'vote') return;
+  const real = {};
+  for (const [id, t] of Object.entries(H.votes)) if (t !== 'skip' && H.alive.has(+id)) real[id] = t;
+  const count = {};
+  for (const t of Object.values(real)) count[t] = (count[t] || 0) + 1;
+  const n = living().length;
+  const out = Object.keys(count).map(Number).find(k => count[k] > n / 2);
+  if (out !== undefined) {
+    H.alive.delete(out);
+    note('Day ' + H.round + ': the town voted out ' + nameOf(out) + '.' + (H.settings.reveal ? ' They were ' + article(H.roles[out]) + '.' : ''));
+  } else note('Day ' + H.round + ': no majority, so nobody was voted out.');
+  if (checkWin()) return;
+  H.round++;
+  beginNight();
+}
+
+function checkWin() {
+  const alive = living();
+  const mafia = alive.filter(id => H.roles[id] === 'mafia').length;
+  if (mafia === 0) H.winner = 'village';
+  else if (mafia >= alive.length - mafia) H.winner = 'mafia';
+  if (!H.winner) return false;
+  H.phase = 'over';
+  H.endsAt = 0;
+  note(H.winner === 'mafia' ? 'The mafia take over the town.' : 'The town found every member of the mafia.');
+  sendAll();
+  return true;
+}
+
+function playerLeft(id) {
+  if (!H.seats.includes(id)) return sendAll();
+  if (H.alive.has(id) && H.phase !== 'setup' && H.phase !== 'over') {
+    H.alive.delete(id);
+    note(nameOf(id) + ' left the game. They were ' + article(H.roles[id]) + '.');
+    if (checkWin()) return;
+    if (H.phase === 'night' && living().every(x => H.night.done.has(x))) return resolveNight();
+    if (H.phase === 'vote' && living().every(x => x in H.votes)) return resolveVote();
+  }
+  sendAll();
+}
+
+function hostTick() {
+  if (!room || !room.isHost) return;
+  if (!H.endsAt || now() < H.endsAt) return;
+  if (H.phase === 'night') resolveNight();
+  else if (H.phase === 'day') startVote();
+  else if (H.phase === 'vote') resolveVote();
+}
+
+function newGame() { H.phase = 'setup'; H.endsAt = 0; H.winner = ''; H.seats = []; H.roles = {}; H.alive = new Set(); sendAll(); }
+
+function viewFor(id) {
+  const seated = H.seats.includes(id);
+  const role = seated ? H.roles[id] : null;
+  const alive = H.alive.has(id);
+  const narrator = H.settings.narrator && id === room.me;
+  const seeAll = H.phase === 'over' || (seated && !alive && H.settings.deadSee && H.phase !== 'setup');
+  const v = {
+    t: 'view', phase: H.phase, round: H.round, left: H.endsAt ? Math.max(0, H.endsAt - now()) : 0,
+    settings: { reveal: H.settings.reveal, narrator: H.settings.narrator, deadSee: H.settings.deadSee },
+    players: H.seats.map(p => ({ id: p, name: nameOf(p), alive: H.alive.has(p) })),
+    log: H.log, winner: H.winner, narrator, canStart: id === room.me ? canStart() : false,
+    you: seated ? { role, alive } : null,
+    done: H.phase === 'night' ? H.night.done.size : 0, needed: living().length,
+    myPick: H.phase === 'night' && seated ? (H.night.picks[id] ?? null) : null,
+    votes: H.phase === 'vote' ? H.votes : {},
+  };
+  if (role === 'mafia') {
+    v.team = H.seats.filter(p => H.roles[p] === 'mafia');
+    if (H.phase === 'night') v.mafiaPicks = H.night.mafia;
+  }
+  if (role === 'detective') v.checks = H.checks[id] || [];
+  if (seeAll) v.roles = H.roles;
+  return v;
+}
+
+function toPlayer(id, m) { if (id === room.me) handle(m); else room.sendTo(id, m); }
+function sendAll() { if (room) for (const p of room.players) toPlayer(p.id, viewFor(p.id)); }
+
+// --- everyone
+
+function attach(r) {
+  room = r;
+  V = { phase: 'wait' };
+  room.on('message', (m, from) => {
+    if (!room.isHost) return handle(m);
+    if (m.t === 'pick') nightPick(from, +m.target);
+    else if (m.t === 'vote') castVote(from, m.target === 'skip' ? 'skip' : +m.target);
+  });
+  room.on('roster', () => { if (room.isHost) sendAll(); render(); });
+  room.on('leave', id => { if (room.isHost) playerLeft(id); });
+  room.on('close', () => { room = null; V = { phase: 'wait' }; lobby.start(); render(); });
+  if (room.isHost) { H.phase = 'setup'; sendAll(); }
+  render();
+}
+
+function handle(m) {
+  if (m.t !== 'view') return;
+  V = m;
+  V.until = now() + m.left;
+  render();
+}
+
+function act(m) {
+  if (!room) return;
+  if (room.isHost) {
+    if (m.t === 'pick') nightPick(room.me, m.target);
+    else if (m.t === 'vote') castVote(room.me, m.target);
+  } else room.send(m);
+}
+
+// --- drawing
+
+let pick = null;
+
+function render() {
+  const day = V.phase === 'day' || V.phase === 'vote' || V.phase === 'over' || V.phase === 'setup';
+  document.body.classList.toggle('day', day && V.phase !== 'wait');
+  document.body.classList.toggle('tv', !!V.narrator);
+  const titles = { wait: 'Mafia', setup: 'Getting ready', night: 'Night ' + V.round, day: 'Day ' + V.round, vote: 'Vote, day ' + V.round,
+    over: V.winner === 'mafia' ? 'The mafia win' : 'The town wins' };
+  $('phase').textContent = titles[V.phase] || 'Mafia';
+  renderRole();
+  renderMain();
+  const log = $('log');
+  $('logPanel').hidden = !(V.log && V.log.length) || V.phase === 'setup';
+  log.innerHTML = (V.log || []).slice().reverse().map(t => '<li>' + esc(t) + '</li>').join('');
+  $('rosterPanel').hidden = !(V.players && V.players.length);
+  $('roster').innerHTML = (V.players || []).map(p => '<span class="' + (p.alive ? '' : 'gone') + '">' + esc(p.name) +
+    (V.roles && V.roles[p.id] ? ' (' + ROLE[V.roles[p.id]].name + ')' : '') + '</span>').join('');
+  renderActions();
+  tickTimer();
+}
+
+function renderRole() {
+  const card = $('roleCard');
+  const you = V.you;
+  card.hidden = !you || V.phase === 'setup';
+  if (card.hidden) return;
+  const r = ROLE[you.role];
+  let html = '<div class="role ' + you.role + '">' + r.name + '</div><p>' + esc(r.tell) + '</p>';
+  if (V.team && V.team.length > 1) html += '<p>The mafia: ' + V.team.map(id => esc(nameFromView(id))).join(', ') + '.</p>';
+  if (V.mafiaPicks) {
+    const picks = Object.entries(V.mafiaPicks).map(([m, t]) => esc(nameFromView(+m)) + ' picked ' + esc(nameFromView(t)));
+    if (picks.length) html += '<p>' + picks.join('. ') + '.</p>';
+  }
+  if (V.checks && V.checks.length) html += '<p>' + V.checks.map(c => esc(nameFromView(c.target)) + (c.mafia ? ' is mafia' : ' is not mafia')).join('. ') + '.</p>';
+  if (!you.alive) html += '<p>You are out of the game.</p>';
+  $('roleSecret').innerHTML = html;
+}
+
+function nameFromView(id) { const p = (V.players || []).find(p => p.id === id); return p ? p.name : 'Someone'; }
+
+function nameButtons(list, selected, disabledFn, extra) {
+  return '<div class="names">' + list.map(p => '<button class="name' + (selected === p.id ? ' sel' : '') + (p.alive ? '' : ' dead') + '" data-id="' + p.id + '"' +
+    (disabledFn(p) ? ' disabled' : '') + '><span>' + esc(p.name) + '</span>' + (extra ? '<small>' + extra(p) + '</small>' : '') + '</button>').join('') + '</div>';
+}
+
+function renderMain() {
+  const m = $('main');
+  const me = room ? room.me : -1;
+  const you = V.you;
+  const host = room && room.isHost;
+  let html = '';
+  if (V.phase === 'wait') html = room ? '<div class="panel"><p>Waiting for the host…</p></div>' : '';
+  else if (V.phase === 'setup') {
+    if (host) {
+      const s = H.settings;
+      html = '<div class="panel"><h2>Set up the game</h2><p>' + room.players.length + ' here. You need 5 to 12 players' + (s.narrator ? ', not counting you as narrator' : '') + '. ' +
+        'With ' + Math.max(5, room.players.length - (s.narrator ? 1 : 0)) + ' players there will be ' + mafiaCount(Math.max(5, room.players.length - (s.narrator ? 1 : 0))) + ' mafia, a doctor, and a detective.</p>' +
+        '<label class="setting"><input type="checkbox" id="sNarr"' + (s.narrator ? ' checked' : '') + '> I\'ll be the narrator only (good on a TV)</label>' +
+        '<label class="setting"><input type="checkbox" id="sReveal"' + (s.reveal ? ' checked' : '') + '> Show a player\'s role when they\'re out</label>' +
+        '<label class="setting"><input type="checkbox" id="sDead"' + (s.deadSee ? ' checked' : '') + '> Players who are out can see every role</label>' +
+        '<label class="setting">Talking time <select id="sTalk">' + [60, 120, 180, 300].map(x => '<option value="' + x + '"' + (x === s.discuss ? ' selected' : '') + '>' + (x / 60) + ' min</option>').join('') + '</select></label>' +
+        '<div class="row"><button class="act" id="goBtn"' + (V.canStart ? '' : ' disabled') + '>Deal the roles</button><button class="quiet" id="invBtn">Invite more</button></div></div>';
+    } else html = '<div class="panel"><h2>Waiting for the host to deal</h2><p>When the game starts, hold the card at the top to see your role. Keep it to yourself.</p></div>';
+  } else if (V.phase === 'night') {
+    if (V.narrator || !you || !you.alive) {
+      html = '<div class="panel"><p class="news">Everyone, close your eyes. The night is quiet.</p><p>' + V.done + ' of ' + V.needed + ' have made their choice.</p></div>';
+    } else {
+      const chosen = V.myPick !== null && V.myPick !== undefined;
+      const sel = chosen ? V.myPick : pick;
+      html = '<div class="panel"><h2>Night. Choose a name.</h2><p>Hold your card above to see what your choice means. Everyone sees this same screen.</p>' +
+        nameButtons(V.players.filter(p => p.alive), sel, () => chosen) +
+        '<div class="row"><button class="act" id="pickBtn"' + (chosen || pick === null ? ' disabled' : '') + '>' + (chosen ? 'Chosen' : 'Confirm') + '</button>' +
+        '<span style="color:var(--muted)">' + V.done + ' of ' + V.needed + ' done</span></div></div>';
+    }
+  } else if (V.phase === 'day') {
+    const last = (V.log || []).slice(-1)[0] || '';
+    html = '<div class="panel"><p class="news">' + esc(last) + '</p><p>Talk it over. Who seems suspicious? The vote starts when the timer runs out.</p>' +
+      (host ? '<div class="row"><button class="ghost" id="voteNow">Start the vote now</button></div>' : '') + '</div>';
+  } else if (V.phase === 'vote') {
+    const counts = {};
+    for (const t of Object.values(V.votes)) if (t !== 'skip') counts[t] = (counts[t] || 0) + 1;
+    const mine = you && V.votes[me] !== undefined ? V.votes[me] : null;
+    const canVote = you && you.alive && !V.narrator;
+    html = '<div class="panel"><h2>Vote someone out</h2><p>A player needs more than half of the votes (' + (Math.floor(V.needed / 2) + 1) + ' of ' + V.needed + ') to be voted out.</p>' +
+      nameButtons(V.players.filter(p => p.alive), mine, p => !canVote || p.id === me, p => (counts[p.id] || 0) + ' vote' + (counts[p.id] === 1 ? '' : 's')) +
+      (canVote ? '<div class="row"><button class="ghost" id="skipBtn">' + (mine === 'skip' ? 'You skipped' : 'Skip') + '</button></div>' : '') +
+      '<p style="margin-top:10px">' + Object.entries(V.votes).map(([v, t]) => esc(nameFromView(+v)) + ' → ' + (t === 'skip' ? 'skip' : esc(nameFromView(t)))).join(' · ') + '</p></div>';
+  } else if (V.phase === 'over') {
+    html = '<div class="panel"><p class="news">' + (V.winner === 'mafia' ? 'The mafia win.' : 'The town wins.') + '</p>' +
+      (host ? '<div class="row"><button class="act" id="againBtn">Play again</button></div>' : '<p>Waiting for the host to start another game.</p>') + '</div>';
+  }
+  m.innerHTML = html;
+  bindMain();
+}
+
+function bindMain() {
+  const q = id => $('main').querySelector('#' + id);
+  for (const b of $('main').querySelectorAll('.name')) b.onclick = () => {
+    const id = +b.dataset.id;
+    if (V.phase === 'night') { pick = id; renderMain(); }
+    else if (V.phase === 'vote') act({ t: 'vote', target: id });
+  };
+  const s = H.settings;
+  const bind = (id, fn) => { const el = q(id); if (el) el.onchange = fn; };
+  if (q('goBtn')) q('goBtn').onclick = () => { pick = null; startGame(); };
+  if (q('invBtn')) q('invBtn').onclick = () => lobby.reopen();
+  bind('sNarr', () => { s.narrator = q('sNarr').checked; sendAll(); });
+  bind('sReveal', () => { s.reveal = q('sReveal').checked; });
+  bind('sDead', () => { s.deadSee = q('sDead').checked; });
+  if (q('sTalk')) q('sTalk').onchange = () => { s.discuss = +q('sTalk').value; };
+  if (q('pickBtn')) q('pickBtn').onclick = () => { if (pick !== null) act({ t: 'pick', target: pick }); };
+  if (q('voteNow')) q('voteNow').onclick = startVote;
+  if (q('skipBtn')) q('skipBtn').onclick = () => act({ t: 'vote', target: 'skip' });
+  if (q('againBtn')) q('againBtn').onclick = () => { pick = null; newGame(); };
+}
+
+function renderActions() {
+  const a = $('actions');
+  let html = '';
+  if (room) html += '<button class="quiet" id="leaveBtn">Leave</button>';
+  if (a.dataset.html === html) return;
+  a.innerHTML = html; a.dataset.html = html;
+  const lv = a.querySelector('#leaveBtn');
+  if (lv) lv.onclick = () => { room = null; V = { phase: 'wait' }; lobby.start(); render(); };
+}
+
+function tickTimer() {
+  const t = $('timer');
+  if (!V.until || !['night', 'day', 'vote'].includes(V.phase)) { t.textContent = ''; return; }
+  const s = Math.max(0, Math.ceil((V.until - now()) / 1000));
+  t.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  t.className = s <= 10 ? 'low' : '';
+}
+
+// hold to peek, so nobody nearby sees the role by accident
+const card = $('roleCard');
+const peek = on => card.classList.toggle('peek', on);
+card.addEventListener('pointerdown', e => { e.preventDefault(); peek(true); });
+for (const ev of ['pointerup', 'pointerleave', 'pointercancel', 'blur']) card.addEventListener(ev, () => peek(false));
+card.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); peek(true); } });
+card.addEventListener('keyup', () => peek(false));
+card.addEventListener('contextmenu', e => e.preventDefault());
+
+setInterval(() => { hostTick(); tickTimer(); }, 250);
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'mafia',
+  title: 'Mafia',
+  blurb: 'A party game for 5 to 12 people in the same room, each on their own phone. Some of you are secretly mafia. Find them before they find you.',
+  min: 5, max: 12,
+  onStart: attach,
+  onJoin: attach,
+});
+render();
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Mafia</h2>
+<p>The party game for 5 to 12 people in the same room, each on their own phone. A few players are secretly mafia. Each night they remove someone, and each day everyone argues and votes on who they think the mafia are.</p>
+<h3>Play</h3>
+<p>Click "Play with friends" and send each friend their own invite. Each of them sends back a reply link; open it in your browser or paste it in. Press Start when everyone is in, choose the settings, and deal the roles.</p>
+<p>Hold the card at the top of your screen to see your role. Let go and it hides again, so people next to you can't read it.</p>
+<h3>Roles</h3>
+<table><tr><td>Role</td><td>What they do</td></tr><tr><td>Mafia</td><td>About one in four players. Each night the mafia pick someone to remove. They know who the other mafia are.</td></tr><tr><td>Doctor</td><td>Each night, picks someone to save. If the mafia picked that person, nobody dies. The doctor can pick themselves.</td></tr><tr><td>Detective</td><td>Each night, picks someone and learns whether they are mafia. Only the detective sees the answer.</td></tr><tr><td>Villager</td><td>No night power. Talks, listens, and votes.</td></tr></table>
+<h3>Rules</h3>
+<ul><li>Night: every living player taps a name and confirms. The mafia's choice is the name most of them picked, and a tie is settled at random. Villagers tap a name too, so everyone's screen looks the same and nobody can tell roles by watching.</li><li>Morning: the town hears who was killed, or that nobody died.</li><li>Day: talk for a set time, then vote. A player needs more than half of the living players' votes to be voted out. Anyone can skip. Without a majority, nobody leaves.</li><li>The town wins when every mafia member is out. The mafia win when there are as many of them as everyone else.</li></ul>
+<h3>Settings</h3>
+<ul><li>Narrator only: the host doesn't play. Their screen shows the public story, which works well on a TV, and never shows anyone's role.</li><li>Show a player's role when they're out. Turn it off for a harder game.</li><li>Players who are out can see every role. Turn it off if people talk too much after they're out.</li><li>Talking time: 1, 2, 3, or 5 minutes.</li></ul>
+<p>People who join after the roles are dealt watch until the next game. If someone leaves in the middle, they're out and their role is shown.</p>
+<h3>How it works</h3>
+<p>It uses <a href="../linkplay/">LinkPlay</a> to connect the phones directly, with no game server. The host's browser deals the roles and runs the game, and it sends each player only what that player may see: their own role, the mafia team if they're mafia, and the detective's answers if they're the detective. Votes during the day are public.</p>
+<p>The host's browser does hold every role, so a host who plays and opens the browser's developer tools could peek. For a game where that matters, use narrator mode.</p>
+<p class="pg-more">More like this: <a href="../watch-party/">Watch Party</a>, <a href="../trivia-night/">Trivia Night</a>, <a href="../whiteboard/">Whiteboard</a>, <a href="../cycle-duel/">Cycle Duel</a>. Or see <a href="../#online">all online games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/mafia">mafia on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

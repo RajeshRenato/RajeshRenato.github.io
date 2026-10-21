@@ -2,7 +2,7 @@
 
 A small kit for making a browser game multiplayer with no server of your own. Players connect by sending each other links. This folder's `index.html` is the demo: invite friends and you see each other's cursors.
 
-Cycle Duel, Type Race, Sketch & Guess, Four in a Row, Checkers, Chess, Clue Grid, Ludo, Trivia Night, and Whiteboard are built on it.
+Most of the online projects here are built on it: Chess, Ludo, Mafia, Clue Grid, Sketch & Guess, Trivia Night, Watch Party, Secret Chat, Video Call, and the online modes in Midnight Racing and Miami Nights. Video Call and Watch Party also send camera and microphone over the same connection (see the media options in `linkplay.js`).
 
 ## How the connection works
 

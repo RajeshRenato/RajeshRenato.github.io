@@ -23,6 +23,7 @@ const Game = {
 const spawnPoint = { x: 44.5 * TILE, y: 39.5 * TILE };
 
 function crime(n) {
+  if (typeof Online !== 'undefined' && Online.active) return;
   Game.wanted = Math.min(5, Game.wanted + n);
   Game.wantedTimer = 0;
 }
@@ -206,12 +207,14 @@ function playUpdate(dt) {
   const allActive = Game.activeCars.concat(Game.police);
 
   for (const c of Game.activeCars) {
+    if (c.remote) continue;
     if (c === Player.car && Player.inCar) c.physics(dt);
     else if (c.ai) aiMove(c, dt, allActive, Player);
     else if (c.speed > 2) { c.throttle = 0; c.steer = 0; c.hand = false; c.physics(dt); }
   }
 
-  updatePolice(dt);
+  const online = typeof Online !== 'undefined' && Online.active;
+  if (!online) updatePolice(dt);
 
   // car vs car
   for (let i = 0; i < allActive.length; i++) {
@@ -258,7 +261,8 @@ function playUpdate(dt) {
     if (Game.wantedTimer > 16) { Game.wanted--; Game.wantedTimer = 0; }
   }
 
-  Mission.update(dt);
+  if (online) Online.update(dt);
+  else Mission.update(dt);
   Particles.update(dt);
 
   AudioMan.setEngine(
@@ -295,8 +299,10 @@ function update(dt) {
     try { localStorage.setItem('vc_view', viewMode); } catch (e) { }
     toast(viewMode === 'street' ? 'street cam' : 'top-down cam', '#28e0ff');
   }
+  if (typeof syncOnlineButton === 'function') syncOnlineButton();
   if (Game.state === 'menu') {
-    if (keyPressed('Enter', 'Mouse0')) {
+    if (keyPressed('o') && typeof openOnlineLobby === 'function') openOnlineLobby();
+    else if (keyPressed('Enter', 'Mouse0')) {
       Game.state = 'play';
       toast('Your pink ride is right there. Press E.', '#28e0ff');
     }

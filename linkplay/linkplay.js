@@ -64,7 +64,9 @@ const LinkPlay = (() => {
 
   // The side that sends invites. One invite connects one friend; call invite()
   // again for each extra player. onChannel(channel, id) fires once per friend.
-  function host(name, { onChannel, onFail } = {}) {
+  // For audio or video, pass media: true (and stream, if you send any); the
+  // friend's tracks arrive through onTrack(event, id).
+  function host(name, { onChannel, onFail, media, stream, onTrack } = {}) {
     const invites = new Map();
     let bc = null;
     try {
@@ -82,6 +84,13 @@ const LinkPlay = (() => {
       const id = newId();
       const pc = new RTCPeerConnection({ iceServers: ICE });
       const channel = pc.createDataChannel(name, { ordered: true });
+      if (media || stream) {
+        for (const kind of ['audio', 'video']) {
+          const track = stream && stream.getTracks().find(t => t.kind === kind);
+          pc.addTransceiver(track || kind, { direction: 'sendrecv', streams: stream ? [stream] : [] });
+        }
+        pc.ontrack = e => onTrack && onTrack(e, id);
+      }
       invites.set(id, { pc, channel });
       watch(pc, () => onFail && onFail(id));
       channel.addEventListener('open', () => onChannel && onChannel(channel, id));
@@ -115,15 +124,26 @@ const LinkPlay = (() => {
   }
 
   // The side that opened an invite. Resolves to the reply link to send back.
-  async function join(name, invite, { onChannel, onFail } = {}) {
+  // stream (optional) is sent on the audio and video slots the host offered.
+  async function join(name, invite, { onChannel, onFail, stream, onTrack } = {}) {
     const pc = new RTCPeerConnection({ iceServers: ICE });
     watch(pc, onFail);
+    pc.ontrack = e => onTrack && onTrack(e);
     pc.ondatachannel = e => {
       const ch = e.channel;
       if (ch.readyState === 'open') onChannel && onChannel(ch);
       else ch.addEventListener('open', () => onChannel && onChannel(ch));
     };
     await pc.setRemoteDescription(await unpack(invite.code));
+    if (stream) {
+      for (const t of pc.getTransceivers()) {
+        const track = stream.getTracks().find(x => x.kind === t.receiver.track.kind);
+        if (!track) continue;
+        await t.sender.replaceTrack(track);
+        t.direction = 'sendrecv';
+        if (t.sender.setStreams) t.sender.setStreams(stream);
+      }
+    }
     await pc.setLocalDescription(await pc.createAnswer());
     await waitIce(pc);
     const link = pageLink('answer=' + invite.id + '.' + await pack(pc.localDescription));

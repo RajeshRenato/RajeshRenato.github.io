@@ -47,3 +47,99 @@ test('the touch joystick maps to driving keys', () => {
   assert.ok(run(`Input.keys['d'] && !Input.keys['w']`));
   run('TouchPad.on = false; TouchPad.joy.active = false;');
 });
+
+// --- cops and robbers, two copies of the game over an in-memory channel
+
+const { createPage, channelPair } = require('./helpers/browser');
+
+function match() {
+  const host = createPage('miami-nights/index.html');
+  const guest = createPage('miami-nights/index.html');
+  const c = channelPair();
+  host.sandbox.c = c.a; guest.sandbox.ch = c.b;
+  host.run(`globalThis.r = Room.create('miami-nights', 'Ana'); r.addChannel(c);`);
+  guest.run(`Online.attach(Room.joinChannel(ch, 'Bo'))`);
+  c.pump();
+  host.run('Online.attach(r)');
+  c.pump();
+  const tick = (n, each = '') => {
+    for (let i = 0; i < n; i++) {
+      host.run(`{ ${each} } update(0.033)`); c.pump();
+      guest.run('update(0.033)'); c.pump();
+    }
+  };
+  return { host, guest, c, tick };
+}
+const toCountdownEnd = m => m.tick(100);
+
+test('online: roles are assigned, cars placed, and positions relayed', () => {
+  const m = match();
+  assert.strictEqual(m.host.run('Online.R.round'), 1);
+  assert.strictEqual(m.guest.run('Online.myRole()'), 'robber', 'the guest robs first');
+  assert.strictEqual(m.host.run('Online.myRole()'), 'cop');
+  assert.strictEqual(m.host.run('Online.car.kind'), 'police');
+  assert.strictEqual(m.guest.run('Online.remote.kind'), 'police');
+  assert.strictEqual(m.host.run('Game.state'), 'play');
+  toCountdownEnd(m);
+  assert.strictEqual(m.guest.run('Online.R.phase'), 'chase');
+  m.guest.run(`Online.car.x += 300; Online.car.vx = 0; Online.car.vy = 0`);
+  m.tick(20);
+  const gx = m.guest.run('Online.car.x'), hx = m.host.run('Online.remote.x');
+  assert.ok(Math.abs(gx - hx) < 2, 'the host draws the guest car where it is: ' + gx + ' vs ' + hx);
+  assert.strictEqual(m.host.run('Game.police.length'), 0, 'no AI police online');
+});
+
+test('online: the bust meter fills when the cop is close and the robber is slow, and the cop wins', () => {
+  const m = match();
+  toCountdownEnd(m);
+  const put = `const g = Online.posOf(Online.R.robber); Online.car.x = g.x + 30; Online.car.y = g.y;`;
+  m.tick(15, put);
+  assert.ok(m.host.run('Online.R.bust') > 0.3, 'meter fills');
+  m.tick(100, put);
+  assert.strictEqual(m.host.run('Online.R.phase'), 'over');
+  assert.strictEqual(m.guest.run('Online.R.winner'), 0, 'the host was the cop and made the bust');
+  assert.strictEqual(m.guest.run('Online.R.score[0]'), 1);
+});
+
+test('online: delivering the package wins the round for the robber, then roles swap', () => {
+  const m = match();
+  toCountdownEnd(m);
+  const p = JSON.parse(m.guest.run('JSON.stringify(Online.R.pickup)'));
+  const d = JSON.parse(m.guest.run('JSON.stringify(Online.R.dropoff)'));
+  m.guest.run(`Online.car.x = ${p.x}; Online.car.y = ${p.y};`);
+  m.tick(10);
+  assert.strictEqual(m.host.run('Online.R.hasPkg'), true);
+  assert.strictEqual(m.guest.run('Mission.state'), 'deliver');
+  m.guest.run(`Online.car.x = ${d.x}; Online.car.y = ${d.y};`);
+  m.tick(10);
+  assert.strictEqual(m.host.run('Online.R.phase'), 'over');
+  assert.strictEqual(m.host.run('Online.R.winner'), m.guest.run('Online.me'));
+  m.tick(140);
+  assert.strictEqual(m.host.run('Online.R.round'), 2);
+  assert.strictEqual(m.host.run('Online.myRole()'), 'robber', 'roles swap');
+  assert.strictEqual(m.guest.run('Online.myRole()'), 'cop');
+});
+
+test('online: the first to three rounds wins the match, and a rematch resets the score', () => {
+  const m = match();
+  for (let round = 0; round < 5 && m.host.run(`Online.R.phase`) !== 'done'; round++) {
+    m.host.run(`Online.R.phase = 'chase'; Online.R.phaseT = 0`);
+    m.host.run(`Online.endRound(0, 'won')`);
+    m.tick(135);
+  }
+  assert.strictEqual(m.host.run('Online.R.phase'), 'done');
+  assert.strictEqual(m.guest.run('Online.R.phase'), 'done');
+  assert.strictEqual(m.guest.run('Online.R.score[0]'), 3);
+  m.guest.run(`Input.pressed['Enter'] = true; update(0.016)`);
+  m.c.pump();
+  assert.strictEqual(m.host.run('Online.R.round'), 1);
+  assert.strictEqual(m.host.run('Online.R.score[0]'), 0);
+});
+
+test('online: leaving returns to the solo game', () => {
+  const m = match();
+  m.c.close(); m.c.pump();
+  assert.strictEqual(m.guest.run('Online.active'), false);
+  assert.strictEqual(m.guest.run('Game.state'), 'menu');
+  assert.strictEqual(m.host.run('Online.active'), false);
+});

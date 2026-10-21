@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffd166'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ER%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<title>Midnight Racing | Road Rash-style bike racing game online</title>
+<title>Midnight Racing | Road Rash-style bike racing, race friends online</title>
 <link rel="stylesheet" href="../common/about.css">
 <link rel="canonical" href="https://rajeshrenato.github.io/playground/midnight-racing/">
 <style>
@@ -14,20 +14,26 @@
   canvas { display:block; width:100vw; height:100vh; touch-action:none; }
   a.back { position:fixed; top:12px; left:14px; color:#ff6fb0; font:12px 'Courier New',monospace;
            text-decoration:none; opacity:.7; z-index:5; }
+  :root { --lp-bg:#07041a; --lp-panel:#150d33; --lp-veil:rgba(7,4,26,.92); --lp-accent:#ff4fa3; --lp-ink:#f2eefc; --lp-muted:#a99fc9; --lp-rule:#2e2457; --lp-field:#0c0724; }
 </style>
+<link rel="stylesheet" href="../linkplay/lobby.css">
 <meta property="og:title" content="Midnight Racing">
-<meta property="og:description" content="Road Rash-style bike combat racing at midnight. Punch and kick rivals, dodge two-way traffic, and race a friend&#39;s ghost.">
+<meta property="og:description" content="Road Rash-style bike combat racing at midnight. Punch and kick rivals, dodge two-way traffic, and race up to three friends online.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/playground/midnight-racing/">
 <meta property="og:image" content="https://rajeshrenato.github.io/playground/midnight-racing/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="Road Rash-style bike combat racing at midnight. Punch and kick rivals, dodge two-way traffic, and race a friend&#39;s ghost.">
+<meta name="description" content="Road Rash-style bike combat racing at midnight. Punch and kick rivals, dodge two-way traffic, and race up to three friends online.">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Highlights", "item": "https://rajeshrenato.github.io/playground/#highlights"}, {"@type": "ListItem", "position": 3, "name": "Midnight Racing", "item": "https://rajeshrenato.github.io/playground/midnight-racing/"}]}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Midnight Racing", "url": "https://rajeshrenato.github.io/playground/midnight-racing/", "description": "Road Rash-style bike combat racing at midnight. Punch and kick rivals, dodge two-way traffic, and race a friend's ghost.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Midnight Racing", "url": "https://rajeshrenato.github.io/playground/midnight-racing/", "description": "Road Rash-style bike combat racing at midnight. Punch and kick rivals, dodge two-way traffic, and race up to three friends online.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <canvas id="game"></canvas>
+<div id="lobby" class="lp-panel" hidden></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
 <script>
 'use strict';
 // Pseudo-3D motorcycle combat racer. Original code and art.
@@ -64,6 +70,7 @@ const easeInOut = (a, b, p) => a + (b - a) * (0.5 - Math.cos(p * Math.PI) / 2);
 // input
 const Keys = {}, Pressed = {};
 window.addEventListener('keydown', e => {
+  if (e.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName || '')) return;
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (!e.repeat) Pressed[k] = true;
@@ -98,6 +105,8 @@ function touchHit(x, y) {
   return null;
 }
 function menuTap(x, y) {
+  const oy = H * 0.58 + 5 * 25 + 92;
+  if (y > oy - 14 && y < oy + 34) { Pressed['o'] = true; return; }
   if (y > H * 0.42 - 12 && y < H * 0.42 + 34) {
     Pressed[String(x < W / 3 ? 1 : x < W * 2 / 3 ? 2 : 3)] = true;
   } else if (y > H * 0.42 + 42 && y < H * 0.42 + 86) {
@@ -109,6 +118,13 @@ function menuTap(x, y) {
 canvas.addEventListener('pointerdown', e => {
   if (e.pointerType === 'touch') Touch.on = true;
   if (G.state === 'menu') { menuTap(e.clientX, e.clientY); return; }
+  if (G.state === 'lobby' || G.state === 'netwait') return;
+  if (G.state === 'over' && online()) {
+    const r = leaveRect;
+    if (r && e.clientX >= r.x && e.clientX <= r.x + r.w && e.clientY >= r.y && e.clientY <= r.y + r.h) leaveOnline('You left the online race.');
+    else Pressed['Enter'] = true;
+    return;
+  }
   if (G.state === 'over') {
     const r = shareRect;
     if (r && e.clientX >= r.x && e.clientX <= r.x + r.w && e.clientY >= r.y && e.clientY <= r.y + r.h) shareGhost();
@@ -240,7 +256,7 @@ function buildTrack(level) {
     }
     if (i % 57 === 0) segs[i].sprites.push({ kind: 'lamp', off: (i % 114 === 0) ? -1.15 : 1.15 });
   }
-  const fseg = Math.floor(finishZ / SEG);
+  const fseg = Math.floor((finishZ + PLAYER_Z) / SEG);
   segs[fseg].sprites.push({ kind: 'arch', off: 0, word: 'FINISH' });
   segs[20].sprites.push({ kind: 'arch', off: 0, word: 'START' });
 }
@@ -348,9 +364,10 @@ async function shareGhost() {
 
 function save() {
   try {
-    localStorage.setItem('rr_level', String(ghostSaved ? ghostSaved.level : G.level));
+    const keep = ghostSaved || NET.keep || G;
+    localStorage.setItem('rr_level', String(keep.level));
     localStorage.setItem('rr_cash', String(G.cash));
-    localStorage.setItem('rr_diff', String(ghostSaved ? ghostSaved.diff : G.diff));
+    localStorage.setItem('rr_diff', String(keep.diff));
     localStorage.setItem('rr_bike', String(G.bike));
   } catch (e) { }
 }
@@ -455,6 +472,7 @@ function resetRace() {
 function rankOf() {
   let r = 1;
   for (const o of rivals) if (o.pos > P.pos) r++;
+  for (const p of NET.peers.values()) if (p.s && p.rpos > P.pos) r++;
   return r;
 }
 
@@ -476,8 +494,9 @@ function attack(kind) {
   if (P.punchT > 0 || P.kickT > 0 || P.state !== 'ride') return;
   if (kind === 'punch') P.punchT = 0.28; else P.kickT = 0.34;
   let best = null, bd = 1e9;
-  for (const o of rivals) {
-    if (o.state !== 'ride') continue;
+  const targets = rivals.filter(o => o.state === 'ride');
+  for (const [id, p] of NET.peers) if (p.s && p.s.st === 'ride') targets.push({ pos: p.rpos, off: p.rx, peer: id, name: p.name, color: p.color });
+  for (const o of targets) {
     const dz = o.pos - P.pos;
     const dx = o.off - P.x;
     if (Math.abs(dz) < 320 && Math.abs(dx) < 0.45) {
@@ -487,6 +506,7 @@ function attack(kind) {
   }
   P.punchSide = best ? Math.sign(best.off - P.x) || 1 : P.lean >= 0 ? 1 : -1;
   if (!best) return;
+  if (best.peer !== undefined) { hitPeer(best, kind); return; }
   if (kind === 'punch') {
     const dmg = P.weapon === 'club' ? 55 : 30;
     best.hp -= dmg;
@@ -552,8 +572,13 @@ function update(dt) {
         msg('Bought the ' + next.name + '!', '#7dffc9');
       } else msg('Need $' + next.cost + ' for the ' + next.name, '#ff6b6b');
     }
-    if (pressed('Enter')) { resetRace(); G.state = 'count'; G.countT = 3.2; }
+    if (pressed('o')) openLobby();
+    else if (pressed('Enter')) { resetRace(); G.state = 'count'; G.countT = 3.2; }
     Pressed['Enter'] = false;
+  } else if (G.state === 'lobby') {
+    // the lobby panel handles input
+  } else if (G.state === 'netwait') {
+    if (pressed('Escape')) leaveOnline('You left the online race.');
   } else if (G.state === 'count') {
     G.countT -= dt;
     updateTraffic(dt);               // rivals hold until GO
@@ -563,12 +588,16 @@ function update(dt) {
     updatePlayer(dt);
     while (G.raceT >= recNext) { rec.push([P.pos, P.x]); recNext += GHOST_DT; }
     updateField(dt, true);
-    if (!G.finished && P.pos >= finishZ) finishRace();
-    if (pressed('r')) { resetRace(); G.state = 'count'; G.countT = 3.2; }
+    if (!G.finished && P.pos >= finishZ) { if (online()) finishOnline(); else finishRace(); }
+    if (pressed('r') && !online()) { resetRace(); G.state = 'count'; G.countT = 3.2; }
+  } else if (G.state === 'over' && online()) {
+    if (pressed('Escape')) leaveOnline('You left the online race.');
+    else if (pressed('Enter') && NET.room.isHost) hostStart();
   } else if (G.state === 'over') {
     if (pressed('g')) shareGhost();
     if (pressed('Enter')) { endGhost(); resetRace(); G.state = 'count'; G.countT = 3.2; }
   }
+  if (online()) netTick(dt);
   for (const k in Pressed) Pressed[k] = false;
   Snd.setEngine(G.state === 'race' || G.state === 'count', P.speed / MAXS);
 }
@@ -920,34 +949,30 @@ function render() {
   ctx.fillStyle = bloom;
   ctx.fillRect(farX - W * 0.4, farY - H * 0.25, W * 0.8, H * 0.5);
 
-  // sprite + entity pass, far -> near
+  // sprite + entity pass, far -> near. Positions in the game are measured where
+  // the camera is, so other riders are drawn at the distance where they come out
+  // the same size as your bike: a rider level with you in the game looks level.
+  const RIDE_Z = clamp(CAM_D * (W / 2) * 2200 / Math.min(W, H), PLAYER_Z, 2400);
   const bySeg = new Map();
-  for (const o of rivals) {
-    const si = Math.floor(o.pos / SEG);
+  const place = (kind, o, z) => {
+    const si = Math.floor(z / SEG);
     if (!bySeg.has(si)) bySeg.set(si, []);
-    bySeg.get(si).push({ kind: 'rival', o });
-  }
-  for (const c of traffic) {
-    const si = Math.floor(c.pos / SEG);
-    if (!bySeg.has(si)) bySeg.set(si, []);
-    bySeg.get(si).push({ kind: 'car', o: c });
-  }
-  for (const f of fxWorld) {
-    const si = Math.floor(f.pos / SEG);
-    if (!bySeg.has(si)) bySeg.set(si, []);
-    bySeg.get(si).push({ kind: 'fx', o: f });
-  }
+    bySeg.get(si).push({ kind, o, z });
+  };
+  for (const o of rivals) place('rival', o, o.pos + RIDE_Z);
+  for (const c of traffic) place('car', c, c.pos + RIDE_Z);
+  for (const f of fxWorld) place('fx', f, f.pos + RIDE_Z);
   if (ghost && (G.state === 'race' || G.state === 'count')) {
     const gp = ghostAt(ghost, G.state === 'race' ? G.raceT : 0);
-    const si = Math.floor(gp.pos / SEG);
-    if (!bySeg.has(si)) bySeg.set(si, []);
-    bySeg.get(si).push({ kind: 'ghost', o: { pos: gp.pos, off: gp.x } });
+    place('ghost', { pos: gp.pos, off: gp.x }, gp.pos + RIDE_Z);
   }
-  if (cop && cop.pos > 0) {
-    const si = Math.floor(cop.pos / SEG);
-    if (!bySeg.has(si)) bySeg.set(si, []);
-    bySeg.get(si).push({ kind: 'cop', o: cop });
+  if (G.state === 'count' || G.state === 'race' || G.state === 'over') {
+    for (const [id, p] of NET.peers) {
+      if (!p.s) continue;
+      place('peer', { pos: p.rpos, off: p.rx, p }, p.rpos + RIDE_Z);
+    }
   }
+  if (cop && cop.pos > 0) place('cop', cop, cop.pos + RIDE_Z);
 
   for (let n = DRAW - 1; n > 0; n--) {
     const idx = Math.min(baseIdx + n, segs.length - 1);
@@ -961,7 +986,7 @@ function render() {
     const ents = bySeg.get(idx);
     if (ents) {
       for (const e of ents) {
-        const pct = (e.o.pos % SEG) / SEG;
+        const pct = (e.z % SEG) / SEG;
         const sx = lerp(seg.sx1, seg.sx2, pct), sy = lerp(seg.sy1, seg.sy2, pct);
         const sw = lerp(seg.sw1, seg.sw2, pct);
         const ex = sx + e.o.off * sw;
@@ -978,6 +1003,7 @@ function render() {
             ctx.fillText('GHOST', ex, sy - 560 * k);
           }
         }
+        else if (e.kind === 'peer') drawPeer(ex, sy, k, e.o, n);
         else if (e.kind === 'cop') {
           drawBikeSprite(ex, sy, k, '#e9edf2', Math.sin(G.time * 2.5) * 0.08, '#1d2f52', { cop: true });
           if (n < 24 && k > 0.05) {
@@ -1376,6 +1402,8 @@ function drawHUD() {
   ctx.textBaseline = 'top';
 
   if (G.state === 'menu') { drawMenu(); ctx.restore(); return; }
+  if (G.state === 'lobby') { ctx.fillStyle = 'rgba(7,4,26,0.55)'; ctx.fillRect(0, 0, W, H); ctx.restore(); return; }
+  if (G.state === 'netwait') { drawNetWait(); ctx.restore(); return; }
 
   // speed gauge
   const kph = Math.round(P.speed / 40);
@@ -1412,7 +1440,7 @@ function drawHUD() {
   ctx.textAlign = 'right';
   ctx.font = 'italic bold 30px "Arial Black", sans-serif';
   ctx.fillStyle = '#ffd166';
-  ctx.fillText(rankOf() + '/' + (rivals.length + 1), W - 20, 14);
+  ctx.fillText(rankOf() + '/' + (rivals.length + 1 + NET.peers.size), W - 20, 14);
   ctx.font = '12px monospace';
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.fillText('PLACE', W - 20, 50);
@@ -1424,7 +1452,7 @@ function drawHUD() {
   ctx.fillText('$' + (G.cash + G.raceCash), 16, 34);
   ctx.font = '12px monospace';
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fillText('LEVEL ' + G.level + ' · ' + diff().name + ' · ' + bike().name + ' · ' + G.raceT.toFixed(1) + 's', 16, 60);
+  ctx.fillText((online() ? 'ONLINE · ' + (NET.peers.size + 1) + ' RIDERS' : 'LEVEL ' + G.level) + ' · ' + diff().name + ' · ' + bike().name + ' · ' + G.raceT.toFixed(1) + 's', 16, 60);
 
   // progress bar (the ghost is the white tick)
   const pw = Math.min(420, W * 0.4);
@@ -1440,6 +1468,11 @@ function drawHUD() {
     const gp = ghostAt(ghost, G.state === 'race' ? G.raceT : 0);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(W / 2 - pw / 2 + pw * clamp(gp.pos / finishZ, 0, 1) - 1.5, 11, 3, 10);
+  }
+  for (const p of NET.peers.values()) {
+    if (!p.s) continue;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(W / 2 - pw / 2 + pw * clamp(p.rpos / finishZ, 0, 1) - 2.5, 9, 5, 14);
   }
 
   // health bar sits higher on touch to clear the steer buttons
@@ -1480,7 +1513,7 @@ function drawHUD() {
     ctx.shadowBlur = 0;
   }
 
-  if (G.state === 'over') drawOver();
+  if (G.state === 'over') { if (online()) drawOverOnline(); else drawOver(); }
 
   // hints / touch buttons
   if (Touch.on) {
@@ -1570,6 +1603,9 @@ function drawMenu() {
     ctx.fillStyle = '#ffd166';
     ctx.fillText(Touch.on ? 'tap here to race' : 'press ENTER to race', W / 2, H * 0.58 + lines.length * 25 + 54);
   }
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#28e0ff';
+  ctx.fillText(Touch.on ? 'or tap here to race friends online' : 'or press O to race friends online', W / 2, H * 0.58 + lines.length * 25 + 92);
 }
 
 function drawOver() {
@@ -1615,11 +1651,251 @@ function drawOver() {
   }
 }
 
+// online races. Every browser simulates its own bike and shares where it is; the
+// host passes messages on and keeps the results. AI riders and traffic come from
+// the shared level and difficulty, so everyone starts with the same field.
+const NET = { room: null, keep: null, peers: new Map(), results: [], finish: [], sentAt: 0, race: 0 };
+let lobby = null, leaveRect = null;
+function online() { return !!NET.room; }
+
+function openLobby() {
+  G.state = 'lobby';
+  if (lobby) { lobby.start(); return; }
+  lobby = Lobby.mount(document.getElementById('lobby'), {
+    game: 'midnight-racing',
+    title: 'Race friends online',
+    blurb: 'Two to four riders on the same track, with the AI pack and traffic. Punch and kick each other off the road. The host picks the difficulty and level.',
+    min: 2, max: 4,
+    extra: [{ label: 'Back to solo racing', note: 'Your saved level, cash, and bike are untouched.', onClick: () => { G.state = 'menu'; } }],
+    onStart: attachRoom,
+    onJoin: attachRoom,
+  });
+}
+
+function attachRoom(room) {
+  NET.room = room;
+  NET.peers.clear(); NET.results = []; NET.finish = [];
+  endGhost();
+  if (!NET.keep) NET.keep = { level: G.level, diff: G.diff };
+  room.on('message', (m, from) => onNet(m, from));
+  room.on('roster', syncPeers);
+  room.on('leave', id => { NET.peers.delete(id); if (room.isHost) hostResults(); });
+  room.on('close', () => leaveOnline('The host left the race.'));
+  syncPeers();
+  G.state = 'netwait';
+  if (room.isHost) hostStart();
+}
+
+function syncPeers() {
+  if (!NET.room) return;
+  for (const pl of NET.room.players) {
+    if (pl.id === NET.room.me) continue;
+    const p = NET.peers.get(pl.id) || { s: null, rpos: 0, rx: 0, t: 0 };
+    p.name = pl.name; p.color = pl.color;
+    NET.peers.set(pl.id, p);
+  }
+  for (const id of [...NET.peers.keys()]) if (!NET.room.players.some(pl => pl.id === id)) NET.peers.delete(id);
+}
+
+function netSend(m) {
+  if (!NET.room) return;
+  m.id = NET.room.me;
+  NET.room.send(m);
+}
+
+function onNet(m, from) {
+  const room = NET.room;
+  if (!room) return;
+  if (room.isHost && from) {
+    if (m.t !== 'st' && m.t !== 'hit' && m.t !== 'fin') return;
+    m.id = from;
+    room.send(m);
+  }
+  if (m.t === 'go') { if (!room.isHost) startOnline(m); return; }
+  if (m.t === 'res') { if (!room.isHost) NET.results = m.list; return; }
+  if (m.id === room.me) return;
+  if (m.t === 'st') {
+    const p = NET.peers.get(m.id);
+    if (!p) return;
+    if (!p.s || Math.abs(m.pos - p.rpos) > 4000) { p.rpos = m.pos; p.rx = m.x; }
+    p.s = m; p.t = G.time;
+  } else if (m.t === 'hit' && m.to === room.me) takeHit(m);
+  else if (m.t === 'fin' && room.isHost) hostFinish(m.id, m.time);
+}
+
+function hostStart() {
+  const m = { t: 'go', level: NET.keep.level, diff: NET.keep.diff, n: ++NET.race };
+  NET.finish = [];
+  NET.room.send(m);
+  startOnline(m);
+  hostResults();
+}
+
+function startOnline(m) {
+  G.level = m.level; G.diff = clamp(m.diff, 1, 3);
+  NET.results = [];
+  for (const p of NET.peers.values()) { p.s = null; p.rpos = 0; p.rx = 0; }
+  resetRace();
+  G.state = 'count'; G.countT = 3.2;
+}
+
+function netTick(dt) {
+  const k = 1 - Math.exp(-10 * dt);
+  for (const p of NET.peers.values()) {
+    if (!p.s) continue;
+    const ahead = p.s.st === 'ride' && G.state !== 'count' ? p.s.sp * Math.min(0.3, G.time - p.t) : 0;
+    p.rpos += (p.s.pos + ahead - p.rpos) * k;
+    p.rx += (p.s.x - p.rx) * k;
+  }
+  if ((G.state === 'count' || G.state === 'race' || G.state === 'over') && G.time - NET.sentAt > 0.075) {
+    NET.sentAt = G.time;
+    netSend({ t: 'st', pos: Math.round(P.pos), x: +P.x.toFixed(3), sp: Math.round(P.speed), st: P.state, hp: Math.round(P.hp),
+      pu: P.punchT > 0 ? 1 : 0, ki: P.kickT > 0 ? 1 : 0, ln: +P.lean.toFixed(2), w: P.weapon ? 1 : 0 });
+  }
+}
+
+// your punch or kick landed on another player: they apply the damage on their side
+function hitPeer(t, kind) {
+  const club = kind === 'punch' && P.weapon === 'club';
+  const dmg = kind === 'kick' ? 15 : club ? 55 : 30;
+  netSend({ t: 'hit', to: t.peer, kind, dmg, side: P.punchSide });
+  Snd.thud(kind === 'kick' ? 0.2 : 0.25);
+  G.shake = Math.max(G.shake, 0.15);
+  sparkWorld(t.pos, t.off, kind === 'kick' ? '#28e0ff' : club ? '#ff8a5c' : '#ffd166', kind === 'kick' ? 5 : 9);
+  if (club) { P.swings--; if (P.swings <= 0) { P.weapon = null; msg('The club snapped!', '#8c93a8'); } }
+}
+
+function takeHit(m) {
+  if (G.state !== 'race' || P.state !== 'ride' || P.invuln > 0) return;
+  const p = NET.peers.get(m.id);
+  const who = p ? p.name : 'Someone';
+  P.hp -= clamp(+m.dmg || 0, 0, 55);
+  P.x += (Math.sign(m.side) || 1) * (m.kind === 'kick' ? 0.55 : 0.22);
+  P.speed *= m.kind === 'kick' ? 0.9 : 0.92;
+  G.shake = Math.max(G.shake, 0.3);
+  Snd.thud(0.22);
+  msg(who + (m.kind === 'kick' ? ' kicked you!' : ' punched you!'), p ? p.color : '#ff6fb0');
+  sparkScreen(W / 2 - (Math.sign(m.side) || 1) * 30, H - 140, p ? p.color : '#ff6fb0', 8, 380);
+  if (P.hp <= 0) { P.hp = 0; crashPlayer('Knocked off by ' + who + '!'); }
+  else if (m.kind === 'kick' && Math.abs(P.x) > 1.05) crashPlayer(who + ' kicked you off the road!');
+}
+
+function finishOnline() {
+  G.finished = true;
+  G.finishT = G.raceT;
+  G.finishRank = rankOf();
+  G.state = 'over';
+  const time = Math.round(G.raceT * 1000) / 1000;
+  netSend({ t: 'fin', time });
+  if (NET.room.isHost) hostFinish(NET.room.me, time);
+}
+
+function hostFinish(id, time) {
+  if (!NET.finish.some(f => f.id === id)) NET.finish.push({ id, time: +time || 0 });
+  hostResults();
+}
+
+function hostResults() {
+  const room = NET.room;
+  if (!room || !room.isHost) return;
+  const done = NET.finish.filter(f => room.players.some(p => p.id === f.id)).sort((a, b) => a.time - b.time);
+  const list = done.map((f, i) => ({ id: f.id, place: i + 1, time: f.time }));
+  for (const p of room.players) if (!done.some(f => f.id === p.id)) list.push({ id: p.id, place: 0, time: 0 });
+  for (const r of list) { const p = room.players.find(x => x.id === r.id); r.name = p ? p.name : '?'; r.color = p ? p.color : '#fff'; }
+  NET.results = list;
+  room.send({ t: 'res', list });
+}
+
+function leaveOnline(text) {
+  if (!NET.room) return;
+  const room = NET.room;
+  NET.room = null;
+  try { room.close(); } catch (e) { }
+  if (lobby) { try { lobby.leave(); } catch (e) { } }
+  NET.peers.clear(); NET.results = []; NET.finish = [];
+  if (NET.keep) { G.level = NET.keep.level; G.diff = NET.keep.diff; NET.keep = null; }
+  resetRace();
+  G.state = 'menu';
+  if (text) msg(text, '#ffd166');
+}
+
+function drawPeer(x, y, k, e, n) {
+  const p = e.p, s = p.s;
+  if (s.st === 'crash') drawRival(x, y, k, { state: 'down', color: p.color }, n);
+  else drawBikeSprite(x, y, k, p.color, s.ln || 0, '#2b2b38', { punch: !!s.pu, kick: !!s.ki, side: Math.sign(P.x - e.off) || 1, weapon: s.w ? 'club' : null });
+  if (n < 60 && k > 0.02) {
+    ctx.font = 'bold ' + Math.max(10, 120 * k) + 'px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = p.color;
+    ctx.fillText(p.name, x, y - 580 * k);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(x - 130 * k, y - 545 * k, 260 * k, 26 * k);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(x - 130 * k, y - 545 * k, 260 * k * clamp(s.hp / 100, 0, 1), 26 * k);
+  }
+}
+
+function drawNetWait() {
+  ctx.fillStyle = 'rgba(7,4,26,0.78)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.font = 'italic bold ' + Math.min(56, W / 12) + 'px "Arial Black", sans-serif';
+  ctx.fillStyle = '#ff4fa3';
+  ctx.fillText('CONNECTED', W / 2, H * 0.32);
+  ctx.font = '17px monospace';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('Waiting for the host to start the race.', W / 2, H * 0.32 + 76);
+  const names = NET.room ? NET.room.players.map(p => p.name).join(', ') : '';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillText(names, W / 2, H * 0.32 + 106);
+  ctx.fillText(Touch.on ? '' : 'ESC to leave', W / 2, H * 0.32 + 146);
+}
+
+function drawOverOnline() {
+  shareRect = null;
+  ctx.fillStyle = 'rgba(7,4,26,0.78)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  const mine = NET.results.find(r => r.id === NET.room.me);
+  const place = mine && mine.place;
+  const ord = n => n + (['th', 'st', 'nd', 'rd'][n % 10 > 3 || Math.floor(n / 10) === 1 ? 0 : n % 10]);
+  ctx.font = 'italic bold ' + Math.min(72, W / 9) + 'px "Arial Black", sans-serif';
+  ctx.fillStyle = place === 1 ? '#39ff9c' : '#ffd166';
+  ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 22;
+  ctx.fillText(place ? ord(place) + ' PLACE' : 'FINISHED', W / 2, H * 0.16);
+  ctx.shadowBlur = 0;
+  ctx.font = '17px monospace';
+  NET.results.forEach((r, i) => {
+    const y = H * 0.16 + 90 + i * 32;
+    ctx.fillStyle = r.color;
+    const you = r.id === NET.room.me ? ' (you)' : '';
+    ctx.fillText((r.place ? r.place + '.  ' : '    ') + r.name + you + '   ' + (r.place ? r.time.toFixed(2) + 's' : 'still racing'), W / 2, y);
+  });
+  const by = H * 0.16 + 110 + Math.max(2, NET.results.length) * 32;
+  if (Math.sin(G.time * 5) > 0) {
+    ctx.font = 'bold 20px monospace';
+    ctx.fillStyle = '#ffd166';
+    ctx.fillText(NET.room.isHost ? (Touch.on ? 'tap for the next race' : 'press ENTER for the next race') : 'waiting for the host to start the next race', W / 2, by);
+  }
+  const label = Touch.on ? 'Leave' : 'ESC: leave';
+  ctx.font = 'bold 16px monospace';
+  const bw = ctx.measureText(label).width + 36, bh = 38;
+  leaveRect = { x: W / 2 - bw / 2, y: by + 40, w: bw, h: bh };
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(leaveRect.x, leaveRect.y, bw, bh);
+  ctx.fillStyle = '#ffffff';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, W / 2, leaveRect.y + bh / 2 + 1);
+  ctx.textBaseline = 'top';
+}
+
 // boot
 const gm = /^#ghost=([A-Za-z0-9_-]+)$/.exec(location.hash || '');
 const linked = gm && decodeGhost(gm[1]);
 if (linked) startGhost(linked);
 resetRace();
+if (LinkPlay.fromHash()) openLobby();
 let last = performance.now();
 function frame(now) {
   const dt = Math.max(0, Math.min(0.033, (now - last) / 1000));
@@ -1634,8 +1910,11 @@ requestAnimationFrame(frame);
 <h2>Midnight Racing</h2>
 <p>A Road Rash-style bike combat racer in plain HTML/CSS/JS. Race a pseudo-3D highway under the moon, punch and kick seven rivals off their bikes (they hit back), dodge traffic in both directions, and spend your winnings on faster bikes. Original code and art; not affiliated with Electronic Arts.</p>
 <h3>Controls</h3>
-<table><tr><td>Input</td><td>Action</td></tr><tr><td>W / up</td><td>throttle</td></tr><tr><td>S / down</td><td>brake</td></tr><tr><td>A / D</td><td>steer</td></tr><tr><td>Space or F</td><td>punch the nearest rival</td></tr><tr><td>E or K</td><td>kick, a hard shove that can put a rider off the road</td></tr><tr><td>1 / 2 / 3</td><td>on the menu: Easy, Medium, Hard</td></tr><tr><td>B</td><td>on the menu: buy the next bike</td></tr><tr><td>G</td><td>after a race: copy a ghost link</td></tr><tr><td>R</td><td>restart the race</td></tr><tr><td>M</td><td>mute</td></tr></table>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>W / up</td><td>throttle</td></tr><tr><td>S / down</td><td>brake</td></tr><tr><td>A / D</td><td>steer</td></tr><tr><td>Space or F</td><td>punch the nearest rival</td></tr><tr><td>E or K</td><td>kick, a hard shove that can put a rider off the road</td></tr><tr><td>1 / 2 / 3</td><td>on the menu: Easy, Medium, Hard</td></tr><tr><td>B</td><td>on the menu: buy the next bike</td></tr><tr><td>O</td><td>on the menu: race friends online</td></tr><tr><td>G</td><td>after a race: copy a ghost link</td></tr><tr><td>R</td><td>restart the race</td></tr><tr><td>M</td><td>mute</td></tr><tr><td>Esc</td><td>online: leave the race</td></tr></table>
 <p>On a phone: arrow buttons on the left steer, throttle is automatic, and the buttons on the right punch, kick, and brake.</p>
+<h3>Online</h3>
+<p>Two to four friends can race the same track. Press O on the menu (or tap the line under "tap here to race"), click "Play with friends", and send each friend their own invite. Each of them sends back a reply link. Open it in your browser or paste it in, then press Start.</p>
+<ul><li>The host's difficulty and level are used for everyone, so the track, the AI riders, and the traffic start out the same for all.</li><li>Each browser runs its own bike and sends where it is about 13 times a second. Other players appear as riders with their name over them.</li><li>Punches and kicks work on other players too. The rider who gets hit takes the damage on their own screen, so a hit counts when it looks like it landed for them.</li><li>Places go by each rider's own race time, collected by the host. The host starts the next race from the results screen.</li><li>Online races don't change your saved level, cash, or bike. Everyone rides the bike from their own garage.</li><li>AI riders and traffic are worked out on each screen separately, so they drift apart a little during a race. Only the players are shared.</li></ul>
 <h3>How it works</h3>
 <ul><li>The road is an array of 200-unit segments, each with a curve and a hill value. Rendering walks about 300 segments ahead, adds up the curves into a screen-space bend, and clips anything behind a hill crest.</li><li>Each level seeds a random generator that strings together straights, bends, S-curves, and hills. Later levels are longer and the rivals are faster.</li><li>Punches do damage. Kicks shove sideways, and leaving the road counts as a knockdown. Some rivals carry clubs that hit harder; knock one down and the club is yours for six swings.</li><li>Difficulty changes rival pace and aggression, traffic density, how many cars come at you, and the payout. Hard adds a police rider who fines you for crashing near him.</li><li>Winnings buy bikes with better top speed, acceleration, and grip. A top-3 finish moves you up a level. Cash, level, bike, and difficulty are saved in <code>localStorage</code>.</li><li>Engine and crash sounds are synthesized with Web Audio.</li><li>Ghost links pack your run into the URL: track position and lane five times a second, 2 bytes each. Whoever opens it races your ghost on the same level and difficulty without touching their own saved progress.</li></ul>
 <p class="pg-more">More like this: <a href="../arrow-flux/">Arrow Flux</a>, <a href="../miami-nights/">Miami Nights</a>, <a href="../breach/">Breach</a>, <a href="../chess/">Chess</a>. Or see <a href="../">everything in the playground</a>.</p>

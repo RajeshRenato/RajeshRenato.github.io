@@ -1,6 +1,6 @@
 # Playground
 
-72 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+77 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/playground/
 
@@ -8,7 +8,7 @@ MIT licensed. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRI
 
 New every day: [daily puzzles](daily/), with today's Penta, Sudoku, and Arrow Flux and one streak across all three.
 
-Ten of these work online with friends and no server: [Cycle Duel](cycle-duel/), [Type Race](type-race/), [Sketch & Guess](sketch-guess/), [Four in a Row](four-in-a-row/), [Checkers](checkers/), [Chess](chess/), [Clue Grid](clue-grid/), [Ludo](ludo/), [Trivia Night](trivia-night/), and [Whiteboard](whiteboard/). Browsers connect directly through links, using a small kit you can reuse: [LinkPlay](linkplay/).
+Play with friends online and no server: [Chess](chess/), [Ludo](ludo/), [Mafia](mafia/), [Clue Grid](clue-grid/), [Sketch & Guess](sketch-guess/), [Trivia Night](trivia-night/), and more, plus online modes in [Midnight Racing](midnight-racing/) and [Miami Nights](miami-nights/). Watch videos together with [Watch Party](watch-party/), and talk privately with [Secret Chat](secret-chat/) and [Video Call](video-call/). Browsers connect directly through links, using a small kit you can reuse: [LinkPlay](linkplay/).
 
 ## Highlights
 
@@ -16,7 +16,7 @@ Ten of these work online with friends and no server: [Cycle Duel](cycle-duel/), 
 
 ![Miami Nights gameplay](docs/media/miami-nights.gif)
 
-A GTA Vice City-style open world: a procedural Miami with traffic AI, police chases, and delivery jobs. The street-level 3D camera is drawn on a plain 2D canvas, with a top-down view one key away.
+A GTA Vice City-style open world: a procedural Miami with traffic AI, police chases, and delivery jobs. The street-level 3D camera is drawn on a plain 2D canvas, with a top-down view one key away. Play cops and robbers with a friend online: one drives the getaway car, the other the police car.
 
 [Play Miami Nights](https://rajeshrenato.github.io/playground/miami-nights/)
 
@@ -32,7 +32,7 @@ First-person shooter on a raycasting engine written from scratch. Every wall tex
 
 ![Midnight Racing gameplay](docs/media/midnight-racing.gif)
 
-Road Rash-style bike combat racing at midnight, on a pseudo-3D road. Punch and kick rivals, take their clubs, dodge two-way traffic, and spend your winnings on faster bikes. Share a link to your run and friends race your ghost.
+Road Rash-style bike combat racing at midnight, on a pseudo-3D road. Punch and kick rivals, take their clubs, dodge two-way traffic, and spend your winnings on faster bikes. Race up to three friends online, or share a link to your run and friends race your ghost.
 
 [Play Midnight Racing](https://rajeshrenato.github.io/playground/midnight-racing/)
 
@@ -60,6 +60,8 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | [chess](chess/) | Play chess with a friend online over a link, on one screen, or against a bot with three levels |
 | [clue-grid](clue-grid/) | A Codenames-style word game for two teams. Spymasters give one-word clues. 4 to 8 players |
 | [ludo](ludo/) | Ludo for 2 to 4. Play friends online with a link, pass one phone around, or play bots |
+| [mafia](mafia/) | A party game for 5 to 12 players on their own phones. Secret roles, night and day, and voting, connected by links |
+| [watch-party](watch-party/) | Watch a video with friends in sync. Everyone plays their own copy, so nothing is uploaded |
 | [trivia-night](trivia-night/) | A trivia quiz for friends over a link. 320 questions in 8 categories, or play alone |
 | [whiteboard](whiteboard/) | Draw, sketch shapes, and write notes together over a link. Save the board as a PNG |
 
@@ -67,6 +69,7 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 
 | Project | What it is |
 | --- | --- |
+| [fruit-slicer](fruit-slicer/) | A Fruit Ninja-style game you play by waving your hands at the webcam, or by swiping. Watch out for bombs |
 | [dune-drift](dune-drift/) | One-button endless ride over rolling dunes. Share a link and friends ride against your ghost |
 | [pixel-logic](pixel-logic/) | Nonograms, solver-verified so pure deduction always wins |
 | [glow-out](glow-out/) | Lights Out with hints computed from a live solution set |
@@ -104,6 +107,7 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | [file-send](file-send/) | Send files straight to a friend's browser. Nothing is uploaded |
 | [secret-note](secret-note/) | Write a note and get a link with it encrypted inside. Nothing is stored |
 | [secret-chat](secret-chat/) | A private chat between two browsers, no server. Hidden and disappearing messages, and a safety code |
+| [video-call](video-call/) | A video call through a link, with no app, no sign-up, and no server. Compare a safety code to know nobody is listening |
 | [qr-studio](qr-studio/) | QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark |
 | [photo-privacy](photo-privacy/) | See and remove the hidden location, date, and device details in photos |
 | [image-squeeze](image-squeeze/) | Compress, resize, and convert images, or fit them under a size limit |
@@ -131,6 +135,7 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 
 | Project | What it is |
 | --- | --- |
+| [air-drums](air-drums/) | Play drums in the air: wave your hands in front of the webcam to hit the pads. The camera stays on your device |
 | [flowfield](flowfield/) | Particles tracing a procedural vector field. Save the result as a PNG |
 | [orbit-sandbox](orbit-sandbox/) | An n-body gravity sandbox. Sling planets around a star |
 | [pendulum-chaos](pendulum-chaos/) | Twelve double pendulums diverging from near-identical starts |

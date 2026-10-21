@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const { load, run } = require('./helpers/browser');
+const { load, run, createPage, channelPair } = require('./helpers/browser');
 
 // rivals and traffic use Math.random, so seed it to keep the runs repeatable
 let seed = 12345;
@@ -127,4 +127,93 @@ test('racing a ghost uses its track and keeps your own level and difficulty', ()
   assert.strictEqual(run('G.level'), run('lvl0'));
   assert.strictEqual(run('G.diff'), run('diff0'));
   assert.strictEqual(run('ghost'), null);
+});
+
+// online: three copies of the page joined by in-memory channels, host in the middle
+function onlineRace() {
+  const host = createPage('midnight-racing/index.html');
+  const g1 = createPage('midnight-racing/index.html');
+  const g2 = createPage('midnight-racing/index.html');
+  const c1 = channelPair(), c2 = channelPair();
+  host.sandbox.c1 = c1.a; host.sandbox.c2 = c2.a; g1.sandbox.ch = c1.b; g2.sandbox.ch = c2.b;
+  const pump = () => { for (let k = 0; k < 4; k++) { c1.pump(); c2.pump(); } };
+  g1.run(`G.level = 7; G.diff = 1;`);
+  host.run(`G.level = 2; G.diff = 3; globalThis.r = Room.create('midnight-racing', 'Ana'); r.addChannel(c1); r.addChannel(c2);`);
+  g1.run(`attachRoom(Room.joinChannel(ch, 'Bo'))`);
+  g2.run(`attachRoom(Room.joinChannel(ch, 'Cy'))`);
+  pump();
+  assert.strictEqual(g1.run('G.state'), 'netwait');
+  host.run('attachRoom(r)');
+  pump();
+  const all = [host, g1, g2];
+  const tick = (n, dt = 0.05) => { for (let i = 0; i < n; i++) { for (const p of all) p.run(`update(${dt})`); pump(); } };
+  return { host, g1, g2, all, pump, tick, c1 };
+}
+
+test('online: everyone races the host\'s level and difficulty on the same track and traffic', () => {
+  const { host, g1, g2 } = onlineRace();
+  for (const p of [g1, g2]) {
+    assert.strictEqual(p.run('G.state'), 'count');
+    assert.strictEqual(p.run('G.level'), 2);
+    assert.strictEqual(p.run('G.diff'), 3);
+    assert.strictEqual(p.run('finishZ'), host.run('finishZ'));
+    assert.strictEqual(p.run('segs.map(s => s.curve).join()'), host.run('segs.map(s => s.curve).join()'));
+    assert.strictEqual(p.run('traffic.map(c => Math.round(c.pos)).join()'), host.run('traffic.map(c => Math.round(c.pos)).join()'));
+  }
+  assert.strictEqual(g1.run(`localStorage.getItem('rr_level')`), null, 'nothing about the online race is saved');
+});
+
+test('online: riders share where they are and show up on each other\'s road', () => {
+  const { host, g1, g2, tick } = onlineRace();
+  tick(70);
+  assert.strictEqual(host.run('G.state'), 'race');
+  g1.run(`Keys['w'] = true`);
+  tick(40);
+  const pos = g1.run('P.pos');
+  assert.ok(pos > 500);
+  const seen = host.run('NET.peers.get(1).rpos');
+  assert.ok(Math.abs(seen - pos) < 600, 'host sees Bo near ' + pos + ', got ' + seen);
+  assert.ok(Math.abs(g2.run('NET.peers.get(1).rpos') - pos) < 600, 'the other guest sees Bo too, through the host');
+  assert.strictEqual(g2.run('NET.peers.get(1).name'), 'Bo');
+  g2.run('render()');
+  assert.ok(host.run('rankOf()') >= 2, 'Bo is ahead of the host');
+});
+
+test('online: a punch on another player lowers their health on their side', () => {
+  const { host, g1, tick, pump } = onlineRace();
+  tick(75);
+  host.run('NET.peers.get(2).rpos = P.pos + 5000');
+  g1.run('P.invuln = 0; P.hp = 100; P.state = "ride"');
+  const punch = () => host.run(`{ const p = NET.peers.get(1); p.s.st = 'ride'; p.rpos = P.pos + 120; p.rx = P.x + 0.1; P.punchT = 0; P.kickT = 0; attack('punch'); }`);
+  punch();
+  pump();
+  assert.strictEqual(g1.run('P.hp'), 70);
+  punch(); punch(); punch();
+  pump();
+  assert.strictEqual(g1.run('P.state'), 'crash', 'four punches knock Bo off');
+});
+
+test('online: the host orders the finishers by their times and starts the next race', () => {
+  const { host, g1, g2, tick, pump } = onlineRace();
+  tick(70);
+  g2.run('G.raceT = 61.5; P.pos = finishZ + 10'); g2.run('update(0.01)'); pump();
+  g1.run('G.raceT = 58.25; P.pos = finishZ + 10'); g1.run('update(0.01)'); pump();
+  assert.strictEqual(g1.run('G.state'), 'over');
+  const res = JSON.parse(host.run('JSON.stringify(NET.results)'));
+  assert.deepStrictEqual(res.map(r => [r.name, r.place]), [['Bo', 1], ['Cy', 2], ['Ana', 0]], 'faster time wins even if it came in later');
+  assert.deepStrictEqual(JSON.parse(g2.run('JSON.stringify(NET.results.map(r => r.name))')), ['Bo', 'Cy', 'Ana']);
+  host.run('G.raceT = 70; P.pos = finishZ + 10'); host.run('update(0.01)'); pump();
+  assert.strictEqual(g1.run('NET.results[2].place'), 3);
+  host.run(`Pressed['Enter'] = true; update(0.01)`); pump();
+  for (const p of [host, g1, g2]) assert.strictEqual(p.run('G.state'), 'count');
+  assert.strictEqual(g1.run('NET.results.every(r => r.place === 0)'), true, 'everyone is racing again');
+});
+
+test('online: leaving puts your own level and difficulty back', () => {
+  const { g1 } = onlineRace();
+  g1.run(`leaveOnline('bye')`);
+  assert.strictEqual(g1.run('G.state'), 'menu');
+  assert.strictEqual(g1.run('G.level'), 7);
+  assert.strictEqual(g1.run('G.diff'), 1);
+  assert.strictEqual(g1.run('online()'), false);
 });

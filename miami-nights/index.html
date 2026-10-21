@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="../common/about.css">
 <link rel="canonical" href="https://rajeshrenato.github.io/playground/miami-nights/">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../linkplay/lobby.css">
 <meta property="og:title" content="Miami Nights">
 <meta property="og:description" content="A GTA Vice City-style open world: drive a procedural Miami at night, outrun the cops, and run deliveries.">
 <meta property="og:type" content="website">
@@ -22,6 +23,8 @@
 <body>
 <a class="back" href="../">&larr; all projects</a>
 <canvas id="game"></canvas>
+<button id="onlineBtn" type="button">Play a friend online: cops and robbers</button>
+<div id="lobby" class="lp-panel" hidden></div>
 <script src="js/utils.js"></script>
 <script src="js/input.js"></script>
 <script src="js/audio.js"></script>
@@ -33,12 +36,20 @@
 <script src="js/hud.js"></script>
 <script src="js/render3d.js"></script>
 <script src="js/main.js"></script>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script src="js/online.js"></script>
 <div class="pg-about" id="pg-about" hidden>
 <h2>Miami Nights</h2>
 <p>A GTA Vice City-style open world in plain HTML/CSS/JS. Drive a procedural 80s Miami from a street-level chase camera, steal cars, outrun the cops, and run deliveries for cash. Original code and art, not affiliated with Rockstar Games.</p>
 <h3>Controls</h3>
 <table><tr><td>Input</td><td>Action</td></tr><tr><td>W A S D / arrows</td><td>drive or walk (on foot in street view, A and D turn)</td></tr><tr><td>E</td><td>get in or out of a car (occupied ones too)</td></tr><tr><td>Space</td><td>handbrake, for drifting</td></tr><tr><td>Shift</td><td>run</td></tr><tr><td>V</td><td>switch between street view and top-down</td></tr><tr><td>M</td><td>mute</td></tr><tr><td>Enter or click</td><td>start from the title screen</td></tr></table>
 <p>On a phone: a joystick on the left half of the screen, and buttons for the car, camera, and handbrake on the right.</p>
+<h3>Online: cops and robbers</h3>
+<p>Two friends in the same city. On the title screen, press O or click "Play a friend online", send your friend the invite, and open the reply they send back. The game starts as soon as they're in.</p>
+<ul><li>One of you drives a getaway car, the other a police car. The guest is the robber in round 1, then the roles swap every round. The first to win 3 rounds wins the match.</li><li>The robber has to pick up a package and deliver it across town before the clock runs out. The time limit depends on the distance.</li><li>The cop wins by staying right on the robber: a bust meter fills while the cop is within a few car lengths and the robber is nearly stopped, and empties again when the robber gets away. If it fills, or time runs out, the cop wins the round.</li><li>The robber always sees the cop on the minimap. The cop sees the robber when they're close, and otherwise only gets a brief ping on the minimap every 8 seconds. Once the robber has the package, the cop also sees where it's going.</li><li>Traffic, pedestrians, and AI police are separate on each screen, so they won't match between the two of you. There are no wanted stars online, and you can't leave your car.</li></ul>
+<p>Each browser drives its own car and sends its position 15 times a second. The other car is drawn a tenth of a second behind, sliding between updates, so it moves smoothly. The host's browser runs the rounds: it checks the pickup, the delivery, and the bust meter, and keeps the score. It uses <a href="../linkplay/">LinkPlay</a> for the connection, with no game server.</p>
 <h3>How it works</h3>
 <ul><li>The city is a pure function of tile coordinates (<code>tileType(tx, ty)</code>), so nothing is stored and it's the same every visit: road grid, sidewalks, buildings, parks, palms, a beach, and the ocean.</li><li>Street view projects the same 2D world through a perspective camera at street height. Buildings are extruded with lit windows, and there are curbs, street lamps, and cars built from depth-sorted boxes. Top-down view draws the world directly.</li><li>Driving splits velocity into forward and sideways parts. The handbrake cuts sideways grip so the car slides.</li><li>Traffic follows lanes on right-hand roads and stops for cars or people in front of it.</li><li>Crimes raise your wanted level, up to five stars. Carjacking or ramming a police car adds one star, running someone over adds one, and stealing a police car adds two. One police car chases you per star. Stay slow near them for too long and you're busted and fined $150. Lie low and you lose a star every 16 seconds.</li><li>Deliveries are endless: pick up, beat the timer, get paid. Cash is saved in <code>localStorage</code>.</li><li>Sound (engine hum and crashes) is synthesized with Web Audio.</li></ul>
 <p class="pg-more">More like this: <a href="../breach/">Breach</a>, <a href="../midnight-racing/">Midnight Racing</a>, <a href="../arrow-flux/">Arrow Flux</a>, <a href="../chess/">Chess</a>. Or see <a href="../">everything in the playground</a>.</p>

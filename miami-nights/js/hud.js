@@ -88,6 +88,7 @@ function drawMenu(ctx) {
     'SHIFT: run',
     'V: street view or top-down',
     'M: mute',
+    'O: play a friend online (cops and robbers)',
     '',
     "Deliver packages. Dodge the cops. Mind the pedestrians... or don't."
   ];
@@ -123,20 +124,23 @@ function drawHUD(ctx) {
   ctx.save();
   ctx.textBaseline = 'top';
 
+  const online = typeof Online !== 'undefined' && Online.active;
   // money
-  ctx.font = 'bold 24px "Courier New", monospace';
-  ctx.textAlign = 'left';
-  ctx.shadowColor = '#0faf7d';
-  ctx.shadowBlur = 8;
-  ctx.fillStyle = '#7dffc9';
-  ctx.fillText('$' + Game.money, 16, 36);
-  ctx.shadowBlur = 0;
+  if (!online) {
+    ctx.font = 'bold 24px "Courier New", monospace';
+    ctx.textAlign = 'left';
+    ctx.shadowColor = '#0faf7d';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#7dffc9';
+    ctx.fillText('$' + Game.money, 16, 36);
+    ctx.shadowBlur = 0;
+  }
 
   // wanted stars (left-to-right fill, anchored to the right edge)
   ctx.font = '26px serif';
   ctx.textAlign = 'left';
   const x0 = W - 16 - 5 * 28;
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < (online ? 0 : 5); i++) {
     ctx.fillStyle = i < Game.wanted ? '#ff4fa3' : 'rgba(255,255,255,0.14)';
     ctx.fillText('★', x0 + i * 28, 12);
   }
@@ -216,6 +220,7 @@ function drawHUD(ctx) {
   }
 
   if (Game.state === 'busted') drawBusted(ctx);
+  if (online) Online.drawHUD(ctx);
   ctx.restore();
 }
 

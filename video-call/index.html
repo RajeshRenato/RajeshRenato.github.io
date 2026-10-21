@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src blob: mediastream:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff6b4a'/%3E%3Crect x='6' y='10' width='14' height='12' rx='3' fill='%23fff'/%3E%3Cpath d='M21 14l6-3v10l-6-3z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Video Call | free video call with no app, no sign-up, and no server</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/video-call/">
+<style>
+  :root { --bg: #e9eef6; --card: #ffffff; --ink: #1d2433; --muted: #5d6880; --line: #cfd8e6; --coral: #ff6b4a; --coral-ink: #ffffff;
+          --good: #1f9d64; --warn: #d98a00; --bad: #d64545; --stage: #1d2433; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; overflow: hidden; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 20; }
+  a.back:hover { color: var(--ink); }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 48px 18px 24px; overflow: auto; }
+  .card { width: 100%; max-width: 560px; }
+  h1 { font-size: clamp(34px, 6vw, 48px); line-height: 1.05; margin: 0 0 10px; letter-spacing: -.02em; }
+  h2 { margin: 0 0 10px; font-size: 24px; }
+  .lede { color: var(--muted); font-size: 17px; line-height: 1.55; margin: 0 0 20px; }
+  .preview { position: relative; aspect-ratio: 16 / 10; background: var(--stage); border-radius: 22px; overflow: hidden; border: 6px solid var(--card);
+             box-shadow: 0 10px 30px rgba(29, 36, 51, .14); margin-bottom: 14px; }
+  .preview video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+  .preview .none { position: absolute; inset: 0; display: grid; place-items: center; color: #b9c3d6; text-align: center; padding: 20px; font-size: 15px; }
+  .pickers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .pickers label { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+  select { font: inherit; font-size: 15px; padding: 9px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); min-width: 0; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .big { font-weight: 700; font-size: 17px; padding: 14px 22px; border-radius: 999px; border: 0; background: var(--coral); color: var(--coral-ink);
+         box-shadow: 0 6px 16px rgba(255, 107, 74, .35); }
+  .big:hover { filter: brightness(1.05); }
+  .big:disabled { opacity: .5; box-shadow: none; cursor: default; }
+  .plain { padding: 10px 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font-weight: 600; }
+  .plain:hover { border-color: var(--muted); }
+  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 6px 0; }
+  .step { background: var(--card); border-radius: 16px; padding: 16px; margin: 0 0 12px; box-shadow: 0 2px 0 var(--line); }
+  .step p { margin: 0 0 10px; color: var(--muted); line-height: 1.5; }
+  .step .n { color: var(--coral); font-weight: 800; margin-right: 6px; }
+  .code { display: flex; gap: 8px; }
+  .code input { flex: 1; min-width: 0; font: 14px ui-monospace, Menlo, monospace; padding: 11px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: #f6f8fc; color: var(--ink); }
+  .status { min-height: 1.5em; margin: 10px 0 0; }
+  .small { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* call */
+  #call { position: fixed; inset: 0; display: flex; flex-direction: column; padding: 40px 14px 14px; gap: 10px; }
+  .top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 999px; background: var(--card); font-size: 14px; font-weight: 600;
+          box-shadow: 0 2px 0 var(--line); }
+  .bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; }
+  .bars i { width: 4px; border-radius: 1px; background: var(--line); }
+  .bars i:nth-child(1) { height: 5px; } .bars i:nth-child(2) { height: 9px; } .bars i:nth-child(3) { height: 14px; }
+  .bars.q3 i { background: var(--good); } .bars.q2 i:nth-child(-n+2) { background: var(--warn); } .bars.q1 i:nth-child(1) { background: var(--bad); }
+  .sas { border: 2px dashed var(--coral); color: #c4452a; background: #fff4f1; cursor: pointer; }
+  .sas.ok { border-style: solid; border-color: var(--good); color: var(--good); background: #eefaf3; }
+  .spacer { flex: 1; }
+  #stage { position: relative; flex: 1; min-height: 0; background: var(--stage); border-radius: 26px; overflow: hidden; border: 6px solid var(--card);
+           box-shadow: 0 14px 40px rgba(29, 36, 51, .18); }
+  #remote { width: 100%; height: 100%; object-fit: contain; display: block; background: var(--stage); }
+  #remoteOff { position: absolute; inset: 0; display: grid; place-items: center; color: #c9d2e3; text-align: center; padding: 20px; }
+  #remoteOff .avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--coral); display: grid; place-items: center; font-size: 40px; margin: 0 auto 12px; }
+  #self { position: absolute; right: 14px; bottom: 14px; width: min(30%, 220px); aspect-ratio: 4 / 3; border-radius: 16px; overflow: hidden; border: 4px solid var(--card);
+          background: #2c3447; box-shadow: 0 8px 20px rgba(0, 0, 0, .35); touch-action: none; cursor: grab; }
+  #self video { width: 100%; height: 100%; object-fit: cover; display: block; transform: scaleX(-1); }
+  #self.screen video { transform: none; }
+  #self .off { position: absolute; inset: 0; display: grid; place-items: center; color: #c9d2e3; font-size: 13px; }
+  #banner { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); background: rgba(29, 36, 51, .82); color: #fff; padding: 9px 16px;
+            border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); text-align: center; }
+  .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .ctl { width: 58px; height: 58px; border-radius: 50%; border: 0; background: var(--card); color: var(--ink); font-size: 22px; display: grid; place-items: center;
+         box-shadow: 0 3px 0 var(--line); position: relative; }
+  .ctl:hover { transform: translateY(-1px); }
+  .ctl.off { background: var(--ink); color: #fff; box-shadow: none; }
+  .ctl.on { background: #ffe7e0; color: #c4452a; }
+  .ctl.end { background: var(--bad); color: #fff; width: 72px; border-radius: 29px; box-shadow: 0 6px 16px rgba(214, 69, 69, .35); }
+  .ctl small { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .ctl .dot { position: absolute; top: 8px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--coral); }
+  .controls { padding-bottom: 18px; }
+
+  #chat { position: fixed; right: 14px; bottom: 104px; width: min(360px, calc(100vw - 28px)); max-height: min(60vh, 460px); display: flex; flex-direction: column;
+          background: var(--card); border-radius: 18px; box-shadow: 0 16px 40px rgba(29, 36, 51, .25); z-index: 15; overflow: hidden; }
+  #chat header { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  #chat header button { margin-left: auto; background: none; border: 0; font-size: 20px; color: var(--muted); }
+  #chatLog { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-height: 120px; }
+  .m { max-width: 85%; padding: 8px 11px; border-radius: 14px; font-size: 14.5px; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .m.me { align-self: flex-end; background: var(--coral); color: #fff; border-bottom-right-radius: 4px; }
+  .m.them { align-self: flex-start; background: #eef2f8; border-bottom-left-radius: 4px; }
+  .m.sys { align-self: center; background: none; color: var(--muted); font-size: 12.5px; }
+  #chatForm { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--line); }
+  #chatIn { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 9px 12px; border-radius: 999px; border: 1.5px solid var(--line); }
+  #chatForm button { border: 0; background: var(--coral); color: #fff; border-radius: 999px; padding: 0 16px; font-weight: 700; }
+
+  .sheet { position: fixed; inset: 0; background: rgba(29, 36, 51, .5); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 30; }
+  .sheet .card { background: var(--card); border-radius: 20px; padding: 22px; max-width: 460px; }
+  .words { font-size: clamp(22px, 5vw, 30px); font-weight: 800; color: #c4452a; margin: 6px 0 2px; }
+  .digits { font: 22px ui-monospace, Menlo, monospace; letter-spacing: .3em; }
+  dl.details { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; margin: 12px 0 0; }
+  dl.details dt { color: var(--muted); } dl.details dd { margin: 0; overflow-wrap: anywhere; }
+  #ended { background: rgba(233, 238, 246, .96); z-index: 40; }
+  @media (max-width: 600px) {
+    #call { padding: 36px 8px 8px; }
+    #stage { border-width: 4px; border-radius: 20px; }
+    .controls { gap: 6px; }
+    .ctl { width: 46px; height: 46px; font-size: 18px; }
+    .ctl.end { width: 58px; }
+    #detailsBtn .lbl { display: none; }
+    .top { gap: 6px; }
+    .pill { padding: 6px 10px; font-size: 13px; }
+    .pickers { grid-template-columns: 1fr; }
+    #self { width: 34%; }
+  }
+</style>
+<meta property="og:title" content="Video Call">
+<meta property="og:description" content="A one-to-one video call through a link. No app, no account, and no server: your browsers connect directly. Compare a safety code to know nobody is listening in.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/video-call/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/video-call/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A one-to-one video call through a link. No app, no account, and no server: your browsers connect directly. Compare a safety code to know nobody is listening in.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "Video Call", "item": "https://rajeshrenato.github.io/playground/video-call/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Video Call", "url": "https://rajeshrenato.github.io/playground/video-call/", "description": "A one-to-one video call through a link. No app, no account, and no server: your browsers connect directly. Compare a safety code to know nobody is listening in.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+
+<div class="screen" id="setup">
+  <div class="card">
+    <h1 id="setupTitle">Video Call</h1>
+    <p class="lede" id="setupLede">A video call through a link. No app, no account, no server. Your two browsers connect directly.</p>
+    <div class="preview"><video id="preview" autoplay muted playsinline></video><div class="none" id="previewNone">Allow your camera and microphone to see yourself here.</div></div>
+    <div class="pickers">
+      <label>Camera<select id="camSel"></select></label>
+      <label>Microphone<select id="micSel"></select></label>
+    </div>
+    <div class="row">
+      <button class="big" id="goBtn" disabled>Start a call</button>
+      <button class="plain" id="allowBtn">Allow camera</button>
+      <button class="link" id="noCamBtn">Join without camera</button>
+    </div>
+    <p class="status" id="setupStatus"></p>
+    <p class="small">Nothing is recorded or stored. Some strict office or mobile networks block direct connections; if yours does, try another network.</p>
+  </div>
+</div>
+
+<div class="screen" id="hostScreen" hidden>
+  <div class="card">
+    <h2>Invite someone</h2>
+    <div class="step"><p><span class="n">1</span>Send them this link. It only works once.</p>
+      <div class="code"><input id="offerLink" readonly placeholder="Making your invite…"><button class="plain" id="copyOffer">Copy</button><button class="plain" id="shareOffer" hidden>Share</button></div></div>
+    <div class="step"><p><span class="n">2</span>They'll get a reply link to send back. Open it in this browser, or paste it here.</p>
+      <div class="code"><input id="replyIn" placeholder="Paste their reply"><button class="plain" id="connectBtn">Connect</button></div></div>
+    <p class="status" id="hostStatus"></p>
+    <button class="link" data-quit>Cancel</button>
+  </div>
+</div>
+
+<div class="screen" id="guestScreen" hidden>
+  <div class="card">
+    <h2>Almost in</h2>
+    <p class="status" id="guestStatus">Setting up a direct connection…</p>
+    <div id="guestReply" hidden>
+      <div class="step"><p><span class="n">→</span>Send this reply link back. The call starts as soon as they open it or paste it in. Keep this page open.</p>
+        <div class="code"><input id="answerLink" readonly><button class="plain" id="copyAnswer">Copy</button><button class="plain" id="shareAnswer" hidden>Share</button></div></div>
+    </div>
+    <button class="link" data-quit>Leave</button>
+  </div>
+</div>
+
+<div class="screen" id="replyScreen" hidden>
+  <div class="card">
+    <h2 id="replyTitle">Connecting…</h2>
+    <p class="status" id="replyMsg"></p>
+    <div class="code" id="replyBox" hidden><input id="replyCode" readonly><button class="plain" id="copyReply">Copy</button></div>
+  </div>
+</div>
+
+<div id="call" hidden>
+  <div class="top">
+    <span class="pill"><span class="bars q3" id="bars"><i></i><i></i><i></i></span><span id="timer">0:00</span></span>
+    <button class="pill sas" id="sasChip" title="Compare this code with the other person">⚠ <span id="sasShort"></span></button>
+    <span class="spacer"></span>
+    <button class="pill" id="detailsBtn" title="Connection details" aria-label="Connection details">ⓘ<span class="lbl"> Details</span></button>
+  </div>
+  <div id="stage">
+    <video id="remote" autoplay playsinline></video>
+    <div id="remoteOff" hidden><div><div class="avatar">👤</div><div id="remoteOffText">Their camera is off</div></div></div>
+    <div id="banner" hidden></div>
+    <div id="self"><video id="selfVideo" autoplay muted playsinline></video><div class="off" id="selfOff" hidden>Camera off</div></div>
+  </div>
+  <div class="controls">
+    <button class="ctl" id="micBtn" aria-pressed="false" title="Mute">🎙<small>Mute</small></button>
+    <button class="ctl" id="camBtn" aria-pressed="false" title="Turn camera off">📷<small>Camera</small></button>
+    <button class="ctl" id="flipBtn" title="Switch camera" hidden>🔄<small>Flip</small></button>
+    <button class="ctl" id="screenBtn" aria-pressed="false" title="Share your screen">🖥<small>Share</small></button>
+    <button class="ctl" id="chatBtn" title="Chat">💬<small>Chat</small></button>
+    <button class="ctl" id="fullBtn" title="Full screen">⛶<small>Full</small></button>
+    <button class="ctl end" id="endBtn" title="Hang up">✕<small>End</small></button>
+  </div>
+</div>
+
+<div id="chat" hidden>
+  <header>Messages<button id="chatClose" aria-label="Close chat">×</button></header>
+  <div id="chatLog" aria-live="polite"></div>
+  <form id="chatForm"><input id="chatIn" maxlength="2000" autocomplete="off" placeholder="Message" aria-label="Message"><button>Send</button></form>
+</div>
+
+<div class="sheet" id="sasSheet" hidden>
+  <div class="card">
+    <h2>Safety code</h2>
+    <p class="small">Read this out to each other. If you both see the same words and number, nobody is between you. If they differ, hang up.</p>
+    <div class="words" id="sasWords"></div>
+    <div class="digits" id="sasDigits"></div>
+    <div class="row" style="margin-top:16px"><button class="big" id="sasYes">It matches</button><button class="plain" id="sasNo">It doesn't match</button><button class="link" id="sasLater">Later</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="detailsSheet" hidden>
+  <div class="card">
+    <h2>Connection details</h2>
+    <p class="small">Read from your browser's own WebRTC statistics.</p>
+    <dl class="details" id="detailsList"></dl>
+    <div class="row" style="margin-top:16px"><button class="plain" id="detailsClose">Close</button></div>
+  </div>
+</div>
+
+<div class="screen sheet" id="ended" hidden>
+  <div class="card" style="text-align:center">
+    <h2 id="endedTitle">Call ended</h2>
+    <p class="small" id="endedMsg"></p>
+    <div class="row" style="justify-content:center;margin-top:12px"><button class="big" id="againBtn">Start a new call</button></div>
+  </div>
+</div>
+
+<script src="../linkplay/linkplay.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+
+// --- pure helpers (tested)
+
+const SAS_WORDS = ('amber anchor apple arrow aspen badger bamboo banjo beacon bison blossom bramble breeze bronze cactus canyon cedar ' +
+  'cherry cobalt comet copper coral cricket crystal cypress dawn delta desert dolphin ember falcon fern fjord flint ' +
+  'forest fossil galaxy garnet geyser ginger glacier granite harbor hazel heron horizon indigo iris island ivory ' +
+  'jasmine jungle kayak kestrel lagoon lantern lemon lotus lunar maple marble meadow meteor mint').split(' ');
+
+function fingerprints(sdp) {
+  return [...String(sdp || '').matchAll(/a=fingerprint:(\S+) ([0-9A-Fa-f:]+)/g)].map(m => m[1].toLowerCase() + ' ' + m[2].toUpperCase());
+}
+
+async function safetyCode(localSdp, remoteSdp) {
+  const fps = [...new Set([...fingerprints(localSdp), ...fingerprints(remoteSdp)])].sort();
+  if (fps.length < 2) return null;
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fps.join('|'))));
+  return { words: [0, 1, 2].map(i => SAS_WORDS[hash[i] % 64]), digits: String(((hash[3] << 8) | hash[4]) % 10000).padStart(4, '0') };
+}
+
+// 3 good, 2 fair, 1 poor, from round trip (ms) and packet loss (0 to 1)
+function quality(rttMs, loss) {
+  if (rttMs == null && loss == null) return 3;
+  if ((rttMs || 0) > 600 || (loss || 0) > 0.08) return 1;
+  if ((rttMs || 0) > 250 || (loss || 0) > 0.02) return 2;
+  return 3;
+}
+
+function fmtTime(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = sec % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+}
+
+// --- state
+
+const S = { local: null, camTrack: null, screenTrack: null, micOn: true, camOn: true, sharing: false, facing: 'user',
+            role: '', pc: null, net: null, chan: null, open: false, ended: false, startedAt: 0, sas: null, verified: false,
+            remoteVideo: false, peerCam: true };
+
+// --- media
+
+const hasMedia = () => typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+
+async function getMedia(withVideo) {
+  const cam = $('camSel').value, mic = $('micSel').value;
+  const c = {
+    audio: mic ? { deviceId: { exact: mic }, echoCancellation: true, noiseSuppression: true } : { echoCancellation: true, noiseSuppression: true },
+    video: withVideo ? (cam ? { deviceId: { exact: cam }, width: { ideal: 1280 }, height: { ideal: 720 } } : { facingMode: S.facing, width: { ideal: 1280 }, height: { ideal: 720 } }) : false,
+  };
+  try { return await navigator.mediaDevices.getUserMedia(c); }
+  catch (e) {
+    if (withVideo) { try { return await navigator.mediaDevices.getUserMedia({ audio: c.audio, video: false }); } catch (e2) { } }
+    throw e;
+  }
+}
+
+async function fillDevices() {
+  try {
+    const list = await navigator.mediaDevices.enumerateDevices();
+    for (const [sel, kind] of [['camSel', 'videoinput'], ['micSel', 'audioinput']]) {
+      const cur = $(sel).value;
+      const opts = list.filter(d => d.kind === kind);
+      $(sel).innerHTML = '';
+      opts.forEach((d, i) => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || (kind === 'videoinput' ? 'Camera ' : 'Microphone ') + (i + 1); $(sel).appendChild(o); });
+      if (!opts.length) { const o = document.createElement('option'); o.value = ''; o.textContent = kind === 'videoinput' ? 'No camera found' : 'No microphone found'; $(sel).appendChild(o); }
+      if (cur && opts.some(d => d.deviceId === cur)) $(sel).value = cur;
+    }
+    $('flipBtn').hidden = list.filter(d => d.kind === 'videoinput').length < 2;
+  } catch (e) { }
+}
+
+async function allow(withVideo = true) {
+  if (!hasMedia()) { $('setupStatus').textContent = "This browser can't use a camera here. Try an up-to-date Chrome, Firefox, or Safari over https."; return false; }
+  $('setupStatus').textContent = '';
+  try {
+    if (S.local) S.local.getTracks().forEach(t => t.stop());
+    S.local = await getMedia(withVideo);
+    S.camTrack = S.local.getVideoTracks()[0] || null;
+    S.camOn = !!S.camTrack;
+    $('preview').srcObject = S.local;
+    $('previewNone').hidden = !!S.camTrack;
+    if (!S.camTrack) $('previewNone').textContent = withVideo ? "No camera found. You'll join with audio only." : 'Joining with audio only.';
+    await fillDevices();
+    $('goBtn').disabled = false;
+    return true;
+  } catch (e) {
+    $('setupStatus').textContent = e && e.name === 'NotAllowedError'
+      ? 'Camera and microphone were blocked. Allow them in your browser\'s address bar, then try again.'
+      : "Couldn't open your camera or microphone. Check that no other app is using them.";
+    return false;
+  }
+}
+
+// --- connecting
+
+function show(id) {
+  for (const s of ['setup', 'hostScreen', 'guestScreen', 'replyScreen', 'call']) $(s).hidden = s !== id;
+}
+
+function onTrack(e) {
+  const v = $('remote');
+  const stream = (e.streams && e.streams[0]) || v.srcObject || new MediaStream();
+  if (!e.streams || !e.streams[0]) stream.addTrack(e.track);
+  if (v.srcObject !== stream) v.srcObject = stream;
+  if (e.track.kind === 'video') {
+    S.remoteVideo = true;
+    e.track.onmute = () => remoteCam(false);
+    e.track.onunmute = () => remoteCam(true);
+  }
+  v.play().catch(() => { banner('Tap the video to start the sound.'); v.onclick = () => { v.play(); banner(''); }; });
+}
+
+function failed(where) {
+  if (S.open) { end('The connection dropped.', 'Your networks may have changed. Start a new call to reconnect.'); return; }
+  $(where).textContent = "Couldn't connect. One of your networks may block direct connections; try another network.";
+}
+
+async function startHost() {
+  show('hostScreen');
+  S.role = 'h';
+  S.net = LinkPlay.host('video-call', {
+    media: true, stream: S.local, onTrack: e => onTrack(e),
+    onChannel: (ch, id) => { S.pc = S.net.invites.get(id).pc; attach(ch); },
+    onFail: () => failed('hostStatus'),
+  });
+  try {
+    const { link } = await S.net.invite();
+    $('offerLink').value = link;
+    $('hostStatus').textContent = 'Waiting for their reply.';
+  } catch (e) {
+    $('hostStatus').textContent = "Your browser couldn't create an invite. Try an up-to-date Chrome, Firefox, or Safari.";
+  }
+}
+
+async function accept(text) {
+  if (!S.net || !S.net.accept) return;
+  const err = await S.net.accept(text);
+  $('hostStatus').textContent = err || 'Connecting…';
+}
+
+let pendingInvite = null;
+async function startGuest() {
+  show('guestScreen');
+  S.role = 'g';
+  try {
+    S.net = await LinkPlay.join('video-call', pendingInvite, {
+      stream: S.local, onTrack: e => onTrack(e),
+      onChannel: ch => attach(ch),
+      onFail: () => failed('guestStatus'),
+    });
+    S.pc = S.net.pc;
+    try { history.replaceState(null, '', location.pathname); } catch (e) { }
+    $('answerLink').value = S.net.link;
+    $('guestReply').hidden = false;
+    $('guestStatus').textContent = 'Almost there.';
+  } catch (e) {
+    $('guestStatus').textContent = "This invite didn't work. It may have been used already. Ask for a fresh one.";
+  }
+}
+
+async function handleReply(reply) {
+  show('replyScreen');
+  try { history.replaceState(null, '', location.pathname); } catch (e) { }
+  if (await LinkPlay.forwardReply('video-call', reply)) {
+    $('replyTitle').textContent = 'Connected';
+    $('replyMsg').textContent = 'Go back to your call tab. You can close this one.';
+    return;
+  }
+  $('replyTitle').textContent = 'Paste this into your call tab';
+  $('replyMsg').textContent = "The tab where you started the call isn't open in this browser. Copy this reply and paste it there.";
+  $('replyCode').value = LinkPlay.pageLink('answer=' + reply.id + '.' + reply.code);
+  $('replyBox').hidden = false;
+}
+
+// --- the call
+
+function attach(ch) {
+  S.chan = ch;
+  ch.onmessage = e => receive(e.data);
+  ch.onclose = () => end('Call ended', 'The other person hung up or closed the page.');
+  if (ch.readyState === 'open' || ch.readyState === undefined) opened();
+  else ch.onopen = opened;
+}
+
+async function opened() {
+  if (S.open) return;
+  S.open = true;
+  S.startedAt = Date.now();
+  show('call');
+  $('selfVideo').srcObject = S.local;
+  renderControls();
+  send({ t: 'state', cam: S.camOn && !!S.camTrack, mic: S.micOn });
+  if (S.pc && S.pc.localDescription && S.pc.remoteDescription) S.sas = await safetyCode(S.pc.localDescription.sdp, S.pc.remoteDescription.sdp);
+  renderSas();
+  if (S.sas) banner('Say the safety code out loud to check nobody is in the middle.', 6000);
+}
+
+function send(m) {
+  if (S.chan && (S.chan.readyState === 'open' || S.chan.readyState === undefined)) { S.chan.send(JSON.stringify(m)); return true; }
+  return false;
+}
+
+function receive(data) {
+  let m;
+  try { m = JSON.parse(data); } catch (e) { return; }
+  if (m.t === 'chat') addChat(String(m.text || '').slice(0, 2000), 'them');
+  else if (m.t === 'state') { S.peerCam = !!m.cam; remoteCam(!!m.cam); if (!m.mic) banner('They muted their microphone.', 2500); }
+  else if (m.t === 'bye') end('Call ended', 'The other person hung up.');
+  else if (m.t === 'verified') addChat('They say the safety code matches.', 'sys');
+}
+
+function remoteCam(on) {
+  $('remoteOff').hidden = on && S.peerCam;
+  $('remoteOffText').textContent = 'Their camera is off';
+}
+
+let bannerTimer = 0;
+function banner(text, ms) {
+  clearTimeout(bannerTimer);
+  $('banner').textContent = text;
+  $('banner').hidden = !text;
+  if (text && ms) bannerTimer = setTimeout(() => { $('banner').hidden = true; }, ms);
+}
+
+function end(title, msg) {
+  if (S.ended) return;
+  S.ended = true;
+  S.open = false;
+  try { S.pc && S.pc.close(); } catch (e) { }
+  if (S.local) S.local.getTracks().forEach(t => t.stop());
+  if (S.screenTrack) { try { S.screenTrack.stop(); } catch (e) { } }
+  $('endedTitle').textContent = title;
+  $('endedMsg').textContent = msg + (S.startedAt ? ' The call lasted ' + fmtTime((Date.now() - S.startedAt) / 1000) + '.' : '');
+  $('ended').hidden = false;
+  $('chat').hidden = true;
+}
+
+function hangUp() {
+  send({ t: 'bye' });
+  end('Call ended', 'You hung up.');
+}
+
+// --- controls
+
+function videoSender() {
+  if (!S.pc || !S.pc.getTransceivers) return null;
+  const t = S.pc.getTransceivers().find(x => x.receiver && x.receiver.track && x.receiver.track.kind === 'video');
+  return t ? t.sender : null;
+}
+
+function toggleMic() {
+  S.micOn = !S.micOn;
+  if (S.local) S.local.getAudioTracks().forEach(t => { t.enabled = S.micOn; });
+  send({ t: 'state', cam: S.camOn && !!S.camTrack, mic: S.micOn });
+  renderControls();
+}
+
+function toggleCam() {
+  if (!S.camTrack) { banner('You joined without a camera.', 2500); return; }
+  S.camOn = !S.camOn;
+  S.camTrack.enabled = S.camOn;
+  send({ t: 'state', cam: S.camOn, mic: S.micOn });
+  renderControls();
+}
+
+async function flipCam() {
+  if (!S.camTrack || S.sharing) return;
+  S.facing = S.facing === 'user' ? 'environment' : 'user';
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: S.facing } } });
+    const t = s.getVideoTracks()[0];
+    const old = S.camTrack;
+    S.local.removeTrack(old); S.local.addTrack(t); old.stop();
+    S.camTrack = t; t.enabled = S.camOn;
+    const sender = videoSender();
+    if (sender) await sender.replaceTrack(t);
+    $('selfVideo').srcObject = S.local;
+  } catch (e) { S.facing = S.facing === 'user' ? 'environment' : 'user'; banner("Couldn't switch cameras.", 2500); }
+}
+
+async function toggleShare() {
+  const sender = videoSender();
+  if (S.sharing) { await stopShare(); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { banner("This browser can't share its screen.", 3000); return; }
+  try {
+    const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    S.screenTrack = s.getVideoTracks()[0];
+    if (sender) await sender.replaceTrack(S.screenTrack);
+    S.sharing = true;
+    S.screenTrack.onended = () => stopShare();
+    $('selfVideo').srcObject = s;
+    $('self').classList.add('screen');
+    send({ t: 'state', cam: true, mic: S.micOn });
+    renderControls();
+  } catch (e) { }
+}
+
+async function stopShare() {
+  if (!S.sharing) return;
+  S.sharing = false;
+  const sender = videoSender();
+  if (sender) await sender.replaceTrack(S.camTrack || null);
+  try { S.screenTrack && S.screenTrack.stop(); } catch (e) { }
+  S.screenTrack = null;
+  $('selfVideo').srcObject = S.local;
+  $('self').classList.remove('screen');
+  send({ t: 'state', cam: S.camOn && !!S.camTrack, mic: S.micOn });
+  renderControls();
+}
+
+function renderControls() {
+  const set = (id, on, label, pressed) => { const b = $(id); b.classList.toggle('off', on); if (pressed !== undefined) b.setAttribute('aria-pressed', String(pressed)); b.lastElementChild && (b.lastElementChild.textContent = label); };
+  set('micBtn', !S.micOn, S.micOn ? 'Mute' : 'Unmute', !S.micOn);
+  set('camBtn', !(S.camOn && S.camTrack), S.camTrack ? (S.camOn ? 'Camera' : 'Camera off') : 'No camera', !(S.camOn && S.camTrack));
+  $('screenBtn').classList.toggle('on', S.sharing);
+  $('screenBtn').setAttribute('aria-pressed', String(S.sharing));
+  $('selfOff').hidden = (S.camOn && !!S.camTrack) || S.sharing;
+}
+
+// --- chat
+
+let unread = 0;
+function addChat(text, who) {
+  const el = document.createElement('div');
+  el.className = 'm ' + who;
+  el.textContent = text;
+  $('chatLog').appendChild(el);
+  $('chatLog').scrollTop = $('chatLog').scrollHeight;
+  if (who === 'them' && $('chat').hidden) {
+    unread++;
+    if (!$('chatBtn').querySelector('.dot')) { const d = document.createElement('span'); d.className = 'dot'; $('chatBtn').appendChild(d); }
+    banner('Message: ' + text.slice(0, 80), 3500);
+  }
+}
+
+function sendChat() {
+  const text = $('chatIn').value.trim();
+  if (!text || !S.open) return;
+  if (send({ t: 'chat', text })) { addChat(text, 'me'); $('chatIn').value = ''; }
+}
+
+function toggleChat(force) {
+  const open = force === undefined ? $('chat').hidden : force;
+  $('chat').hidden = !open;
+  if (open) {
+    unread = 0;
+    const d = $('chatBtn').querySelector('.dot');
+    if (d && d.remove) d.remove();
+    try { $('chatIn').focus(); } catch (e) { }
+  }
+}
+
+// --- safety code, quality, details
+
+function renderSas() {
+  if (!S.sas) { $('sasChip').hidden = true; return; }
+  $('sasChip').hidden = false;
+  $('sasChip').classList.toggle('ok', S.verified);
+  if ($('sasChip').firstChild) $('sasChip').firstChild.textContent = S.verified ? '✓ ' : '⚠ ';
+  $('sasShort').textContent = S.verified ? 'Verified' : S.sas.words.join(' · ');
+  $('sasWords').textContent = S.sas.words.join(' · ');
+  $('sasDigits').textContent = S.sas.digits;
+}
+
+async function readStats() {
+  const out = { rtt: null, loss: null, cipher: '', tls: '', route: '', res: '' };
+  if (!S.pc || !S.pc.getStats) return out;
+  const stats = await S.pc.getStats();
+  const byId = {};
+  let transport = null, lost = 0, recv = 0;
+  stats.forEach(s => {
+    byId[s.id] = s;
+    if (s.type === 'transport') transport = s;
+    if (s.type === 'inbound-rtp' && s.kind === 'video') {
+      lost += s.packetsLost || 0; recv += s.packetsReceived || 0;
+      if (s.frameWidth) out.res = s.frameWidth + '×' + s.frameHeight + (s.framesPerSecond ? ' at ' + Math.round(s.framesPerSecond) + ' fps' : '');
+    }
+  });
+  let pair = transport && transport.selectedCandidatePairId ? byId[transport.selectedCandidatePairId] : null;
+  if (!pair) stats.forEach(s => { if (s.type === 'candidate-pair' && s.state === 'succeeded' && (s.selected || s.nominated)) pair = s; });
+  if (pair && pair.currentRoundTripTime != null) out.rtt = Math.round(pair.currentRoundTripTime * 1000);
+  if (recv + lost > 0) out.loss = lost / (recv + lost);
+  if (transport) { out.cipher = transport.dtlsCipher || ''; out.tls = ({ FEFD: '1.2', FEFC: '1.3' })[transport.tlsVersion] || transport.tlsVersion || ''; }
+  if (pair) {
+    const r = byId[pair.remoteCandidateId];
+    const t = r && r.candidateType;
+    out.route = t === 'host' ? 'Direct, same network' : t === 'srflx' || t === 'prflx' ? 'Direct, across the internet' : t === 'relay' ? 'Through a relay' : '';
+  }
+  return out;
+}
+
+let lastStats = null;
+async function tick() {
+  if (!S.open) return;
+  $('timer').textContent = fmtTime((Date.now() - S.startedAt) / 1000);
+  try {
+    lastStats = await readStats();
+    const q = quality(lastStats.rtt, lastStats.loss);
+    $('bars').className = 'bars q' + q;
+    $('bars').title = q === 3 ? 'Good connection' : q === 2 ? 'Fair connection' : 'Poor connection';
+  } catch (e) { }
+}
+
+async function showDetails() {
+  const st = lastStats || await readStats().catch(() => ({}));
+  const rows = [['Encryption', 'DTLS and SRTP, required by every browser for WebRTC']];
+  if (st.tls) rows.push(['DTLS version', st.tls]);
+  if (st.cipher) rows.push(['Cipher', st.cipher]);
+  if (st.route) rows.push(['Route', st.route]);
+  if (st.rtt != null) rows.push(['Round trip', st.rtt + ' ms']);
+  if (st.loss != null) rows.push(['Packet loss', (st.loss * 100).toFixed(1) + '%']);
+  if (st.res) rows.push(['Their video', st.res]);
+  rows.push(['Server', 'None. A public STUN server only told each browser its own address.']);
+  rows.push(['Recorded', 'Nothing. The call exists only while both pages are open.']);
+  if (S.sas) rows.push(['Safety code', S.sas.words.join(' · ') + ' ' + S.sas.digits + (S.verified ? ' (verified)' : ' (not compared yet)')]);
+  const dl = $('detailsList');
+  dl.innerHTML = '';
+  for (const [k, v] of rows) { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); }
+  $('detailsSheet').hidden = false;
+}
+
+// --- draggable self view
+
+(() => {
+  const el = $('self');
+  let drag = null;
+  el.addEventListener('pointerdown', e => {
+    const r = el.getBoundingClientRect(), p = el.parentElement.getBoundingClientRect();
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, p };
+    try { el.setPointerCapture(e.pointerId); } catch (err) { }
+  });
+  el.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const { p } = drag, r = el.getBoundingClientRect();
+    const x = Math.max(6, Math.min(p.width - r.width - 6, e.clientX - p.left - drag.dx));
+    const y = Math.max(6, Math.min(p.height - r.height - 6, e.clientY - p.top - drag.dy));
+    el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.right = 'auto'; el.style.bottom = 'auto';
+  });
+  el.addEventListener('pointerup', () => { drag = null; });
+})();
+
+// --- wiring
+
+const link = LinkPlay.fromHash();
+
+$('allowBtn').onclick = () => allow(true);
+$('noCamBtn').onclick = () => allow(false);
+$('camSel').onchange = () => allow(true);
+$('micSel').onchange = () => allow(!!S.camTrack);
+$('goBtn').onclick = () => (pendingInvite ? startGuest() : startHost());
+$('connectBtn').onclick = () => accept($('replyIn').value);
+$('replyIn').addEventListener('keydown', e => { if (e.key === 'Enter') accept($('replyIn').value); });
+async function copy(input, btn) { try { await navigator.clipboard.writeText($(input).value); $(btn).textContent = 'Copied'; setTimeout(() => { $(btn).textContent = 'Copy'; }, 1500); } catch (e) { $(input).select(); } }
+for (const [b, i] of [['copyOffer', 'offerLink'], ['copyAnswer', 'answerLink'], ['copyReply', 'replyCode']]) $(b).onclick = () => copy(i, b);
+for (const [b, i] of [['shareOffer', 'offerLink'], ['shareAnswer', 'answerLink']]) $(b).onclick = async () => { try { await navigator.share({ url: $(i).value }); } catch (e) { } };
+if (typeof navigator !== 'undefined' && navigator.share) { $('shareOffer').hidden = false; $('shareAnswer').hidden = false; }
+for (const b of document.querySelectorAll('[data-quit]')) b.onclick = () => location.replace(location.pathname);
+
+$('micBtn').onclick = toggleMic;
+$('camBtn').onclick = toggleCam;
+$('flipBtn').onclick = flipCam;
+$('screenBtn').onclick = toggleShare;
+$('chatBtn').onclick = () => toggleChat();
+$('chatClose').onclick = () => toggleChat(false);
+$('chatForm').addEventListener('submit', e => { e.preventDefault(); sendChat(); });
+$('fullBtn').onclick = () => { const st = $('stage'); try { document.fullscreenElement ? document.exitFullscreen() : (st.requestFullscreen || st.webkitRequestFullscreen).call(st); } catch (e) { } };
+$('endBtn').onclick = hangUp;
+$('againBtn').onclick = () => location.replace(location.pathname);
+$('sasChip').onclick = () => { $('sasSheet').hidden = false; };
+$('sasYes').onclick = () => { S.verified = true; renderSas(); $('sasSheet').hidden = true; send({ t: 'verified' }); banner('Safety code verified.', 2500); };
+$('sasNo').onclick = () => { $('sasSheet').hidden = true; send({ t: 'bye' }); end('Call closed', "The safety codes didn't match, so someone may have been in the middle. Start a new call and send the links a different way."); };
+$('sasLater').onclick = () => { $('sasSheet').hidden = true; };
+$('detailsBtn').onclick = showDetails;
+$('detailsClose').onclick = () => { $('detailsSheet').hidden = true; };
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { $('sasSheet').hidden = true; $('detailsSheet').hidden = true; }
+  if (!S.open || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) return;
+  if (e.key === 'm') toggleMic();
+  else if (e.key === 'v') toggleCam();
+});
+addEventListener('pagehide', () => { if (S.open) send({ t: 'bye' }); });
+setInterval(tick, 1000);
+
+if (link && link.kind === 'answer') handleReply(link);
+else {
+  show('setup');
+  if (link && link.kind === 'offer') {
+    pendingInvite = link;
+    $('setupTitle').textContent = "You're invited to a video call";
+    $('setupLede').textContent = 'Check your camera and microphone, then join. Your browsers will connect directly, with no server in between.';
+    $('goBtn').textContent = 'Join the call';
+  }
+}
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Video Call</h2>
+<p>A one-to-one video call through a link. There's no app, no account, and no server: the two browsers connect directly, and nothing is recorded or stored.</p>
+<h3>Use</h3>
+<p>Allow your camera and microphone, check yourself in the preview, and click "Start a call". Send the invite link. The other person opens it, allows their camera, and gets a reply link to send back. Open the reply in your browser or paste it in, and the call starts. An invite only works once. Anyone without a camera can choose "Join without camera" and talk with audio only.</p>
+<h3>In a call</h3>
+<table><tr><td>Control</td><td>What it does</td></tr><tr><td>Mute</td><td>turns your microphone off and on (or press M)</td></tr><tr><td>Camera</td><td>turns your camera off and on (or press V). The other side sees a placeholder.</td></tr><tr><td>Flip</td><td>switches between front and back cameras on phones</td></tr><tr><td>Share</td><td>sends your screen instead of your camera, and back</td></tr><tr><td>Chat</td><td>text messages over the same connection</td></tr><tr><td>Full</td><td>full screen</td></tr><tr><td>End</td><td>hangs up for both of you</td></tr></table>
+<p>Your own video sits in a small window you can drag anywhere. The bars next to the timer show the connection quality from the round trip time and lost packets.</p>
+<h3>The safety code</h3>
+<p>Both screens show the same three words and four digits, made from both browsers' connection keys. Say them out loud. If they match, nobody is in the middle. If someone had swapped the links on the way, the codes would differ, and "It doesn't match" ends the call.</p>
+<h3>How it works</h3>
+<p>It uses <a href="../linkplay/">LinkPlay</a>: the invite carries the caller's connection details with an audio and a video slot, and the reply carries the other side's. WebRTC encrypts the media with SRTP and the chat with DTLS, with fresh keys for every call. Details shows what your browser reports: the DTLS version, the cipher, the route, the round trip time, packet loss, and the incoming resolution.</p>
+<p>Screen sharing swaps the video track in place, so the call doesn't need to reconnect. The page sets a Content Security Policy so the browser blocks it from loading or sending anything else.</p>
+<p>Limits: both people need the page open at the same time. There's no relay server, so some strict office or mobile networks can't connect, and the two browsers see each other's IP address. It's one to one only, and there's no recording.</p>
+<p class="pg-more">More like this: <a href="../qr-studio/">QR Studio</a>, <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>, <a href="../video-to-gif/">Video to GIF</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/video-call">video-call on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

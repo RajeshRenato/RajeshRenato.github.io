@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23161215'/%3E%3Cellipse cx='16' cy='19' rx='11' ry='5' fill='%23ff7a45'/%3E%3Cpath d='M5 19v5c0 3 5 5 11 5s11-2 11-5v-5' fill='%23ff7a45' opacity='.7'/%3E%3Cpath d='M7 4l7 11M25 4l-7 11' stroke='%23ffe3cf' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Air Drums | play drums in the air with your webcam</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/air-drums/">
+<style>
+  :root { --bg: #161215; --panel: #221b20; --line: #3a2f36; --ink: #fbefe8; --muted: #b39f9a; --accent: #ff7a45; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: radial-gradient(900px 600px at 50% 0%, #2a1a1c 0%, transparent 70%), var(--bg); color: var(--ink);
+         font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; overflow: hidden; display: flex; flex-direction: column; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 20; }
+  a.back:hover { color: var(--ink); }
+  button, select, input { font: inherit; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  #stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 40px 12px 8px; position: relative; }
+  canvas#view { display: block; border-radius: 18px; background: #0d0a0c; box-shadow: 0 10px 40px rgba(0,0,0,.45); touch-action: manipulation; }
+  #intro { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 48px 18px 18px; }
+  #intro .card { max-width: 480px; text-align: center; }
+  #intro h1 { font-size: clamp(40px, 9vw, 64px); margin: 0 0 10px; letter-spacing: -.02em; line-height: 1; }
+  #intro h1 span { color: var(--accent); }
+  #intro p { color: var(--muted); line-height: 1.55; margin: 0 0 18px; font-size: 16.5px; }
+  .big { font-weight: 800; font-size: 18px; padding: 14px 22px; border-radius: 14px; border: 0; background: var(--accent); color: #2a0e02; cursor: pointer; }
+  .big:hover { filter: brightness(1.06); }
+  .plain { padding: 9px 14px; border-radius: 11px; border: 1.5px solid var(--line); background: var(--panel); color: var(--ink); font-weight: 600; cursor: pointer; font-size: 14.5px; }
+  .plain:hover { border-color: var(--muted); }
+  .plain.on { border-color: var(--accent); color: var(--accent); }
+  .plain.rec { border-color: #ff4d5e; color: #ff4d5e; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center; }
+  .note { font-size: 13.5px; color: var(--muted); margin-top: 16px !important; }
+  #msg { min-height: 1.4em; color: var(--accent); font-weight: 600; margin: 10px 0 0; }
+  #bar { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 8px 12px 14px; }
+  #bar label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+  #bar input[type=range] { width: 120px; accent-color: var(--accent); }
+  #status { color: var(--muted); font-size: 13px; text-align: center; min-height: 18px; padding: 0 12px; }
+  @media (max-width: 600px) { #bar { gap: 6px; } .plain { padding: 8px 10px; font-size: 13.5px; } #bar input[type=range] { width: 90px; } }
+</style>
+<meta property="og:title" content="Air Drums">
+<meta property="og:description" content="Play drums in the air. Wave your hands in front of your webcam to hit the pads. The camera never leaves your device.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/air-drums/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/air-drums/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Play drums in the air. Wave your hands in front of your webcam to hit the pads. The camera never leaves your device.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Toys & simulations", "item": "https://rajeshrenato.github.io/playground/#toys"}, {"@type": "ListItem", "position": 3, "name": "Air Drums", "item": "https://rajeshrenato.github.io/playground/air-drums/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Air Drums", "url": "https://rajeshrenato.github.io/playground/air-drums/", "description": "Play drums in the air. Wave your hands in front of your webcam to hit the pads. The camera never leaves your device.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="stage">
+  <canvas id="view" width="960" height="720"></canvas>
+  <div id="intro">
+    <div class="card">
+      <h1>Air <span>Drums</span></h1>
+      <p>Wave your hands over the pads around the edge of the picture to hit them. Faster moves hit harder. The camera picture stays on your device; nothing is recorded or sent anywhere.</p>
+      <div class="row"><button class="big" id="camBtn">Start the camera</button><button class="plain" id="keysBtn">Play with the keyboard</button></div>
+      <p id="msg"></p>
+      <p class="note">Works best with your face in the middle, a light in front of you, and a still background.</p>
+    </div>
+  </div>
+</div>
+<div id="status"></div>
+<div id="bar" hidden>
+  <label id="sensLabel">Sensitivity <input type="range" id="sens" min="0" max="100" value="55" aria-label="Sensitivity"></label>
+  <button class="plain" id="calBtn" title="Hold still for 2 seconds">Calibrate</button>
+  <button class="plain" id="loopBtn">Record loop</button>
+  <button class="plain" id="metroBtn">Metronome</button>
+  <button class="plain" id="motionBtn">Show motion</button>
+</div>
+<video id="cam" playsinline muted hidden></video>
+<script>
+'use strict';
+
+// --- pads, in mirrored video coordinates from 0 to 1
+
+const PADS = [
+  { id: 'crash', name: 'Crash', key: 'c', x: 0.02, y: 0.03, w: 0.22, h: 0.24, color: '#ffd166' },
+  { id: 'hat', name: 'Hi-hat', key: 'h', x: 0.26, y: 0.03, w: 0.21, h: 0.2, color: '#9be15d' },
+  { id: 'tom1', name: 'Tom 1', key: 't', x: 0.53, y: 0.03, w: 0.21, h: 0.2, color: '#4ea8ff' },
+  { id: 'ride', name: 'Ride', key: 'r', x: 0.76, y: 0.03, w: 0.22, h: 0.24, color: '#c77bff' },
+  { id: 'snare', name: 'Snare', key: 's', x: 0.02, y: 0.38, w: 0.19, h: 0.3, color: '#ff7a45' },
+  { id: 'floor', name: 'Floor tom', key: 'f', x: 0.79, y: 0.38, w: 0.19, h: 0.3, color: '#45d9c8' },
+  { id: 'kick', name: 'Kick', key: 'k', x: 0.02, y: 0.74, w: 0.26, h: 0.23, color: '#ff4d6d' },
+];
+const GW = 160, GH = 120;
+
+// --- motion detection: the share of pixels in each pad that changed since the last frame
+
+function zoneIndex(pads, gw, gh) {
+  return pads.map(p => {
+    const x0 = Math.floor(p.x * gw), x1 = Math.ceil((p.x + p.w) * gw), y0 = Math.floor(p.y * gh), y1 = Math.ceil((p.y + p.h) * gh);
+    const idx = [];
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) idx.push(y * gw + x);
+    return Int32Array.from(idx);
+  });
+}
+
+function createDetector(pads, { gw = GW, gh = GH, sensitivity = 0.55, refractory = 140, pixelDelta = 26 } = {}) {
+  const zones = zoneIndex(pads, gw, gh);
+  const d = {
+    prev: null,
+    floor: new Float32Array(pads.length).fill(0.01),
+    above: new Uint8Array(pads.length),
+    lastHit: new Float64Array(pads.length).fill(-1e9),
+    energy: new Float32Array(pads.length),
+    sensitivity, refractory, pixelDelta,
+    calibrating: null,
+  };
+  // base threshold: 0.16 of the pad changing at the lowest sensitivity, 0.03 at the highest
+  d.threshold = i => Math.max(0.16 - d.sensitivity * 0.13, d.floor[i] * 2.4 + 0.015);
+
+  d.process = (gray, t) => {
+    const hits = [];
+    if (!d.prev) { d.prev = Uint8Array.from(gray); return hits; }
+    for (let i = 0; i < zones.length; i++) {
+      const z = zones[i];
+      let changed = 0;
+      for (let k = 0; k < z.length; k++) { const j = z[k]; if (Math.abs(gray[j] - d.prev[j]) > d.pixelDelta) changed++; }
+      const e = z.length ? changed / z.length : 0;
+      d.energy[i] = e;
+      if (d.calibrating) { d.calibrating[i] = Math.max(d.calibrating[i], e); continue; }
+      const thr = d.threshold(i);
+      if (e > thr) {
+        if (!d.above[i] && t - d.lastHit[i] >= d.refractory) {
+          d.lastHit[i] = t;
+          hits.push({ pad: i, velocity: Math.max(0.3, Math.min(1, 0.35 + (e - thr) * 2.2)) });
+        }
+        d.above[i] = 1;
+      } else {
+        if (e < thr * 0.6) d.above[i] = 0;
+        // the floor follows the room slowly, but only while nothing is happening in the pad
+        if (e < thr * 0.5) d.floor[i] = d.floor[i] * 0.985 + e * 0.015;
+      }
+    }
+    d.prev.set(gray);
+    return hits;
+  };
+  d.startCalibration = () => { d.calibrating = new Float32Array(pads.length); };
+  d.finishCalibration = () => {
+    if (!d.calibrating) return;
+    for (let i = 0; i < pads.length; i++) d.floor[i] = Math.max(d.floor[i], d.calibrating[i] * 1.15);
+    d.calibrating = null;
+  };
+  return d;
+}
+
+// --- loop recorder: hits are kept with their time in the loop, then replayed on every pass
+
+function createLooper() {
+  const L = { state: 'idle', events: [], start: 0, length: 0, playStart: 0, last: -1 };
+  L.record = t => { L.state = 'rec'; L.events = []; L.start = t; };
+  L.add = (pad, velocity, t) => { if (L.state === 'rec') L.events.push({ at: t - L.start, pad, velocity }); };
+  L.stop = t => {
+    if (L.state === 'rec') {
+      L.length = Math.max(250, t - L.start);
+      if (!L.events.length) { L.state = 'idle'; return false; }
+      L.events.sort((a, b) => a.at - b.at);
+      L.state = 'play'; L.playStart = t; L.last = -1;
+      return true;
+    }
+    L.state = 'idle';
+    return false;
+  };
+  // the hits due since the last call, across as many passes of the loop as have gone by
+  L.due = t => {
+    if (L.state !== 'play') return [];
+    const pos = t - L.playStart, out = [];
+    for (let pass = Math.max(0, Math.floor(L.last / L.length)); pass * L.length <= pos; pass++) {
+      for (const e of L.events) {
+        const at = pass * L.length + e.at;
+        if (at > L.last && at <= pos) out.push(e);
+      }
+    }
+    L.last = pos;
+    return out;
+  };
+  return L;
+}
+
+// --- sound: every drum is synthesized
+
+let actx = null, master = null;
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -14; comp.ratio.value = 4;
+      master = actx.createGain(); master.gain.value = 0.9;
+      master.connect(comp); comp.connect(actx.destination);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume();
+  return actx;
+}
+const noiseCache = {};
+function noise(dur) {
+  if (noiseCache[dur]) return noiseCache[dur];
+  const sr = actx.sampleRate, b = actx.createBuffer(1, Math.max(1, sr * dur | 0), sr), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return (noiseCache[dur] = b);
+}
+function env(g, when, peak, decay) {
+  g.gain.setValueAtTime(0.0001, when);
+  g.gain.exponentialRampToValueAtTime(peak, when + 0.003);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + decay);
+}
+function tone(when, f0, f1, decay, peak, type = 'sine') {
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, when);
+  o.frequency.exponentialRampToValueAtTime(f1, when + decay * 0.6);
+  env(g, when, peak, decay);
+  o.connect(g); g.connect(master); o.start(when); o.stop(when + decay + 0.05);
+}
+function hiss(when, dur, decay, peak, type, freq, q = 0.8) {
+  const s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  s.buffer = noise(dur);
+  f.type = type; f.frequency.value = freq; f.Q.value = q;
+  env(g, when, peak, decay);
+  s.connect(f); f.connect(g); g.connect(master); s.start(when); s.stop(when + dur);
+}
+function playDrum(id, v = 0.8, when) {
+  if (!audio()) return;
+  const t = when || actx.currentTime;
+  switch (id) {
+    case 'kick': tone(t, 160, 45, 0.38, 1.0 * v); hiss(t, 0.02, 0.015, 0.25 * v, 'lowpass', 2500); break;
+    case 'snare': tone(t, 240, 170, 0.12, 0.35 * v, 'triangle'); hiss(t, 0.25, 0.2, 0.55 * v, 'bandpass', 2200, 0.7); break;
+    case 'hat': hiss(t, 0.08, 0.06, 0.35 * v, 'highpass', 8000); break;
+    case 'crash': hiss(t, 1.6, 1.4, 0.4 * v, 'highpass', 5200, 0.5); hiss(t, 0.5, 0.35, 0.25 * v, 'bandpass', 9000); break;
+    case 'ride': hiss(t, 0.9, 0.8, 0.22 * v, 'bandpass', 7000, 2.5); tone(t, 5200, 5000, 0.6, 0.04 * v, 'square'); break;
+    case 'tom1': tone(t, 230, 140, 0.35, 0.8 * v); hiss(t, 0.05, 0.04, 0.12 * v, 'bandpass', 1500); break;
+    case 'floor': tone(t, 130, 75, 0.5, 0.9 * v); hiss(t, 0.05, 0.04, 0.12 * v, 'bandpass', 900); break;
+    case 'click': tone(t, 1800, 1700, 0.05, 0.25 * v, 'square'); break;
+  }
+}
+
+// --- the app
+
+const $ = id => document.getElementById(id);
+const view = $('view'), vctx = view.getContext('2d');
+const small = document.createElement('canvas');
+small.width = GW; small.height = GH;
+const sctx = small.getContext('2d', { willReadFrequently: true });
+const gray = new Uint8Array(GW * GH);
+const det = createDetector(PADS);
+const looper = createLooper();
+const flash = new Float32Array(PADS.length);
+const sparks = [];
+let mode = 'intro';          // intro | camera | keys
+let showMotion = false, motionMap = null;
+let stream = null, hitsTotal = 0;
+
+function hit(i, velocity, fromLoop) {
+  const p = PADS[i];
+  playDrum(p.id, velocity);
+  flash[i] = Math.max(flash[i], 0.5 + velocity / 2);
+  hitsTotal++;
+  if (!fromLoop) looper.add(i, velocity, performance.now());
+  for (let k = 0; k < 10; k++) sparks.push({ x: p.x + p.w / 2, y: p.y + p.h / 2, vx: (Math.random() - 0.5) * 0.02, vy: (Math.random() - 0.5) * 0.02, life: 1, color: p.color });
+}
+
+function keyPad(key) { return PADS.findIndex(p => p.key === String(key).toLowerCase() || (key === ' ' && p.id === 'kick')); }
+
+async function startCamera() {
+  $('msg').textContent = '';
+  audio();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { startKeys("This browser can't use a camera here. You can still play with the keyboard."); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+  } catch (e) {
+    startKeys(e && e.name === 'NotAllowedError' ? 'Camera access was blocked. Allow it in the address bar to play in the air, or use the keyboard.' : "No camera found. You can play with the keyboard.");
+    return;
+  }
+  const v = $('cam');
+  v.srcObject = stream;
+  await v.play().catch(() => {});
+  mode = 'camera';
+  $('intro').hidden = true; $('bar').hidden = false;
+  fitView();
+  setStatus('Wave over a pad to hit it. Keys work too: ' + PADS.map(p => p.key.toUpperCase() + ' ' + p.name.toLowerCase()).join(', ') + '.');
+  if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(onFrame); else requestAnimationFrame(onFrameRaf);
+}
+
+function startKeys(reason) {
+  audio();
+  mode = 'keys';
+  $('intro').hidden = true; $('bar').hidden = false;
+  $('calBtn').hidden = true; $('motionBtn').hidden = true; $('sensLabel').hidden = true;
+  setStatus((reason ? reason + ' ' : '') + 'Keys: ' + PADS.map(p => p.key.toUpperCase() + ' ' + p.name.toLowerCase()).join(', ') + ', or tap the pads.');
+  fitView();
+}
+
+function setStatus(t) { $('status').textContent = t; }
+
+function grab() {
+  const v = $('cam');
+  if (!v.videoWidth) return false;
+  sctx.save();
+  sctx.translate(GW, 0); sctx.scale(-1, 1);
+  sctx.drawImage(v, 0, 0, GW, GH);
+  sctx.restore();
+  const px = sctx.getImageData(0, 0, GW, GH).data;
+  for (let i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = (px[j] * 77 + px[j + 1] * 150 + px[j + 2] * 29) >> 8;
+  if (showMotion && det.prev) {
+    if (!motionMap) motionMap = new Uint8Array(GW * GH);
+    for (let i = 0; i < gray.length; i++) motionMap[i] = Math.abs(gray[i] - det.prev[i]) > det.pixelDelta ? 1 : 0;
+  }
+  return true;
+}
+
+function step(t) {
+  if (mode === 'camera' && grab()) for (const h of det.process(gray, t)) hit(h.pad, h.velocity, false);
+  for (const e of looper.due(t)) hit(e.pad, e.velocity, true);
+}
+
+function onFrame(now) { step(performance.now()); $('cam').requestVideoFrameCallback(onFrame); }
+function onFrameRaf() { step(performance.now()); requestAnimationFrame(onFrameRaf); }
+
+// --- drawing
+
+let VW = 960, VH = 720;
+function fitView() {
+  const v = $('cam');
+  const aspect = mode === 'camera' && v.videoWidth ? v.videoWidth / v.videoHeight : 4 / 3;
+  const maxW = Math.min(innerWidth - 24, 1100), maxH = innerHeight - (mode === 'intro' ? 60 : 150);
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  VW = Math.max(200, Math.round(w)); VH = Math.max(150, Math.round(h));
+  const d = devicePixelRatio || 1;
+  view.width = VW * d; view.height = VH * d;
+  view.style.width = VW + 'px'; view.style.height = VH + 'px';
+  vctx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener('resize', fitView);
+
+function draw() {
+  const v = $('cam');
+  vctx.fillStyle = '#0d0a0c';
+  vctx.fillRect(0, 0, VW, VH);
+  if (mode === 'camera' && v.videoWidth) {
+    vctx.save();
+    vctx.translate(VW, 0); vctx.scale(-1, 1);
+    vctx.globalAlpha = 0.85;
+    vctx.drawImage(v, 0, 0, VW, VH);
+    vctx.restore();
+    vctx.fillStyle = 'rgba(15, 8, 12, .28)';
+    vctx.fillRect(0, 0, VW, VH);
+    if (showMotion && motionMap) {
+      vctx.fillStyle = 'rgba(255, 122, 69, .75)';
+      const cw = VW / GW, ch = VH / GH;
+      for (let y = 0; y < GH; y += 2) for (let x = 0; x < GW; x += 2) if (motionMap[y * GW + x]) vctx.fillRect(x * cw, y * ch, cw * 2, ch * 2);
+    }
+  } else if (mode !== 'intro') {
+    const g = vctx.createRadialGradient(VW / 2, VH * 0.55, 10, VW / 2, VH * 0.55, VW * 0.6);
+    g.addColorStop(0, '#2c1d22'); g.addColorStop(1, '#0d0a0c');
+    vctx.fillStyle = g; vctx.fillRect(0, 0, VW, VH);
+  }
+  if (mode !== 'intro') {
+    PADS.forEach((p, i) => {
+      const x = p.x * VW, y = p.y * VH, w = p.w * VW, h = p.h * VH, f = flash[i];
+      const e = mode === 'camera' ? Math.min(1, det.energy[i] / Math.max(0.02, det.threshold(i))) : 0;
+      vctx.save();
+      vctx.globalAlpha = 0.22 + 0.25 * e + 0.5 * f;
+      vctx.fillStyle = p.color;
+      vctx.beginPath(); vctx.roundRect(x, y, w, h, 16); vctx.fill();
+      vctx.globalAlpha = 0.9;
+      vctx.lineWidth = 2.5 + f * 4;
+      vctx.strokeStyle = p.color;
+      if (f > 0) { vctx.shadowColor = p.color; vctx.shadowBlur = 30 * f; }
+      vctx.stroke();
+      vctx.shadowBlur = 0;
+      vctx.globalAlpha = 1;
+      vctx.fillStyle = '#fff';
+      vctx.font = '700 ' + Math.max(12, Math.min(20, w / 7)) + 'px system-ui, sans-serif';
+      vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
+      vctx.fillText(p.name, x + w / 2, y + h / 2 - 6);
+      vctx.font = '600 ' + Math.max(10, Math.min(13, w / 10)) + 'px ui-monospace, Menlo, monospace';
+      vctx.globalAlpha = 0.7;
+      vctx.fillText(p.key.toUpperCase(), x + w / 2, y + h / 2 + 14);
+      vctx.restore();
+      flash[i] = Math.max(0, f - 0.06);
+    });
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.x += s.vx; s.y += s.vy; s.life -= 0.04;
+      if (s.life <= 0) { sparks.splice(i, 1); continue; }
+      vctx.globalAlpha = s.life;
+      vctx.fillStyle = s.color;
+      vctx.beginPath(); vctx.arc(s.x * VW, s.y * VH, 3 + 4 * s.life, 0, Math.PI * 2); vctx.fill();
+    }
+    vctx.globalAlpha = 1;
+    if (looper.state !== 'idle') {
+      vctx.fillStyle = looper.state === 'rec' ? '#ff4d5e' : '#9be15d';
+      vctx.font = '700 14px system-ui, sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'alphabetic';
+      vctx.fillText(looper.state === 'rec' ? '● recording' : '⟳ loop playing', VW / 2, VH - 16);
+    }
+    if (det.calibrating) {
+      vctx.fillStyle = 'rgba(13, 10, 12, .6)'; vctx.fillRect(0, VH / 2 - 30, VW, 60);
+      vctx.fillStyle = '#fff'; vctx.font = '700 20px system-ui, sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
+      vctx.fillText('Hold still…', VW / 2, VH / 2);
+    }
+  }
+  requestAnimationFrame(draw);
+}
+
+// --- metronome on the audio clock
+
+let metroOn = false, metroNext = 0, metroBeat = 0;
+const BPM = 100;
+function metroTick() {
+  if (!metroOn || !actx) return;
+  while (metroNext < actx.currentTime + 0.12) {
+    playDrum('click', metroBeat % 4 === 0 ? 1 : 0.5, metroNext);
+    metroNext += 60 / BPM; metroBeat++;
+  }
+}
+
+// --- controls
+
+$('camBtn').onclick = startCamera;
+$('keysBtn').onclick = () => startKeys('');
+$('sens').oninput = () => { det.sensitivity = +$('sens').value / 100; };
+$('calBtn').onclick = () => {
+  det.startCalibration();
+  setTimeout(() => { det.finishCalibration(); setStatus('Calibrated. Background movement is ignored more now.'); }, 2000);
+};
+$('loopBtn').onclick = () => {
+  const t = performance.now();
+  if (looper.state === 'idle') { looper.record(t); $('loopBtn').textContent = 'Stop recording'; $('loopBtn').className = 'plain rec'; }
+  else if (looper.state === 'rec') {
+    const playing = looper.stop(t);
+    $('loopBtn').textContent = playing ? 'Stop loop' : 'Record loop';
+    $('loopBtn').className = 'plain' + (playing ? ' on' : '');
+    if (!playing) setStatus('Nothing was played while recording, so there is no loop.');
+  } else { looper.stop(t); $('loopBtn').textContent = 'Record loop'; $('loopBtn').className = 'plain'; }
+};
+$('metroBtn').onclick = () => {
+  metroOn = !metroOn;
+  $('metroBtn').classList.toggle('on', metroOn);
+  if (metroOn && audio()) { metroNext = actx.currentTime + 0.05; metroBeat = 0; }
+};
+$('motionBtn').onclick = () => { showMotion = !showMotion; $('motionBtn').classList.toggle('on', showMotion); };
+
+addEventListener('keydown', e => {
+  if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || mode === 'intro') return;
+  const i = keyPad(e.key);
+  if (i >= 0) { e.preventDefault(); audio(); hit(i, 0.85, false); }
+});
+view.addEventListener('pointerdown', e => {
+  if (mode === 'intro') return;
+  const r = view.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  const i = PADS.findIndex(p => x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h);
+  if (i >= 0) { audio(); hit(i, 0.85, false); }
+});
+
+setInterval(() => {
+  metroTick();
+  if (mode === 'keys') for (const e of looper.due(performance.now())) hit(e.pad, e.velocity, true);
+}, 25);
+
+fitView();
+requestAnimationFrame(draw);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Air Drums</h2>
+<p>Play a drum kit in the air. Wave your hands over the pads around the edge of the webcam picture to hit them: crash, hi-hat, two toms, ride, snare, and kick. Faster moves hit harder. The camera picture stays on your device.</p>
+<h3>Play</h3>
+<p>Press "Start the camera" and allow camera access. Sit with your face in the middle, so it's between the pads, and wave a hand over a pad. If the camera is blocked or missing, the page switches to keyboard mode.</p>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Wave over a pad</td><td>hit it</td></tr><tr><td>C, H, T, R, S, F, K</td><td>crash, hi-hat, tom 1, ride, snare, floor tom, kick</td></tr><tr><td>Space</td><td>kick</td></tr><tr><td>Tap or click a pad</td><td>hit it</td></tr></table>
+<h3>Controls</h3>
+<ul><li>Sensitivity: how much movement it takes to hit a pad.</li><li>Calibrate: hold still for 2 seconds. The page measures how much each pad moves on its own (a flickering light, a fan, a TV behind you) and ignores that much from then on.</li><li>Record loop: play a pattern, press again to stop, and it repeats while you play over it.</li><li>Metronome: a click at 100 beats per minute.</li><li>Show motion: paints the pixels that changed, so you can see what the camera is reacting to.</li></ul>
+<h3>How it works</h3>
+<ul><li>Every video frame is drawn, mirrored, onto a 160 by 120 canvas and turned to grayscale. The page compares it with the previous frame and counts, for each pad, the share of pixels that changed by more than a small amount.</li><li>A pad is hit when that share jumps above a threshold, and it can't be hit again until the motion settles and 140 ms have passed. That way one wave is one hit, not a burst.</li><li>Each pad keeps a slowly moving noise floor, learned while nothing is happening, and the threshold sits above it. Calibrating sets the floor from a few seconds of stillness.</li><li>Frames are processed as they arrive from the camera (<code>requestVideoFrameCallback</code>) to keep the delay short.</li><li>Every drum is synthesized with Web Audio: pitched sine sweeps for the kick and toms, filtered noise for the snare, hats, crash, and ride, and a compressor on the output.</li></ul>
+<p>There's no hand tracking. It only sees change, so it reacts to anything that moves over a pad: a hand, a sleeve, or a shadow. It works best with light in front of you, a still background, and your head between the pads. Low light makes the camera noisier, which raises the floor and makes hits harder.</p>
+<p class="pg-more">More like this: <a href="../flowfield/">Flow Field</a>, <a href="../orbit-sandbox/">Orbit Sandbox</a>, <a href="../pendulum-chaos/">Pendulum Chaos</a>, <a href="../boid-swarm/">Boid Swarm</a>. Or see <a href="../#toys">all toys and simulations</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/air-drums">air-drums on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5d6c'/%3E%3Ccircle cx='16' cy='17' r='9' fill='%23ffd166'/%3E%3Cpath d='M5 27 L27 5' stroke='%23ffffff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Fruit Slicer | Fruit Ninja-style game you play with your webcam</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/playground/fruit-slicer/">
+<style>
+  :root { --ink: #fff8ee; --muted: #c9b8a6; --accent: #ff5d6c; --sun: #ffd166; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: #241a2e; color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 5; }
+  a.back:hover { color: var(--ink); }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; cursor: crosshair; }
+  video { display: none; }
+  .panel { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 4;
+           background: rgba(36, 26, 46, .78); }
+  .panel[hidden] { display: none; }
+  .box { max-width: 460px; width: 100%; text-align: center; }
+  h1 { margin: 0 0 8px; font-size: clamp(40px, 9vw, 64px); line-height: 1; letter-spacing: -.02em; color: var(--sun);
+       text-shadow: 0 4px 0 #b3365a; transform: rotate(-3deg); }
+  .box p { color: var(--muted); line-height: 1.5; margin: 0 0 16px; }
+  .modes { display: flex; gap: 8px; justify-content: center; margin: 0 0 16px; }
+  .modes button { font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 999px; border: 2px solid #5a4670; background: none; color: var(--muted); cursor: pointer; }
+  .modes button.on { border-color: var(--sun); color: var(--sun); }
+  .go { display: grid; gap: 10px; }
+  .go button { font: inherit; font-weight: 800; font-size: 18px; padding: 14px 18px; border-radius: 14px; border: 0; cursor: pointer; background: var(--accent); color: #fff;
+               box-shadow: 0 4px 0 #b3365a; }
+  .go button.alt { background: #3a2c4a; box-shadow: 0 4px 0 #1c1424; color: var(--ink); }
+  .go button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b3365a; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+  .small { font-size: 13px; color: var(--muted); }
+  #big { font-size: 64px; font-weight: 900; color: var(--sun); margin: 4px 0; }
+  #tools { position: fixed; right: 12px; top: 10px; z-index: 3; display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted);
+           background: rgba(20, 14, 26, .55); padding: 6px 10px; border-radius: 10px; }
+  #tools[hidden] { display: none; }
+  #tools input { width: 110px; accent-color: var(--sun); }
+  #tools button { font: inherit; border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; }
+</style>
+<meta property="og:title" content="Fruit Slicer">
+<meta property="og:description" content="A Fruit Ninja-style game you play by waving your hands at the webcam. Or swipe with a mouse or finger. Nothing leaves your device.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/playground/fruit-slicer/">
+<meta property="og:image" content="https://rajeshrenato.github.io/playground/fruit-slicer/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A Fruit Ninja-style game you play by waving your hands at the webcam. Or swipe with a mouse or finger. Nothing leaves your device.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Games", "item": "https://rajeshrenato.github.io/playground/#games"}, {"@type": "ListItem", "position": 3, "name": "Fruit Slicer", "item": "https://rajeshrenato.github.io/playground/fruit-slicer/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Fruit Slicer", "url": "https://rajeshrenato.github.io/playground/fruit-slicer/", "description": "A Fruit Ninja-style game you play by waving your hands at the webcam. Or swipe with a mouse or finger. Nothing leaves your device.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="c"></canvas>
+<video id="cam" playsinline muted></video>
+<div id="tools" hidden><label>Sensitivity <input type="range" id="sens" min="0" max="100" value="50" aria-label="Motion sensitivity"></label><button id="quit">Menu</button></div>
+
+<div class="panel" id="menu">
+  <div class="box">
+    <h1>Fruit Slicer</h1>
+    <p>Fruit flies up. Wave your hands at the webcam to slice it, or swipe with a mouse or finger. Don't touch the bombs.</p>
+    <div class="modes"><button id="mClassic" class="on">Classic</button><button id="mZen">Zen, 90 seconds</button></div>
+    <div class="go"><button id="camBtn">Play with the camera</button><button class="alt" id="swipeBtn">Play with mouse or touch</button></div>
+    <p class="small" id="camNote" style="margin-top:14px">The camera picture stays on this device. It's only used to spot movement, and nothing is recorded or sent.</p>
+  </div>
+</div>
+
+<div class="panel" id="over" hidden>
+  <div class="box">
+    <p id="overWhy">Game over</p>
+    <div id="big">0</div>
+    <p id="overBest"></p>
+    <div class="go"><button id="againBtn">Play again</button><button class="alt" id="menuBtn">Menu</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const cv = $('c'), ctx = cv.getContext('2d');
+const video = $('cam');
+let W = 800, H = 600, DPR = 1;
+const GRAVITY = 900;
+
+// --- fruit
+
+const TYPES = [
+  { skin: '#2f9e44', stripe: '#1b6e2c', flesh: '#ff5d6c', rind: '#e8f5c8', seeds: '#2b1a1a', r: 44 },
+  { skin: '#ff9f1c', flesh: '#ffc46b', rind: '#fff1d0', r: 32 },
+  { skin: '#7bc043', flesh: '#d9f99d', rind: '#f4ffe0', r: 28 },
+  { skin: '#e63946', flesh: '#fff1d6', rind: '#ffe8e8', seeds: '#5c3a1e', r: 32 },
+  { skin: '#9b5de5', flesh: '#ffd6a5', rind: '#f6e8ff', r: 30 },
+  { skin: '#8d6e4f', flesh: '#8bc34a', rind: '#e9ffd0', seeds: '#1d1d1d', r: 27 },
+];
+
+const G = {
+  mode: 'menu', game: 'classic', score: 0, lives: 3, t: 0, zenLeft: 90, spawnIn: 0.8,
+  fruits: [], halves: [], parts: [], splats: [], pops: [], trail: [],
+  combo: 0, comboAt: -9, shake: 0, flash: 0, camera: false, best: { classic: 0, zen: 0 },
+  noise: 0, calibrate: 0, calibSamples: [],
+};
+try { G.best.classic = +(localStorage.getItem('fs_best_classic') || 0); G.best.zen = +(localStorage.getItem('fs_best_zen') || 0); } catch (e) { }
+
+let rand = Math.random;
+
+function launch(bomb) {
+  const type = bomb ? null : TYPES[Math.floor(rand() * TYPES.length)];
+  const r = bomb ? 30 : type.r * Math.min(1.15, Math.max(0.75, Math.min(W, H) / 700));
+  const x = W * (0.15 + rand() * 0.7);
+  const peak = H * (0.12 + rand() * 0.3);
+  const vy = -Math.sqrt(2 * GRAVITY * (H + r - peak));
+  const vx = ((W / 2 - x) / W) * (120 + rand() * 260) + (rand() - 0.5) * 80;
+  const f = { x, y: H + r, vx, vy, r, type, bomb: !!bomb, rot: rand() * 6.28, vr: (rand() - 0.5) * 4 };
+  G.fruits.push(f);
+  return f;
+}
+
+function spawnWave() {
+  const d = difficulty();
+  const n = 1 + Math.floor(rand() * (1 + d * 4));
+  for (let i = 0; i < n; i++) launch(G.game === 'classic' && rand() < 0.08 + d * 0.1);
+  G.spawnIn = 1.6 - d * 0.75 + rand() * 0.5;
+}
+
+function difficulty() { return Math.min(1, G.t / 120); }
+
+// --- slicing, shared by swipes and the camera
+
+function slice(f, angle) {
+  const i = G.fruits.indexOf(f);
+  if (i < 0) return false;
+  G.fruits.splice(i, 1);
+  if (f.bomb) { bombHit(f); return true; }
+  const nx = Math.cos(angle + Math.PI / 2), ny = Math.sin(angle + Math.PI / 2);
+  for (const s of [-1, 1]) {
+    G.halves.push({ x: f.x + nx * s * 4, y: f.y + ny * s * 4, vx: f.vx * 0.6 + nx * s * 140, vy: f.vy * 0.4 + ny * s * 140 - 60,
+                    r: f.r, type: f.type, rot: angle, vr: s * (2 + rand() * 3), side: s, life: 2.5 });
+  }
+  for (let k = 0; k < 14; k++) {
+    const a = rand() * 6.28, sp = 80 + rand() * 260;
+    G.parts.push({ x: f.x, y: f.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80, life: 0.5 + rand() * 0.5, color: f.type.flesh, size: 3 + rand() * 4 });
+  }
+  const drops = [];
+  for (let k = 0; k < 7; k++) { const a = rand() * 6.28, d = f.r * (0.2 + rand() * 0.9); drops.push([Math.cos(a) * d, Math.sin(a) * d, f.r * (0.12 + rand() * 0.28)]); }
+  G.splats.push({ x: f.x, y: f.y, drops, color: f.type.flesh, life: 3 });
+  if (G.splats.length > 30) G.splats.shift();
+  G.score += 1;
+  if (G.t - G.comboAt < 0.35) G.combo++;
+  else G.combo = 1;
+  G.comboAt = G.t;
+  sound('slice');
+  return true;
+}
+
+function bombHit(f) {
+  for (let k = 0; k < 40; k++) {
+    const a = rand() * 6.28, sp = 100 + rand() * 500;
+    G.parts.push({ x: f.x, y: f.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.4 + rand() * 0.6, color: rand() < 0.5 ? '#ffd166' : '#ff6b35', size: 3 + rand() * 6 });
+  }
+  G.shake = 0.5; G.flash = 0.35;
+  sound('boom');
+  if (G.game === 'classic') loseLife('A bomb went off.');
+}
+
+function loseLife(why) {
+  G.lives--;
+  G.pops.push({ x: W / 2, y: H * 0.3, text: G.lives > 0 ? '−1 life' : '', life: 0.9, color: '#ff6b6b' });
+  if (G.lives <= 0) gameOver(why);
+}
+
+function settleCombo() {
+  if (G.combo >= 3 && G.t - G.comboAt >= 0.35) {
+    G.score += G.combo;
+    G.pops.push({ x: W / 2, y: H * 0.22, text: G.combo + ' fruit combo +' + G.combo, life: 1.2, color: '#ffd166' });
+    sound('combo');
+    G.combo = 0;
+  } else if (G.t - G.comboAt >= 0.35) G.combo = 0;
+}
+
+function distToSeg(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
+  const t = l ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)) : 0;
+  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+}
+
+// A swipe from one point to the next slices whatever it passes through.
+function swipe(x0, y0, x1, y1) {
+  if (G.mode !== 'play') return 0;
+  let n = 0;
+  const angle = Math.atan2(y1 - y0, x1 - x0);
+  for (const f of G.fruits.slice()) if (distToSeg(f.x, f.y, x0, y0, x1, y1) < f.r) { slice(f, angle); n++; }
+  addTrail(x1, y1);
+  return n;
+}
+
+function addTrail(x, y) {
+  G.trail.push({ x, y, life: 0.18 });
+  if (G.trail.length > 24) G.trail.shift();
+}
+
+// --- motion from the camera: grayscale frame differences on a small copy
+
+const MW = 160;
+let MH = 120;
+const small = document.createElement('canvas');
+const sctx = small.getContext('2d', { willReadFrequently: true });
+let prevGray = null, lastMotion = null, centroids = [];
+
+function toGray(rgba, out) {
+  for (let i = 0, j = 0; j < out.length; i += 4, j++) out[j] = (rgba[i] * 77 + rgba[i + 1] * 150 + rgba[i + 2] * 29) >> 8;
+  return out;
+}
+
+// Pixels that changed by more than `thresh` between two gray frames.
+function motionMap(prev, cur, w, h, thresh) {
+  const mask = new Uint8Array(w * h);
+  let count = 0, sx = 0, sy = 0;
+  for (let i = 0; i < mask.length; i++) {
+    if (Math.abs(cur[i] - prev[i]) > thresh) {
+      mask[i] = 1; count++;
+      sx += i % w; sy += (i / w) | 0;
+    }
+  }
+  return { mask, w, h, count, frac: count / mask.length, cx: count ? sx / count : -1, cy: count ? sy / count : -1 };
+}
+
+// Share of a fruit's area (in mask pixels) that moved this frame.
+function fruitMotion(f, m) {
+  const sx = m.w / W, sy = m.h / H;
+  const cx = f.x * sx, cy = f.y * sy, rx = Math.max(1, f.r * sx), ry = Math.max(1, f.r * sy);
+  let inside = 0, moved = 0;
+  for (let y = Math.max(0, Math.floor(cy - ry)); y <= Math.min(m.h - 1, Math.ceil(cy + ry)); y++) {
+    for (let x = Math.max(0, Math.floor(cx - rx)); x <= Math.min(m.w - 1, Math.ceil(cx + rx)); x++) {
+      const dx = (x - cx) / rx, dy = (y - cy) / ry;
+      if (dx * dx + dy * dy > 1) continue;
+      inside++;
+      if (m.mask[y * m.w + x]) moved++;
+    }
+  }
+  return inside ? moved / inside : 0;
+}
+
+function sensitivity() { return +$('sens').value / 100; }
+function pixelThresh() { return Math.round(48 - sensitivity() * 34); }
+function minFrac() { return 0.32 - sensitivity() * 0.22; }
+
+// Applies one motion map: slices fruit the movement covers, moves the blade.
+function applyMotion(m) {
+  lastMotion = m;
+  if (G.calibrate > 0) { G.calibSamples.push(m.frac); return 0; }
+  let n = 0;
+  if (m.count > 0 && m.frac > G.noise + 0.002) {
+    const px = m.cx / m.w * W, py = m.cy / m.h * H;
+    centroids.push({ x: px, y: py });
+    if (centroids.length > 5) centroids.shift();
+    addTrail(px, py);
+  } else centroids = [];
+  if (G.mode !== 'play') return 0;
+  const a = centroids.length >= 2 ? Math.atan2(centroids[centroids.length - 1].y - centroids[0].y, centroids[centroids.length - 1].x - centroids[0].x) : rand() * 6.28;
+  for (const f of G.fruits.slice()) if (fruitMotion(f, m) >= minFrac() + G.noise) { slice(f, a); n++; }
+  return n;
+}
+
+function drawCover(g, w, h) {
+  const vw = video.videoWidth || 640, vh = video.videoHeight || 480;
+  const s = Math.max(w / vw, h / vh), dw = vw * s, dh = vh * s;
+  g.save();
+  g.translate(w, 0); g.scale(-1, 1);
+  g.drawImage(video, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  g.restore();
+}
+
+function readCamera() {
+  if (!G.camera || video.readyState < 2) return;
+  drawCover(sctx, MW, MH);
+  const img = sctx.getImageData(0, 0, MW, MH);
+  const gray = toGray(img.data, new Uint8Array(MW * MH));
+  if (prevGray && prevGray.length === gray.length) applyMotion(motionMap(prevGray, gray, MW, MH, pixelThresh()));
+  prevGray = gray;
+}
+
+async function startCamera() {
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no camera api');
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    video.srcObject = stream;
+    await video.play();
+    G.camera = true;
+    return true;
+  } catch (e) {
+    G.camera = false;
+    $('camNote').textContent = "The camera isn't available, so this game uses swipes. Use a mouse or your finger.";
+    return false;
+  }
+}
+
+function stopCamera() {
+  const s = video.srcObject;
+  if (s) for (const t of s.getTracks()) t.stop();
+  video.srcObject = null;
+  G.camera = false;
+  prevGray = null;
+}
+
+// --- game flow
+
+function startGame(game, camera) {
+  Object.assign(G, { mode: 'play', game, score: 0, lives: 3, t: 0, zenLeft: 90, spawnIn: 0.8, fruits: [], halves: [], parts: [], splats: [], pops: [], trail: [], combo: 0, comboAt: -9 });
+  G.calibrate = camera ? 1.5 : 0;
+  G.calibSamples = [];
+  $('menu').hidden = true; $('over').hidden = true;
+  $('tools').hidden = !camera;
+  if (camera) G.pops.push({ x: W / 2, y: H * 0.4, text: 'Hold still…', life: 1.5, color: '#fff8ee' });
+}
+
+function gameOver(why) {
+  G.mode = 'over';
+  const key = G.game;
+  const best = G.best[key];
+  if (G.score > best) {
+    G.best[key] = G.score;
+    try { localStorage.setItem('fs_best_' + key, String(G.score)); } catch (e) { }
+  }
+  $('overWhy').textContent = why;
+  $('big').textContent = G.score;
+  $('overBest').textContent = G.score > best ? (best ? 'A new best. The old one was ' + best + '.' : 'Your first score in this mode.') : 'Best: ' + G.best[key];
+  $('over').hidden = false;
+}
+
+function update(dt) {
+  G.shake = Math.max(0, G.shake - dt);
+  G.flash = Math.max(0, G.flash - dt);
+  for (const p of G.trail) p.life -= dt;
+  G.trail = G.trail.filter(p => p.life > 0);
+  for (const p of G.pops) { p.life -= dt; p.y -= 30 * dt; }
+  G.pops = G.pops.filter(p => p.life > 0);
+  for (const s of G.splats) s.life -= dt * 0.4;
+  G.splats = G.splats.filter(s => s.life > 0);
+  for (const p of G.parts) { p.vy += GRAVITY * 0.7 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
+  G.parts = G.parts.filter(p => p.life > 0);
+  for (const h of G.halves) { h.vy += GRAVITY * dt; h.x += h.vx * dt; h.y += h.vy * dt; h.rot += h.vr * dt; h.life -= dt; }
+  G.halves = G.halves.filter(h => h.life > 0 && h.y < H + 120);
+  if (G.mode !== 'play') return;
+
+  if (G.calibrate > 0) {
+    G.calibrate -= dt;
+    if (G.calibrate <= 0) {
+      const s = G.calibSamples.sort((a, b) => a - b);
+      G.noise = s.length ? Math.min(0.15, s[Math.floor(s.length * 0.8)] * 1.5) : 0;
+      G.pops.push({ x: W / 2, y: H * 0.4, text: 'Go!', life: 0.8, color: '#ffd166' });
+    }
+    return;
+  }
+
+  G.t += dt;
+  if (G.game === 'zen') {
+    G.zenLeft -= dt;
+    if (G.zenLeft <= 0) { G.zenLeft = 0; gameOver("Time's up."); return; }
+  }
+  G.spawnIn -= dt;
+  if (G.spawnIn <= 0) spawnWave();
+  for (const f of G.fruits.slice()) {
+    f.vy += GRAVITY * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.rot += f.vr * dt;
+    if (f.vy > 0 && f.y > H + f.r + 10) {
+      G.fruits.splice(G.fruits.indexOf(f), 1);
+      if (!f.bomb && G.game === 'classic') { loseLife('Too many fruit got away.'); if (G.mode !== 'play') return; }
+    }
+  }
+  settleCombo();
+}
+
+// --- sound
+
+let audio = null;
+function sound(kind) {
+  try {
+    if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+    const t = audio.currentTime;
+    if (kind === 'slice') {
+      const len = 0.12, buf = audio.createBuffer(1, audio.sampleRate * len, audio.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      const src = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain();
+      src.buffer = buf; f.type = 'bandpass'; f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(800, t + len);
+      g.gain.value = 0.35; src.connect(f).connect(g).connect(audio.destination); src.start(t);
+    } else if (kind === 'boom') {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(30, t + 0.5);
+      g.gain.setValueAtTime(0.4, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      o.connect(g).connect(audio.destination); o.start(t); o.stop(t + 0.6);
+    } else if (kind === 'combo') {
+      [660, 880, 1320].forEach((fr, i) => {
+        const o = audio.createOscillator(), g = audio.createGain();
+        o.frequency.value = fr; g.gain.setValueAtTime(0.15, t + i * 0.07); g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.2);
+        o.connect(g).connect(audio.destination); o.start(t + i * 0.07); o.stop(t + i * 0.07 + 0.22);
+      });
+    }
+  } catch (e) { }
+}
+
+// --- drawing
+
+function resize() {
+  DPR = Math.min(2, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  MH = Math.max(60, Math.min(320, Math.round(MW * H / W)));
+  small.width = MW; small.height = MH;
+  prevGray = null;
+}
+addEventListener('resize', resize);
+resize();
+
+function drawFruit(f) {
+  const t = f.type;
+  ctx.save();
+  ctx.translate(f.x, f.y);
+  ctx.rotate(f.rot);
+  if (f.bomb) {
+    ctx.fillStyle = '#1b1b22'; ctx.beginPath(); ctx.arc(0, 0, f.r, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#ff4d4d'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, f.r * 0.7, 0, 7); ctx.stroke();
+    ctx.strokeStyle = '#8a6a4a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, -f.r); ctx.quadraticCurveTo(8, -f.r - 12, 4, -f.r - 20); ctx.stroke();
+    ctx.fillStyle = Math.sin(performance.now() / 60) > 0 ? '#ffd166' : '#ff6b35';
+    ctx.beginPath(); ctx.arc(4, -f.r - 22, 5, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold ' + Math.round(f.r * 0.9) + 'px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('!', 0, 2);
+  } else {
+    ctx.fillStyle = t.skin; ctx.beginPath(); ctx.arc(0, 0, f.r, 0, 7); ctx.fill();
+    if (t.stripe) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(0, 0, f.r, 0, 7); ctx.clip();
+      ctx.fillStyle = t.stripe;
+      for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.ellipse(k * f.r * 0.4, 0, f.r * 0.09, f.r * 1.05, k * 0.05, 0, 7); ctx.fill(); }
+      ctx.restore();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(-f.r * 0.35, -f.r * 0.4, f.r * 0.28, f.r * 0.16, -0.6, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawHalf(h) {
+  const t = h.type;
+  ctx.save();
+  ctx.translate(h.x, h.y);
+  ctx.rotate(h.rot);
+  const a0 = h.side > 0 ? 0 : Math.PI;
+  ctx.globalAlpha = Math.min(1, h.life * 2);
+  ctx.fillStyle = t.skin; ctx.beginPath(); ctx.arc(0, 0, h.r, a0, a0 + Math.PI); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = t.rind; ctx.beginPath(); ctx.arc(0, 0, h.r * 0.9, a0, a0 + Math.PI); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = t.flesh; ctx.beginPath(); ctx.arc(0, 0, h.r * 0.8, a0, a0 + Math.PI); ctx.closePath(); ctx.fill();
+  if (t.seeds) {
+    ctx.fillStyle = t.seeds;
+    for (let k = 0; k < 5; k++) { const a = a0 + 0.4 + k * 0.55; ctx.beginPath(); ctx.ellipse(Math.cos(a) * h.r * 0.5, Math.sin(a) * h.r * 0.5, 2.5, 4, a, 0, 7); ctx.fill(); }
+  }
+  ctx.restore();
+}
+
+function draw() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (G.shake > 0) ctx.translate((Math.random() - 0.5) * 16 * G.shake, (Math.random() - 0.5) * 16 * G.shake);
+  if (G.camera && video.readyState >= 2) {
+    drawCover(ctx, W, H);
+    ctx.fillStyle = 'rgba(36, 22, 44, .62)'; ctx.fillRect(-20, -20, W + 40, H + 40);
+  } else {
+    const gr = ctx.createLinearGradient(0, 0, 0, H);
+    gr.addColorStop(0, '#3b2346'); gr.addColorStop(1, '#1f1628');
+    ctx.fillStyle = gr; ctx.fillRect(-20, -20, W + 40, H + 40);
+    ctx.fillStyle = 'rgba(255,255,255,.03)';
+    for (let y = 0; y < H; y += 46) ctx.fillRect(0, y, W, 2);
+  }
+  for (const s of G.splats) {
+    ctx.globalAlpha = Math.min(0.35, s.life * 0.2); ctx.fillStyle = s.color;
+    for (const [dx, dy, r] of s.drops) { ctx.beginPath(); ctx.arc(s.x + dx, s.y + dy, r, 0, 7); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+  for (const h of G.halves) drawHalf(h);
+  for (const f of G.fruits) drawFruit(f);
+  for (const p of G.parts) { ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  if (G.trail.length > 1) {
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (let i = 1; i < G.trail.length; i++) {
+      const a = G.trail[i - 1], b = G.trail[i];
+      ctx.strokeStyle = 'rgba(255, 248, 238,' + Math.min(1, b.life * 6) + ')';
+      ctx.lineWidth = 2 + i * 0.5;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+  }
+  if (G.flash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + G.flash + ')'; ctx.fillRect(-20, -20, W + 40, H + 40); }
+
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (G.mode === 'play' || G.mode === 'over') {
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#ffd166'; ctx.font = '900 40px system-ui, sans-serif';
+    ctx.fillText(G.score, 16, 34);
+    ctx.fillStyle = '#c9b8a6'; ctx.font = '600 14px system-ui, sans-serif';
+    ctx.fillText('best ' + G.best[G.game], 18, 78);
+    ctx.textAlign = 'right';
+    if (G.game === 'classic') {
+      ctx.font = '900 30px system-ui, sans-serif';
+      for (let i = 0; i < 3; i++) { ctx.fillStyle = i < 3 - G.lives ? '#ff4d4d' : 'rgba(255,255,255,.25)'; ctx.fillText('✕', W - 16 - i * 34, G.camera ? 52 : 34); }
+    } else {
+      ctx.fillStyle = G.zenLeft < 10 ? '#ff6b6b' : '#fff8ee'; ctx.font = '900 34px system-ui, sans-serif';
+      ctx.fillText(Math.ceil(G.zenLeft), W - 16, G.camera ? 52 : 34);
+    }
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const p of G.pops) {
+    ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = p.color; ctx.font = '900 ' + Math.round(Math.min(W, 900) / 18) + 'px system-ui, sans-serif';
+    ctx.fillText(p.text, p.x, p.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// --- input
+
+let lastPt = null;
+function pt(e) { return [e.clientX, e.clientY]; }
+cv.addEventListener('pointerdown', e => { lastPt = pt(e); try { cv.setPointerCapture(e.pointerId); } catch (err) { } addTrail(...lastPt); });
+cv.addEventListener('pointermove', e => {
+  const p = pt(e);
+  if (lastPt && (e.buttons || e.pointerType === 'touch')) swipe(lastPt[0], lastPt[1], p[0], p[1]);
+  lastPt = p;
+});
+const up = () => { lastPt = null; };
+cv.addEventListener('pointerup', up);
+cv.addEventListener('pointercancel', up);
+cv.addEventListener('pointerleave', up);
+
+let pick = 'classic';
+function setPick(g) { pick = g; $('mClassic').classList.toggle('on', g === 'classic'); $('mZen').classList.toggle('on', g === 'zen'); }
+$('mClassic').onclick = () => setPick('classic');
+$('mZen').onclick = () => setPick('zen');
+$('camBtn').onclick = async () => { const ok = await startCamera(); startGame(pick, ok); };
+$('swipeBtn').onclick = () => { stopCamera(); startGame(pick, false); };
+$('againBtn').onclick = () => startGame(G.game, G.camera);
+$('menuBtn').onclick = () => { G.mode = 'menu'; $('over').hidden = true; $('menu').hidden = false; $('tools').hidden = true; };
+$('quit').onclick = () => { stopCamera(); G.mode = 'menu'; G.fruits = []; $('menu').hidden = false; $('tools').hidden = true; };
+addEventListener('keydown', e => { if (e.key === 'Enter' && G.mode === 'over') startGame(G.game, G.camera); });
+
+let last = performance.now(), camAcc = 0;
+function frame(now) {
+  const dt = Math.max(0, Math.min(0.033, (now - last) / 1000));
+  last = now;
+  camAcc += dt;
+  if (camAcc >= 1 / 30) { camAcc = 0; readCamera(); }
+  update(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Fruit Slicer</h2>
+<p>A Fruit Ninja-style game you play with your webcam. Fruit is thrown up from the bottom of the screen, and you slice it by moving your hands in front of the camera. You can also play with a mouse or a finger by swiping. Don't slice the bombs.</p>
+<h3>Play</h3>
+<p>Pick a mode, then "Play with the camera" or "Play with mouse or touch". With the camera, hold still for a moment at the start while the game measures how noisy the picture is. Stand back far enough that your hands fit in the frame.</p>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>Move your hands in front of the camera</td><td>slice</td></tr><tr><td>Drag with the mouse, or swipe with a finger</td><td>slice</td></tr><tr><td>Sensitivity slider</td><td>how much movement counts as a slice</td></tr><tr><td>Enter</td><td>play again after a game</td></tr></table>
+<h3>Rules</h3>
+<ul><li>Classic: you have 3 lives. Each fruit that falls without being sliced costs one, and so does slicing a bomb.</li><li>Zen: 90 seconds, no bombs, and missed fruit costs nothing.</li><li>Every fruit is 1 point. Slicing 3 or more in one quick stroke is a combo, worth that many extra points.</li><li>Waves get bigger and come faster as the game goes on.</li><li>Your best score for each mode is saved in <code>localStorage</code>.</li></ul>
+<h3>How the camera works</h3>
+<p>There's no AI model. Each frame is drawn mirrored into a small canvas about 160 pixels wide and turned to grayscale. Comparing it with the previous frame gives a map of the pixels that changed. A fruit is sliced when enough of the area under it moved. The slice direction comes from how the centre of the movement shifted over the last few frames, and the blade trail follows that centre.</p>
+<p>The hold-still step at the start measures how much the picture changes on its own (camera noise, flicker, a fan in the background) and raises the bar by that much. The sensitivity slider moves both the per-pixel threshold and the share of a fruit that has to move.</p>
+<p>The camera picture never leaves the device. Nothing is recorded or sent.</p>
+<p>Limits: any movement counts, not just hands, so a busy background or someone walking past can slice fruit. A plain background and good light work best. If the camera isn't available or permission is refused, the game switches to swipes.</p>
+<p class="pg-more">More like this: <a href="../dune-drift/">Dune Drift</a>, <a href="../pixel-logic/">Pixel Logic</a>, <a href="../glow-out/">Glow Out</a>, <a href="../flood-rush/">Flood Rush</a>. Or see <a href="../#games">all games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/fruit-slicer">fruit-slicer on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

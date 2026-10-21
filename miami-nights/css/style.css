@@ -12,3 +12,12 @@ a.back {
   color: #ff6fb0; font: 12px 'Courier New', monospace; text-decoration: none; opacity: 0.75;
 }
 a.back:hover { opacity: 1; }
+#onlineBtn {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 6;
+  font: bold 15px 'Courier New', monospace; color: #0b0d16; background: #28e0ff; border: 0; border-radius: 22px;
+  padding: 11px 20px; cursor: pointer; box-shadow: 0 0 18px rgba(40, 224, 255, .45);
+}
+#onlineBtn:hover { filter: brightness(1.08); }
+#onlineBtn:focus-visible { outline: 2px solid #ffd166; outline-offset: 3px; }
+#onlineBtn[hidden] { display: none; }
+.lp-panel { --lp-accent: #28e0ff; --lp-veil: rgba(8, 6, 24, .92); cursor: default; }

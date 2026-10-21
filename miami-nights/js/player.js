@@ -14,7 +14,7 @@ const Player = {
       c.throttle = (keyDown('w', 'ArrowUp') ? 1 : 0) + (keyDown('s', 'ArrowDown') ? -1 : 0);
       c.steer = (keyDown('d', 'ArrowRight') ? 1 : 0) - (keyDown('a', 'ArrowLeft') ? 1 : 0);
       c.hand = keyDown(' ');
-      if (keyPressed('e')) this.exitCar();
+      if (keyPressed('e') && !(typeof Online !== 'undefined' && Online.active)) this.exitCar();
     } else {
       // street view: A/D turn, W/S move along facing; top-down: world-relative WASD
       const street = typeof viewMode !== 'undefined' && viewMode === 'street';
@@ -57,6 +57,7 @@ const Player = {
     let best = null, bd = 55 * 55;
     const all = Game.cars.concat(Game.police);
     for (const c of all) {
+      if (c.remote) continue;
       const d = dist2(this.x, this.y, c.x, c.y);
       if (d < bd) { bd = d; best = c; }
     }
