@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314b38a'/%3E%3Cpath d='M9 10h14M9 16h14M9 22h8' stroke='%23ffffff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<title>Split Bill | split expenses with friends, Splitwise alternative</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/split-bill/">
+<style>
+  :root { --paper:#f4f5f1; --ink:#1a1b18; --muted:#6c6f66; --rule:#dcdfd6; --card:#ffffff; --accent:#0f8f6e; --accent-soft:#e2f4ee; --bad:#cf3a2f; --good:#0f8f6e; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#111312; --ink:#e7e9e3; --muted:#959a90; --rule:#2b2f2c; --card:#1a1d1b; --accent:#3fd3a8; --accent-soft:#163029; --bad:#ff6b5f; --good:#3fd3a8; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 72px; }
+  main { max-width:720px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { font-size:18px; margin:0 0 10px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--rule); border-radius:14px; padding:16px; margin-top:16px; }
+  label { display:block; font-weight:600; margin:12px 0 5px; font-size:14px; }
+  input, select { font:inherit; font-size:16px; padding:9px 11px; border-radius:9px; border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); min-width:0; }
+  input[type=checkbox] { width:18px; height:18px; padding:0; accent-color:var(--accent); }
+  .full { width:100%; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .grow { flex:1; min-width:0; }
+  button { font:inherit; font-weight:600; font-size:15px; padding:9px 14px; border-radius:9px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { border-color:var(--ink); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  @media (prefers-color-scheme: dark) { button.primary { color:#0c1a15; } }
+  button.link { border:0; background:none; padding:4px 6px; color:var(--accent); }
+  button.danger { color:var(--bad); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:18px; }
+  .bar select { flex:1; min-width:150px; font-weight:600; }
+  .tabs { display:flex; gap:4px; margin-top:16px; border-bottom:1.5px solid var(--rule); }
+  .tabs button { border:0; border-radius:9px 9px 0 0; background:none; color:var(--muted); padding:9px 14px; }
+  .tabs button.on { color:var(--ink); box-shadow:inset 0 -3px 0 var(--accent); }
+  .stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .stats div { background:var(--paper); border-radius:10px; padding:10px 12px; }
+  .stats b { display:block; font-size:20px; font-variant-numeric:tabular-nums; }
+  .stats span { font-size:13px; color:var(--muted); }
+  @media (max-width:540px) { .stats { grid-template-columns:1fr 1fr; } }
+  .list { list-style:none; margin:0; padding:0; }
+  .list li { display:flex; gap:12px; align-items:center; padding:11px 4px; border-bottom:1px solid var(--rule); }
+  .list li:last-child { border-bottom:0; }
+  .list li.click { cursor:pointer; }
+  .list li.click:hover { background:var(--accent-soft); border-radius:8px; }
+  .date { width:44px; text-align:center; font-size:12px; color:var(--muted); line-height:1.2; flex:none; }
+  .date b { display:block; font-size:18px; color:var(--ink); }
+  .amt { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .amt small { display:block; font-size:12px; }
+  .pos { color:var(--good); } .neg { color:var(--bad); }
+  .meter { height:8px; border-radius:4px; background:var(--paper); overflow:hidden; margin-top:4px; position:relative; }
+  .meter i { position:absolute; top:0; bottom:0; }
+  .seg { display:inline-flex; border:1.5px solid var(--rule); border-radius:9px; overflow:hidden; flex-wrap:wrap; }
+  .seg button { border:0; border-radius:0; padding:7px 12px; font-size:14px; }
+  .seg button.on { background:var(--accent); color:#fff; }
+  .parts .p { display:flex; gap:10px; align-items:center; padding:6px 0; }
+  .parts .p span.n { flex:1; }
+  .parts input[type=text] { width:110px; text-align:right; }
+  .parts .share { width:96px; text-align:right; color:var(--muted); font-size:14px; font-variant-numeric:tabular-nums; }
+  .note { font-size:14px; padding:8px 10px; border-radius:8px; background:var(--accent-soft); }
+  .note.bad { background:transparent; color:var(--bad); padding-left:0; }
+  .veil { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:24px 12px; overflow-y:auto; z-index:5; }
+  .veil .card { width:min(560px, 100%); margin:0; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:5px 6px 5px 11px; border-radius:20px; background:var(--accent-soft); font-size:14px; }
+  .chip button { padding:0 7px; border:0; background:none; font-size:16px; color:var(--muted); }
+  .qr { display:block; margin:10px auto; image-rendering:pixelated; background:#fff; border-radius:8px; }
+  .code { display:flex; gap:6px; }
+  .code input { flex:1; font:13px ui-monospace, Menlo, monospace; }
+  .empty { text-align:center; padding:26px 10px; color:var(--muted); }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Split Bill">
+<meta property="og:description" content="Split trip, flat and dinner expenses with friends. See who owes whom, settle up in the fewest payments with UPI, and share the group as a link. Nothing is uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/split-bill/">
+<meta property="og:image" content="https://rajeshrenato.github.io/split-bill/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Split trip, flat and dinner expenses with friends. See who owes whom, settle up in the fewest payments with UPI, and share the group as a link. Nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Split Bill", "item": "https://rajeshrenato.github.io/split-bill/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Split Bill", "url": "https://rajeshrenato.github.io/split-bill/", "description": "Split trip, flat and dinner expenses with friends. See who owes whom, settle up in the fewest payments with UPI, and share the group as a link. Nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Split Bill</h1>
+  <p class="lede">Split trip, flat and dinner expenses with friends. See who owes whom, settle up in the fewest payments, and share the group as a link.</p>
+  <p class="muted small">Everything stays in this browser. A shared link carries the group inside it, so no server ever sees your expenses.</p>
+
+  <div id="incoming" class="card" hidden></div>
+
+  <div class="bar" id="bar" hidden>
+    <select id="groupSel" aria-label="Group"></select>
+    <button id="newGroupBtn">New group</button>
+    <button id="shareBtn">Share</button>
+    <button id="csvBtn">Export CSV</button>
+  </div>
+
+  <section id="setup" class="card" hidden>
+    <h2>Start a group</h2>
+    <p class="muted small">A trip, a flat, a dinner. Add the people now; you can add more later.</p>
+    <label for="gName">Group name</label>
+    <input id="gName" class="full" maxlength="60" placeholder="Goa trip">
+    <label for="gCur">Currency</label>
+    <select id="gCur" class="full"></select>
+    <label for="gPerson">People</label>
+    <div class="row"><input id="gPerson" class="grow" maxlength="30" placeholder="A name, then Enter"><button id="gAdd">Add</button></div>
+    <div class="chips" id="gPeople" style="margin-top:10px"></div>
+    <p class="note bad" id="gErr" hidden></p>
+    <div class="row" style="margin-top:16px"><button class="primary" id="gCreate">Create group</button><button id="gCancel" hidden>Cancel</button></div>
+  </section>
+
+  <section id="groupView" hidden>
+    <div class="card">
+      <div class="stats" id="stats"></div>
+      <div class="row small" style="margin-top:12px"><span class="muted">On this device I am</span><select id="meSel" aria-label="Who are you"></select></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button data-tab="expenses" class="on">Expenses</button>
+      <button data-tab="balances">Balances</button>
+      <button data-tab="people">People</button>
+    </nav>
+    <div data-pane="expenses">
+      <div class="row" style="margin:14px 0 4px"><button class="primary" id="addExpBtn">Add expense</button><button id="addPayBtn">Record a payment</button></div>
+      <ul class="list" id="expList"></ul>
+    </div>
+    <div data-pane="balances" hidden>
+      <div class="card"><h2>Balances</h2><ul class="list" id="balList"></ul></div>
+      <div class="card"><h2>Settle up</h2><p class="muted small">The fewest payments that clear every debt.</p><ul class="list" id="settleList"></ul></div>
+    </div>
+    <div data-pane="people" hidden>
+      <div class="card">
+        <ul class="list" id="peopleList"></ul>
+        <div class="row" style="margin-top:12px"><input id="newPerson" class="grow" maxlength="30" placeholder="Add someone"><button id="newPersonBtn">Add</button></div>
+        <p class="muted small" style="margin-top:12px">Add a UPI ID to someone and a "Pay with UPI" button appears when others settle up with them.</p>
+      </div>
+      <div class="card"><h2>Group</h2>
+        <div class="row"><input id="renameIn" class="grow" maxlength="60"><button id="renameBtn">Rename</button></div>
+        <div class="row" style="margin-top:10px"><button class="danger" id="deleteGroupBtn">Delete this group from this device</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="veil" id="veil" hidden><div class="card" id="dlg"></div></div>
+
+<script src="../common/qr.js"></script>
+<script>
+'use strict';
+
+// ======================================================================
+// Money. Amounts are kept as whole numbers of the currency's smallest unit
+// (paise, cents), so splits always add up exactly.
+// ======================================================================
+
+const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD', 'JPY', 'LKR', 'NPR', 'BDT', 'MYR', 'THB', 'IDR', 'ZAR', 'NZD', 'CHF'];
+const digitsOf = cur => { try { return new Intl.NumberFormat('en', { style: 'currency', currency: cur }).resolvedOptions().maximumFractionDigits; } catch (e) { return 2; } };
+function parseAmount(str, cur) {
+  const s = String(str).replace(/[,\s]/g, '').replace(/^[^\d.-]+/, '');
+  if (!/^-?\d*(\.\d*)?$/.test(s) || s === '' || s === '.' || s === '-') return NaN;
+  const d = digitsOf(cur), v = Math.round(parseFloat(s) * 10 ** d);
+  return Number.isFinite(v) ? v : NaN;
+}
+const fmtCache = {};
+function fmt(minor, cur) {
+  const d = digitsOf(cur);
+  try {
+    const f = fmtCache[cur] || (fmtCache[cur] = new Intl.NumberFormat(cur === 'INR' ? 'en-IN' : undefined, { style: 'currency', currency: cur, minimumFractionDigits: d }));
+    return f.format(minor / 10 ** d);
+  } catch (e) { return (minor / 10 ** d).toFixed(d) + ' ' + cur; }
+}
+const plain = (minor, cur) => (minor / 10 ** digitsOf(cur)).toFixed(digitsOf(cur));
+
+// Splits a total over weights by the largest-remainder method, so the pieces add up to the total.
+function apportion(total, weights) {
+  const ids = Object.keys(weights).filter(k => weights[k] > 0);
+  const sum = ids.reduce((t, k) => t + weights[k], 0);
+  const out = {};
+  if (!sum) return out;
+  let given = 0;
+  const rest = [];
+  for (const k of ids) { const exact = total * weights[k] / sum, base = Math.floor(exact); out[k] = base; given += base; rest.push([exact - base, k]); }
+  rest.sort((a, b) => b[0] - a[0] || (a[1] < b[1] ? -1 : 1));
+  for (let i = 0; i < total - given; i++) out[rest[i % rest.length][1]]++;
+  return out;
+}
+// What each person owes for one item: { personId: amount }
+function shareOf(item) {
+  if (item.kind === 'pay') return { [item.to]: item.amt };
+  const sp = item.split || { mode: 'equal', parts: {} };
+  if (sp.mode === 'exact') { const o = {}; for (const [k, v] of Object.entries(sp.parts)) if (v > 0) o[k] = v; return o; }
+  return apportion(item.amt, sp.parts);
+}
+const live = list => list.filter(x => !x.del);
+// Each person's balance: positive means they get money back, negative means they owe.
+function balances(g) {
+  const b = {};
+  for (const p of live(g.people)) b[p.id] = 0;
+  for (const it of live(g.items)) {
+    const payer = it.kind === 'pay' ? it.from : it.by;
+    b[payer] = (b[payer] || 0) + it.amt;
+    for (const [k, v] of Object.entries(shareOf(it))) b[k] = (b[k] || 0) - v;
+  }
+  return b;
+}
+// The fewest payments that settle everyone: the biggest debtor pays the biggest creditor, repeatedly.
+function settle(bal) {
+  const debt = Object.entries(bal).filter(([, v]) => v < 0).map(([k, v]) => [k, -v]);
+  const cred = Object.entries(bal).filter(([, v]) => v > 0).map(([k, v]) => [k, v]);
+  const out = [];
+  const byBig = (a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1);
+  while (debt.length && cred.length) {
+    debt.sort(byBig); cred.sort(byBig);
+    const d = debt[0], c = cred[0], amt = Math.min(d[1], c[1]);
+    out.push({ from: d[0], to: c[0], amt });
+    d[1] -= amt; c[1] -= amt;
+    if (!d[1]) debt.shift();
+    if (!c[1]) cred.shift();
+  }
+  return out;
+}
+function stats(g) {
+  const spent = {}, paid = {};
+  let total = 0;
+  for (const it of live(g.items)) {
+    if (it.kind === 'pay') continue;
+    total += it.amt;
+    paid[it.by] = (paid[it.by] || 0) + it.amt;
+    for (const [k, v] of Object.entries(shareOf(it))) spent[k] = (spent[k] || 0) + v;
+  }
+  return { total, spent, paid };
+}
+
+// ======================================================================
+// Storage and sharing. A group travels as a compressed link; opening it
+// merges with the copy already here, keeping the newer version of each entry.
+// ======================================================================
+
+const KEY = 'split-bill-v1';
+let S = { groups: {}, current: null, me: {} };
+try { const raw = JSON.parse(localStorage.getItem(KEY) || 'null'); if (raw && raw.groups) S = Object.assign(S, raw); } catch (e) { }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+// today's date where the user is, not in UTC
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+
+function newGroup(name, cur, names) {
+  const now = Date.now();
+  return { id: uid(), name, cur, u: now, people: names.map(n => ({ id: uid(), name: n, upi: '', u: now })), items: [] };
+}
+function mergeGroup(a, b) {
+  const byId = (x, y) => {
+    const m = new Map();
+    for (const e of x) m.set(e.id, e);
+    for (const e of y) { const o = m.get(e.id); if (!o || (e.u || 0) > (o.u || 0)) m.set(e.id, e); }
+    return [...m.values()];
+  };
+  const newer = (b.u || 0) > (a.u || 0) ? b : a;
+  return { ...a, name: newer.name, cur: newer.cur, u: Math.max(a.u || 0, b.u || 0), people: byId(a.people, b.people), items: byId(a.items, b.items) };
+}
+const b64u = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const unb64u = s => { const b = atob(s.replace(/-/g, '+').replace(/_/g, '/')); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+async function pipe(bytes, S2) { return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new S2('deflate'))).arrayBuffer()); }
+// Deleted entries are dropped from the link only once nobody could still have the old copy; they're kept so deletions merge too.
+async function encodeGroup(g) {
+  const json = new TextEncoder().encode(JSON.stringify({ v: 1, g }));
+  if (typeof CompressionStream === 'function') return 'z' + b64u(await pipe(json, CompressionStream));
+  return 'j' + b64u(json);
+}
+async function decodeGroup(code) {
+  const kind = code[0], bytes = unb64u(code.slice(1));
+  const json = kind === 'z' ? await pipe(bytes, DecompressionStream) : bytes;
+  const o = JSON.parse(new TextDecoder().decode(json));
+  if (!o || o.v !== 1) throw new Error('version');
+  return validGroup(o.g);
+}
+// A link can come from anyone, so check its shape before trusting it.
+function validGroup(g) {
+  const str = (v, n) => typeof v === 'string' && v.length <= n;
+  const int = v => Number.isInteger(v) && v >= 0 && v < 1e13;
+  if (!g || !str(g.id, 40) || !str(g.name, 80) || !CURRENCIES.includes(g.cur) || !Array.isArray(g.people) || !Array.isArray(g.items)) throw new Error('shape');
+  if (g.people.length > 100 || g.items.length > 5000) throw new Error('size');
+  const ids = new Set();
+  for (const p of g.people) { if (!str(p.id, 40) || !str(p.name, 40) || (p.upi && !str(p.upi, 80))) throw new Error('person'); ids.add(p.id); }
+  for (const it of g.items) {
+    if (!str(it.id, 40) || !int(it.amt) || !['exp', 'pay'].includes(it.kind) || (it.date && !/^\d{4}-\d{2}-\d{2}$/.test(it.date))) throw new Error('item');
+    if (it.kind === 'pay' && !(ids.has(it.from) && ids.has(it.to))) throw new Error('pay');
+    if (it.kind === 'exp') {
+      if (!ids.has(it.by) || !str(it.desc || '', 120) || !it.split || !['equal', 'exact', 'shares', 'percent'].includes(it.split.mode)) throw new Error('exp');
+      for (const [k, v] of Object.entries(it.split.parts || {})) if (!ids.has(k) || !(typeof v === 'number' && v >= 0 && v < 1e13)) throw new Error('part');
+    }
+  }
+  return g;
+}
+
+// ======================================================================
+// The page
+// ======================================================================
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const G = () => S.groups[S.current];
+const person = (g, id) => g.people.find(p => p.id === id) || { name: '?' };
+let tab = 'expenses';
+
+function render() {
+  const ids = Object.keys(S.groups);
+  $('bar').hidden = !ids.length;
+  if (!ids.length || !S.groups[S.current]) S.current = ids[0] || null;
+  $('groupSel').innerHTML = ids.map(id => '<option value="' + id + '"' + (id === S.current ? ' selected' : '') + '>' + esc(S.groups[id].name) + '</option>').join('');
+  if (!S.current) { $('groupView').hidden = true; showSetup(false); return; }
+  $('setup').hidden = true;
+  $('groupView').hidden = false;
+  const g = G(), cur = g.cur, bal = balances(g), st = stats(g), me = S.me[g.id];
+  const people = live(g.people);
+  $('meSel').innerHTML = '<option value="">nobody in particular</option>' + people.map(p => '<option value="' + p.id + '"' + (p.id === me ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
+  let mine = '';
+  if (me && bal[me] !== undefined) {
+    const v = bal[me];
+    mine = '<div><b class="' + (v > 0 ? 'pos' : v < 0 ? 'neg' : '') + '">' + fmt(Math.abs(v), cur) + '</b><span>' + (v > 0 ? 'you get back' : v < 0 ? 'you owe' : 'you\'re settled') + '</span></div>';
+  }
+  $('stats').innerHTML = '<div><b>' + fmt(st.total, cur) + '</b><span>spent in total</span></div>' +
+    '<div><b>' + live(g.items).filter(i => i.kind === 'exp').length + '</b><span>expenses</span></div>' +
+    (mine || '<div><b>' + people.length + '</b><span>people</span></div>');
+  for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b.dataset.tab === tab);
+  for (const p of document.querySelectorAll('[data-pane]')) p.hidden = p.dataset.pane !== tab;
+  renderExpenses(g); renderBalances(g, bal); renderPeople(g, bal);
+  $('renameIn').value = g.name;
+}
+
+function renderExpenses(g) {
+  const items = live(g.items).sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.u - a.u);
+  const me = S.me[g.id];
+  if (!items.length) { $('expList').innerHTML = '<li class="empty">No expenses yet. Add the first one.</li>'; return; }
+  $('expList').innerHTML = items.map(it => {
+    const d = it.date ? new Date(it.date + 'T00:00') : null;
+    const when = d ? '<div class="date">' + d.toLocaleString(undefined, { month: 'short' }) + '<b>' + d.getDate() + '</b></div>' : '<div class="date"></div>';
+    if (it.kind === 'pay') return '<li class="click" data-id="' + it.id + '">' + when + '<div class="grow"><b>' + esc(person(g, it.from).name) + '</b> paid <b>' + esc(person(g, it.to).name) + '</b><div class="muted small">Payment</div></div><div class="amt">' + fmt(it.amt, g.cur) + '</div></li>';
+    let mineTxt = '';
+    if (me) {
+      const owe = shareOf(it)[me] || 0, net = (it.by === me ? it.amt : 0) - owe;
+      if (net) mineTxt = '<small class="' + (net > 0 ? 'pos' : 'neg') + '">' + (net > 0 ? 'you lent ' : 'you borrowed ') + fmt(Math.abs(net), g.cur) + '</small>';
+      else mineTxt = '<small class="muted">not involved</small>';
+    }
+    return '<li class="click" data-id="' + it.id + '">' + when + '<div class="grow"><b>' + esc(it.desc || 'Expense') + '</b><div class="muted small">' + esc(person(g, it.by).name) + ' paid ' + fmt(it.amt, g.cur) + '</div></div><div class="amt">' + fmt(it.amt, g.cur) + mineTxt + '</div></li>';
+  }).join('');
+  for (const li of $('expList').querySelectorAll('li[data-id]')) li.onclick = () => { const it = g.items.find(x => x.id === li.dataset.id); if (it.kind === 'pay') payForm(it); else expenseForm(it); };
+}
+
+function renderBalances(g, bal) {
+  const people = live(g.people), max = Math.max(1, ...people.map(p => Math.abs(bal[p.id] || 0)));
+  $('balList').innerHTML = people.map(p => {
+    const v = bal[p.id] || 0, w = Math.abs(v) / max * 50;
+    return '<li><div class="grow"><b>' + esc(p.name) + '</b><div class="meter"><i style="' + (v >= 0 ? 'left:50%;width:' + w + '%;background:var(--good)' : 'right:50%;width:' + w + '%;background:var(--bad)') + '"></i></div></div>' +
+      '<div class="amt ' + (v > 0 ? 'pos' : v < 0 ? 'neg' : 'muted') + '">' + (v > 0 ? 'gets back ' : v < 0 ? 'owes ' : 'settled ') + (v ? fmt(Math.abs(v), g.cur) : '') + '</div></li>';
+  }).join('');
+  const plan = settle(bal);
+  if (!plan.length) { $('settleList').innerHTML = '<li class="empty">Everyone is settled up.</li>'; return; }
+  $('settleList').innerHTML = plan.map((t, i) => {
+    const to = person(g, t.to), upi = g.cur === 'INR' && to.upi;
+    return '<li><div class="grow"><b>' + esc(person(g, t.from).name) + '</b> pays <b>' + esc(to.name) + '</b></div><div class="amt">' + fmt(t.amt, g.cur) + '</div>' +
+      '<div class="row">' + (upi ? '<button class="link" data-upi="' + i + '">UPI</button>' : '') + '<button class="link" data-rec="' + i + '">Mark paid</button></div></li>';
+  }).join('');
+  for (const b of $('settleList').querySelectorAll('[data-rec]')) b.onclick = () => { const t = plan[+b.dataset.rec]; payForm(null, t); };
+  for (const b of $('settleList').querySelectorAll('[data-upi]')) b.onclick = () => upiDialog(g, plan[+b.dataset.upi]);
+}
+
+function renderPeople(g, bal) {
+  $('peopleList').innerHTML = live(g.people).map(p => '<li><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.upi ? 'UPI: ' + esc(p.upi) : 'No UPI ID') + '</div></div>' +
+    '<button class="link" data-edit="' + p.id + '">Edit</button>' + (involved(g, p.id) ? '' : '<button class="link danger" data-del="' + p.id + '">Remove</button>') + '</li>').join('');
+  for (const b of $('peopleList').querySelectorAll('[data-edit]')) b.onclick = () => personForm(g, g.people.find(p => p.id === b.dataset.edit));
+  for (const b of $('peopleList').querySelectorAll('[data-del]')) b.onclick = () => { const p = g.people.find(x => x.id === b.dataset.del); p.del = true; p.u = Date.now(); touch(g); };
+}
+const involved = (g, id) => live(g.items).some(it => it.by === id || it.from === id || it.to === id || (it.split && it.split.parts && it.split.parts[id] > 0));
+function touch(g) { g.u = Date.now(); save(); render(); }
+
+// ---- dialogs
+
+function openDlg(html) { $('dlg').innerHTML = html; $('veil').hidden = false; const f = $('dlg').querySelector('input, select'); if (f) setTimeout(() => f.focus(), 30); }
+function closeDlg() { $('veil').hidden = true; $('dlg').innerHTML = ''; }
+$('veil').addEventListener('click', e => { if (e.target === $('veil')) closeDlg(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('veil').hidden) closeDlg(); });
+
+function expenseForm(it) {
+  const g = G(), people = live(g.people), cur = g.cur;
+  const draft = it ? JSON.parse(JSON.stringify(it)) : { id: uid(), kind: 'exp', desc: '', amt: 0, by: S.me[g.id] || people[0].id, date: today(), split: { mode: 'equal', parts: Object.fromEntries(people.map(p => [p.id, 1])) } };
+  // the values typed for each person in the current mode
+  const typed = {};
+  for (const p of people) {
+    const v = draft.split.parts[p.id] || 0;
+    typed[p.id] = draft.split.mode === 'exact' ? (v ? plain(v, cur) : '') : draft.split.mode === 'equal' ? '' : (v ? String(v) : '');
+  }
+  const html = () => '<h2>' + (it ? 'Edit expense' : 'Add an expense') + '</h2>' +
+    '<label for="eDesc">What was it for?</label><input id="eDesc" class="full" maxlength="100" placeholder="Dinner, taxi, groceries" value="' + esc(draft.desc) + '">' +
+    '<div class="row"><div class="grow"><label for="eAmt">Amount (' + cur + ')</label><input id="eAmt" class="full" inputmode="decimal" placeholder="0" value="' + (draft.amt ? plain(draft.amt, cur) : '') + '"></div>' +
+    '<div class="grow"><label for="eDate">Date</label><input id="eDate" type="date" class="full" value="' + esc(draft.date || today()) + '"></div></div>' +
+    '<label for="eBy">Paid by</label><select id="eBy" class="full">' + people.map(p => '<option value="' + p.id + '"' + (p.id === draft.by ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</select>' +
+    '<label>Split</label><div class="seg" id="eMode">' + [['equal', 'Equally'], ['exact', 'Exact amounts'], ['shares', 'By shares'], ['percent', 'By percent']].map(([k, l]) => '<button data-m="' + k + '" class="' + (draft.split.mode === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+    '<div class="parts" id="eParts"></div><p class="note" id="eNote"></p>' +
+    '<div class="row" style="margin-top:14px"><button class="primary" id="eSave">Save</button><button id="eCancel">Cancel</button>' + (it ? '<span class="grow"></span><button class="danger" id="eDel">Delete</button>' : '') + '</div>';
+  openDlg(html());
+  const parts = () => {
+    const m = draft.split.mode;
+    $('eParts').innerHTML = people.map(p => '<div class="p"><input type="checkbox" data-c="' + p.id + '"' + (m === 'equal' ? (draft.split.parts[p.id] > 0 ? ' checked' : '') : (typed[p.id] !== '' ? ' checked' : '')) + ' aria-label="Include ' + esc(p.name) + '"><span class="n">' + esc(p.name) + '</span>' +
+      (m === 'equal' ? '' : '<input type="text" inputmode="decimal" data-v="' + p.id + '" value="' + esc(typed[p.id]) + '" placeholder="' + (m === 'exact' ? '0' : m === 'percent' ? '%' : '1') + '">') +
+      '<span class="share" data-s="' + p.id + '"></span></div>').join('');
+    for (const c of $('eParts').querySelectorAll('[data-c]')) c.onchange = () => {
+      const id = c.dataset.c;
+      if (draft.split.mode === 'equal') draft.split.parts[id] = c.checked ? 1 : 0;
+      else typed[id] = c.checked ? (draft.split.mode === 'shares' ? '1' : typed[id] || '') : '';
+      if (draft.split.mode !== 'equal') parts(); else update();
+    };
+    for (const v of $('eParts').querySelectorAll('[data-v]')) v.oninput = () => { typed[v.dataset.v] = v.value; const c = $('eParts').querySelector('[data-c="' + v.dataset.v + '"]'); c.checked = v.value.trim() !== ''; update(); };
+    update();
+  };
+  // builds the split from what's typed, shows each share, and says what's wrong if anything
+  const update = () => {
+    const amt = parseAmount($('eAmt').value, cur), m = draft.split.mode;
+    draft.amt = Number.isFinite(amt) ? amt : 0;
+    let err = '', info = '';
+    const p2 = {};
+    if (m === 'equal') { for (const p of people) if (draft.split.parts[p.id] > 0) p2[p.id] = 1; if (!Object.keys(p2).length) err = 'Pick at least one person.'; }
+    else for (const p of people) {
+      const t = typed[p.id];
+      if (t === '' || t == null) continue;
+      const v = m === 'exact' ? parseAmount(t, cur) : parseFloat(t);
+      if (!Number.isFinite(v) || v < 0) { err = 'Check the number for ' + p.name + '.'; continue; }
+      if (v > 0) p2[p.id] = m === 'exact' ? v : v;
+    }
+    if (!err && m === 'exact') { const sum = Object.values(p2).reduce((a, b) => a + b, 0); if (sum !== draft.amt) err = (sum < draft.amt ? fmt(draft.amt - sum, cur) + ' still to assign.' : fmt(sum - draft.amt, cur) + ' more than the total.'); }
+    if (!err && m === 'percent') { const sum = Object.values(p2).reduce((a, b) => a + b, 0); if (Math.abs(sum - 100) > 1e-6) err = 'The percentages add up to ' + (Math.round(sum * 100) / 100) + '%, not 100%.'; }
+    if (!err && m !== 'equal' && !Object.keys(p2).length) err = 'Give at least one person a share.';
+    if (!err && !(draft.amt > 0)) err = 'Enter the amount.';
+    draft.split.parts = m === 'equal' ? Object.fromEntries(people.map(p => [p.id, draft.split.parts[p.id] > 0 ? 1 : 0])) : p2;
+    const sh = !err || err.startsWith('Enter') ? shareOf({ ...draft, split: { mode: m, parts: p2 } }) : {};
+    for (const el of $('eParts').querySelectorAll('[data-s]')) el.textContent = sh[el.dataset.s] ? fmt(sh[el.dataset.s], cur) : '';
+    if (!err && m === 'equal') info = 'Each pays about ' + fmt(Math.round(draft.amt / Object.keys(p2).length), cur) + '.';
+    $('eNote').textContent = err || info; $('eNote').className = 'note' + (err ? ' bad' : ''); $('eNote').hidden = !(err || info);
+    $('eSave').disabled = !!err;
+  };
+  $('eAmt').oninput = update;
+  for (const b of $('eMode').querySelectorAll('button')) b.onclick = () => {
+    const m = b.dataset.m, old = draft.split.mode;
+    if (m === old) return;
+    const included = people.filter(p => (old === 'equal' ? draft.split.parts[p.id] > 0 : typed[p.id] !== '' && typed[p.id] != null));
+    draft.split.mode = m;
+    if (m === 'equal') draft.split.parts = Object.fromEntries(people.map(p => [p.id, included.some(x => x.id === p.id) ? 1 : 0]));
+    else {
+      const n = included.length || 1, even = m === 'exact' ? apportion(draft.amt, Object.fromEntries(included.map(p => [p.id, 1]))) : null;
+      for (const p of people) {
+        const on = included.some(x => x.id === p.id);
+        typed[p.id] = !on ? '' : m === 'exact' ? plain(even[p.id] || 0, cur) : m === 'percent' ? String(Math.round(10000 / n) / 100) : '1';
+      }
+    }
+    for (const x of $('eMode').querySelectorAll('button')) x.classList.toggle('on', x === b);
+    parts();
+  };
+  parts();
+  $('eCancel').onclick = closeDlg;
+  $('eSave').onclick = () => {
+    update();
+    if ($('eSave').disabled) return;
+    draft.desc = $('eDesc').value.trim().slice(0, 100); draft.by = $('eBy').value; draft.date = $('eDate').value || today(); draft.u = Date.now();
+    const i = g.items.findIndex(x => x.id === draft.id);
+    if (i >= 0) g.items[i] = draft; else g.items.push(draft);
+    closeDlg(); touch(g);
+  };
+  if (it) $('eDel').onclick = () => { if (!confirm('Delete "' + (it.desc || 'this expense') + '"?')) return; Object.assign(g.items.find(x => x.id === it.id), { del: true, u: Date.now() }); closeDlg(); touch(g); };
+}
+
+function payForm(it, suggestion) {
+  const g = G(), people = live(g.people), cur = g.cur;
+  const d = it || { id: uid(), kind: 'pay', from: suggestion ? suggestion.from : people[0].id, to: suggestion ? suggestion.to : (people[1] || people[0]).id, amt: suggestion ? suggestion.amt : 0, date: today() };
+  const opts = sel => people.map(p => '<option value="' + p.id + '"' + (p.id === sel ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
+  openDlg('<h2>' + (it ? 'Edit payment' : 'Record a payment') + '</h2><p class="muted small">When someone pays someone back, record it here.</p>' +
+    '<div class="row"><div class="grow"><label for="pFrom">Who paid</label><select id="pFrom" class="full">' + opts(d.from) + '</select></div><div class="grow"><label for="pTo">Paid to</label><select id="pTo" class="full">' + opts(d.to) + '</select></div></div>' +
+    '<div class="row"><div class="grow"><label for="pAmt">Amount (' + cur + ')</label><input id="pAmt" class="full" inputmode="decimal" value="' + (d.amt ? plain(d.amt, cur) : '') + '"></div><div class="grow"><label for="pDate">Date</label><input id="pDate" type="date" class="full" value="' + esc(d.date) + '"></div></div>' +
+    '<p class="note bad" id="pErr" hidden></p><div class="row" style="margin-top:14px"><button class="primary" id="pSave">Save</button><button id="pCancel">Cancel</button>' + (it ? '<span class="grow"></span><button class="danger" id="pDel">Delete</button>' : '') + '</div>');
+  $('pCancel').onclick = closeDlg;
+  $('pSave').onclick = () => {
+    const amt = parseAmount($('pAmt').value, cur);
+    const err = $('pFrom').value === $('pTo').value ? 'Pick two different people.' : !(amt > 0) ? 'Enter the amount.' : '';
+    if (err) { $('pErr').textContent = err; $('pErr').hidden = false; return; }
+    Object.assign(d, { from: $('pFrom').value, to: $('pTo').value, amt, date: $('pDate').value || today(), u: Date.now() });
+    const i = g.items.findIndex(x => x.id === d.id);
+    if (i >= 0) g.items[i] = d; else g.items.push(d);
+    closeDlg(); touch(g);
+  };
+  if (it) $('pDel').onclick = () => { Object.assign(g.items.find(x => x.id === it.id), { del: true, u: Date.now() }); closeDlg(); touch(g); };
+}
+
+function personForm(g, p) {
+  openDlg('<h2>Edit ' + esc(p.name) + '</h2><label for="nName">Name</label><input id="nName" class="full" maxlength="30" value="' + esc(p.name) + '">' +
+    '<label for="nUpi">UPI ID (optional)</label><input id="nUpi" class="full" maxlength="60" placeholder="name@bank" value="' + esc(p.upi || '') + '" autocapitalize="off" spellcheck="false">' +
+    '<p class="note bad" id="nErr" hidden></p><div class="row" style="margin-top:14px"><button class="primary" id="nSave">Save</button><button id="nCancel">Cancel</button></div>');
+  $('nCancel').onclick = closeDlg;
+  $('nSave').onclick = () => {
+    const name = $('nName').value.trim(), upi = $('nUpi').value.trim();
+    const err = !name ? 'Enter a name.' : live(g.people).some(x => x.id !== p.id && x.name.toLowerCase() === name.toLowerCase()) ? 'Someone already has that name.' : upi && !/^[\w.\-]{2,}@[a-zA-Z][\w.\-]*$/.test(upi) ? 'A UPI ID looks like name@bank.' : '';
+    if (err) { $('nErr').textContent = err; $('nErr').hidden = false; return; }
+    Object.assign(p, { name, upi, u: Date.now() });
+    closeDlg(); touch(g);
+  };
+}
+
+// A UPI link that opens the payment apps on a phone, and the same as a QR code to scan from another phone.
+function upiLink(g, t) {
+  const to = person(g, t.to);
+  return 'upi://pay?pa=' + encodeURIComponent(to.upi).replace('%40', '@') + '&pn=' + encodeURIComponent(to.name) + '&am=' + plain(t.amt, 'INR') + '&cu=INR&tn=' + encodeURIComponent(g.name.slice(0, 40));
+}
+function qrCanvas(text, px) {
+  const q = makeQR(text, 'M');
+  const cv = document.createElement('canvas');
+  if (!q) return cv;
+  const cells = q.size + 8, s = Math.max(2, Math.floor(px / cells));
+  cv.width = cv.height = cells * s; cv.className = 'qr';
+  const x = cv.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); x.fillStyle = '#000';
+  q.modules.forEach((row, y) => row.forEach((on, c) => { if (on) x.fillRect((c + 4) * s, (y + 4) * s, s, s); }));
+  return cv;
+}
+function upiDialog(g, t) {
+  const link = upiLink(g, t);
+  openDlg('<h2>' + esc(person(g, t.from).name) + ' pays ' + esc(person(g, t.to).name) + ' ' + fmt(t.amt, 'INR') + '</h2>' +
+    '<p class="muted small">On a phone, the button opens your UPI app with everything filled in. From a laptop, scan the code with the phone that will pay.</p>' +
+    '<div id="upiQr"></div><div class="row"><a href="' + esc(link) + '" style="flex:1"><button class="primary" style="width:100%">Pay with UPI</button></a></div>' +
+    '<div class="row" style="margin-top:10px"><button id="uMark">Mark as paid</button><button id="uClose">Close</button></div>');
+  $('upiQr').appendChild(qrCanvas(link, 240));
+  $('uClose').onclick = closeDlg;
+  $('uMark').onclick = () => { closeDlg(); payForm(null, t); };
+}
+
+async function shareDialog() {
+  const g = G(), code = await encodeGroup(g), link = location.origin + location.pathname + '#g=' + code;
+  openDlg('<h2>Share "' + esc(g.name) + '"</h2><p class="muted small">Anyone who opens this link gets a copy of the group, with every expense. When they add expenses and share it back, opening their link merges the changes into your copy.</p>' +
+    '<div class="code"><input id="sLink" readonly value="' + esc(link) + '"><button id="sCopy">Copy</button></div>' +
+    (navigator.share ? '<div class="row" style="margin-top:10px"><button id="sNative">Share...</button></div>' : '') +
+    '<div id="sQr"></div><p class="muted small">' + (link.length > 2900 ? 'This group is too big for a QR code, so send the link instead.' : 'Or scan this from another phone.') + ' The link is ' + link.length.toLocaleString() + ' characters long.</p>' +
+    '<div class="row"><button id="sClose">Close</button></div>');
+  if (link.length <= 2900) $('sQr').appendChild(qrCanvas(link, 280));
+  $('sCopy').onclick = async () => { try { await navigator.clipboard.writeText(link); $('sCopy').textContent = 'Copied'; } catch (e) { $('sLink').select(); } };
+  if ($('sNative')) $('sNative').onclick = () => navigator.share({ title: g.name, text: 'Our expenses for ' + g.name, url: link }).catch(() => { });
+  $('sClose').onclick = closeDlg;
+}
+
+function exportCsv() {
+  const g = G(), people = live(g.people), cur = g.cur;
+  const q = v => /[",\n]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : v;
+  const rows = [['Date', 'Description', 'Paid by', 'Amount (' + cur + ')', ...people.map(p => p.name)]];
+  for (const it of live(g.items).sort((a, b) => (a.date || '').localeCompare(b.date || ''))) {
+    const sh = shareOf(it);
+    rows.push([it.date || '', it.kind === 'pay' ? 'Payment to ' + person(g, it.to).name : it.desc, person(g, it.kind === 'pay' ? it.from : it.by).name, plain(it.amt, cur), ...people.map(p => sh[p.id] ? plain(sh[p.id], cur) : '')]);
+  }
+  const bal = balances(g);
+  rows.push([], ['', 'Balance', '', '', ...people.map(p => plain(bal[p.id] || 0, cur))]);
+  const blob = new Blob(['﻿' + rows.map(r => r.map(q).join(',')).join('\r\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = g.name.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '-expenses.csv';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+// ---- starting a group
+
+let setupNames = [];
+function showSetup(cancellable) {
+  $('setup').hidden = false; $('groupView').hidden = true;
+  $('gCancel').hidden = !cancellable;
+  setupNames = []; $('gName').value = ''; $('gErr').hidden = true; drawChips();
+}
+function drawChips() {
+  $('gPeople').innerHTML = setupNames.map((n, i) => '<span class="chip">' + esc(n) + '<button data-i="' + i + '" aria-label="Remove ' + esc(n) + '">&times;</button></span>').join('');
+  for (const b of $('gPeople').querySelectorAll('button')) b.onclick = () => { setupNames.splice(+b.dataset.i, 1); drawChips(); };
+}
+function addSetupName() {
+  for (const n of $('gPerson').value.split(',').map(s => s.trim()).filter(Boolean)) if (!setupNames.some(x => x.toLowerCase() === n.toLowerCase())) setupNames.push(n.slice(0, 30));
+  $('gPerson').value = ''; drawChips();
+}
+$('gCur').innerHTML = CURRENCIES.map(c => '<option>' + c + '</option>').join('');
+try { const loc = (navigator.language || '').toUpperCase(); $('gCur').value = /IN$/.test(loc) ? 'INR' : /GB$/.test(loc) ? 'GBP' : /US$/.test(loc) ? 'USD' : 'INR'; } catch (e) { }
+$('gAdd').onclick = addSetupName;
+$('gPerson').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addSetupName(); } });
+$('gCancel').onclick = () => { $('setup').hidden = true; render(); };
+$('gCreate').onclick = () => {
+  addSetupName();
+  const name = $('gName').value.trim() || 'Our group';
+  if (setupNames.length < 2) { $('gErr').textContent = 'Add at least two people.'; $('gErr').hidden = false; return; }
+  const g = newGroup(name.slice(0, 60), $('gCur').value, setupNames);
+  S.groups[g.id] = g; S.current = g.id; tab = 'expenses'; save(); render();
+};
+$('newGroupBtn').onclick = () => showSetup(true);
+$('groupSel').onchange = () => { S.current = $('groupSel').value; save(); render(); };
+$('meSel').onchange = () => { S.me[G().id] = $('meSel').value; save(); render(); };
+for (const b of document.querySelectorAll('.tabs button')) b.onclick = () => { tab = b.dataset.tab; render(); };
+$('addExpBtn').onclick = () => expenseForm(null);
+$('addPayBtn').onclick = () => payForm(null);
+$('shareBtn').onclick = shareDialog;
+$('csvBtn').onclick = exportCsv;
+$('newPersonBtn').onclick = () => {
+  const g = G(), n = $('newPerson').value.trim().slice(0, 30);
+  if (!n || live(g.people).some(p => p.name.toLowerCase() === n.toLowerCase())) return;
+  g.people.push({ id: uid(), name: n, upi: '', u: Date.now() }); $('newPerson').value = ''; touch(g);
+};
+$('newPerson').addEventListener('keydown', e => { if (e.key === 'Enter') $('newPersonBtn').click(); });
+$('renameBtn').onclick = () => { const g = G(), n = $('renameIn').value.trim(); if (n) { g.name = n.slice(0, 60); touch(g); } };
+$('deleteGroupBtn').onclick = () => {
+  const g = G();
+  if (!confirm('Delete "' + g.name + '" from this device? Anyone you shared it with keeps their copy.')) return;
+  delete S.groups[g.id]; delete S.me[g.id]; S.current = null; save(); render();
+};
+
+// ---- a shared link
+
+async function openShared() {
+  const m = /^#g=([zj][\w-]+)$/.exec(location.hash || '');
+  if (!m) return;
+  history.replaceState(null, '', location.pathname);
+  const box = $('incoming');
+  let g;
+  try { g = await decodeGroup(m[1]); }
+  catch (e) { box.innerHTML = '<p class="note bad">This link is damaged or incomplete. Ask for it again.</p>'; box.hidden = false; return; }
+  const mine = S.groups[g.id], n = live(g.items).filter(i => i.kind === 'exp').length;
+  box.innerHTML = '<h2>"' + esc(g.name) + '" was shared with you</h2><p>' + live(g.people).length + ' people, ' + n + (n === 1 ? ' expense' : ' expenses') + ', ' + fmt(stats(g).total, g.cur) + ' in total.</p>' +
+    (mine ? '<p class="muted small">You already have this group. Merging keeps everything from both copies, using the newer version of anything edited in both.</p>' : '') +
+    '<div class="row"><button class="primary" id="inYes">' + (mine ? 'Merge into my copy' : 'Add to my groups') + '</button><button id="inNo">Not now</button></div>';
+  box.hidden = false;
+  $('inYes').onclick = () => { S.groups[g.id] = mine ? mergeGroup(mine, g) : g; S.current = g.id; save(); box.hidden = true; render(); };
+  $('inNo').onclick = () => { box.hidden = true; };
+}
+
+render();
+openShared();
+addEventListener('hashchange', openShared);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Split Bill</h2>
+<p>Split trip, flat and dinner expenses with friends, like Splitwise but with no account and no server. See who owes whom, settle up in the fewest payments, and share the whole group as a link.</p>
+<h3>Use</h3>
+<ul><li>Start a group, pick the currency, and add the people.</li><li>Add each expense: what it was, how much, who paid, and how to split it. Split it equally among some or all of the group, by exact amounts, by shares (one person has two portions, say), or by percent.</li><li>Pick who you are on this device and every expense shows what you lent or borrowed, and the top shows what you owe or get back overall.</li><li>Balances shows everyone's total. Settle up lists the fewest payments that clear every debt. Mark one paid when it's done, or record any other payment between two people.</li><li>Add someone's UPI ID and, for groups in rupees, Settle up shows a "Pay with UPI" button that opens a payment app with the amount filled in, and a QR code to scan from another phone.</li><li>Share sends the group as a link (or a QR code). When a friend opens it, they get their own copy. If they add expenses and share it back, opening their link merges the two: everything from both copies is kept, and where the same expense was edited in both, the newer edit wins. Deletions carry over too.</li><li>Export CSV gives a spreadsheet with every expense, each person's share, and the balances.</li></ul>
+<h3>How it works</h3>
+<ul><li>Amounts are kept as whole numbers of paise or cents, never fractions, so totals can't drift. Splits use the largest remainder method: everyone gets their exact share rounded down, and the leftover paise go to the shares that were rounded down the most. The pieces always add up to the amount.</li><li>Settling up repeatedly matches the person who owes the most with the person owed the most and has one pay the other as much as possible. That clears everything in at most one payment fewer than the number of people.</li><li>Groups are saved in this browser. A shared link holds the group in its address, after the <code>#</code>, compressed with deflate and encoded in base64url. Browsers never send that part to any server.</li><li>A link could come from anyone, so before a shared group is used, every field is checked: known currency, whole positive amounts, payers and shares that belong to people in the group, and size limits. Names and descriptions are always shown as text, never as page markup.</li></ul>
+<p class="pg-more">More like this: <a href="../file-lock/">File Lock</a>, <a href="../passport-photo/">Passport Photo</a>, <a href="../invoice-maker/">Invoice Maker</a>, <a href="../screen-recorder/">Screen Recorder</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/split-bill">split-bill on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

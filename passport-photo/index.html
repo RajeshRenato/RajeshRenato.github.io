@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233a7bd5'/%3E%3Crect x='8' y='6' width='16' height='20' rx='2' fill='%23ffffff'/%3E%3Ccircle cx='16' cy='14' r='4' fill='%233a7bd5'/%3E%3Cpath d='M10 24c1-4 3.5-5 6-5s5 1 6 5' fill='%233a7bd5'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<title>Passport Photo | make passport and visa size photos online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/passport-photo/">
+<style>
+  :root { --paper:#f2f4f7; --ink:#171a1f; --muted:#666d78; --rule:#d9dde4; --card:#ffffff; --accent:#2f6fd0; --accent-soft:#e3ecfa; --bad:#cf3a2f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#101215; --ink:#e6e9ee; --muted:#959ca8; --rule:#2a2f37; --card:#181b20; --accent:#6aa2ff; --accent-soft:#1a2740; --bad:#ff6b5f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 72px; }
+  main { max-width:1000px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { font-size:17px; margin:0 0 10px; }
+  p { margin:0 0 10px; }
+  .lede { font-size:17px; max-width:680px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--rule); border-radius:14px; padding:16px; }
+  .layout { display:grid; grid-template-columns:minmax(0, 1fr) 320px; gap:16px; margin-top:18px; align-items:start; }
+  @media (max-width:820px) { .layout { grid-template-columns:1fr; } }
+  .side { display:grid; gap:16px; }
+  label { display:block; font-weight:600; margin:10px 0 4px; font-size:14px; }
+  select, input[type=number] { width:100%; font:inherit; font-size:15px; padding:8px 10px; border-radius:9px; border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .row > * { flex:1; }
+  button { font:inherit; font-weight:600; font-size:15px; padding:9px 14px; border-radius:9px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { border-color:var(--ink); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .drop { border:2px dashed var(--rule); border-radius:14px; padding:44px 16px; text-align:center; cursor:pointer; }
+  .drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); }
+  .drop b { display:block; font-size:18px; }
+  #editor { display:block; width:100%; border-radius:10px; background:#2a2d33; touch-action:none; cursor:grab; }
+  #editor:active { cursor:grabbing; }
+  .hint { font-size:13px; color:var(--muted); margin-top:8px; }
+  .swatches { display:flex; gap:6px; margin-top:6px; }
+  .swatches button { width:34px; height:34px; padding:0; border-radius:50%; border:2px solid var(--rule); flex:none; }
+  .swatches button.on { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); }
+  .check { display:flex; gap:8px; align-items:center; font-weight:500; margin-top:10px; }
+  .check input { width:18px; height:18px; accent-color:var(--accent); }
+  #preview { display:block; margin:6px auto 8px; max-width:100%; box-shadow:0 2px 10px rgba(0,0,0,.18); background:#fff; }
+  .spec { font-size:13px; color:var(--muted); text-align:center; }
+  ul.tips { margin:6px 0 0; padding-left:18px; font-size:14px; }
+  ul.tips li { margin:3px 0; }
+  .note { font-size:13px; padding:8px 10px; border-radius:8px; background:var(--accent-soft); margin-top:10px; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Passport Photo">
+<meta property="og:description" content="Make passport and visa photos for India, the US, UK, Schengen and more. Line up the face with guides, whiten the background, and print a sheet of copies. Free and private.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/passport-photo/">
+<meta property="og:image" content="https://rajeshrenato.github.io/passport-photo/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Make passport and visa photos for India, the US, UK, Schengen and more. Line up the face with guides, whiten the background, and print a sheet of copies. Free and private.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Passport Photo", "item": "https://rajeshrenato.github.io/passport-photo/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Passport Photo", "url": "https://rajeshrenato.github.io/passport-photo/", "description": "Make passport and visa photos for India, the US, UK, Schengen and more. Line up the face with guides, whiten the background, and print a sheet of copies. Free and private.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Passport Photo</h1>
+  <p class="lede">Make a passport or visa photo at the right size. Line up the face with the guides, clean up the background, then download the photo or print a sheet of copies on 4×6 photo paper or A4.</p>
+  <p class="muted small">Your photo is processed in this browser and never uploaded.</p>
+
+  <div class="layout">
+    <section class="card">
+      <div class="drop" id="drop" tabindex="0" role="button"><b>Choose a photo</b><span class="muted small">or drop one here. On a phone you can take one now.</span></div>
+      <input type="file" id="pick" accept="image/*" hidden>
+      <div id="editWrap" hidden>
+        <canvas id="editor" width="900" height="900" aria-label="Drag to move the photo, scroll or pinch to zoom"></canvas>
+        <p class="hint">Drag to move, scroll or pinch to zoom. Put the top of the head on the upper line and the chin on the lower line, with the face in the oval.</p>
+        <div class="row">
+          <div><label for="zoom">Zoom</label><input type="range" id="zoom" min="0" max="1000" value="300"></div>
+          <div><label for="rot">Straighten</label><input type="range" id="rot" min="-150" max="150" value="0"></div>
+        </div>
+        <div class="row">
+          <div><label for="bright">Brightness</label><input type="range" id="bright" min="-40" max="40" value="0"></div>
+          <div><label for="contrast">Contrast</label><input type="range" id="contrast" min="-40" max="40" value="0"></div>
+        </div>
+        <div class="row" style="margin-top:10px"><button id="another">Use another photo</button><button id="reset">Reset</button></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="card">
+        <h2>Size</h2>
+        <select id="preset" aria-label="Photo size"></select>
+        <div id="custom" hidden>
+          <div class="row"><div><label for="cw">Width (mm)</label><input type="number" id="cw" min="10" max="150" value="35"></div><div><label for="ch">Height (mm)</label><input type="number" id="ch" min="10" max="150" value="45"></div></div>
+        </div>
+        <ul class="tips" id="tips"></ul>
+      </section>
+      <section class="card">
+        <h2>Background</h2>
+        <label class="check"><input type="checkbox" id="bgOn"> Clean up the background</label>
+        <div id="bgOpts" hidden>
+          <div class="swatches" id="swatches"></div>
+          <label for="tol">How much to replace</label><input type="range" id="tol" min="5" max="90" value="38">
+          <p class="small muted">Works on plain walls: it fills the area joined to the photo's edges whose color is close to the wall's. If it eats into hair or clothes, lower it.</p>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Your photo</h2>
+        <canvas id="preview" width="10" height="10"></canvas>
+        <p class="spec" id="spec"></p>
+        <label for="maxKb">Largest file size, for online forms</label>
+        <select id="maxKb"><option value="0">No limit</option><option value="20">20 KB</option><option value="50">50 KB</option><option value="100">100 KB</option><option value="200">200 KB</option><option value="500">500 KB</option><option value="1000">1 MB</option></select>
+        <button class="primary" id="dlOne" style="width:100%;margin-top:12px" disabled>Download photo (JPEG)</button>
+        <label for="paper">Print sheet</label>
+        <select id="paper"><option value="4x6">4×6 in photo print (10×15 cm)</option><option value="a4">A4 paper</option><option value="letter">US Letter paper</option></select>
+        <div class="row" style="margin-top:10px"><button id="dlSheet" disabled>Sheet as JPEG</button><button id="dlPdf" disabled>Sheet as PDF</button></div>
+        <p class="small muted" id="sheetInfo" style="margin-top:8px"></p>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<script src="../common/pdf-lite.js"></script>
+<script>
+'use strict';
+
+// ======================================================================
+// Sizes. Each has the photo size and the range for the height of the head,
+// from the chin to the top of the hair, in millimetres.
+// ======================================================================
+
+const PRESETS = [
+  { id: 'in-passport', name: 'India passport (2×2 in, 51×51 mm)', w: 50.8, h: 50.8, head: [25, 35], bg: '#ffffff', tips: ['Plain white background.', 'Face straight on, eyes open, mouth closed.', 'No glasses, hats or shadows on the face.'] },
+  { id: 'in-visa', name: 'India visa (2×2 in, 51×51 mm)', w: 50.8, h: 50.8, head: [25, 35], bg: '#ffffff', tips: ['Plain white or light background.', 'Full face, front view, eyes open.', 'The online visa form also asks for a JPEG under 1 MB.'] },
+  { id: 'in-form', name: 'India online forms (35×45 mm, 20-50 KB)', w: 35, h: 45, head: [25, 33], bg: '#ffffff', kb: 50, tips: ['Used by many exam and government forms. Check the form\'s own size and file limits.', 'White or light background, face covering most of the photo.'] },
+  { id: 'in-pan', name: 'India PAN card (25×35 mm)', w: 25, h: 35, head: [18, 24], bg: '#ffffff', tips: ['White background, face clearly visible.', 'For the online PAN form, set the file size limit to 50 KB.'] },
+  { id: 'us', name: 'US passport and visa (2×2 in)', w: 50.8, h: 50.8, head: [25, 35], bg: '#ffffff', tips: ['White or off-white background.', 'Eyes 28 to 35 mm from the bottom.', 'No glasses. Neutral expression or a natural smile.'] },
+  { id: 'uk', name: 'UK passport (35×45 mm)', w: 35, h: 45, head: [29, 34], bg: '#eeeeee', tips: ['Plain cream or light grey background.', 'Neutral expression, mouth closed.'] },
+  { id: 'schengen', name: 'Schengen and EU visa (35×45 mm)', w: 35, h: 45, head: [32, 36], bg: '#f0f0f0', tips: ['Light grey or light blue background.', 'Face takes up 70 to 80 percent of the photo.'] },
+  { id: 'ca', name: 'Canada passport (50×70 mm)', w: 50, h: 70, head: [31, 36], bg: '#ffffff', tips: ['White or light-coloured background.', 'A photo studio must stamp the back for a passport; this is fine for visas and other forms.'] },
+  { id: 'au', name: 'Australia passport (35×45 mm)', w: 35, h: 45, head: [32, 36], bg: '#f2f2f2', tips: ['Plain white or light grey background.'] },
+  { id: 'cn', name: 'China visa (33×48 mm)', w: 33, h: 48, head: [28, 33], bg: '#ffffff', tips: ['White background, no shadows.'] },
+  { id: 'jp', name: 'Japan visa (35×45 mm)', w: 35, h: 45, head: [32, 36], bg: '#ffffff', tips: ['Plain background, no patterns.'] },
+  { id: 'ae', name: 'UAE visa (43×55 mm)', w: 43, h: 55, head: [32, 40], bg: '#ffffff', tips: ['White background.'] },
+  { id: 'sg', name: 'Singapore passport (35×45 mm)', w: 35, h: 45, head: [25, 35], bg: '#ffffff', tips: ['White background, no shadows.'] },
+  { id: 'custom', name: 'Custom size', w: 35, h: 45, head: null, bg: '#ffffff', tips: ['Enter the size your form asks for.'] },
+];
+const DPI = 300, MM = DPI / 25.4;
+const BGS = ['#ffffff', '#f2f2f2', '#dfe9f5', '#a9c8ee', '#c9302c'];
+
+let P = PRESETS[0], img = null, iw = 0, ih = 0;
+const st = { z: 1, x: 0, y: 0, rot: 0, bright: 0, contrast: 0, bgOn: false, bg: '#ffffff', tol: 38 };
+const $ = id => document.getElementById(id);
+const outSize = () => [Math.round(P.w * MM), Math.round(P.h * MM)];
+
+// Where the head should go, in output pixels: the top of the head and the chin, centred so the
+// head's middle height sits a little above the photo's middle.
+function guides() {
+  const [W, H] = outSize();
+  if (!P.head) return null;
+  const head = (P.head[0] + P.head[1]) / 2 * MM, lo = P.head[0] * MM, hi = P.head[1] * MM;
+  const top = Math.max(H * 0.06, (H - head) * 0.42);
+  return { top, chin: top + head, lo, hi, cx: W / 2, faceW: head * 0.74 };
+}
+
+// ======================================================================
+// Rendering the photo into the output size
+// ======================================================================
+
+// st.x, st.y are where the image centre sits in output pixels; st.z is output pixels per image pixel
+function drawPhoto(ctx, W, H, scale = 1) {
+  ctx.save();
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  ctx.translate(st.x, st.y); ctx.rotate(st.rot); ctx.scale(st.z, st.z);
+  const b = 100 + st.bright * 1.2, c = 100 + st.contrast * 1.2;
+  ctx.filter = 'brightness(' + b + '%) contrast(' + c + '%)';
+  ctx.drawImage(img, -iw / 2, -ih / 2);
+  ctx.restore();
+}
+function render(W, H) {
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  drawPhoto(ctx, W, H);
+  if (st.bgOn) cleanBackground(ctx, W, H);
+  return cv;
+}
+
+// Fills the plain wall behind the person: start from every edge pixel that looks like the wall,
+// spread to neighbours of a similar colour, and paint those with the new background, softening
+// the boundary over a couple of pixels.
+function cleanBackground(ctx, W, H) {
+  const im = ctx.getImageData(0, 0, W, H), d = im.data;
+  // the wall colour: the median of the top corners and top edge
+  const samples = [];
+  for (let x = 0; x < W; x += Math.max(1, W >> 6)) for (const y of [1, 3]) { const i = (y * W + x) * 4; samples.push([d[i], d[i + 1], d[i + 2]]); }
+  for (let y = 0; y < H * 0.5; y += Math.max(1, H >> 6)) for (const x of [1, W - 2]) { const i = (y * W + x) * 4; samples.push([d[i], d[i + 1], d[i + 2]]); }
+  const med = k => samples.map(s => s[k]).sort((a, b) => a - b)[samples.length >> 1];
+  const wall = [med(0), med(1), med(2)];
+  const tol = st.tol * 2.2, mask = new Uint8Array(W * H), stack = [];
+  const close = i => { const dr = d[i * 4] - wall[0], dg = d[i * 4 + 1] - wall[1], db = d[i * 4 + 2] - wall[2]; return dr * dr * 0.3 + dg * dg * 0.59 + db * db * 0.11 < tol * tol; };
+  const seed = i => { if (!mask[i] && close(i)) { mask[i] = 1; stack.push(i); } };
+  for (let x = 0; x < W; x++) { seed(x); seed((H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { seed(y * W); seed(y * W + W - 1); }
+  while (stack.length) {
+    const i = stack.pop(), x = i % W;
+    if (x > 0) seed(i - 1); if (x < W - 1) seed(i + 1);
+    if (i >= W) seed(i - W); if (i < W * (H - 1)) seed(i + W);
+  }
+  // soften: count wall pixels in a small neighbourhood
+  const [br, bgc, bb] = [1, 3, 5].map(k => parseInt(st.bg.slice(k, k + 2), 16));
+  const R = 2;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    let n = 0, t = 0;
+    for (let dy = -R; dy <= R; dy++) { const yy = y + dy; if (yy < 0 || yy >= H) continue; for (let dx = -R; dx <= R; dx++) { const xx = x + dx; if (xx < 0 || xx >= W) continue; t++; n += mask[yy * W + xx]; } }
+    if (!n) continue;
+    const a = mask[y * W + x] ? Math.max(0.6, n / t) : n / t * 0.6, i = (y * W + x) * 4;
+    d[i] = d[i] + (br - d[i]) * a; d[i + 1] = d[i + 1] + (bgc - d[i + 1]) * a; d[i + 2] = d[i + 2] + (bb - d[i + 2]) * a;
+  }
+  ctx.putImageData(im, 0, 0);
+}
+
+// ======================================================================
+// The editor: the photo with the frame and the guides over it
+// ======================================================================
+
+const ed = $('editor'), ex = ed.getContext('2d');
+const PAD = 0.12;   // room around the frame, as a fraction of the editor
+function edGeom() {
+  const [W, H] = outSize(), E = ed.width, k = Math.min(E * (1 - 2 * PAD) / W, ed.height * (1 - 2 * PAD) / H);
+  return { W, H, k, ox: (E - W * k) / 2, oy: (ed.height - H * k) / 2 };
+}
+function drawEditor() {
+  if (!img) return;
+  const [W, H] = outSize();
+  ed.height = Math.round(ed.width * Math.min(1.35, Math.max(0.8, H / W)));
+  const { k, ox, oy } = edGeom();
+  ex.setTransform(1, 0, 0, 1, 0, 0);
+  ex.fillStyle = '#2a2d33'; ex.fillRect(0, 0, ed.width, ed.height);
+  ex.save(); ex.translate(ox, oy);
+  // the photo, visible outside the frame too but dimmed there
+  ex.save(); ex.scale(k, k); ex.translate(st.x, st.y); ex.rotate(st.rot); ex.scale(st.z, st.z);
+  ex.filter = 'brightness(' + (100 + st.bright * 1.2) + '%) contrast(' + (100 + st.contrast * 1.2) + '%)';
+  ex.drawImage(img, -iw / 2, -ih / 2); ex.restore();
+  ex.fillStyle = 'rgba(20,22,26,0.62)';
+  ex.fillRect(-ox, -oy, ed.width, oy); ex.fillRect(-ox, H * k, ed.width, ed.height); ex.fillRect(-ox, 0, ox, H * k); ex.fillRect(W * k, 0, ox, H * k);
+  if (st.bgOn && previewCv) { ex.globalAlpha = 1; ex.drawImage(previewCv, 0, 0, W * k, H * k); }
+  ex.strokeStyle = '#ffffff'; ex.lineWidth = 2; ex.strokeRect(0, 0, W * k, H * k);
+  const gd = guides();
+  if (gd) {
+    ex.setLineDash([8, 6]); ex.lineWidth = 2;
+    // the allowed range for the top of the head, and the chin line
+    ex.fillStyle = 'rgba(80,200,140,0.18)';
+    const mid = (gd.top + gd.chin) / 2, half = (gd.hi - gd.lo) / 2;
+    ex.fillRect(0, (gd.top - half) * k, W * k, half * 2 * k);
+    ex.strokeStyle = 'rgba(120,230,170,0.95)';
+    for (const [y, t] of [[gd.top, 'top of head'], [gd.chin, 'chin']]) {
+      ex.beginPath(); ex.moveTo(0, y * k); ex.lineTo(W * k, y * k); ex.stroke();
+      ex.setLineDash([]); ex.fillStyle = 'rgba(120,230,170,0.95)'; ex.font = '600 ' + Math.round(ed.width / 48) + 'px system-ui, sans-serif'; ex.fillText(t, 6, y * k - 6); ex.setLineDash([8, 6]);
+    }
+    ex.strokeStyle = 'rgba(255,255,255,0.75)';
+    ex.beginPath(); ex.ellipse(gd.cx * k, mid * k, gd.faceW / 2 * k, (gd.chin - gd.top) / 2 * k, 0, 0, 7); ex.stroke();
+    ex.beginPath(); ex.moveTo(gd.cx * k, 0); ex.lineTo(gd.cx * k, H * k); ex.globalAlpha = 0.35; ex.stroke(); ex.globalAlpha = 1;
+    ex.setLineDash([]);
+  }
+  ex.restore();
+}
+
+// ---- moving and zooming
+
+const zMin = () => Math.max(outSize()[0] / Math.max(iw, ih), 0.01) * 0.5;
+const zMax = () => Math.max(outSize()[0] / Math.min(iw, ih), 0.02) * 8;
+const zFromSlider = v => zMin() * Math.pow(zMax() / zMin(), v / 1000);
+const sliderFromZ = z => Math.round(1000 * Math.log(z / zMin()) / Math.log(zMax() / zMin()));
+function zoomAt(z, cx, cy) {
+  // keep the point under (cx, cy), in output pixels, where it is
+  z = Math.max(zMin(), Math.min(zMax(), z));
+  st.x = cx + (st.x - cx) * z / st.z; st.y = cy + (st.y - cy) * z / st.z; st.z = z;
+  $('zoom').value = sliderFromZ(z);
+  changed();
+}
+const pointers = new Map();
+let pinch = null;
+function toOut(e) { const r = ed.getBoundingClientRect(), { k, ox, oy } = edGeom(), sx = ed.width / r.width; return [((e.clientX - r.left) * sx - ox) / k, ((e.clientY - r.top) * sx - oy) / k]; }
+ed.addEventListener('pointerdown', e => { ed.setPointerCapture(e.pointerId); pointers.set(e.pointerId, toOut(e)); if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: st.z }; } });
+ed.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId), now = toOut(e);
+  pointers.set(e.pointerId, now);
+  if (pointers.size === 2 && pinch) {
+    const [a, b] = [...pointers.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    zoomAt(pinch.z * d / pinch.d, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+  } else if (pointers.size === 1) { st.x += now[0] - prev[0]; st.y += now[1] - prev[1]; changed(); }
+});
+const up = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; };
+ed.addEventListener('pointerup', up); ed.addEventListener('pointercancel', up);
+ed.addEventListener('wheel', e => { e.preventDefault(); const [x, y] = toOut(e); zoomAt(st.z * Math.exp(-e.deltaY * 0.0015), x, y); }, { passive: false });
+ed.addEventListener('keydown', e => { const s = 4; if (e.key === 'ArrowLeft') st.x -= s; else if (e.key === 'ArrowRight') st.x += s; else if (e.key === 'ArrowUp') st.y -= s; else if (e.key === 'ArrowDown') st.y += s; else return; e.preventDefault(); changed(); });
+ed.tabIndex = 0;
+
+// ---- the result
+
+let previewCv = null, pending = 0;
+function changed() {
+  drawEditor();
+  cancelAnimationFrame(pending);
+  pending = requestAnimationFrame(() => {
+    const [W, H] = outSize();
+    previewCv = render(W, H);
+    const pv = $('preview'), s = Math.min(220 / W, 260 / H);
+    pv.width = Math.round(W * s); pv.height = Math.round(H * s);
+    pv.getContext('2d').drawImage(previewCv, 0, 0, pv.width, pv.height);
+    if (st.bgOn) drawEditor();
+    updateSheetInfo();
+  });
+}
+function fitPhoto() {
+  const [W, H] = outSize();
+  st.rot = 0; st.z = Math.max(W / iw, H / ih); st.x = W / 2; st.y = H / 2;
+  $('zoom').value = sliderFromZ(st.z); $('rot').value = 0;
+}
+
+// JPEG under a size limit: lower the quality step by step, then the resolution if it must.
+async function jpegUnder(cv, kb) {
+  const enc = (c, q) => new Promise(ok => c.toBlob(ok, 'image/jpeg', q));
+  if (!kb) return enc(cv, 0.95);
+  let c = cv;
+  for (let pass = 0; pass < 6; pass++) {
+    let lo = 0.3, hi = 0.95, best = null;
+    for (let i = 0; i < 7; i++) {
+      const q = (lo + hi) / 2, b = await enc(c, q);
+      if (b.size <= kb * 1024) { best = b; lo = q; } else hi = q;
+    }
+    if (best) return best;
+    const s = document.createElement('canvas');
+    s.width = Math.round(c.width * 0.8); s.height = Math.round(c.height * 0.8);
+    s.getContext('2d').drawImage(c, 0, 0, s.width, s.height);
+    c = s;
+  }
+  return enc(c, 0.3);
+}
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+}
+const baseName = () => 'passport-photo-' + P.w + 'x' + P.h + 'mm';
+
+// Print sheets: as many copies as fit, 2 mm apart, with light cut marks.
+const PAPERS = { '4x6': [101.6, 152.4], a4: [210, 297], letter: [215.9, 279.4] };
+// Tries the photos spaced apart with a margin, and for 4×6 prints also edge to edge (as photo labs
+// print 2×2 photos), both ways round, and keeps whichever fits the most; spaced wins a tie.
+function sheetLayout(paper) {
+  const [pw, ph] = PAPERS[paper] || PAPERS['4x6'], fit = (a, b) => Math.floor(a / b + 1e-6);
+  let best = null;
+  // home printers can't print to the paper's edge, so only photo-lab prints go edge to edge
+  for (const [gap, margin] of paper === '4x6' ? [[2, 3], [0, 0]] : [[2, 8]]) {
+    for (const [W, H] of [[pw, ph], [ph, pw]]) {
+      const cols = fit(W - 2 * margin + gap, P.w + gap), rows = fit(H - 2 * margin + gap, P.h + gap);
+      if (cols > 0 && rows > 0 && (!best || cols * rows > best.n)) best = { W, H, cols, rows, n: cols * rows, gap };
+    }
+  }
+  if (!best) return null;
+  best.x0 = (best.W - best.cols * P.w - (best.cols - 1) * best.gap) / 2; best.y0 = (best.H - best.rows * P.h - (best.rows - 1) * best.gap) / 2;
+  return best;
+}
+function updateSheetInfo() {
+  const L = sheetLayout($('paper').value);
+  $('sheetInfo').textContent = L ? L.n + (L.n === 1 ? ' copy' : ' copies') + ' fit on the sheet. Print at 100% size ("actual size"), not "fit to page".' : 'The photo is too big for this paper.';
+}
+function sheetCanvas() {
+  const L = sheetLayout($('paper').value), [W, H] = outSize();
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(L.W * MM); cv.height = Math.round(L.H * MM);
+  const c = cv.getContext('2d');
+  c.fillStyle = '#ffffff'; c.fillRect(0, 0, cv.width, cv.height);
+  const photo = render(W, H);
+  for (let r = 0; r < L.rows; r++) for (let q = 0; q < L.cols; q++) {
+    const x = (L.x0 + q * (P.w + L.gap)) * MM, y = (L.y0 + r * (P.h + L.gap)) * MM;
+    c.drawImage(photo, Math.round(x), Math.round(y), W, H);
+    c.strokeStyle = '#c8c8c8'; c.lineWidth = 1; c.strokeRect(Math.round(x) - 0.5, Math.round(y) - 0.5, W + 1, H + 1);
+  }
+  return { cv, L, photo };
+}
+
+// ---- wiring
+
+function loadFile(file) {
+  if (!file || !/^image\//.test(file.type)) return;
+  const done = bmp => { img = bmp; iw = bmp.width; ih = bmp.height; $('drop').hidden = true; $('editWrap').hidden = false; for (const id of ['dlOne', 'dlSheet', 'dlPdf']) $(id).disabled = false; fitPhoto(); changed(); };
+  if (window.createImageBitmap) createImageBitmap(file, { imageOrientation: 'from-image' }).then(done, () => viaImg(file, done));
+  else viaImg(file, done);
+}
+function viaImg(file, done) { const im = new Image(); im.onload = () => done(im); im.src = URL.createObjectURL(file); }
+
+$('preset').innerHTML = PRESETS.map(p => '<option value="' + p.id + '">' + p.name + '</option>').join('');
+$('swatches').innerHTML = BGS.map(c => '<button style="background:' + c + '" data-c="' + c + '" aria-label="Background ' + c + '"></button>').join('');
+function choosePreset(id) {
+  P = { ...PRESETS.find(p => p.id === id) };
+  if (id === 'custom') { P.w = Math.max(10, Math.min(150, +$('cw').value || 35)); P.h = Math.max(10, Math.min(150, +$('ch').value || 45)); P.head = [P.h * 0.62, P.h * 0.78]; }
+  $('custom').hidden = id !== 'custom';
+  $('tips').innerHTML = P.tips.map(t => '<li>' + t + '</li>').join('');
+  st.bg = P.bg; markSwatch();
+  if (P.kb) $('maxKb').value = String(P.kb);
+  const [W, H] = outSize();
+  $('spec').textContent = P.w + ' × ' + P.h + ' mm, ' + W + ' × ' + H + ' pixels at ' + DPI + ' DPI';
+  if (img) { fitPhoto(); changed(); } else updateSheetInfo();
+}
+function markSwatch() { for (const b of $('swatches').querySelectorAll('button')) b.classList.toggle('on', b.dataset.c === st.bg); }
+$('preset').onchange = () => choosePreset($('preset').value);
+for (const id of ['cw', 'ch']) $(id).oninput = () => choosePreset('custom');
+for (const b of $('swatches').querySelectorAll('button')) b.onclick = () => { st.bg = b.dataset.c; markSwatch(); changed(); };
+$('bgOn').onchange = () => { st.bgOn = $('bgOn').checked; $('bgOpts').hidden = !st.bgOn; changed(); };
+$('tol').oninput = () => { st.tol = +$('tol').value; changed(); };
+$('zoom').oninput = () => { const [W, H] = outSize(); zoomAt(zFromSlider(+$('zoom').value), W / 2, H / 2); };
+$('rot').oninput = () => { st.rot = +$('rot').value / 10 * Math.PI / 180; changed(); };
+$('bright').oninput = () => { st.bright = +$('bright').value; changed(); };
+$('contrast').oninput = () => { st.contrast = +$('contrast').value; changed(); };
+$('reset').onclick = () => { st.bright = st.contrast = 0; $('bright').value = $('contrast').value = 0; fitPhoto(); changed(); };
+$('another').onclick = () => $('pick').click();
+$('paper').onchange = updateSheetInfo;
+$('drop').onclick = () => $('pick').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pick').click(); } };
+$('pick').onchange = () => { loadFile($('pick').files[0]); $('pick').value = ''; };
+addEventListener('dragover', e => { e.preventDefault(); $('drop').classList.add('over'); });
+addEventListener('dragleave', () => $('drop').classList.remove('over'));
+addEventListener('drop', e => { e.preventDefault(); $('drop').classList.remove('over'); loadFile(e.dataTransfer.files[0]); });
+$('dlOne').onclick = async () => {
+  const [W, H] = outSize(), kb = +$('maxKb').value, blob = await jpegUnder(render(W, H), kb);
+  save(blob, baseName() + '.jpg');
+};
+$('dlSheet').onclick = async () => { const { cv } = sheetCanvas(); save(await jpegUnder(cv, 0), baseName() + '-sheet.jpg'); };
+$('dlPdf').onclick = async () => {
+  const { L, photo } = sheetCanvas(), pt = PdfLite.MM, pg = PdfLite.page(L.W * pt, L.H * pt);
+  const jpg = await PdfLite.canvasJpeg(photo, 0.95);
+  for (let r = 0; r < L.rows; r++) for (let q = 0; q < L.cols; q++) {
+    const x = (L.x0 + q * (P.w + L.gap)) * pt, y = (L.y0 + r * (P.h + L.gap)) * pt;
+    pg.image(jpg, x, y, P.w * pt, P.h * pt);
+    pg.rect(x, y, P.w * pt, P.h * pt, { stroke: '#c8c8c8', width: 0.4 });
+  }
+  save(new Blob([PdfLite.build([pg], { title: 'Passport photos ' + P.w + 'x' + P.h + ' mm' })], { type: 'application/pdf' }), baseName() + '-sheet.pdf');
+};
+choosePreset(PRESETS[0].id);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Passport Photo</h2>
+<p>Make a passport or visa photo at the right size from any photo. Line up the face with the guides, clean up the background, then download the photo or print a sheet of copies. Your photo never leaves your device.</p>
+<h3>Use</h3>
+<ul><li>Choose a photo, or take one on a phone. Stand in front of a plain wall, in even light, facing the camera. 2. Pick the size. There are presets for India (passport, visa, PAN card, and the 35×45 mm size many online forms use), the US, UK, Schengen countries, Canada, Australia, China, Japan, the UAE and Singapore, plus a custom size. 3. Drag the photo and zoom (scroll, pinch, or the slider) until the top of the head sits on the upper line, the chin on the lower line, and the face fills the oval. Straighten it if it's tilted, and adjust brightness and contrast if needed. 4. Tick "Clean up the background" to replace a plain wall with white, light grey or light blue. 5. Download the photo as a JPEG. For online forms, set the largest file size (20 KB, 50 KB and so on) and it's compressed to fit. 6. Or download a print sheet: as many copies as fit on a 4×6 inch photo print or on A4 or Letter paper, as a JPEG or a PDF. Print at actual size, not "fit to page".</li></ul>
+<h3>How it works</h3>
+<ul><li>The photo is drawn at 300 dots per inch into the exact size in millimetres, so a 2×2 inch photo is 600×600 pixels.</li><li>Each size has the allowed height for the head, from chin to crown. The guides put the crown and chin lines for the middle of that range, with the green band showing how far the top of the head can move.</li><li>Background clean-up samples the wall along the top and sides, then fills from the photo's edges into every neighbouring pixel close to that colour, stopping at the person. The boundary is softened over a few pixels so hair doesn't get a hard edge. It works on plain walls; patterned backgrounds need a plain wall photo.</li><li>To fit a file size limit, the JPEG quality is found by binary search; if even low quality is too big, the photo is scaled down a little and tried again.</li><li>On a 4×6 print, 2×2 photos go edge to edge, as photo labs print them, so six fit. On A4 and Letter there's a margin, because home printers can't print to the edge, and light lines mark where to cut. The PDF stores the photo once and places it on the page as many times as fit.</li></ul>
+<p class="pg-more">More like this: <a href="../invoice-maker/">Invoice Maker</a>, <a href="../screen-recorder/">Screen Recorder</a>, <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/passport-photo">passport-photo on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

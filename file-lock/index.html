@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e0a526'/%3E%3Crect x='9' y='14' width='14' height='11' rx='2' fill='%2316160f'/%3E%3Cpath d='M12 14v-3a4 4 0 0 1 8 0v3' fill='none' stroke='%2316160f' stroke-width='2.6'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>File Lock | password protect and encrypt any file</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/file-lock/">
+<style>
+  :root { --paper:#f5f3ee; --ink:#1b1a17; --muted:#6f6b62; --rule:#dfdbd0; --card:#ffffff; --accent:#a8740d; --accent-soft:#f6ecd6; --bad:#cf3a2f; --good:#2c8a4b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121110; --ink:#ebe8e1; --muted:#9a958a; --rule:#2e2b26; --card:#1c1a17; --accent:#f0b740; --accent-soft:#2e2615; --bad:#ff6b5f; --good:#5fd38a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 72px; }
+  main { max-width:680px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { font-size:18px; margin:0 0 8px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--rule); border-radius:14px; padding:18px; margin-top:16px; }
+  .tabs { display:flex; gap:6px; margin-top:20px; }
+  .tabs button { flex:1; padding:12px; font-size:16px; }
+  .tabs button.on { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .drop { border:2px dashed var(--rule); border-radius:14px; padding:30px 16px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); }
+  .drop b { display:block; font-size:18px; margin-bottom:4px; }
+  label { display:block; font-weight:600; margin:14px 0 6px; font-size:14px; }
+  input[type=password], input[type=text] { width:100%; font:inherit; font-size:16px; padding:10px 12px; border-radius:9px; border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  .pw { position:relative; }
+  .pw button { position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:5px 9px; font-size:13px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  .grow { flex:1; }
+  button { font:inherit; font-weight:600; font-size:15px; padding:9px 15px; border-radius:9px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { border-color:var(--ink); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#1b1406; }
+  button.link { border:0; background:none; padding:4px 6px; color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .files { list-style:none; margin:12px 0 0; padding:0; }
+  .files li { display:flex; gap:10px; align-items:center; padding:9px 2px; border-bottom:1px solid var(--rule); font-size:15px; }
+  .files li:last-child { border-bottom:0; }
+  .files .n { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .files .s { color:var(--muted); font-size:13px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .files .st { font-size:13px; white-space:nowrap; }
+  .ok { color:var(--good); } .bad { color:var(--bad); }
+  .strength { height:6px; border-radius:3px; background:var(--rule); margin-top:8px; overflow:hidden; }
+  .strength i { display:block; height:100%; width:0; transition:width .2s, background .2s; }
+  .check { display:flex; gap:8px; align-items:center; font-weight:500; margin-top:12px; font-size:15px; }
+  .check input { width:18px; height:18px; accent-color:var(--accent); }
+  .bar { height:8px; border-radius:4px; background:var(--rule); overflow:hidden; margin-top:6px; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); }
+  .warn { background:var(--accent-soft); border-radius:10px; padding:10px 12px; font-size:14px; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="File Lock">
+<meta property="og:description" content="Password-protect any file with AES-256 encryption, right in your browser. Lock documents, photos or videos, and unlock them later with the password. Nothing is uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/file-lock/">
+<meta property="og:image" content="https://rajeshrenato.github.io/file-lock/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Password-protect any file with AES-256 encryption, right in your browser. Lock documents, photos or videos, and unlock them later with the password. Nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "File Lock", "item": "https://rajeshrenato.github.io/file-lock/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "File Lock", "url": "https://rajeshrenato.github.io/file-lock/", "description": "Password-protect any file with AES-256 encryption, right in your browser. Lock documents, photos or videos, and unlock them later with the password. Nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>File Lock</h1>
+  <p class="lede">Password-protect any file. Lock a document, photo or video, send it or store it anywhere, and only someone with the password can open it.</p>
+  <p class="muted small">The encryption happens in your browser. Your files and password never leave this device; this page can't even make network requests.</p>
+
+  <div class="tabs" role="tablist"><button id="tLock" class="on">Lock files</button><button id="tUnlock">Unlock files</button></div>
+
+  <section class="card">
+    <div class="drop" id="drop" tabindex="0" role="button">
+      <b id="dropTitle">Drop files to lock</b>
+      <span class="muted small" id="dropSub">or click to choose. Any type, any size your browser can hold.</span>
+    </div>
+    <input type="file" id="pick" multiple hidden>
+    <ul class="files" id="files"></ul>
+
+    <div id="opts" hidden>
+      <label for="pw1">Password</label>
+      <div class="pw"><input type="password" id="pw1" autocomplete="new-password" spellcheck="false"><button id="show1" type="button">Show</button></div>
+      <div id="lockOnly">
+        <div class="strength"><i id="meter"></i></div>
+        <div class="row" style="margin-top:6px"><span class="small muted grow" id="meterText">Use at least 12 characters, or press Suggest.</span><button class="link" id="suggest">Suggest a strong password</button></div>
+        <label for="pw2">Type it again</label>
+        <input type="password" id="pw2" autocomplete="new-password" spellcheck="false">
+        <label class="check"><input type="checkbox" id="hideName"> Hide the file names too</label>
+        <p class="warn" style="margin-top:12px">There's no way to recover a forgotten password, not even for us. Keep it somewhere safe.</p>
+      </div>
+      <p class="small bad" id="err" hidden></p>
+      <div class="row"><button class="primary" id="go">Lock</button><button id="clear">Clear</button></div>
+      <div id="prog" hidden><div class="bar"><i id="progBar"></i></div><p class="small muted" id="progText" style="margin-top:6px"></p></div>
+    </div>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+// ======================================================================
+// The locked file format. A short header, then numbered encrypted records:
+// record 0 holds the file's name and type, the rest hold the file in 4 MB
+// pieces. Each piece is sealed with AES-256-GCM using the header, its number,
+// and whether it's the last one as extra authenticated data, so pieces can't
+// be removed, reordered, or swapped between files without detection.
+//
+//   "FILELOCK" | version (1 byte) | PBKDF2 iterations (4) | salt (16) | IV (12) | piece size (4)
+//   then for each record: length (4) | ciphertext
+// ======================================================================
+
+const MAGIC = 'FILELOCK', VERSION = 1, HEAD = 8 + 1 + 4 + 16 + 12 + 4, ITERATIONS = 600000, PIECE = 4 * 1024 * 1024;
+const te = new TextEncoder(), td = new TextDecoder();
+
+async function deriveKey(password, salt, iterations) {
+  const base = await crypto.subtle.importKey('raw', te.encode(password.normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+// each record gets its own IV: the base IV with the record number mixed into its last four bytes
+function ivFor(base, n) {
+  const iv = base.slice();
+  const v = new DataView(iv.buffer);
+  v.setUint32(8, v.getUint32(8) ^ n);
+  return iv;
+}
+function aad(head, n, last) {
+  const a = new Uint8Array(head.length + 5);
+  a.set(head); new DataView(a.buffer).setUint32(head.length, n); a[head.length + 4] = last ? 1 : 0;
+  return a;
+}
+const u32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n); return b; };
+
+// Locks one file. Returns a Blob. onProgress(bytesDone).
+async function lockFile(file, password, { hideName = false, onProgress = () => { } } = {}) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const head = new Uint8Array(HEAD), hv = new DataView(head.buffer);
+  head.set(te.encode(MAGIC)); head[8] = VERSION; hv.setUint32(9, ITERATIONS); head.set(salt, 13); head.set(iv, 29); hv.setUint32(41, PIECE);
+  const key = await deriveKey(password, salt, ITERATIONS);
+  const pieces = Math.max(1, Math.ceil(file.size / PIECE));
+  const seal = async (n, last, data) => new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: ivFor(iv, n), additionalData: aad(head, n, last) }, key, data));
+  const meta = te.encode(JSON.stringify({ name: file.name, type: file.type || '', size: file.size, modified: file.lastModified || 0 }));
+  const parts = [head];
+  const m = await seal(0, false, meta);
+  parts.push(u32(m.length), m);
+  for (let i = 0; i < pieces; i++) {
+    const chunk = new Uint8Array(await file.slice(i * PIECE, (i + 1) * PIECE).arrayBuffer());
+    const c = await seal(i + 1, i === pieces - 1, chunk);
+    parts.push(u32(c.length), c);
+    onProgress(Math.min(file.size, (i + 1) * PIECE));
+  }
+  return { blob: new Blob(parts, { type: 'application/octet-stream' }), name: hideName ? 'locked-' + [...crypto.getRandomValues(new Uint8Array(4))].map(b => b.toString(16).padStart(2, '0')).join('') + '.locked' : file.name + '.locked' };
+}
+
+class LockError extends Error { constructor(kind, msg) { super(msg); this.kind = kind; } }
+async function isLocked(file) {
+  if (file.size < HEAD) return false;
+  return td.decode(await file.slice(0, 8).arrayBuffer()) === MAGIC;
+}
+// Unlocks one file. Returns { blob, name, type }.
+async function unlockFile(file, password, { onProgress = () => { } } = {}) {
+  if (!(await isLocked(file))) throw new LockError('format', 'This isn\'t a file locked with File Lock.');
+  const head = new Uint8Array(await file.slice(0, HEAD).arrayBuffer()), hv = new DataView(head.buffer);
+  if (head[8] !== VERSION) throw new LockError('format', 'This file was locked with a newer version of File Lock.');
+  const iterations = hv.getUint32(9), salt = head.slice(13, 29), iv = head.slice(29, 41), piece = hv.getUint32(41);
+  if (iterations < 1000 || iterations > 10000000 || piece < 1024 || piece > 64 * 1024 * 1024) throw new LockError('format', 'The file\'s header is damaged.');
+  const key = await deriveKey(password, salt, iterations);
+  let pos = HEAD, n = 0, meta = null, done = false;
+  const parts = [];
+  while (pos < file.size) {
+    if (done) throw new LockError('damaged', 'The file has extra data after its end. It may be damaged.');
+    if (pos + 4 > file.size) throw new LockError('damaged', 'The file is cut short.');
+    const len = new DataView(await file.slice(pos, pos + 4).arrayBuffer()).getUint32(0);
+    if (len < 16 || len > piece + 16 || pos + 4 + len > file.size) throw new LockError('damaged', 'The file is damaged or cut short.');
+    const ct = new Uint8Array(await file.slice(pos + 4, pos + 4 + len).arrayBuffer());
+    pos += 4 + len;
+    const last = n > 0 && pos >= file.size;
+    let pt;
+    try { pt = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ivFor(iv, n), additionalData: aad(head, n, last) }, key, ct)); }
+    catch (e) {
+      if (n === 0) throw new LockError('password', 'Wrong password.');
+      throw new LockError('damaged', 'Part of the file is damaged or has been changed, so it can\'t be unlocked safely.');
+    }
+    if (n === 0) { try { meta = JSON.parse(td.decode(pt)); } catch (e) { throw new LockError('damaged', 'The file\'s details are damaged.'); } }
+    else { parts.push(pt); onProgress(pos); }
+    if (last) done = true;
+    n++;
+  }
+  if (!done) throw new LockError('damaged', 'The file is cut short: its last part is missing.');
+  const name = String(meta && meta.name || 'unlocked-file').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').slice(0, 200) || 'unlocked-file';
+  const type = typeof meta.type === 'string' && /^[\w.+-]+\/[\w.+-]+$/.test(meta.type) ? meta.type : 'application/octet-stream';
+  return { blob: new Blob(parts, { type }), name, type };
+}
+
+// ---- password strength: a rough estimate of guesses needed
+
+function strength(pw) {
+  if (!pw) return { bits: 0, label: '' };
+  let pool = 0;
+  if (/[a-z]/.test(pw)) pool += 26;
+  if (/[A-Z]/.test(pw)) pool += 26;
+  if (/\d/.test(pw)) pool += 10;
+  if (/[^a-zA-Z0-9]/.test(pw)) pool += 33;
+  let bits = pw.length * Math.log2(pool || 1);
+  if (/^(.)\1+$/.test(pw)) bits = Math.log2(pool) + 2;
+  if (/^(password|qwerty|letmein|123456|admin|welcome|iloveyou)/i.test(pw)) bits = Math.min(bits, 20);
+  if (/(.{2,})\1{2,}/.test(pw)) bits *= 0.6;
+  const label = bits < 40 ? 'Weak: easy to guess' : bits < 60 ? 'Fair: fine for everyday files' : bits < 80 ? 'Strong' : 'Very strong';
+  return { bits, label };
+}
+// a random password from letters that are hard to mix up, in groups of four (about 100 bits)
+function suggest() {
+  const A = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const r = crypto.getRandomValues(new Uint32Array(20));
+  let s = '';
+  for (let i = 0; i < 20; i++) { s += A[r[i] % A.length]; if (i % 5 === 4 && i < 19) s += '-'; }
+  return s;
+}
+
+// ======================================================================
+// The page
+// ======================================================================
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const size = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : n < 1073741824 ? (n / 1048576).toFixed(1) + ' MB' : (n / 1073741824).toFixed(2) + ' GB';
+let mode = 'lock', list = [];
+
+function setMode(m) {
+  mode = m;
+  $('tLock').classList.toggle('on', m === 'lock'); $('tUnlock').classList.toggle('on', m === 'unlock');
+  $('dropTitle').textContent = m === 'lock' ? 'Drop files to lock' : 'Drop .locked files to unlock';
+  $('dropSub').textContent = m === 'lock' ? 'or click to choose. Any type, any size your browser can hold.' : 'or click to choose the files you locked here.';
+  $('lockOnly').hidden = m !== 'lock';
+  $('go').textContent = m === 'lock' ? 'Lock' : 'Unlock';
+  $('pw1').autocomplete = m === 'lock' ? 'new-password' : 'current-password';
+  list = []; draw();
+}
+function draw() {
+  $('files').innerHTML = list.map((f, i) => '<li><span class="n" title="' + esc(f.file.name) + '">' + esc(f.file.name) + '</span><span class="s">' + size(f.file.size) + '</span><span class="st ' + (f.ok ? 'ok' : f.err ? 'bad' : '') + '">' + esc(f.status || '') + '</span>' +
+    (f.out ? '<button class="link" data-dl="' + i + '">Download</button>' : '<button class="link" data-rm="' + i + '" aria-label="Remove">&times;</button>') + '</li>').join('');
+  for (const b of $('files').querySelectorAll('[data-rm]')) b.onclick = () => { list.splice(+b.dataset.rm, 1); draw(); };
+  for (const b of $('files').querySelectorAll('[data-dl]')) b.onclick = () => download(list[+b.dataset.dl].out);
+  $('opts').hidden = !list.length;
+  check();
+}
+async function addFiles(files) {
+  for (const file of files) {
+    const locked = await isLocked(file);
+    if (mode === 'lock' && locked && !list.length) setMode('unlock');
+    else if (mode === 'unlock' && !locked && !list.length) setMode('lock');
+    if ((mode === 'unlock') !== locked) continue;
+    if (!list.some(f => f.file === file)) list.push({ file, status: '' });
+  }
+  draw();
+  if (list.length) $('pw1').focus();
+}
+function check() {
+  const pw = $('pw1').value, st = strength(pw);
+  $('meter').style.width = Math.min(100, st.bits / 100 * 100) + '%';
+  $('meter').style.background = st.bits < 40 ? 'var(--bad)' : st.bits < 60 ? 'var(--accent)' : 'var(--good)';
+  $('meterText').textContent = st.label || 'Use at least 12 characters, or press Suggest.';
+  const ready = list.some(f => !f.out) && pw && (mode === 'unlock' || pw === $('pw2').value);
+  $('go').disabled = !ready || busy;
+  $('err').hidden = true;
+}
+function download({ blob, name }) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+
+let busy = false;
+async function go() {
+  const pw = $('pw1').value;
+  if (mode === 'lock' && strength(pw).bits < 40 && !confirm('That password is weak and could be guessed. Lock with it anyway?')) return;
+  busy = true; check();
+  const todo = list.filter(f => !f.out), total = todo.reduce((t, f) => t + f.file.size, 0) || 1;
+  let before = 0;
+  $('prog').hidden = false;
+  for (const f of todo) {
+    f.status = mode === 'lock' ? 'Locking...' : 'Unlocking...'; f.err = false; draw();
+    const onProgress = done => { $('progBar').style.width = Math.round((before + done) / total * 100) + '%'; $('progText').textContent = f.status + ' ' + esc(f.file.name); };
+    try {
+      f.out = mode === 'lock' ? await lockFile(f.file, pw, { hideName: $('hideName').checked, onProgress }) : await unlockFile(f.file, pw, { onProgress });
+      f.ok = true; f.status = mode === 'lock' ? 'Locked' : 'Unlocked';
+      download(f.out);
+    } catch (e) {
+      f.err = true; f.status = e instanceof LockError ? e.message : 'Something went wrong: ' + (e.message || e);
+      if (e.kind === 'password') { $('err').textContent = 'Wrong password, or this file was locked with a different one.'; }
+    }
+    before += f.file.size; draw();
+  }
+  $('progBar').style.width = '100%';
+  const ok = todo.filter(f => f.ok).length;
+  $('progText').textContent = ok + ' of ' + todo.length + (todo.length === 1 ? ' file ' : ' files ') + (mode === 'lock' ? 'locked' : 'unlocked') + '. ' + (ok ? 'Downloads have started; use Download to save one again.' : '');
+  busy = false; check();
+  if (todo.some(f => f.err && f.status === 'Wrong password.')) { $('err').textContent = 'Wrong password, or this file was locked with a different one.'; $('err').hidden = false; for (const f of todo) if (f.err) { f.err = false; f.status = ''; } draw(); }
+}
+
+$('tLock').onclick = () => setMode('lock');
+$('tUnlock').onclick = () => setMode('unlock');
+$('drop').onclick = () => $('pick').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pick').click(); } };
+$('pick').onchange = () => { addFiles([...$('pick').files]); $('pick').value = ''; };
+for (const ev of ['dragenter', 'dragover']) $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); });
+for (const ev of ['dragleave', 'drop']) $('drop').addEventListener(ev, () => $('drop').classList.remove('over'));
+$('drop').addEventListener('drop', e => { e.preventDefault(); addFiles([...e.dataTransfer.files]); });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); if (e.target !== $('drop')) addFiles([...(e.dataTransfer || {}).files || []]); });
+for (const id of ['pw1', 'pw2']) $(id).oninput = check;
+$('pw1').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('go').disabled) go(); });
+$('pw2').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('go').disabled) go(); });
+$('show1').onclick = () => { const on = $('pw1').type === 'password'; $('pw1').type = $('pw2').type = on ? 'text' : 'password'; $('show1').textContent = on ? 'Hide' : 'Show'; };
+$('suggest').onclick = () => { const s = suggest(); $('pw1').value = $('pw2').value = s; $('pw1').type = $('pw2').type = 'text'; $('show1').textContent = 'Hide'; check(); };
+$('go').onclick = go;
+$('clear').onclick = () => { list = []; $('prog').hidden = true; draw(); };
+setMode('lock');
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>File Lock</h2>
+<p>Password-protect any file. Lock a document, photo or video, then send it or store it anywhere: only someone with the password can open it. Everything happens in your browser.</p>
+<h3>Use</h3>
+<ul><li>Drop files (or click to choose), type a password twice, and press Lock. Each file downloads as <code>name.locked</code>. Suggest gives you a strong random password.</li><li>Tick "Hide the file names too" and the locked files get random names; the real name comes back when they're unlocked.</li><li>To open one, switch to Unlock (or just drop a <code>.locked</code> file; the page notices), type the password, and press Unlock. You get the original file back, with its name.</li><li>There's no way to recover a forgotten password. Keep it somewhere safe, and send it a different way than the file.</li></ul>
+<h3>How it works</h3>
+<ul><li>The password is turned into a 256-bit key with PBKDF2 (SHA-256, 600,000 iterations) and a random salt, so guessing passwords is slow even with fast hardware.</li><li>The file is encrypted with AES-256-GCM in 4 MB pieces, so big files don't have to fit in memory at once. Each piece has its own IV, made from a random base IV and the piece's number.</li><li>Each piece is sealed together with the file's header, its number, and whether it's the last piece. Changing a single bit, cutting the file short, dropping or reordering pieces, or mixing pieces from two files is detected, and the file is refused instead of opened wrong.</li><li>The first sealed piece holds the original name and type. A wrong password fails right there, so you're told it's the wrong password rather than that the file is damaged.</li><li>The page's content security policy forbids every network request, so your files and password can't be sent anywhere.</li></ul>
+<p>The format: <code>FILELOCK</code>, a version byte, the iteration count, the 16-byte salt, the 12-byte base IV, and the piece size; then for each piece, its length followed by the ciphertext.</p>
+<p class="pg-more">More like this: <a href="../passport-photo/">Passport Photo</a>, <a href="../invoice-maker/">Invoice Maker</a>, <a href="../screen-recorder/">Screen Recorder</a>, <a href="../photo-privacy/">Photo Privacy</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/file-lock">file-lock on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

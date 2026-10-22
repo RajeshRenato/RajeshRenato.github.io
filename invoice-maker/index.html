@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23d9534f'/%3E%3Crect x='9' y='6' width='14' height='20' rx='2' fill='%23ffffff'/%3E%3Cpath d='M12 11h8M12 15h8M12 19h5' stroke='%23d9534f' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<title>Invoice Maker | free GST invoice generator, PDF</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/invoice-maker/">
+<style>
+  :root { --paper:#f4f3f1; --ink:#1c1b19; --muted:#6d6a64; --rule:#dedbd5; --card:#ffffff; --accent:#c4403b; --accent-soft:#f8e4e2; --bad:#c4403b; --good:#2c8a4b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#121211; --ink:#e9e7e3; --muted:#9a968f; --rule:#2d2c29; --card:#1b1a19; --accent:#ff7a72; --accent-soft:#341d1b; --bad:#ff7a72; --good:#5fd38a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.45; padding:48px 16px 72px; }
+  main { max-width:1220px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { font-size:16px; margin:0 0 8px; }
+  p { margin:0 0 10px; }
+  .lede { font-size:17px; max-width:720px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .layout { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.05fr); gap:18px; margin-top:16px; align-items:start; }
+  @media (max-width:980px) { .layout { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1.5px solid var(--rule); border-radius:14px; padding:14px 16px; margin-bottom:14px; }
+  details.card > summary { cursor:pointer; font-weight:700; list-style:none; display:flex; justify-content:space-between; }
+  details.card > summary::after { content:'+'; color:var(--muted); }
+  details.card[open] > summary::after { content:'−'; }
+  details.card[open] > summary { margin-bottom:6px; }
+  label { display:block; font-weight:600; margin:8px 0 3px; font-size:13px; color:var(--muted); }
+  input, select, textarea { width:100%; font:inherit; font-size:15px; padding:7px 9px; border-radius:8px; border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  textarea { resize:vertical; min-height:56px; }
+  input[type=checkbox] { width:17px; height:17px; padding:0; accent-color:var(--accent); }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:0 10px; }
+  .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 10px; }
+  @media (max-width:520px) { .g3 { grid-template-columns:1fr 1fr; } }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .grow { flex:1; min-width:0; }
+  .check { display:flex; gap:8px; align-items:center; font-weight:500; color:var(--ink); font-size:14px; margin-top:8px; }
+  button { font:inherit; font-weight:600; font-size:14px; padding:8px 13px; border-radius:9px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { border-color:var(--ink); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.link { border:0; background:none; padding:3px 6px; color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .items { width:100%; border-collapse:collapse; }
+  .items th { font-size:12px; color:var(--muted); text-align:left; font-weight:600; padding:0 4px 4px; }
+  .items td { padding:3px 3px; vertical-align:top; }
+  .items input { padding:6px 7px; font-size:14px; }
+  .items .num input { text-align:right; }
+  .items .del { width:28px; }
+  @media (max-width:620px) { .items .hsn { display:none; } }
+  .toolbar { position:sticky; top:8px; z-index:3; display:flex; gap:8px; flex-wrap:wrap; background:var(--paper); padding:6px 0 10px; }
+  .history { list-style:none; margin:0; padding:0; max-height:260px; overflow:auto; }
+  .history li { display:flex; gap:10px; align-items:center; padding:7px 4px; border-bottom:1px solid var(--rule); cursor:pointer; font-size:14px; }
+  .history li:hover { background:var(--accent-soft); }
+  .tag { font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px; background:var(--accent-soft); color:var(--accent); }
+  .tag.paid { background:#dff3e6; color:#22713c; }
+  .warn { font-size:13px; padding:8px 10px; border-radius:8px; background:var(--accent-soft); }
+  /* the invoice itself, as it will print */
+  .sheet-wrap { position:sticky; top:12px; }
+  .sheet { background:#fff; color:#1a1a1a; aspect-ratio:210 / 297; width:100%; box-shadow:0 4px 18px rgba(0,0,0,.14); border-radius:4px; padding:5.5% 6%; font-size:clamp(7px, 1.05vw, 12.5px); overflow:hidden; display:flex; flex-direction:column; }
+  @media (max-width:980px) { .sheet { font-size:clamp(6.5px, 2.1vw, 12px); } }
+  .sheet .top { display:flex; justify-content:space-between; gap:12px; }
+  .sheet .biz b { font-size:1.45em; display:block; }
+  .sheet .biz img { max-height:4.5em; max-width:11em; display:block; margin-bottom:.5em; }
+  .sheet .doc { text-align:right; }
+  .sheet .doc b { font-size:2em; letter-spacing:.04em; display:block; }
+  .sheet .grey { color:#666; }
+  .sheet .bill { display:flex; justify-content:space-between; gap:12px; margin:1.6em 0 1.1em; padding:.9em 1em; background:#f5f5f3; border-radius:4px; }
+  .sheet table { width:100%; border-collapse:collapse; }
+  .sheet th { background:#222; color:#fff; font-weight:600; padding:.45em .5em; text-align:left; font-size:.92em; }
+  .sheet td { padding:.45em .5em; border-bottom:1px solid #e6e6e6; vertical-align:top; }
+  .sheet .r { text-align:right; white-space:nowrap; }
+  .sheet .totals { display:flex; justify-content:space-between; gap:16px; margin-top:.8em; }
+  .sheet .totals table { width:46%; }
+  .sheet .totals td { border:0; padding:.25em .5em; }
+  .sheet .totals tr.big td { font-weight:800; font-size:1.2em; border-top:2px solid #222; padding-top:.45em; }
+  .sheet .words { flex:1; font-size:.95em; }
+  .sheet .foot { margin-top:auto; display:flex; justify-content:space-between; gap:14px; align-items:flex-end; font-size:.92em; padding-top:1em; }
+  .sheet .qr { text-align:center; font-size:.85em; color:#555; }
+  .sheet .qr canvas { width:7em; height:7em; display:block; image-rendering:pixelated; }
+  .sheet .sign { text-align:right; }
+  .sheet .sign span { display:block; border-top:1px solid #999; margin-top:3.2em; padding-top:.3em; }
+  .pre { white-space:pre-wrap; }
+  [hidden] { display:none !important; }
+  @media print {
+    body { padding:0; background:#fff; }
+    a.back, h1, .lede, .muted.small, .layout > div:first-child, .toolbar { display:none !important; }
+    .layout { display:block; margin:0; }
+    .sheet-wrap { position:static; }
+    .sheet { box-shadow:none; border-radius:0; width:210mm; height:297mm; aspect-ratio:auto; font-size:11px; padding:14mm 13mm; }
+    @page { size:A4; margin:0; }
+  }
+</style>
+<meta property="og:title" content="Invoice Maker">
+<meta property="og:description" content="Make professional invoices, receipts and quotes as PDF. GST with CGST, SGST and IGST, HSN codes, amount in words, a UPI payment QR, saved clients and invoice history. Free, no sign-up.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/invoice-maker/">
+<meta property="og:image" content="https://rajeshrenato.github.io/invoice-maker/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Make professional invoices, receipts and quotes as PDF. GST with CGST, SGST and IGST, HSN codes, amount in words, a UPI payment QR, saved clients and invoice history. Free, no sign-up.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Invoice Maker", "item": "https://rajeshrenato.github.io/invoice-maker/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Invoice Maker", "url": "https://rajeshrenato.github.io/invoice-maker/", "description": "Make professional invoices, receipts and quotes as PDF. GST with CGST, SGST and IGST, HSN codes, amount in words, a UPI payment QR, saved clients and invoice history. Free, no sign-up.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Invoice Maker</h1>
+  <p class="lede">Make invoices, receipts and quotes as a PDF. GST, HSN codes, the amount in words and a UPI payment QR are built in, and your clients and past invoices are saved for next time.</p>
+  <p class="muted small">Your business details, clients and invoices are saved only in this browser.</p>
+
+  <div class="layout">
+    <div>
+      <div class="toolbar">
+        <button class="primary" id="pdfBtn">Download PDF</button>
+        <button id="printBtn">Print</button>
+        <button id="saveBtn">Save</button>
+        <button id="newBtn">New invoice</button>
+      </div>
+      <p class="warn" id="fontWarn" hidden>Some of the text uses letters the PDF's built-in font doesn't have, so they'd show as "?". Use Print and choose "Save as PDF" instead; that keeps every character.</p>
+
+      <details class="card" open>
+        <summary>Invoice</summary>
+        <div class="g3">
+          <div><label for="docType">Type</label><select id="docType"><option>Tax Invoice</option><option>Invoice</option><option>Receipt</option><option>Quotation</option><option>Proforma Invoice</option><option>Bill of Supply</option></select></div>
+          <div><label for="num">Number</label><input id="num"></div>
+          <div><label for="cur">Currency</label><select id="cur"></select></div>
+          <div><label for="date">Date</label><input id="date" type="date"></div>
+          <div><label for="due">Due date</label><input id="due" type="date"></div>
+          <div><label for="taxMode">Tax</label><select id="taxMode"><option value="gst">GST (India)</option><option value="vat">VAT</option><option value="tax">Sales tax</option><option value="none">No tax</option></select></div>
+        </div>
+        <label class="check" id="igstRow"><input type="checkbox" id="igst"> Customer is in another state (charge IGST instead of CGST and SGST)</label>
+        <label class="check"><input type="checkbox" id="roundOff" checked> Round the total to the nearest whole amount</label>
+      </details>
+
+      <details class="card" open>
+        <summary>Items</summary>
+        <table class="items"><thead><tr><th>Description</th><th class="hsn" id="hsnHead">HSN/SAC</th><th class="num" style="width:12%">Qty</th><th class="num" style="width:17%">Rate</th><th class="num" style="width:12%" id="taxHead">Tax %</th><th class="del"></th></tr></thead><tbody id="itemRows"></tbody></table>
+        <div class="row" style="margin-top:8px"><button id="addItem">Add item</button><span class="grow"></span></div>
+        <div class="g3" style="margin-top:4px">
+          <div><label for="discount">Discount (%)</label><input id="discount" inputmode="decimal" value="0"></div>
+          <div><label for="shipping">Shipping / other</label><input id="shipping" inputmode="decimal" value="0"></div>
+          <div><label for="paid">Already paid</label><input id="paid" inputmode="decimal" value="0"></div>
+        </div>
+      </details>
+
+      <details class="card" open>
+        <summary>Bill to</summary>
+        <div class="row"><select id="clientPick" class="grow" aria-label="Saved clients"><option value="">Saved clients...</option></select><button id="saveClient">Save client</button></div>
+        <label for="cName">Name</label><input id="cName">
+        <label for="cAddr">Address</label><textarea id="cAddr" rows="2"></textarea>
+        <div class="g2"><div><label for="cTax">GSTIN / tax ID</label><input id="cTax" autocapitalize="characters"></div><div><label for="cContact">Email or phone</label><input id="cContact"></div></div>
+      </details>
+
+      <details class="card" id="bizCard">
+        <summary>Your business</summary>
+        <label for="bName">Business name</label><input id="bName">
+        <label for="bAddr">Address</label><textarea id="bAddr" rows="2"></textarea>
+        <div class="g2">
+          <div><label for="bTax">GSTIN / tax ID</label><input id="bTax" autocapitalize="characters"></div>
+          <div><label for="bContact">Email or phone</label><input id="bContact"></div>
+          <div><label for="bUpi">UPI ID (for a pay QR)</label><input id="bUpi" placeholder="name@bank" autocapitalize="off" spellcheck="false"></div>
+          <div><label for="bPrefix">Number prefix</label><input id="bPrefix" placeholder="INV-"></div>
+        </div>
+        <label for="bBank">Bank details</label><textarea id="bBank" rows="2" placeholder="Account name, number, IFSC"></textarea>
+        <label>Logo</label>
+        <div class="row"><button id="logoBtn">Choose image</button><button class="link" id="logoClear" hidden>Remove</button><span class="small muted" id="logoName"></span></div>
+        <input type="file" id="logoPick" accept="image/*" hidden>
+        <label for="accent">Accent colour</label><input id="accent" type="color" value="#c4403b" style="height:38px;padding:3px">
+      </details>
+
+      <details class="card">
+        <summary>Notes and terms</summary>
+        <label for="notes">Notes</label><textarea id="notes" rows="2" placeholder="Thank you for your business."></textarea>
+        <label for="terms">Terms</label><textarea id="terms" rows="2" placeholder="Payment due within 15 days."></textarea>
+      </details>
+
+      <details class="card" id="histCard">
+        <summary>Saved invoices</summary>
+        <ul class="history" id="history"></ul>
+      </details>
+    </div>
+
+    <div class="sheet-wrap"><div class="sheet" id="sheet"></div></div>
+  </div>
+</main>
+
+<script src="../common/qr.js"></script>
+<script src="../common/pdf-lite.js"></script>
+<script>
+'use strict';
+
+// ======================================================================
+// Money and words
+// ======================================================================
+
+const CURRENCIES = { INR: ['₹', 'Rupee', 'Rupees', 'Paisa', 'Paise'], USD: ['$', 'Dollar', 'Dollars', 'Cent', 'Cents'], EUR: ['€', 'Euro', 'Euros', 'Cent', 'Cents'], GBP: ['£', 'Pound', 'Pounds', 'Penny', 'Pence'],
+  AED: ['AED ', 'Dirham', 'Dirhams', 'Fils', 'Fils'], SGD: ['S$', 'Dollar', 'Dollars', 'Cent', 'Cents'], AUD: ['A$', 'Dollar', 'Dollars', 'Cent', 'Cents'], CAD: ['C$', 'Dollar', 'Dollars', 'Cent', 'Cents'],
+  LKR: ['Rs ', 'Rupee', 'Rupees', 'Cent', 'Cents'], NPR: ['Rs ', 'Rupee', 'Rupees', 'Paisa', 'Paisa'], BDT: ['Tk ', 'Taka', 'Taka', 'Poisha', 'Poisha'], ZAR: ['R ', 'Rand', 'Rand', 'Cent', 'Cents'], MYR: ['RM ', 'Ringgit', 'Ringgit', 'Sen', 'Sen'] };
+const num = v => { const n = parseFloat(String(v).replace(/,/g, '')); return Number.isFinite(n) ? n : 0; };
+const r2 = v => Math.round((v + Number.EPSILON) * 100) / 100;
+function money(v, cur, forPdf) {
+  const sym = CURRENCIES[cur][0], s = new Intl.NumberFormat(cur === 'INR' ? 'en-IN' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(v));
+  const shown = forPdf && !PdfLite.canShow(sym) ? (cur === 'INR' ? 'Rs. ' : cur + ' ') : sym;
+  return (v < 0 ? '-' : '') + shown + s;
+}
+const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+function below1000(n) {
+  const h = Math.floor(n / 100), r = n % 100, out = [];
+  if (h) out.push(ONES[h] + ' Hundred');
+  if (r) out.push(r < 20 ? ONES[r] : TENS[Math.floor(r / 10)] + (r % 10 ? '-' + ONES[r % 10] : ''));
+  return out.join(' ');
+}
+// Indian numbering (lakh, crore) for rupees; thousand, million, billion for the rest.
+function wholeWords(n, indian) {
+  if (n === 0) return 'Zero';
+  const parts = [];
+  const scales = indian ? [[1e7, 'Crore'], [1e5, 'Lakh'], [1e3, 'Thousand']] : [[1e9, 'Billion'], [1e6, 'Million'], [1e3, 'Thousand']];
+  for (const [v, name] of scales) {
+    if (n >= v) {
+      const q = Math.floor(n / v);
+      parts.push((q >= 1000 || (indian && v === 1e7 && q >= 100) ? wholeWords(q, indian) : below1000(q)) + ' ' + name);
+      n %= v;
+    }
+  }
+  if (n) parts.push(below1000(n));
+  return parts.join(' ');
+}
+function amountInWords(v, cur) {
+  const [, one, many, subOne, subMany] = CURRENCIES[cur];
+  const whole = Math.floor(Math.abs(v) + 1e-9), frac = Math.round((Math.abs(v) - whole) * 100);
+  let s = wholeWords(whole, cur === 'INR') + ' ' + (whole === 1 ? one : many);
+  if (frac) s += ' and ' + wholeWords(frac, false) + ' ' + (frac === 1 ? subOne : subMany);
+  return s + ' Only';
+}
+
+// ======================================================================
+// The invoice's sums. Each line: qty × rate, less the discount, plus its tax.
+// GST within a state is split equally into CGST and SGST; across states it's IGST.
+// ======================================================================
+
+function totals(inv) {
+  const disc = Math.min(100, Math.max(0, num(inv.discount))) / 100, taxOn = inv.taxMode !== 'none';
+  let sub = 0, discount = 0, taxable = 0;
+  const byRate = new Map();
+  const lines = inv.items.filter(it => it.desc || num(it.qty) * num(it.rate)).map(it => {
+    const amount = r2(num(it.qty) * num(it.rate)), d = r2(amount * disc), base = amount - d, taxRate = taxOn ? Math.max(0, num(it.tax)) : 0;
+    sub += amount; discount += d; taxable += base;
+    if (taxRate) byRate.set(taxRate, (byRate.get(taxRate) || 0) + base);
+    return { ...it, amount, taxRate };
+  });
+  const taxes = [];
+  for (const [rate, base] of [...byRate].sort((a, b) => a[0] - b[0])) {
+    const t = r2(base * rate / 100);
+    if (inv.taxMode === 'gst') {
+      if (inv.igst) taxes.push({ label: 'IGST ' + rate + '%', amt: t });
+      else { const h = r2(t / 2); taxes.push({ label: 'CGST ' + rate / 2 + '%', amt: h }, { label: 'SGST ' + rate / 2 + '%', amt: r2(t - h) }); }
+    } else taxes.push({ label: (inv.taxMode === 'vat' ? 'VAT ' : 'Tax ') + rate + '%', amt: t });
+  }
+  const taxTotal = taxes.reduce((a, b) => a + b.amt, 0), ship = num(inv.shipping);
+  let total = r2(taxable + taxTotal + ship), round = 0;
+  if (inv.roundOff) { round = r2(Math.round(total) - total); total = Math.round(total); }
+  const paid = r2(num(inv.paid));
+  return { lines, sub: r2(sub), discount: r2(discount), taxable: r2(taxable), taxes, ship, round, total, paid, due: r2(total - paid) };
+}
+
+// ======================================================================
+// Storage
+// ======================================================================
+
+const KEY = 'invoice-maker-v1';
+let S = { biz: { name: '', addr: '', tax: '', contact: '', upi: '', bank: '', prefix: 'INV-', logo: '', accent: '#c4403b' }, clients: [], invoices: [], next: 1 };
+try { const raw = JSON.parse(localStorage.getItem(KEY) || 'null'); if (raw && raw.biz) S = Object.assign(S, raw, { biz: Object.assign(S.biz, raw.biz) }); } catch (e) { }
+function store() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { alert('Your browser\'s storage is full. Remove the logo or some old invoices.'); } }
+// a date as YYYY-MM-DD where the user is, not in UTC
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const plusDays = (s, n) => { const d = new Date(s + 'T00:00'); d.setDate(d.getDate() + n); return iso(d); };
+function blankInvoice() {
+  const date = iso(new Date());
+  return { id: Math.random().toString(36).slice(2, 10), docType: 'Tax Invoice', num: (S.biz.prefix || '') + String(S.next).padStart(4, '0'), cur: 'INR', date, due: plusDays(date, 15),
+    taxMode: 'gst', igst: false, roundOff: true, items: [{ desc: '', hsn: '', qty: '1', rate: '', tax: '18' }], discount: '0', shipping: '0', paid: '0',
+    client: { name: '', addr: '', tax: '', contact: '' }, notes: 'Thank you for your business.', terms: '', status: 'unpaid', saved: false };
+}
+let inv = blankInvoice();
+
+// ======================================================================
+// The form
+// ======================================================================
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+$('cur').innerHTML = Object.keys(CURRENCIES).map(c => '<option>' + c + '</option>').join('');
+const BIZ = { bName: 'name', bAddr: 'addr', bTax: 'tax', bContact: 'contact', bUpi: 'upi', bBank: 'bank', bPrefix: 'prefix', accent: 'accent' };
+const CLIENT = { cName: 'name', cAddr: 'addr', cTax: 'tax', cContact: 'contact' };
+const INV = { docType: 'docType', num: 'num', cur: 'cur', date: 'date', due: 'due', taxMode: 'taxMode', discount: 'discount', shipping: 'shipping', paid: 'paid', notes: 'notes', terms: 'terms' };
+
+function fillForm() {
+  for (const [id, k] of Object.entries(INV)) $(id).value = inv[k];
+  $('igst').checked = inv.igst; $('roundOff').checked = inv.roundOff;
+  for (const [id, k] of Object.entries(CLIENT)) $(id).value = inv.client[k] || '';
+  for (const [id, k] of Object.entries(BIZ)) $(id).value = S.biz[k] || '';
+  $('logoName').textContent = S.biz.logo ? 'Logo added' : ''; $('logoClear').hidden = !S.biz.logo;
+  $('bizCard').open = !S.biz.name;
+  drawItems(); drawClients(); drawHistory(); update();
+}
+function drawItems() {
+  const gst = inv.taxMode === 'gst', tax = inv.taxMode !== 'none';
+  $('hsnHead').hidden = !gst; $('taxHead').hidden = !tax;
+  $('itemRows').innerHTML = inv.items.map((it, i) => '<tr>' +
+    '<td><input data-i="' + i + '" data-k="desc" value="' + esc(it.desc) + '" placeholder="Item or service" aria-label="Description"></td>' +
+    (gst ? '<td class="hsn"><input data-i="' + i + '" data-k="hsn" value="' + esc(it.hsn) + '" aria-label="HSN or SAC code"></td>' : '') +
+    '<td class="num"><input data-i="' + i + '" data-k="qty" value="' + esc(it.qty) + '" inputmode="decimal" aria-label="Quantity"></td>' +
+    '<td class="num"><input data-i="' + i + '" data-k="rate" value="' + esc(it.rate) + '" inputmode="decimal" placeholder="0.00" aria-label="Rate"></td>' +
+    (tax ? '<td class="num"><input data-i="' + i + '" data-k="tax" value="' + esc(it.tax) + '" inputmode="decimal" list="rates" aria-label="Tax percent"></td>' : '') +
+    '<td class="del"><button class="link" data-del="' + i + '" aria-label="Remove item"' + (inv.items.length < 2 ? ' disabled' : '') + '>&times;</button></td></tr>').join('') +
+    '<datalist id="rates"><option>0</option><option>5</option><option>12</option><option>18</option><option>28</option></datalist>';
+  for (const el of $('itemRows').querySelectorAll('input[data-k]')) el.oninput = () => { inv.items[+el.dataset.i][el.dataset.k] = el.value; update(); };
+  for (const b of $('itemRows').querySelectorAll('[data-del]')) b.onclick = () => { inv.items.splice(+b.dataset.del, 1); drawItems(); update(); };
+}
+function drawClients() {
+  $('clientPick').innerHTML = '<option value="">Saved clients...</option>' + S.clients.map((c, i) => '<option value="' + i + '">' + esc(c.name) + '</option>').join('');
+}
+function drawHistory() {
+  const list = S.invoices.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  $('histCard').hidden = !list.length;
+  $('history').innerHTML = list.map(x => { const t = totals(x); return '<li data-id="' + x.id + '"><span class="grow"><b>' + esc(x.num) + '</b> ' + esc(x.client.name || 'No client') + '<br><span class="small muted">' + esc(x.date) + ', ' + esc(x.docType) + '</span></span><span>' + esc(money(t.total, x.cur)) + '</span><span class="tag ' + (x.status === 'paid' ? 'paid' : '') + '">' + (x.status === 'paid' ? 'Paid' : 'Unpaid') + '</span>' +
+    '<button class="link" data-paid="' + x.id + '">' + (x.status === 'paid' ? 'Unpaid' : 'Mark paid') + '</button><button class="link" data-rm="' + x.id + '" aria-label="Delete">&times;</button></li>'; }).join('');
+  for (const li of $('history').querySelectorAll('li')) li.onclick = e => {
+    if (e.target.dataset.paid || e.target.dataset.rm) return;
+    inv = JSON.parse(JSON.stringify(S.invoices.find(x => x.id === li.dataset.id))); fillForm(); scrollTo(0, 0);
+  };
+  for (const b of $('history').querySelectorAll('[data-paid]')) b.onclick = () => { const x = S.invoices.find(v => v.id === b.dataset.paid); x.status = x.status === 'paid' ? 'unpaid' : 'paid'; if (inv.id === x.id) inv.status = x.status; store(); drawHistory(); };
+  for (const b of $('history').querySelectorAll('[data-rm]')) b.onclick = () => { if (!confirm('Delete this saved invoice?')) return; S.invoices = S.invoices.filter(v => v.id !== b.dataset.rm); store(); drawHistory(); };
+}
+function readForm() {
+  for (const [id, k] of Object.entries(INV)) inv[k] = $(id).value;
+  inv.igst = $('igst').checked; inv.roundOff = $('roundOff').checked;
+  for (const [id, k] of Object.entries(CLIENT)) inv.client[k] = $(id).value;
+  for (const [id, k] of Object.entries(BIZ)) S.biz[k] = $(id).value;
+}
+let saveTimer = 0;
+function update() {
+  readForm();
+  $('igstRow').hidden = inv.taxMode !== 'gst';
+  drawSheet();
+  clearTimeout(saveTimer); saveTimer = setTimeout(store, 400);
+  const all = [S.biz.name, S.biz.addr, S.biz.bank, S.biz.contact, inv.client.name, inv.client.addr, inv.notes, inv.terms, ...inv.items.map(i => i.desc)].join(' ');
+  $('fontWarn').hidden = PdfLite.canShow(all);
+}
+
+// ======================================================================
+// The preview on the page
+// ======================================================================
+
+function upiLink(t) {
+  if (!S.biz.upi || inv.cur !== 'INR' || !(t.due > 0)) return '';
+  return 'upi://pay?pa=' + encodeURIComponent(S.biz.upi.trim()).replace('%40', '@') + '&pn=' + encodeURIComponent((S.biz.name || 'Payee').slice(0, 40)) + '&am=' + t.due.toFixed(2) + '&cu=INR&tn=' + encodeURIComponent(inv.num);
+}
+function qrCanvas(text, cells = 6) {
+  const q = makeQR(text, 'M'), cv = document.createElement('canvas');
+  if (!q) return cv;
+  const n = q.size + 4;
+  cv.width = cv.height = n * cells;
+  const x = cv.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); x.fillStyle = '#000';
+  q.modules.forEach((row, y) => row.forEach((on, c) => { if (on) x.fillRect((c + 2) * cells, (y + 2) * cells, cells, cells); }));
+  return cv;
+}
+const fmtDate = s => { if (!s) return ''; const d = new Date(s + 'T00:00'); return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); };
+function drawSheet() {
+  const t = totals(inv), cur = inv.cur, gst = inv.taxMode === 'gst', tax = inv.taxMode !== 'none', b = S.biz, c = inv.client;
+  const head = '<tr><th>#</th><th>Description</th>' + (gst ? '<th>HSN/SAC</th>' : '') + '<th class="r">Qty</th><th class="r">Rate</th>' + (tax ? '<th class="r">Tax</th>' : '') + '<th class="r">Amount</th></tr>';
+  const rows = t.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td class="pre">' + esc(l.desc) + '</td>' + (gst ? '<td>' + esc(l.hsn) + '</td>' : '') + '<td class="r">' + esc(l.qty) + '</td><td class="r">' + money(num(l.rate), cur) + '</td>' + (tax ? '<td class="r">' + l.taxRate + '%</td>' : '') + '<td class="r">' + money(l.amount, cur) + '</td></tr>').join('');
+  const tr = (label, v, cls = '') => '<tr class="' + cls + '"><td>' + label + '</td><td class="r">' + money(v, cur) + '</td></tr>';
+  const upi = upiLink(t);
+  $('sheet').innerHTML =
+    '<div class="top"><div class="biz">' + (b.logo ? '<img src="' + b.logo + '" alt="">' : '') + '<b>' + esc(b.name || 'Your business') + '</b><div class="grey pre">' + esc(b.addr) + '</div>' +
+      (b.tax ? '<div>' + (gst ? 'GSTIN' : 'Tax ID') + ': ' + esc(b.tax) + '</div>' : '') + (b.contact ? '<div class="grey">' + esc(b.contact) + '</div>' : '') + '</div>' +
+    '<div class="doc"><b style="color:' + (/^#[0-9a-f]{6}$/i.test(b.accent) ? b.accent : '#c4403b') + '">' + esc(inv.docType.toUpperCase()) + '</b><div>No. ' + esc(inv.num) + '</div><div class="grey">Date: ' + fmtDate(inv.date) + '</div>' + (inv.due && inv.docType !== 'Receipt' ? '<div class="grey">Due: ' + fmtDate(inv.due) + '</div>' : '') + '</div></div>' +
+    '<div class="bill"><div><div class="grey">Bill to</div><b>' + esc(c.name || 'Client name') + '</b><div class="pre">' + esc(c.addr) + '</div>' + (c.tax ? '<div>' + (gst ? 'GSTIN' : 'Tax ID') + ': ' + esc(c.tax) + '</div>' : '') + (c.contact ? '<div class="grey">' + esc(c.contact) + '</div>' : '') + '</div>' +
+      '<div style="text-align:right"><div class="grey">' + (inv.docType === 'Receipt' ? 'Amount received' : 'Amount due') + '</div><b style="font-size:1.6em">' + money(inv.docType === 'Receipt' ? t.total : t.due, cur) + '</b>' + (gst ? '<div class="grey">' + (inv.igst ? 'Inter-state supply' : 'Intra-state supply') + '</div>' : '') + '</div></div>' +
+    '<table>' + head + (rows || '<tr><td colspan="7" class="grey">Add items on the left.</td></tr>') + '</table>' +
+    '<div class="totals"><div class="words"><div class="grey">Amount in words</div><b>' + esc(amountInWords(t.total, cur)) + '</b>' +
+      (inv.notes ? '<div style="margin-top:1em" class="pre">' + esc(inv.notes) + '</div>' : '') + '</div>' +
+      '<table>' + tr('Subtotal', t.sub) + (t.discount ? tr('Discount (' + num(inv.discount) + '%)', -t.discount) : '') + t.taxes.map(x => tr(x.label, x.amt)).join('') +
+      (t.ship ? tr('Shipping / other', t.ship) : '') + (t.round ? tr('Round off', t.round) : '') + tr('Total', t.total, 'big') + (t.paid ? tr('Paid', -t.paid) + tr('Balance due', t.due, 'big') : '') + '</table></div>' +
+    '<div class="foot"><div>' + (b.bank ? '<div class="grey">Bank details</div><div class="pre">' + esc(b.bank) + '</div>' : '') + (inv.terms ? '<div style="margin-top:.6em" class="grey">Terms</div><div class="pre">' + esc(inv.terms) + '</div>' : '') + '</div>' +
+      (upi ? '<div class="qr" id="sheetQr"><span>Scan to pay with UPI</span></div>' : '') +
+      '<div class="sign">For ' + esc(b.name || 'your business') + '<span>Authorised signatory</span></div></div>';
+  if (upi) $('sheetQr').prepend(qrCanvas(upi));
+}
+
+// ======================================================================
+// The PDF, laid out in points on A4, with real text.
+// ======================================================================
+
+async function makePdf() {
+  const P = PdfLite, [PW, PH] = P.A4, M = 40, t = totals(inv), cur = inv.cur, gst = inv.taxMode === 'gst', tax = inv.taxMode !== 'none', b = S.biz, c = inv.client;
+  const accent = /^#[0-9a-f]{6}$/i.test(b.accent) ? b.accent : '#c4403b', grey = '#666666';
+  const m = v => money(v, cur, true);
+  const pages = [];
+  let pg, y;
+  const newPage = () => { pg = P.page(PW, PH); pages.push(pg); y = M; };
+  newPage();
+  // header: logo and business on the left, the document title on the right
+  let left = y;
+  if (b.logo) {
+    try {
+      const im = await loadImage(b.logo), k = Math.min(130 / im.width, 56 / im.height), cv = document.createElement('canvas');
+      cv.width = Math.round(im.width * k * 3); cv.height = Math.round(im.height * k * 3);
+      const x = cv.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(im, 0, 0, cv.width, cv.height);
+      pg.image(await P.canvasJpeg(cv, 0.92), M, left, cv.width / 3, cv.height / 3); left += cv.height / 3 + 8;
+    } catch (e) { }
+  }
+  pg.text(M, left + 14, b.name || 'Your business', { size: 15, bold: true }); left += 22;
+  for (const line of P.wrap(b.addr, 9, false, 260)) { pg.text(M, left + 9, line, { size: 9, color: grey }); left += 12; }
+  if (b.tax) { pg.text(M, left + 9, (gst ? 'GSTIN: ' : 'Tax ID: ') + b.tax, { size: 9 }); left += 12; }
+  if (b.contact) { pg.text(M, left + 9, b.contact, { size: 9, color: grey }); left += 12; }
+  pg.text(PW - M, y + 20, inv.docType.toUpperCase(), { size: 20, bold: true, color: accent, align: 'right' });
+  pg.text(PW - M, y + 38, 'No. ' + inv.num, { size: 10, align: 'right' });
+  pg.text(PW - M, y + 52, 'Date: ' + fmtDate(inv.date), { size: 9, color: grey, align: 'right' });
+  if (inv.due && inv.docType !== 'Receipt') pg.text(PW - M, y + 64, 'Due: ' + fmtDate(inv.due), { size: 9, color: grey, align: 'right' });
+  y = Math.max(left, y + 72) + 14;
+  // bill to
+  const billLines = [c.name ? null : null, ...P.wrap(c.addr, 9.5, false, 300)];
+  const bh = 34 + (billLines.length - 1) * 12 + (c.tax ? 12 : 0) + (c.contact ? 12 : 0);
+  pg.rect(M, y, PW - 2 * M, bh, { fill: '#f4f4f2' });
+  pg.text(M + 10, y + 14, 'Bill to', { size: 8.5, color: grey });
+  pg.text(M + 10, y + 27, c.name || 'Client', { size: 11, bold: true });
+  let by = y + 27;
+  for (const line of billLines.slice(1)) { by += 12; pg.text(M + 10, by, line, { size: 9.5 }); }
+  if (c.tax) { by += 12; pg.text(M + 10, by, (gst ? 'GSTIN: ' : 'Tax ID: ') + c.tax, { size: 9.5 }); }
+  if (c.contact) { by += 12; pg.text(M + 10, by, c.contact, { size: 9.5, color: grey }); }
+  pg.text(PW - M - 10, y + 14, inv.docType === 'Receipt' ? 'Amount received' : 'Amount due', { size: 8.5, color: grey, align: 'right' });
+  pg.text(PW - M - 10, y + 32, m(inv.docType === 'Receipt' ? t.total : t.due), { size: 15, bold: true, align: 'right' });
+  if (gst) pg.text(PW - M - 10, y + 46, inv.igst ? 'Inter-state supply' : 'Intra-state supply', { size: 8.5, color: grey, align: 'right' });
+  y += bh + 16;
+  // the items table
+  const cols = [{ k: '#', w: 22 }, { k: 'Description', w: 0 }];
+  if (gst) cols.push({ k: 'HSN/SAC', w: 58 });
+  cols.push({ k: 'Qty', w: 40, r: true }, { k: 'Rate', w: 78, r: true });
+  if (tax) cols.push({ k: 'Tax', w: 38, r: true });
+  cols.push({ k: 'Amount', w: 86, r: true });
+  const fixed = cols.reduce((a, x) => a + x.w, 0);
+  cols[1].w = PW - 2 * M - fixed;
+  const header = () => {
+    pg.rect(M, y, PW - 2 * M, 20, { fill: '#222222' });
+    let x = M;
+    for (const col of cols) { pg.text(col.r ? x + col.w - 6 : x + 6, y + 13.5, col.k, { size: 8.5, bold: true, color: '#ffffff', align: col.r ? 'right' : 'left' }); x += col.w; }
+    y += 20;
+  };
+  header();
+  t.lines.forEach((l, i) => {
+    const desc = P.wrap(l.desc || '', 9.5, false, cols[1].w - 12), h = Math.max(1, desc.length) * 12 + 10;
+    if (y + h > PH - 150) { newPage(); header(); }
+    const vals = [String(i + 1), null];
+    if (gst) vals.push(l.hsn || '');
+    vals.push(String(l.qty), m(num(l.rate)));
+    if (tax) vals.push(l.taxRate + '%');
+    vals.push(m(l.amount));
+    let x = M;
+    cols.forEach((col, k) => {
+      if (k === 1) desc.forEach((d, j) => pg.text(x + 6, y + 14 + j * 12, d, { size: 9.5 }));
+      else pg.text(col.r ? x + col.w - 6 : x + 6, y + 14, vals[k], { size: 9.5, align: col.r ? 'right' : 'left' });
+      x += col.w;
+    });
+    y += h;
+    pg.line(M, y, PW - M, y, { color: '#e2e2e2', width: 0.6 });
+  });
+  // totals on the right, amount in words on the left
+  const rows = [['Subtotal', t.sub]];
+  if (t.discount) rows.push(['Discount (' + num(inv.discount) + '%)', -t.discount]);
+  for (const x of t.taxes) rows.push([x.label, x.amt]);
+  if (t.ship) rows.push(['Shipping / other', t.ship]);
+  if (t.round) rows.push(['Round off', t.round]);
+  const after = t.paid ? [['Paid', -t.paid]] : [];
+  const need = (rows.length + after.length + 2) * 15 + 30;
+  if (y + need > PH - 120) newPage();
+  y += 12;
+  const tx = PW - M - 210;
+  let ty = y;
+  for (const [label, v] of rows) { pg.text(tx, ty + 10, label, { size: 9.5 }); pg.text(PW - M - 6, ty + 10, m(v), { size: 9.5, align: 'right' }); ty += 15; }
+  pg.line(tx, ty + 2, PW - M, ty + 2, { width: 1.2, color: '#222222' });
+  pg.text(tx, ty + 17, 'Total', { size: 11.5, bold: true }); pg.text(PW - M - 6, ty + 17, m(t.total), { size: 11.5, bold: true, align: 'right' }); ty += 22;
+  for (const [label, v] of after) { pg.text(tx, ty + 10, label, { size: 9.5 }); pg.text(PW - M - 6, ty + 10, m(v), { size: 9.5, align: 'right' }); ty += 15; }
+  if (t.paid) { pg.text(tx, ty + 12, 'Balance due', { size: 11, bold: true }); pg.text(PW - M - 6, ty + 12, m(t.due), { size: 11, bold: true, align: 'right' }); ty += 18; }
+  let wy = y;
+  pg.text(M, wy + 10, 'Amount in words', { size: 8.5, color: grey }); wy += 12;
+  for (const line of P.wrap(amountInWords(t.total, cur), 9.5, true, tx - M - 20)) { wy += 12; pg.text(M, wy, line, { size: 9.5, bold: true }); }
+  if (inv.notes) { wy += 8; for (const line of P.wrap(inv.notes, 9, false, tx - M - 20)) { wy += 12; pg.text(M, wy, line, { size: 9, color: grey }); } }
+  y = Math.max(ty, wy) + 20;
+  // footer: bank details and terms, the UPI code, the signature
+  const fy = Math.max(y, PH - 150);
+  if (fy + 110 > PH) newPage();
+  const foot = Math.max(y, PH - 150);
+  let ly = foot;
+  if (b.bank) { pg.text(M, ly + 9, 'Bank details', { size: 8.5, color: grey }); ly += 12; for (const line of P.wrap(b.bank, 9, false, 196)) { ly += 11; pg.text(M, ly, line, { size: 9 }); } ly += 10; }
+  if (inv.terms) { pg.text(M, ly + 9, 'Terms', { size: 8.5, color: grey }); ly += 12; for (const line of P.wrap(inv.terms, 9, false, 196)) { ly += 11; pg.text(M, ly, line, { size: 9 }); } }
+  const upi = upiLink(t);
+  if (upi) {
+    const q = qrCanvas(upi, 8);
+    pg.image(await P.canvasJpeg(q, 0.95), PW / 2 - 40, foot, 80, 80);
+    pg.text(PW / 2, foot + 92, 'Scan to pay with UPI', { size: 8, color: grey, align: 'center' });
+  }
+  pg.text(PW - M, foot + 10, 'For ' + (b.name || 'your business'), { size: 9.5, align: 'right' });
+  pg.line(PW - M - 150, foot + 70, PW - M, foot + 70, { color: '#999999' });
+  pg.text(PW - M, foot + 82, 'Authorised signatory', { size: 8.5, color: grey, align: 'right' });
+  pages.forEach((p, i) => { if (pages.length > 1) p.text(PW / 2, PH - 18, 'Page ' + (i + 1) + ' of ' + pages.length, { size: 8, color: grey, align: 'center' }); });
+  return P.build(pages, { title: inv.docType + ' ' + inv.num, author: b.name });
+}
+function loadImage(src) { return new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = src; }); }
+
+// ======================================================================
+// Buttons
+// ======================================================================
+
+function saveInvoice() {
+  readForm();
+  inv.saved = true;
+  const i = S.invoices.findIndex(x => x.id === inv.id);
+  if (i >= 0) S.invoices[i] = JSON.parse(JSON.stringify(inv));
+  else {
+    S.invoices.push(JSON.parse(JSON.stringify(inv)));
+    // the next number follows this one if it ends in digits
+    const m = /(\d+)\s*$/.exec(inv.num);
+    if (m) S.next = Math.max(S.next, +m[1] + 1);
+  }
+  store(); drawHistory();
+}
+$('pdfBtn').onclick = async () => {
+  saveInvoice();
+  const bytes = await makePdf(), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+  a.download = (inv.docType + '-' + inv.num).replace(/[^\w\-]+/g, '-').replace(/-+/g, '-') + '.pdf';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+};
+$('printBtn').onclick = () => { saveInvoice(); print(); };
+$('saveBtn').onclick = () => { saveInvoice(); $('saveBtn').textContent = 'Saved'; setTimeout(() => { $('saveBtn').textContent = 'Save'; }, 1200); };
+$('newBtn').onclick = () => { readForm(); inv = blankInvoice(); const last = S.invoices[S.invoices.length - 1]; if (last) { inv.cur = last.cur; inv.taxMode = last.taxMode; inv.docType = last.docType; inv.terms = last.terms; inv.notes = last.notes; } fillForm(); };
+$('addItem').onclick = () => { const last = inv.items[inv.items.length - 1] || {}; inv.items.push({ desc: '', hsn: '', qty: '1', rate: '', tax: last.tax || '18' }); drawItems(); update(); const ins = $('itemRows').querySelectorAll('input[data-k="desc"]'); ins[ins.length - 1].focus(); };
+$('saveClient').onclick = () => {
+  readForm();
+  if (!inv.client.name.trim()) return;
+  const i = S.clients.findIndex(x => x.name.toLowerCase() === inv.client.name.trim().toLowerCase());
+  if (i >= 0) S.clients[i] = { ...inv.client }; else S.clients.push({ ...inv.client });
+  S.clients.sort((a, b) => a.name.localeCompare(b.name)); store(); drawClients();
+  $('saveClient').textContent = 'Saved'; setTimeout(() => { $('saveClient').textContent = 'Save client'; }, 1200);
+};
+$('clientPick').onchange = () => { const c = S.clients[+$('clientPick').value]; if (c) { inv.client = { ...c }; for (const [id, k] of Object.entries(CLIENT)) $(id).value = c[k] || ''; update(); } $('clientPick').value = ''; };
+$('taxMode').onchange = () => { inv.taxMode = $('taxMode').value; drawItems(); update(); };
+$('logoBtn').onclick = () => $('logoPick').click();
+$('logoPick').onchange = async () => {
+  const f = $('logoPick').files[0]; $('logoPick').value = '';
+  if (!f) return;
+  const im = await loadImage(URL.createObjectURL(f)), k = Math.min(1, 400 / Math.max(im.width, im.height)), cv = document.createElement('canvas');
+  cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+  cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+  S.biz.logo = cv.toDataURL('image/png'); fillForm();
+};
+$('logoClear').onclick = () => { S.biz.logo = ''; fillForm(); };
+for (const id of [...Object.keys(BIZ), ...Object.keys(CLIENT), ...Object.keys(INV), 'igst', 'roundOff']) $(id).addEventListener('input', update);
+$('igst').onchange = update; $('roundOff').onchange = update;
+fillForm();
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Invoice Maker</h2>
+<p>Make invoices, receipts and quotes as a PDF, with GST, HSN codes, the amount in words and a UPI payment QR built in. Your business details, clients and past invoices are saved in your browser for next time.</p>
+<h3>Use</h3>
+<ul><li>Fill in your business once: name, address, GSTIN or tax ID, contact, bank details, an optional logo and accent colour, and your UPI ID if you want a "scan to pay" code on rupee invoices.</li><li>Pick the document (tax invoice, invoice, receipt, quotation, proforma, bill of supply), the currency, the dates, and the tax: GST, VAT, sales tax, or none.</li><li>Add the client, or pick a saved one. Save client keeps them for next time.</li><li>Add items with a description, quantity, rate and tax rate (and an HSN or SAC code with GST). Add a discount, shipping, and any amount already paid.</li><li>The invoice on the right updates as you type. Download PDF saves it as a PDF. Print prints it, or saves it as a PDF from the print dialog; use that if your text has letters outside the Latin alphabet, such as Hindi.</li><li>Invoices are numbered in order from your prefix (INV-0001, INV-0002 and so on). Saved invoices are listed at the bottom; open one to edit it, duplicate it with New invoice, or mark it paid.</li></ul>
+<h3>How it works</h3>
+<ul><li>Each line is quantity times rate, less the discount; tax is worked out per rate on what's left. For GST within a state, each rate splits into equal CGST and SGST; for a customer in another state it's IGST. Amounts are rounded to the paisa at each step, and the total can be rounded to the nearest rupee with the difference shown as round-off.</li><li>The amount in words uses lakh and crore for rupees, and thousand, million and billion for other currencies, with paise, cents or pence.</li><li>The PDF is written from scratch with real text in the built-in Helvetica fonts, so it's small and sharp and the text can be searched and copied. Text is measured with the font's character widths to wrap descriptions and right-align amounts. Long invoices continue onto more pages, repeating the table header and numbering the pages.</li><li>Those built-in fonts have no rupee sign, so the PDF writes "Rs." while the page and printed copy show ₹. The UPI code is the standard <code>upi://pay</code> link with the balance due and the invoice number.</li></ul>
+<p class="pg-more">More like this: <a href="../screen-recorder/">Screen Recorder</a>, <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>, <a href="../video-to-gif/">Video to GIF</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/invoice-maker">invoice-maker on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>
