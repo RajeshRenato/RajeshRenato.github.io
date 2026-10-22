@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='7' y='1' width='3' height='10' rx='1.5' fill='%231d2124'/%3E%3Crect x='5' y='8' width='22' height='23' rx='6' fill='%23f2b705'/%3E%3Crect x='9' y='12' width='14' height='7' rx='1.5' fill='%23b9c49a'/%3E%3Ccircle cx='16' cy='25' r='3.5' fill='%231d2124'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Walkie-Talkie | push to talk group voice chat online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/walkie-talkie/">
+<style>
+  :root { --bg: #cdd3cf; --ink: #1d2124; --muted: #565e62; --body: #f2b705; --body-dark: #c99600; --lcd: #b9c49a; --lcd-ink: #26301a;
+          --rubber: #1d2124; --live: #e5452b; --ok: #2f9e44; --field: #f4f5f2; --rule: #a9b0ac; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; min-height: 100vh; }
+  a.back { position: absolute; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; }
+  a.back:hover { color: var(--ink); }
+  main { max-width: 900px; margin: 0 auto; padding: 52px 20px 40px; }
+  [hidden] { display: none !important; }
+  h1 { font-size: 40px; margin: 0 0 8px; letter-spacing: -0.5px; }
+  h2 { font-size: 22px; margin: 0 0 10px; }
+  p { line-height: 1.5; }
+  .lede { color: var(--muted); max-width: 560px; margin: 0 0 22px; font-size: 17px; }
+  .small { color: var(--muted); font-size: 13px; max-width: 560px; }
+  label.name { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; color: var(--muted); }
+  input.field { font: 15px system-ui, sans-serif; padding: 9px 10px; border-radius: 8px; border: 1.5px solid var(--rule); background: var(--field); color: var(--ink); min-width: 0; }
+  input.field:focus-visible, button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  label.name input { width: 190px; }
+  button { font: inherit; cursor: pointer; }
+  .btn { font-weight: 600; font-size: 15px; padding: 10px 16px; border-radius: 8px; border: 1.5px solid var(--ink); background: var(--ink); color: #f4f5f2; }
+  .btn:hover { background: #000; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .plain { font-size: 14px; padding: 8px 12px; border-radius: 8px; border: 1.5px solid var(--rule); background: var(--field); color: var(--ink); }
+  .plain:hover { border-color: var(--ink); }
+  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 4px 0; font-size: 14px; }
+  .link:hover { color: var(--ink); }
+  .code { display: flex; gap: 6px; margin: 6px 0 12px; }
+  .code input { flex: 1; font: 13px ui-monospace, Menlo, monospace; }
+  .status { min-height: 1.5em; margin: 6px 0; }
+
+  /* the radio */
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: start; }
+  .radio { position: relative; width: 300px; margin: 34px auto 0; }
+  .antenna { position: absolute; left: 44px; top: -74px; width: 22px; height: 96px; border-radius: 11px; background: var(--rubber);
+             box-shadow: inset -4px 0 0 rgba(255,255,255,.08); }
+  .knob { position: absolute; right: 52px; top: -16px; width: 40px; height: 22px; border-radius: 6px 6px 0 0; background: var(--rubber);
+          background-image: repeating-linear-gradient(90deg, transparent 0 4px, rgba(255,255,255,.12) 4px 6px); }
+  .case { position: relative; background: var(--body); border-radius: 30px 30px 40px 40px; padding: 22px 22px 30px;
+          box-shadow: inset 0 -10px 0 var(--body-dark), inset 0 3px 0 rgba(255,255,255,.35), 0 18px 34px rgba(29,33,36,.25); }
+  .case::before, .case::after { content: ''; position: absolute; top: 110px; width: 10px; height: 180px; background: var(--rubber); border-radius: 5px; }
+  .case::before { left: -5px; }
+  .case::after { right: -5px; }
+  .led { position: absolute; top: 12px; right: 26px; width: 10px; height: 10px; border-radius: 50%; background: #6b6f5e; box-shadow: inset 0 1px 2px rgba(0,0,0,.4); }
+  .led.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .led.rx { background: #ffb21e; box-shadow: 0 0 8px #ffb21e; }
+  .led.tx { background: var(--live); box-shadow: 0 0 10px var(--live); }
+  .lcd { background: var(--lcd); color: var(--lcd-ink); border-radius: 10px; padding: 12px 14px 10px; margin-top: 10px; min-height: 118px;
+         font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; box-shadow: inset 0 3px 8px rgba(0,0,0,.28), 0 0 0 4px #2a2f2a; }
+  .lcd .top { display: flex; justify-content: space-between; font-size: 12px; opacity: .8; }
+  .lcd .main { font-size: 25px; font-weight: 700; margin: 12px 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lcd .sub { font-size: 12px; min-height: 1.3em; }
+  .bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; }
+  .bars i { width: 4px; background: var(--lcd-ink); opacity: .18; }
+  .bars i.lit { opacity: 1; }
+  .grille { height: 74px; margin: 20px 6px 18px; border-radius: 12px; background-color: var(--body-dark);
+            background-image: radial-gradient(circle, var(--rubber) 2.6px, transparent 3px); background-size: 13px 13px; background-position: center; }
+  .ptt { display: block; margin: 0 auto; width: 156px; height: 156px; border-radius: 50%; border: 0; color: #f4f5f2; font-weight: 700; font-size: 17px;
+         background: radial-gradient(circle at 50% 40%, #3a4045, var(--rubber) 70%);
+         box-shadow: 0 0 0 9px var(--body-dark), 0 0 0 11px var(--rubber), inset 0 -6px 0 rgba(0,0,0,.35);
+         touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: transform .06s; }
+  .ptt small { display: block; font-weight: 500; font-size: 12px; opacity: .65; margin-top: 4px; }
+  .ptt.down { transform: scale(.96); }
+  .ptt.live { background: radial-gradient(circle at 50% 40%, #ff6a4f, var(--live) 70%); }
+  .ptt:disabled { opacity: .5; }
+
+  .side h2 { margin-top: 6px; }
+  ul.people { list-style: none; padding: 0; margin: 0 0 26px; }
+  ul.people li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--rule); }
+  ul.people li i { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: none; }
+  ul.people li.talk i { background: var(--live); box-shadow: 0 0 0 4px rgba(229,69,43,.25); }
+  ul.people li span { flex: 1; }
+  ul.people li em { font-style: normal; color: var(--muted); font-size: 13px; }
+  .inv > span { font-size: 13px; color: var(--muted); }
+  .note { background: rgba(255,255,255,.45); border-radius: 10px; padding: 12px 14px; margin: 0 0 18px; }
+  .note p { margin: 0 0 8px; }
+
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; gap: 26px; }
+    main { padding-top: 44px; }
+    .radio { margin-top: 66px; }
+    h1 { font-size: 32px; }
+    input.field { font-size: 16px; }
+  }
+  @media (pointer: coarse) { .ptt small { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .ptt { transition: none; } }
+</style>
+<meta property="og:title" content="Walkie-Talkie">
+<meta property="og:description" content="A push-to-talk walkie-talkie for a group, over a link. Hold the button to talk, let go to listen. Voice goes browser to browser, with no server and no sign-up.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/walkie-talkie/">
+<meta property="og:image" content="https://rajeshrenato.github.io/walkie-talkie/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A push-to-talk walkie-talkie for a group, over a link. Hold the button to talk, let go to listen. Voice goes browser to browser, with no server and no sign-up.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Walkie-Talkie", "item": "https://rajeshrenato.github.io/walkie-talkie/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Walkie-Talkie", "url": "https://rajeshrenato.github.io/walkie-talkie/", "description": "A push-to-talk walkie-talkie for a group, over a link. Hold the button to talk, let go to listen. Voice goes browser to browser, with no server and no sign-up.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+
+<section id="start">
+  <h1>Walkie-Talkie</h1>
+  <p class="lede">Push to talk with up to 8 people. Start a channel, send each person a link, then hold the button to talk and let go to listen. One person talks at a time.</p>
+  <label class="name">Your name <input class="field" id="nameStart" maxlength="16" autocomplete="nickname"></label>
+  <button class="btn" id="startBtn">Start a channel</button>
+  <p class="small">Voice goes straight between browsers, encrypted, with no server in between. Everyone connects to the person who started the channel, and their browser passes each voice on to the others. A public STUN service helps the browsers find each other. Everyone needs this page open at the same time.</p>
+</section>
+
+<section id="joinScreen" hidden>
+  <h1>Join the channel</h1>
+  <p class="lede">You've been invited to a walkie-talkie channel.</p>
+  <label class="name">Your name <input class="field" id="nameJoin" maxlength="16" autocomplete="nickname"></label>
+  <button class="btn" id="joinBtn">Join</button>
+  <p class="status" id="joinStatus"></p>
+  <div id="joinReply" hidden>
+    <p>Send this reply link back to the person who invited you. You're on the channel as soon as they open it or paste it in. Keep this page open.</p>
+    <div class="code"><input class="field" id="answerLink" readonly><button class="plain" id="answerCopy">Copy</button><button class="plain" id="answerShare" hidden>Share</button></div>
+  </div>
+</section>
+
+<section id="replyScreen" hidden>
+  <h1 id="replyTitle">Connecting…</h1>
+  <p id="replyMsg"></p>
+  <div class="code" id="replyBox" hidden><input class="field" id="replyCode" readonly><button class="plain" id="replyCopy">Copy</button></div>
+</section>
+
+<section id="channel" hidden>
+  <div class="layout">
+    <div>
+      <div class="radio">
+        <div class="antenna"></div><div class="knob"></div>
+        <div class="case">
+          <i class="led" id="led"></i>
+          <div class="lcd" aria-live="polite">
+            <div class="top"><span id="lcdCount"></span><span class="bars" id="bars" aria-hidden="true"><i style="height:3px"></i><i style="height:5px"></i><i style="height:7px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+            <div class="main" id="lcdMain">Channel clear</div>
+            <div class="sub" id="lcdSub"></div>
+          </div>
+          <div class="grille"></div>
+          <button class="ptt" id="ptt">Hold to talk<small>or hold Space</small></button>
+        </div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="note" id="micNote" hidden><p id="micMsg"></p><button class="plain" id="micRetry">Try the microphone again</button></div>
+      <h2>On the channel</h2>
+      <ul class="people" id="people"></ul>
+      <div id="hostPanel" hidden>
+        <h2>Invite people</h2>
+        <p class="small">Send each person their own invite. They'll get a reply link to send back: open it in this browser, or paste it below.</p>
+        <div id="invites"></div>
+        <button class="link" id="moreBtn">Invite another person</button>
+        <div class="code"><input class="field" id="replyIn" placeholder="Paste a reply link"><button class="plain" id="connectBtn">Connect</button></div>
+        <p class="status" id="hostStatus"></p>
+      </div>
+      <button class="link" id="leaveBtn">Leave the channel</button>
+    </div>
+  </div>
+</section>
+
+</main>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script>
+'use strict';
+
+const NAME = 'walkie-talkie', MAX_TALK = 60, MAX_INVITES = 7;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const now = () => performance.now();
+
+let room = null;          // Room, once on the channel
+let lp = null;            // host: LinkPlay host, for invites
+let joined = null;        // guest: the LinkPlay connection to the host
+let mic = null;           // my microphone track, enabled only while I have the channel
+let floor = -1;           // id of whoever is talking, -1 when the channel is clear
+let floorSince = 0;
+let holding = false;      // I'm holding the button
+let notice = '';          // a short line for the display, like "Busy"
+let inviteCount = 0;
+const peers = new Map();  // host: room id -> { pc, track }
+const byInvite = new Map(); // host: invite id -> { id, track }
+const audios = {};
+
+function savedName() { try { return localStorage.getItem('linkplay_name') || ''; } catch (e) { return ''; } }
+function saveName(n) { try { localStorage.setItem('linkplay_name', n); } catch (e) { } }
+function show(id) { for (const s of ['start', 'joinScreen', 'replyScreen', 'channel']) $(s).hidden = s !== id; }
+
+// ---- who hears what (host)
+
+// What the host sends to guest g: its own mic, another guest's voice (their id), or nothing.
+function routeTarget(g, talker) {
+  if (talker === 0) return 'mic';
+  if (talker > 0 && talker !== g) return talker;
+  return null;
+}
+
+function audioSender(pc) {
+  const t = pc.getTransceivers().find(x => x.receiver && x.receiver.track && x.receiver.track.kind === 'audio');
+  return t ? t.sender : null;
+}
+
+function applyRouting() {
+  if (mic) mic.enabled = floor === (room ? room.me : -2);
+  if (!room || !room.isHost) return;
+  for (const [g, peer] of peers) {
+    const sender = peer.pc && audioSender(peer.pc);
+    if (!sender) continue;
+    const want = routeTarget(g, floor);
+    const track = want === 'mic' ? mic : want === null ? null : (peers.get(want) || {}).track || null;
+    if (sender.track !== track) sender.replaceTrack(track).catch(() => {});
+  }
+}
+
+// ---- the channel: one talker at a time, decided by the host
+
+function setFloor(id) {
+  if (id === floor) return;
+  const was = floor;
+  floor = id;
+  floorSince = now();
+  if (room && room.isHost) room.send({ t: 'floor', id });
+  applyRouting();
+  chirp(id === -1 ? 'end' : 'start', was);
+  render();
+}
+
+// Host: someone presses (on) or lets go. Whoever is still holding when the
+// channel clears gets it next, in the order they pressed.
+const waiting = [];
+function request(id, on) {
+  const k = waiting.indexOf(id);
+  if (k >= 0) waiting.splice(k, 1);
+  if (on) {
+    if (floor === -1 || floor === id) { setFloor(id); return true; }
+    waiting.push(id);
+    return false;
+  }
+  if (floor === id) setFloor(waiting.length ? waiting.shift() : -1);
+  return false;
+}
+
+async function press() {
+  if (holding || !room) return;
+  holding = true;
+  notice = '';
+  $('ptt').classList.add('down');
+  if (!mic) {
+    await getMic();
+    if (!mic || !holding) { holding = false; $('ptt').classList.remove('down'); render(); return; }
+  }
+  if (room.isHost) { if (!request(0, true)) busy(); }
+  else room.send({ t: 'talk', on: true });
+  render();
+}
+
+function release() {
+  if (!holding) return;
+  holding = false;
+  $('ptt').classList.remove('down');
+  if (!room) return;
+  if (room.isHost) request(0, false);
+  else room.send({ t: 'talk', on: false });
+  if (mic) mic.enabled = false;
+  render();
+}
+
+function busy() {
+  notice = 'Busy';
+  chirp('busy');
+  setTimeout(() => { notice = ''; render(); }, 1400);
+}
+
+function tick() {
+  if (!room || !room.isHost || floor === -1 || now() - floorSince <= MAX_TALK * 1000) return;
+  if (floor === 0) notice = 'Time is up. Let go and press again.';
+  request(floor, false);
+}
+
+function onHostMessage(m, from) {
+  if (m.t === 'talk') request(from, m.on === true);
+}
+
+function onGuestMessage(m) {
+  if (m.t !== 'floor' || !Number.isInteger(m.id) || m.id < -1) return;
+  const was = floor;
+  setFloor(m.id);
+  if (holding && m.id !== room.me && was === room.me) notice = 'Time is up. Let go and press again.';
+  else if (holding && m.id !== room.me && m.id !== -1) busy();
+  else if (m.id === room.me) notice = '';
+  render();
+}
+
+function enterChannel(r) {
+  room = r;
+  r.on('roster', () => {
+    if (r.isHost && $('hostStatus').textContent === 'Connecting…') $('hostStatus').textContent = '';
+    render();
+  });
+  if (r.isHost) {
+    r.on('message', onHostMessage);
+    r.on('leave', id => {
+      peers.delete(id);
+      request(id, false);
+      render();
+    });
+  } else {
+    r.on('message', onGuestMessage);
+    r.on('close', () => {
+      if (room !== r) return;
+      room = null;
+      floor = -1;
+      $('lcdMain').textContent = 'Channel closed';
+      $('lcdSub').textContent = 'The person who started it left.';
+      $('led').className = 'led';
+      $('ptt').disabled = true;
+    });
+  }
+  show('channel');
+  $('hostPanel').hidden = !r.isHost;
+  $('ptt').disabled = false;
+  try { $('ptt').focus(); } catch (e) { }
+  render();
+  autoMic();
+}
+
+// ---- starting, inviting, joining
+
+function startHost() {
+  const name = $('nameStart').value.trim();
+  if (name) saveName(name);
+  const r = Room.create(NAME, name);
+  lp = LinkPlay.host(NAME, {
+    media: true,
+    onChannel: (ch, inviteId) => {
+      const id = r.addChannel(ch);
+      const inv = lp.invites.get(inviteId), early = byInvite.get(inviteId);
+      peers.set(id, { pc: inv && inv.pc, track: early ? early.track : null });
+      byInvite.set(inviteId, { id, track: early ? early.track : null });
+      applyRouting();
+    },
+    onTrack: (e, inviteId) => {
+      if (e.track.kind !== 'audio') return;
+      const known = byInvite.get(inviteId);
+      byInvite.set(inviteId, { id: known ? known.id : null, track: e.track });
+      if (known && peers.has(known.id)) peers.get(known.id).track = e.track;
+      play(e.track, 'inv-' + inviteId);
+      applyRouting();
+    },
+    onFail: () => { $('hostStatus').textContent = "Someone couldn't connect. One of your networks may block direct connections; send a new invite or try another network."; },
+  });
+  enterChannel(r);
+  addInvite();
+}
+
+async function addInvite() {
+  if (!lp || inviteCount >= MAX_INVITES) return;
+  inviteCount++;
+  const row = document.createElement('div');
+  row.className = 'inv';
+  const label = document.createElement('span');
+  label.textContent = 'Invite ' + inviteCount;
+  const code = document.createElement('div');
+  code.className = 'code';
+  const input = document.createElement('input');
+  input.className = 'field'; input.readOnly = true; input.placeholder = 'Making the invite…';
+  const copy = document.createElement('button');
+  copy.className = 'plain'; copy.textContent = 'Copy';
+  copy.onclick = () => copyText(input.value, copy);
+  code.append(input, copy);
+  if (navigator.share) {
+    const sh = document.createElement('button');
+    sh.className = 'plain'; sh.textContent = 'Share';
+    sh.onclick = () => navigator.share({ url: input.value }).catch(() => {});
+    code.append(sh);
+  }
+  row.append(label, code);
+  $('invites').appendChild(row);
+  try { input.value = (await lp.invite()).link; }
+  catch (e) { $('hostStatus').textContent = "Your browser couldn't create an invite. Try an up-to-date Chrome, Firefox, or Safari."; }
+  if (inviteCount >= MAX_INVITES) $('moreBtn').hidden = true;
+}
+
+async function acceptReply(text) {
+  if (!lp) return;
+  const err = await lp.accept(text);
+  $('hostStatus').textContent = err || 'Connecting…';
+  if (!err) $('replyIn').value = '';
+}
+
+let silentStream = null;
+function silent() {
+  if (silentStream) return silentStream;
+  try { silentStream = new (window.AudioContext || window.webkitAudioContext)().createMediaStreamDestination().stream; }
+  catch (e) { silentStream = null; }
+  return silentStream;
+}
+
+async function joinChannel(invite) {
+  const name = $('nameJoin').value.trim();
+  if (name) saveName(name);
+  $('joinBtn').disabled = true;
+  $('joinStatus').textContent = 'Setting up a direct connection…';
+  try {
+    // a silent track keeps a slot open, so the microphone can go in later without reconnecting
+    joined = await LinkPlay.join(NAME, invite, {
+      stream: silent(),
+      onChannel: ch => enterChannel(Room.joinChannel(ch, name)),
+      onTrack: e => { if (e.track.kind === 'audio') play(e.track, 'host'); },
+      onFail: () => { $('joinStatus').textContent = "Couldn't connect. One of your networks may block direct connections; try another network."; },
+    });
+    try { history.replaceState(null, '', location.pathname); } catch (e) { }
+    $('answerLink').value = joined.link;
+    $('joinReply').hidden = false;
+    $('joinStatus').textContent = 'Almost there.';
+  } catch (e) {
+    $('joinStatus').textContent = "This invite didn't work. It may have been used already. Ask for a fresh one.";
+    $('joinBtn').disabled = false;
+  }
+}
+
+async function handleReply(reply) {
+  show('replyScreen');
+  try { history.replaceState(null, '', location.pathname); } catch (e) { }
+  if (await LinkPlay.forwardReply(NAME, reply)) {
+    $('replyTitle').textContent = 'Connected';
+    $('replyMsg').textContent = 'Go back to your walkie-talkie tab. You can close this one.';
+    return;
+  }
+  $('replyTitle').textContent = 'Paste this into your channel tab';
+  $('replyMsg').textContent = "The channel isn't open in this browser. Copy this reply and paste it into the tab where you started the channel.";
+  $('replyCode').value = LinkPlay.pageLink('answer=' + reply.id + '.' + reply.code);
+  $('replyBox').hidden = false;
+}
+
+function leave() {
+  release();
+  if (room) { try { room.close(); } catch (e) { } }
+  if (lp) lp.close();
+  if (joined) joined.close();
+  if (mic) mic.stop();
+  location.href = location.pathname;
+}
+
+async function copyText(text, btn) {
+  if (!text) return;
+  try { await navigator.clipboard.writeText(text); } catch (e) { }
+  if (btn) { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1400); }
+}
+
+// ---- microphone
+
+async function permission(name) {
+  try { return (await navigator.permissions.query({ name })).state; } catch (e) { return ''; }
+}
+
+async function explain(e) {
+  const name = e && e.name;
+  if (!window.isSecureContext) return 'The microphone only works on a secure (https) page. Open the https:// address instead.';
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    if ((await permission('microphone')) === 'granted') {
+      const mac = /Mac/.test(navigator.platform || navigator.userAgent), win = /Win/.test(navigator.platform || navigator.userAgent);
+      return 'Your browser allows this page, but your computer is blocking the browser from the microphone. ' +
+        (mac ? 'On a Mac: System Settings, Privacy & Security, Microphone, then turn on your browser and reopen it.'
+          : win ? 'On Windows: Settings, Privacy & security, Microphone, then allow desktop apps to use it.'
+          : "Check your device's privacy settings for the microphone.");
+    }
+    return "The microphone is blocked for this page. Click the lock or microphone icon in the address bar and allow it. You can still listen.";
+  }
+  if (name === 'NotReadableError' || name === 'AbortError') return 'Another app is using your microphone. Close it and try again.';
+  if (name === 'NotFoundError') return 'No microphone was found. You can still listen.';
+  return "Couldn't open your microphone" + (name ? ' (' + name + ')' : '') + '. You can still listen.';
+}
+
+let gettingMic = null;
+function getMic() {
+  if (mic) return Promise.resolve(mic);
+  if (gettingMic) return gettingMic;
+  gettingMic = (async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw Object.assign(new Error(), { name: 'NotSupported' });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      mic = stream.getAudioTracks()[0];
+      mic.enabled = false;
+      if (joined && joined.pc) { const s = audioSender(joined.pc); if (s) await s.replaceTrack(mic); }
+      $('micNote').hidden = true;
+      applyRouting();
+    } catch (e) {
+      $('micMsg').textContent = await explain(e);
+      $('micNote').hidden = false;
+    }
+    gettingMic = null;
+    render();
+    return mic;
+  })();
+  return gettingMic;
+}
+
+// Open the mic right away when it's already allowed, so the first press is instant,
+// and as soon as it's allowed in the browser's settings while the page is open.
+async function autoMic() {
+  if ((await permission('microphone')) === 'granted') getMic();
+  try {
+    const st = await navigator.permissions.query({ name: 'microphone' });
+    st.onchange = () => { if (st.state === 'granted' && !mic) getMic(); };
+  } catch (e) { }
+}
+
+function play(track, key) {
+  let a = audios[key];
+  if (!a) { a = document.createElement('audio'); a.autoplay = true; document.body.appendChild(a); audios[key] = a; }
+  a.srcObject = new MediaStream([track]);
+  const p = a.play && a.play();
+  if (p && p.catch) p.catch(() => {});
+}
+
+// Short radio beeps when the channel opens and closes.
+let actx = null;
+function chirp(kind, was) {
+  try {
+    if (kind === 'start' && was !== -1 && was !== undefined) return;
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const tones = kind === 'start' ? [[1250, 0, 0.06]] : kind === 'end' ? [[880, 0, 0.07], [1320, 0.08, 0.09]] : [[330, 0, 0.12], [330, 0.17, 0.12]];
+    for (const [f, at, len] of tones) {
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + at;
+      o.type = 'square'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.06, t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      o.connect(g).connect(actx.destination);
+      o.start(t); o.stop(t + len + 0.02);
+    }
+  } catch (e) { }
+}
+
+// ---- the display
+
+const nameOf = id => { const p = room && room.players.find(x => x.id === id); return p ? p.name : 'Someone'; };
+
+function render() {
+  if (!room) return;
+  const mine = floor === room.me, n = room.players.length;
+  $('lcdCount').textContent = n === 1 ? 'Just you so far' : n + ' on the channel';
+  $('lcdMain').textContent = mine ? 'On air' : floor === -1 ? (holding && !mic ? 'Mic needed' : 'Channel clear') : nameOf(floor);
+  $('lcdSub').textContent = notice || (mine ? 'Let go to listen' : floor !== -1 ? (holding && mic ? 'is talking. Keep holding to go next.' : 'is talking') :
+    holding ? 'Waiting for the channel' : n === 1 ? 'Invite people to talk' : 'Nobody is talking');
+  $('led').className = 'led ' + (mine ? 'tx' : floor !== -1 ? 'rx' : 'on');
+  $('ptt').classList.toggle('live', mine);
+  $('people').innerHTML = room.players.map(p => '<li' + (p.id === floor ? ' class="talk"' : '') + '><i></i><span>' + esc(p.name) +
+    (p.id === room.me ? ' (you)' : '') + '</span><em>' + (p.id === floor ? 'talking' : p.id === 0 ? 'started the channel' : '') + '</em></li>').join('');
+}
+
+// Signal bars: how loud the voice coming in is.
+async function level() {
+  let pc = null;
+  if (room && !room.isHost && floor > -1 && floor !== room.me) pc = joined && joined.pc;
+  if (room && room.isHost && floor > 0) pc = (peers.get(floor) || {}).pc;
+  let lit = 0;
+  if (pc) {
+    try {
+      (await pc.getStats()).forEach(s => {
+        if (s.type === 'inbound-rtp' && s.kind === 'audio' && typeof s.audioLevel === 'number') lit = Math.max(lit, Math.min(5, Math.round(Math.sqrt(s.audioLevel) * 9)));
+      });
+    } catch (e) { }
+  } else if (room && floor === room.me) lit = 5;
+  const bars = $('bars').children || [];
+  for (let i = 0; i < bars.length; i++) bars[i].className = i < lit ? 'lit' : '';
+}
+
+// ---- controls
+
+const ptt = $('ptt');
+ptt.addEventListener('pointerdown', e => { e.preventDefault(); try { ptt.setPointerCapture(e.pointerId); } catch (x) { } press(); });
+ptt.addEventListener('pointerup', release);
+ptt.addEventListener('pointercancel', release);
+ptt.addEventListener('contextmenu', e => e.preventDefault());
+ptt.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.repeat) press(); });
+ptt.addEventListener('keyup', e => { if (e.key === 'Enter') release(); });
+addEventListener('keydown', e => {
+  if (e.code !== 'Space' || $('channel').hidden || (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' && e.target !== ptt))) return;
+  e.preventDefault();
+  if (!e.repeat) press();
+});
+addEventListener('keyup', e => { if (e.code === 'Space') release(); });
+addEventListener('blur', release);
+document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
+
+$('nameStart').value = $('nameJoin').value = savedName();
+$('startBtn').onclick = startHost;
+$('moreBtn').onclick = addInvite;
+$('connectBtn').onclick = () => acceptReply($('replyIn').value);
+$('replyIn').onkeydown = e => { if (e.key === 'Enter') acceptReply($('replyIn').value); };
+$('answerCopy').onclick = () => copyText($('answerLink').value, $('answerCopy'));
+if (navigator.share) { $('answerShare').hidden = false; $('answerShare').onclick = () => navigator.share({ url: $('answerLink').value }).catch(() => {}); }
+$('replyCopy').onclick = () => copyText($('replyCode').value, $('replyCopy'));
+$('micRetry').onclick = () => getMic();
+$('leaveBtn').onclick = leave;
+setInterval(() => { tick(); level(); }, 200);
+
+const fromLink = LinkPlay.fromHash();
+if (fromLink && fromLink.kind === 'offer') { show('joinScreen'); $('joinBtn').onclick = () => joinChannel(fromLink); }
+else if (fromLink && fromLink.kind === 'answer') handleReply(fromLink);
+else show('start');
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Walkie-Talkie</h2>
+<p>A push-to-talk walkie-talkie for up to 8 people, through links. Hold the button to talk and let go to listen. Like a real radio, one person talks at a time. There's no app, no account, and no server.</p>
+<h3>Use</h3>
+<p>The microphone only works on <code>http://localhost</code> or <code>https://</code>.</p>
+<p>Click "Start a channel" and send each person their own invite. They open it, click Join, and get a reply link to send back. Open the reply in your browser or paste it in, and they're on the channel. An invite only works once; "Invite another person" makes a new one.</p>
+<ul><li>Hold the big button, or hold Space, to talk. Let go to listen.</li><li>The first time you talk, the browser asks for the microphone. If you've already allowed it, it's ready right away.</li><li>If someone else is talking when you press, you hear a busy beep. Keep holding and the channel is yours as soon as they let go.</li><li>Nobody can talk for more than a minute at a time.</li><li>You can listen without a microphone.</li></ul>
+<h3>How it works</h3>
+<p>It uses <a href="../linkplay/">LinkPlay</a>: browsers connect directly over WebRTC, and the invite and reply links carry the connection details. Everyone connects to the person who started the channel. Their browser decides who has the channel and passes that person's voice on to everyone else, so the talker doesn't hear an echo of themselves. Your microphone track is muted except while you have the channel.</p>
+<p>Voice is encrypted on every connection (DTLS-SRTP). The browser that started the channel does hear everything, since it passes the voices on. Nothing is recorded or stored, and closing the tab leaves the channel. If the person who started it leaves, the channel closes for everyone.</p>
+<p class="pg-more">More like this: <a href="../secret-note/">Secret Note</a>, <a href="../screen-recorder/">Screen Recorder</a>, <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/walkie-talkie">walkie-talkie on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

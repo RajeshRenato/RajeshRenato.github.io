@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='9' width='18' height='13' rx='2' fill='%230f1f1c'/%3E%3Crect x='20' y='5' width='10' height='22' rx='2.5' fill='%230a8f6a'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Phone to Laptop | send files from phone to PC, no app</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/phone-to-laptop/">
+<style>
+  :root { --bg: #eef3f1; --ink: #0f1f1c; --muted: #536460; --rule: #c7d4cf; --go: #0a8f6a; --panel: #ffffff; --warn: #b3261e; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; min-height: 100vh; }
+  [hidden] { display: none !important; }
+  a.back { position: absolute; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; }
+  a.back:hover { color: var(--ink); }
+  main { max-width: 980px; margin: 0 auto; padding: 50px 20px 50px; }
+  h1 { font-size: 40px; margin: 0 0 8px; letter-spacing: -.5px; }
+  h2 { font-size: 22px; margin: 0 0 8px; }
+  p { line-height: 1.5; }
+  .lede { color: var(--muted); font-size: 17px; max-width: 600px; margin: 0 0 22px; }
+  .small { color: var(--muted); font-size: 13px; max-width: 620px; }
+  button { font: inherit; cursor: pointer; color: inherit; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--go); outline-offset: 2px; }
+  .btn { font-weight: 600; font-size: 15px; padding: 10px 16px; border-radius: 9px; border: 1.5px solid var(--ink); background: var(--panel); }
+  .btn.go { background: var(--go); border-color: var(--go); color: #fff; }
+  .btn.go:hover { background: #087556; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .link { border: 0; background: none; color: var(--muted); text-decoration: underline; padding: 4px 0; font-size: 14px; }
+  .link:hover { color: var(--ink); }
+  .field { font: 14px ui-monospace, Menlo, monospace; padding: 9px 10px; border-radius: 8px; border: 1.5px solid var(--rule); background: #fff; color: var(--ink); min-width: 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .err { color: var(--warn); font-weight: 600; min-height: 1.4em; }
+
+  /* pairing */
+  .pair { display: grid; grid-template-columns: auto 1fr; gap: 34px; align-items: start; background: var(--panel); border-radius: 16px; padding: 26px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .qr { background: #fff; padding: 14px; border-radius: 12px; border: 1.5px solid var(--rule); width: max-content; }
+  .qr canvas { display: block; width: 260px; height: 260px; image-rendering: pixelated; }
+  ol.how { margin: 0 0 16px; padding-left: 22px; line-height: 1.55; }
+  ol.how li { margin-bottom: 8px; }
+  ol.how li.done { color: var(--muted); text-decoration: line-through; }
+  .cam { position: relative; width: 280px; max-width: 100%; aspect-ratio: 4 / 3; background: #0f1f1c; border-radius: 12px; overflow: hidden; }
+  .cam video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+  .cam .frame { position: absolute; inset: 14%; border: 2.5px solid rgba(255,255,255,.85); border-radius: 12px; }
+  .cam .msg { position: absolute; left: 10px; right: 10px; bottom: 8px; color: #fff; font-size: 13px; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,.8); }
+  details { margin-top: 14px; color: var(--muted); font-size: 14px; }
+  details summary { cursor: pointer; }
+  details .row { margin-top: 8px; }
+  details .field { flex: 1; }
+  .big { font-size: 20px; }
+
+  /* the reply screen on the phone */
+  .reply { text-align: center; background: var(--panel); border-radius: 16px; padding: 22px 16px 26px; max-width: 460px; margin: 0 auto; }
+  .reply .qr { margin: 16px auto; }
+  .reply .qr canvas { width: min(300px, 74vw); height: min(300px, 74vw); }
+
+  /* connected */
+  .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .bar .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--go); box-shadow: 0 0 0 4px rgba(10,143,106,.18); }
+  .bar strong { font-size: 18px; }
+  .bar .push { margin-left: auto; }
+  .send { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .drop { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; border: 2px dashed var(--rule); border-radius: 14px; background: var(--panel);
+          padding: 26px 16px; text-align: center; cursor: pointer; min-height: 132px; }
+  .drop strong { font-size: 18px; }
+  .drop span { color: var(--muted); font-size: 14px; }
+  .drop.over { border-color: var(--go); background: #e6f6f0; }
+  .note { display: flex; flex-direction: column; gap: 8px; background: var(--panel); border-radius: 14px; padding: 12px; }
+  .note textarea { flex: 1; min-height: 70px; resize: vertical; font: 15px system-ui, sans-serif; border: 1.5px solid var(--rule); border-radius: 8px; padding: 8px 10px; }
+  .feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .feed li { background: var(--panel); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+  .feed li.mine { background: #f6faf8; }
+  .feed .thumb { width: 54px; height: 54px; border-radius: 8px; background: #dfe8e4 center / cover no-repeat; display: grid; place-items: center; font-size: 12px; color: var(--muted); font-weight: 700; }
+  .feed .what { min-width: 0; }
+  .feed .what b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feed .what span { color: var(--muted); font-size: 13px; }
+  .feed .what p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .feed .what a { color: var(--go); }
+  .feed .acts { display: flex; gap: 6px; }
+  .feed .acts button { font-size: 13px; padding: 6px 10px; border-radius: 7px; border: 1.5px solid var(--rule); background: #fff; }
+  .bar2 { height: 4px; border-radius: 2px; background: #dfe8e4; margin-top: 6px; overflow: hidden; }
+  .bar2 i { display: block; height: 100%; background: var(--go); width: 0; }
+  .empty { color: var(--muted); text-align: center; padding: 18px; }
+
+  @media (max-width: 720px) {
+    .pair { grid-template-columns: 1fr; padding: 18px; }
+    .qr { margin: 0 auto; }
+    .send { grid-template-columns: 1fr; }
+    h1 { font-size: 32px; }
+    .field, .note textarea { font-size: 16px; }
+  }
+</style>
+<meta property="og:title" content="Phone to Laptop">
+<meta property="og:description" content="Send photos, files, and text between your phone and your computer by scanning a QR code. No cable, no app, no account, and nothing is uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/phone-to-laptop/">
+<meta property="og:image" content="https://rajeshrenato.github.io/phone-to-laptop/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Send photos, files, and text between your phone and your computer by scanning a QR code. No cable, no app, no account, and nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Phone to Laptop", "item": "https://rajeshrenato.github.io/phone-to-laptop/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Phone to Laptop", "url": "https://rajeshrenato.github.io/phone-to-laptop/", "description": "Send photos, files, and text between your phone and your computer by scanning a QR code. No cable, no app, no account, and nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+
+<section id="start">
+  <h1>Phone to Laptop</h1>
+  <p class="lede">Send photos, files, and text between your phone and your computer. Scan a code, and the two connect directly over your network. No cable, no app, and nothing is uploaded.</p>
+  <div class="pair">
+    <div class="qr"><canvas id="offerQr" width="260" height="260" aria-label="QR code to scan with your phone"></canvas></div>
+    <div>
+      <h2>Connect your phone</h2>
+      <ol class="how">
+        <li id="step1">Open your phone's camera and point it at this code. Open the link it shows.</li>
+        <li id="step2">Your phone shows a code of its own. Hold it up to this computer's camera.</li>
+      </ol>
+      <div class="cam" id="cam" hidden><video id="video" playsinline muted></video><div class="frame"></div><div class="msg" id="camMsg">Looking for the code on your phone…</div></div>
+      <div class="row"><button class="btn go" id="camBtn">Turn on this computer's camera</button></div>
+      <p class="err" id="camErr"></p>
+      <details>
+        <summary>No camera here?</summary>
+        <p>Your phone also shows its reply as text under its code. Send it to yourself (in a note or a chat), then paste it here.</p>
+        <div class="row"><input class="field" id="replyIn" placeholder="Paste the phone's reply"><button class="btn" id="replyBtn">Connect</button></div>
+      </details>
+    </div>
+  </div>
+  <p class="small">The two devices connect browser to browser and the files go straight across, encrypted. A public STUN service helps them find each other; nothing else sees the connection. Works best when both are on the same Wi-Fi. Keep this page open on both until you're done.</p>
+</section>
+
+<section id="joining" hidden>
+  <div class="reply">
+    <h2 id="joinTitle">Connecting…</h2>
+    <p id="joinMsg" class="small" style="margin:0 auto"></p>
+    <div class="qr" id="replyBox" hidden><canvas id="replyQr" width="300" height="300" aria-label="QR code for your computer's camera"></canvas></div>
+    <div id="replyText" hidden>
+      <p class="small" style="margin:0 auto 8px">No camera on the computer? Copy this and paste it there.</p>
+      <div class="row" style="justify-content:center"><input class="field" id="replyOut" readonly style="width:220px"><button class="btn" id="replyCopy">Copy</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="connected" hidden>
+  <div class="bar"><span class="dot"></span><strong id="peerName">Connected</strong><span class="small" id="peerNote"></span><button class="link push" id="endBtn">Disconnect</button></div>
+  <div class="send">
+    <label class="drop" id="drop"><strong>Send photos or files</strong><span id="dropHint">Choose them, or drop them here</span><input type="file" id="fileIn" multiple hidden></label>
+    <div class="note"><textarea id="textIn" placeholder="Type or paste text or a link to send"></textarea><div class="row"><button class="btn go" id="textBtn">Send text</button><button class="link" id="pasteBtn" hidden>Paste from clipboard</button></div></div>
+  </div>
+  <ul class="feed" id="feed"><li class="empty" id="emptyNote">Nothing sent yet. Whatever either side sends shows up here on both.</li></ul>
+</section>
+
+<section id="ended" hidden>
+  <h1>Disconnected</h1>
+  <p class="lede" id="endedMsg">The other device left or the connection dropped.</p>
+  <button class="btn go" id="againBtn">Connect again</button>
+</section>
+
+</main>
+<script src="../common/qr.js"></script>
+<script src="../common/jsqr/jsQR.js"></script>
+<script src="../common/camera.js"></script>
+<script src="../linkplay/qrpair.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const STUN = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
+const CHUNK = 64 * 1024, HIGH_WATER = 4 * 1024 * 1024;
+const isPhone = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ''));
+
+// ---- connecting
+
+let pc = null, chan = null, myId = null, role = null;
+
+function newPc() {
+  const c = new RTCPeerConnection({ iceServers: STUN });
+  c.addEventListener('connectionstatechange', () => {
+    if (c !== pc) return;
+    if (c.connectionState === 'failed') ended("The devices couldn't reach each other. Put both on the same Wi-Fi and try again.");
+    else if (c.connectionState === 'disconnected' || c.connectionState === 'closed') { if (chan && chan.readyState !== 'open') ended(); }
+  });
+  return c;
+}
+
+// Computer: make an offer and show it as a link in a QR code.
+async function showOffer() {
+  role = 'host';
+  myId = crypto.getRandomValues(new Uint8Array(4));
+  pc = newPc();
+  wire(pc.createDataChannel('ptl', { ordered: true }));
+  await pc.setLocalDescription(await pc.createOffer());
+  await waitIce(pc);
+  const d = parseSdp(pc.localDescription.sdp);
+  const link = location.origin + location.pathname + '#c=' + packDesc('offer', myId, d);
+  drawQr($('offerQr'), link);
+  window.offerLink = link;
+}
+
+// Phone: take the offer from the link, answer, and show the answer as a QR code.
+async function answerOffer(code) {
+  role = 'guest';
+  show('joining');
+  const d = unpackDesc(code);
+  if (!d || d.kind !== 'offer') { $('joinTitle').textContent = "This code didn't work"; $('joinMsg').textContent = 'Scan the code on the other screen again.'; return; }
+  try {
+    pc = newPc();
+    pc.addEventListener('datachannel', e => wire(e.channel));
+    await pc.setRemoteDescription({ type: 'offer', sdp: buildSdp(d) });
+    await pc.setLocalDescription(await pc.createAnswer());
+    await waitIce(pc);
+    const reply = 'PTL' + packDesc('answer', d.id, parseSdp(pc.localDescription.sdp));
+    drawQr($('replyQr'), reply);
+    $('replyOut').value = reply;
+    $('joinTitle').textContent = 'Show this to your computer';
+    $('joinMsg').textContent = "Hold your phone up to the computer's camera so it can see this code. Keep this page open.";
+    $('replyBox').hidden = false;
+    $('replyText').hidden = false;
+    try { history.replaceState(null, '', location.pathname); } catch (e) { }
+  } catch (e) {
+    $('joinTitle').textContent = "Couldn't connect";
+    $('joinMsg').textContent = 'Scan the code on the other screen again. If it keeps happening, reload that page for a fresh code.';
+  }
+}
+
+// Computer: the phone's answer arrived, by camera or pasted.
+async function takeReply(text) {
+  const raw = String(text || '').trim().replace(/^PTL/, '');
+  const d = unpackDesc(raw);
+  if (!d || d.kind !== 'answer') return "That isn't a reply from this page. Scan the code on your phone again.";
+  if (!myId || d.id.join() !== Array.from(myId).join()) return 'That reply is for an older code. On your phone, scan the code on this screen again.';
+  if (!pc || pc.signalingState !== 'have-local-offer') return '';
+  try { await pc.setRemoteDescription({ type: 'answer', sdp: buildSdp(d) }); }
+  catch (e) { return "That reply didn't work. Reload this page and scan the new code."; }
+  $('step2').classList.add('done');
+  $('camMsg').textContent = 'Got it. Connecting…';
+  return '';
+}
+
+// ---- reading the phone's code with this computer's camera
+
+let scanner = null;
+async function startCamera() {
+  $('camErr').textContent = '';
+  if (scanner) return;
+  try {
+    scanner = await startScanner($('video'), async text => {
+      if (!text.startsWith('PTL')) return;
+      const err = await takeReply(text);
+      if (!err) stopCamera();
+      else $('camMsg').textContent = err;
+    }, t => { $('camErr').textContent = t; });
+    $('camErr').textContent = '';
+  } catch (e) {
+    $('camErr').textContent = (await cameraError(e)) + ' Or use "No camera here?" below.';
+    if (typeof CameraHelp !== 'undefined') CameraHelp.onGranted('camera', () => { $('camErr').textContent = ''; startCamera(); });
+    return;
+  }
+  $('cam').hidden = false;
+  $('camBtn').hidden = true;
+}
+function stopCamera() {
+  if (scanner) scanner.stop();
+  scanner = null;
+}
+
+// ---- sending and receiving
+
+const outQueue = [];      // files waiting to go
+let sending = null, incoming = null, nextId = 1;
+const items = new Map();  // id -> feed entry
+
+function wire(ch) {
+  chan = ch;
+  ch.binaryType = 'arraybuffer';
+  ch.bufferedAmountLowThreshold = 1024 * 1024;
+  ch.onopen = onOpen;
+  ch.onclose = () => ended();
+  ch.onmessage = e => onMessage(e.data);
+  if (ch.readyState === 'open') onOpen();
+}
+
+function onOpen() {
+  stopCamera();
+  show('connected');
+  sendJson({ t: 'hello', device: isPhone() ? 'phone' : 'computer' });
+  $('peerName').textContent = 'Connected';
+  $('dropHint').textContent = isPhone() ? 'Pick photos or files from this phone' : 'Choose them, or drop them here';
+  if (navigator.clipboard && navigator.clipboard.readText) $('pasteBtn').hidden = false;
+}
+
+function sendJson(m) { if (chan && chan.readyState === 'open') chan.send(JSON.stringify(m)); }
+
+function waitForRoom() {
+  if (!chan || !(chan.bufferedAmount > HIGH_WATER)) return Promise.resolve();
+  return new Promise(res => {
+    const done = () => { chan.removeEventListener('bufferedamountlow', done); res(); };
+    chan.addEventListener('bufferedamountlow', done);
+  });
+}
+
+function sendText(text) {
+  text = String(text || '');
+  if (!text.trim() || !chan || chan.readyState !== 'open') return false;
+  const id = 'm' + nextId++;
+  sendJson({ t: 'text', id, text: text.slice(0, 100000) });
+  addEntry({ id, mine: true, kind: 'text', text: text.slice(0, 100000) });
+  return true;
+}
+
+function sendFiles(list) {
+  for (const f of list) {
+    const id = 'f' + nextId++;
+    outQueue.push({ id, file: f });
+    addEntry({ id, mine: true, kind: 'file', name: f.name, size: f.size, type: f.type, done: 0, blob: f });
+  }
+  pump();
+}
+
+async function pump() {
+  if (sending || !outQueue.length || !chan || chan.readyState !== 'open') return;
+  sending = outQueue.shift();
+  const { id, file } = sending;
+  try {
+    sendJson({ t: 'file', id, name: file.name, size: file.size, type: file.type });
+    for (let off = 0; off < file.size; off += CHUNK) {
+      await waitForRoom();
+      if (!chan || chan.readyState !== 'open') throw new Error('closed');
+      chan.send(await file.slice(off, off + CHUNK).arrayBuffer());
+      progress(id, Math.min(file.size, off + CHUNK));
+    }
+    sendJson({ t: 'end', id });
+    progress(id, file.size);
+  } catch (e) { }
+  sending = null;
+  pump();
+}
+
+function onMessage(data) {
+  if (typeof data !== 'string') {
+    if (!incoming) return;
+    const b = new Uint8Array(data);
+    incoming.parts.push(b);
+    incoming.got += b.byteLength;
+    if (incoming.got > incoming.size) { incoming = null; return; }
+    progress(incoming.id, incoming.got);
+    return;
+  }
+  let m;
+  try { m = JSON.parse(data); } catch (e) { return; }
+  if (!m || typeof m !== 'object') return;
+  if (m.t === 'hello') {
+    const dev = m.device === 'phone' ? 'phone' : 'computer';
+    $('peerName').textContent = 'Connected to your ' + dev;
+  } else if (m.t === 'text' && typeof m.text === 'string') {
+    addEntry({ id: 'r' + nextId++, mine: false, kind: 'text', text: m.text.slice(0, 100000) });
+  } else if (m.t === 'file' && Number.isSafeInteger(m.size) && m.size >= 0) {
+    const id = 'r' + nextId++;
+    incoming = { id, size: m.size, got: 0, parts: [], name: cleanName(m.name), type: typeof m.type === 'string' ? m.type.slice(0, 100) : '' };
+    addEntry({ id, mine: false, kind: 'file', name: incoming.name, size: m.size, type: incoming.type, done: 0 });
+    if (m.size === 0) finishIncoming();
+  } else if (m.t === 'end' && incoming) {
+    finishIncoming();
+  }
+}
+
+function finishIncoming() {
+  const inc = incoming;
+  incoming = null;
+  if (!inc || inc.got !== inc.size) return;
+  const blob = new Blob(inc.parts, { type: safeType(inc.type) });
+  const it = items.get(inc.id);
+  if (it) { it.blob = blob; it.done = inc.size; drawEntry(it); }
+}
+
+const cleanName = n => (String(n || 'file').replace(/[\u0000-\u001f\u007f/\\]/g, '_').replace(/^\.+/, '').slice(0, 180) || 'file');
+// files only ever download or show as pictures; anything that could run as a page is saved as plain bytes
+const safeType = t => (/^(image\/(png|jpeg|gif|webp|avif|heic|heif|bmp)|video\/[\w.+-]+|audio\/[\w.+-]+|application\/pdf|text\/plain)$/i.test(t) ? t : 'application/octet-stream');
+
+// ---- the feed
+
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB';
+  if (n < 1073741824) return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + ' MB';
+  return (n / 1073741824).toFixed(1) + ' GB';
+}
+
+function addEntry(it) {
+  items.set(it.id, it);
+  $('emptyNote').hidden = true;
+  const li = document.createElement('li');
+  it.el = li;
+  $('feed').prepend(li);
+  drawEntry(it);
+}
+
+function progress(id, done) {
+  const it = items.get(id);
+  if (!it) return;
+  it.done = done;
+  const bar = it.el && it.el.querySelector('.bar2 i');
+  if (bar) bar.style.width = (it.size ? (100 * done / it.size) : 100) + '%';
+  if (done >= it.size) drawEntry(it);
+}
+
+function linkify(p, text) {
+  const re = /\bhttps?:\/\/[^\s<>"']+/g;
+  let last = 0, m;
+  while ((m = re.exec(text))) {
+    p.append(text.slice(last, m.index));
+    const a = document.createElement('a');
+    a.href = m[0]; a.textContent = m[0]; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    p.append(a);
+    last = m.index + m[0].length;
+  }
+  p.append(text.slice(last));
+}
+
+function drawEntry(it) {
+  const li = it.el;
+  li.className = it.mine ? 'mine' : '';
+  li.innerHTML = '';
+  const thumb = document.createElement('div');
+  thumb.className = 'thumb';
+  const what = document.createElement('div');
+  what.className = 'what';
+  const acts = document.createElement('div');
+  acts.className = 'acts';
+  const btn = (label, fn) => { const b = document.createElement('button'); b.textContent = label; b.onclick = fn; acts.appendChild(b); };
+  if (it.kind === 'text') {
+    thumb.textContent = 'Aa';
+    const p = document.createElement('p');
+    linkify(p, it.text);
+    const meta = document.createElement('span');
+    meta.textContent = it.mine ? 'You sent' : 'Received';
+    what.append(p, meta);
+    btn('Copy', async e => { try { await navigator.clipboard.writeText(it.text); e.target.textContent = 'Copied'; } catch (x) { } });
+  } else {
+    const ready = !!it.blob && it.done >= it.size;
+    const ext = (it.name.split('.').pop() || '').slice(0, 4).toUpperCase();
+    thumb.textContent = /^image\//.test(it.type) && ready ? '' : ext || 'FILE';
+    if (ready && /^image\/(png|jpeg|gif|webp|avif|bmp)$/i.test(it.blob.type || it.type)) {
+      it.url = it.url || URL.createObjectURL(it.blob);
+      thumb.style.backgroundImage = 'url("' + it.url + '")';
+    }
+    const b = document.createElement('b');
+    b.textContent = it.name;
+    const meta = document.createElement('span');
+    meta.textContent = fmtBytes(it.size) + ', ' + (it.mine ? (ready && it.done >= it.size ? 'sent' : 'sending') : ready ? 'received' : 'receiving');
+    what.append(b, meta);
+    if (!(it.done >= it.size && (it.mine || ready))) {
+      const bar = document.createElement('div');
+      bar.className = 'bar2';
+      bar.innerHTML = '<i style="width:' + (it.size ? 100 * it.done / it.size : 0) + '%"></i>';
+      what.append(bar);
+    }
+    if (!it.mine && ready) {
+      btn('Save', () => saveBlob(it.blob, it.name));
+      if (navigator.canShare && (() => { try { return navigator.canShare({ files: [new File([it.blob], it.name, { type: it.blob.type })] }); } catch (e) { return false; } })()) {
+        btn('Share', () => navigator.share({ files: [new File([it.blob], it.name, { type: it.blob.type })] }).catch(() => {}));
+      }
+    }
+  }
+  li.append(thumb, what, acts);
+}
+
+function saveBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+// ---- screens
+
+function show(id) { for (const s of ['start', 'joining', 'connected', 'ended']) $(s).hidden = s !== id; }
+
+let isEnded = false;
+function ended(msg) {
+  if (isEnded) return;
+  isEnded = true;
+  stopCamera();
+  if (msg) $('endedMsg').textContent = msg;
+  show('ended');
+}
+
+$('camBtn').onclick = startCamera;
+$('replyBtn').onclick = async () => { const err = await takeReply($('replyIn').value); $('camErr').textContent = err || 'Connecting…'; };
+$('replyCopy').onclick = async () => { try { await navigator.clipboard.writeText($('replyOut').value); $('replyCopy').textContent = 'Copied'; } catch (e) { $('replyOut').select(); } };
+$('fileIn').addEventListener('change', e => { sendFiles([...e.target.files]); e.target.value = ''; });
+$('textBtn').onclick = () => { if (sendText($('textIn').value)) $('textIn').value = ''; };
+$('textIn').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) $('textBtn').click(); });
+$('pasteBtn').onclick = async () => { try { $('textIn').value = await navigator.clipboard.readText(); } catch (e) { } };
+$('endBtn').onclick = () => { try { if (chan) chan.close(); if (pc) pc.close(); } catch (e) { } ended('You disconnected.'); };
+$('againBtn').onclick = () => { location.href = location.pathname; };
+const drop = $('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); sendFiles([...e.dataTransfer.files]); });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); if (!$('connected').hidden && e.dataTransfer) sendFiles([...e.dataTransfer.files]); });
+addEventListener('paste', e => {
+  if ($('connected').hidden || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return;
+  const files = [...(e.clipboardData ? e.clipboardData.files : [])];
+  if (files.length) sendFiles(files);
+});
+addEventListener('beforeunload', e => { if (chan && chan.readyState === 'open') { e.preventDefault(); e.returnValue = ''; } });
+
+// Start: a link with #c= is a phone that scanned a code; otherwise show one.
+(function route() {
+  const m = /^#c=([A-Za-z0-9_-]+)$/.exec(location.hash);
+  if (m) answerOffer(m[1]);
+  else if (typeof RTCPeerConnection !== 'undefined') {
+    showOffer().catch(() => { $('camErr').textContent = "This browser can't make a direct connection. Try an up-to-date Chrome, Edge, Firefox, or Safari."; });
+    // open the camera by itself if it's already allowed
+    (async () => { try { if ((await navigator.permissions.query({ name: 'camera' })).state === 'granted') startCamera(); } catch (e) { } })();
+  }
+})();
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Phone to Laptop</h2>
+<p>Send photos, files, and text between your phone and your computer. Open the page on the computer, scan its code with your phone, and hold your phone up to the computer's camera. The two connect directly, and whatever you send goes straight across. No cable, no app, no account, and nothing is uploaded.</p>
+<h3>Use</h3>
+<p>Open this page on your computer.</p>
+<ul><li>Point your phone's camera at the code on the computer's screen and open the link it shows. 2. Your phone shows a code of its own. Click "Turn on this computer's camera" and hold the phone up to it. (If the camera is already allowed, it turns on by itself.)</li><li>Both screens say Connected. Pick photos or files, or type or paste text, on either side.</li></ul>
+<p>Everything sent shows up on both screens. Received files have a Save button, and on phones a Share button too, which can save photos straight to the photo library. Links in text can be opened with a tap. Text can be copied with one click, and on the computer you can paste a screenshot or a file straight into the page to send it.</p>
+<p>No camera on the computer? Under the phone's code is the same reply as text. Send it to yourself in a note or chat and paste it into "No camera here?".</p>
+<p>It also works between two computers or two phones.</p>
+<h3>How it works</h3>
+<ul><li>The devices connect with WebRTC, browser to browser. The connection is encrypted (DTLS), and files go over it in 64 KB pieces, with the sender slowing down whenever the receiver falls behind.</li><li>WebRTC needs the two sides to swap connection details, which are normally around 800 characters each. That's too much for a QR code a laptop camera can read reliably, so the page packs them down to the few values that change: the ICE username and password, the certificate fingerprint, the DTLS role, and the network addresses with their priorities. That's about 130 bytes, and the full description is rebuilt on the other side. The computer's code is a version 10 QR code, and the phone's is about version 8.</li><li>The computer reads the phone's code with the browser's built-in barcode reader where there is one (Chrome and Edge on Mac and Android), and otherwise with <a href="https://github.com/cozmo/jsQR">jsQR</a> 1.4.0, which is included in this repo under <code>common/jsqr</code> with its Apache 2.0 license.</li><li>QR codes are drawn with the same encoder as <a href="../qr-studio/">QR Studio</a> (<code>common/qr.js</code>).</li><li>Received files are only ever saved or shown as pictures. File names are cleaned, and a file that says it's a web page is saved as plain bytes so it can't open as one here. Data past the size a file announced is dropped.</li><li>A public STUN service (Google or Cloudflare) tells each device its public address. Nothing else is contacted, and the page has a Content Security Policy that blocks anything outside this site.</li></ul>
+<p>On the same Wi-Fi the files go over your local network. On different networks they go over the internet directly, which usually works, but some mobile and office networks block it.</p>
+<p class="pg-more">More like this: <a href="../images-to-pdf/">Images to PDF</a>, <a href="../file-send/">File Send</a>, <a href="../video-call/">Video Call</a>, <a href="../secret-chat/">Secret Chat</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/phone-to-laptop">phone-to-laptop on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

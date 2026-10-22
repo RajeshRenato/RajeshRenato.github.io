@@ -1,6 +1,6 @@
 # Secret Chat
 
-A private chat between two browsers. There's no server and no account, and nothing is left behind when you close the tab. Made for passing a password or anything else sensitive to someone who's online at the same time.
+A private chat between two browsers, or a group of up to 8. There's no server and no account, and nothing is left behind when you close the tab. Made for passing a password or anything else sensitive to someone who's online at the same time.
 
 ## Use
 
@@ -21,6 +21,18 @@ Click "Start a secret chat" and send your friend the invite link. They get a rep
 
 Both screens show the same three words and four digits, made from both browsers' connection keys. Read them out to each other on a call. If they match, nobody is in the middle. If someone had swapped the links on their way, the codes would differ, so "It doesn't match" closes the chat.
 
+
+## Group chats
+
+Pick a name and click "Start a group chat". You get an invite link for one person; make another for each person you want. Everyone sends back a reply link, which you open or paste in, and they appear in the member list. You can invite more people later.
+
+- Everyone connects to the host's browser, which passes messages on. On top of that, every message is encrypted end to end, so the host can only open the copy meant for it.
+- Each member's browser makes an ECDH P-256 key pair. Every pair of members turns their two keys into a shared AES-256-GCM key. A message is encrypted once with a fresh random key, and that key is locked for each member with the key the sender shares with them. The sender's and recipient's ids are bound into each lock, so nobody can pass a message off as someone else's.
+- The group safety code is made from every member's public key. Compare it on a group call. If anyone swapped a key to listen in, the codes would differ between people. When someone joins or leaves, the code changes, and the chat says so.
+- Someone who joins later can't read what was sent before they arrived.
+- Files are limited to 5 MB in a group, since the host passes each one to everyone.
+- Only the host can wipe the chat for everyone. Others can clear their own screen.
+- The chat ends when the host leaves. The host's browser can see who is in the group and when people send messages, but not what they say.
 ## How it works
 
 It uses [LinkPlay](../linkplay/): the invite and reply links carry the two browsers' connection details, and the browsers then talk over a WebRTC data channel. Browsers always encrypt these channels with DTLS, with fresh keys for each connection, so a recording of the traffic can't be decrypted later.
@@ -36,3 +48,5 @@ If a relay is configured in LinkPlay, it's used only when a direct connection fa
 ## Tests
 
 `tests/secret-chat.test.js` checks the safety code (the same on both sides, different when a key changes), messages and seen receipts, that text is never treated as HTML, hidden and disappearing messages, wiping and leaving, and a file arriving byte for byte over in-memory channels.
+
+`tests/secret-chat-group.test.js` covers group chats: the shared safety code, a swapped key changing it, the host not being able to open other members' copies, forged senders, late joiners, files, and wiping. `tests/browser/secret-chat-mitm.html` runs a real man-in-the-middle attack on a two-person chat in the browser.

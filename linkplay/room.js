@@ -20,13 +20,13 @@ const Room = (() => {
     return (name, ...args) => { for (const fn of (subs[name] || []).slice()) fn(...args); };
   }
 
-  function create(name, myName) {
+  function create(name, myName, { relay } = {}) {
     const players = [{ id: 0, name: cleanName(myName, 0), color: COLORS[0] }];
     const chans = new Map();
     let nextId = 1;
-    const room = { isHost: true, me: 0, players, send, sendTo, invite, close, addChannel, drop };
+    const room = { isHost: true, me: 0, players, send, sendTo, invite, close, addChannel, drop, buffered: () => Math.max(0, ...[...chans.values()].map(c => c.bufferedAmount || 0)) };
     const emit = emitter(room);
-    const lp = LinkPlay.host(name, { onChannel: ch => addChannel(ch), onFail: () => emit('fail') });
+    const lp = LinkPlay.host(name, { onChannel: ch => addChannel(ch), onFail: () => emit('fail'), relay });
     room.accept = lp.accept;
 
     function roster() {
@@ -84,7 +84,7 @@ const Room = (() => {
 
   // Guest side, over an open channel.
   function joinChannel(ch, myName) {
-    const room = { isHost: false, me: -1, players: [], send, close };
+    const room = { isHost: false, me: -1, players: [], send, close, buffered: () => ch.bufferedAmount || 0 };
     const emit = emitter(room);
     let closed = false;
     function send(m) { if (ch.readyState === 'open') ch.send(JSON.stringify(m)); }
@@ -112,10 +112,11 @@ const Room = (() => {
 
   // Guest side, from an invite. Resolves to { link, close } right away; the
   // room arrives through onReady(room) once the host takes the reply.
-  function join(name, invite, myName, { onReady, onFail } = {}) {
+  function join(name, invite, myName, { onReady, onFail, relay } = {}) {
     return LinkPlay.join(name, invite, {
       onChannel: ch => onReady && onReady(joinChannel(ch, myName)),
       onFail,
+      relay,
     });
   }
 

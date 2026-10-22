@@ -241,6 +241,7 @@
 </div>
 
 <script src="../linkplay/linkplay.js"></script>
+<script src="../common/camera.js"></script>
 <script>
 'use strict';
 
@@ -296,8 +297,59 @@ async function getMedia(withVideo) {
   };
   try { return await navigator.mediaDevices.getUserMedia(c); }
   catch (e) {
-    if (withVideo) { try { return await navigator.mediaDevices.getUserMedia({ audio: c.audio, video: false }); } catch (e2) { } }
+    if (e && e.name === 'OverconstrainedError' && (cam || mic)) {
+      // the chosen device is gone; fall back to the default ones
+      try { return await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: withVideo ? { facingMode: S.facing } : false }); } catch (e2) { }
+    }
+    if (withVideo && e && e.name !== 'NotAllowedError') { try { return await navigator.mediaDevices.getUserMedia({ audio: c.audio, video: false }); } catch (e2) { } }
     throw e;
+  }
+}
+
+// 'granted', 'denied', 'prompt', or '' where the browser can't say (older Safari)
+async function permission(name) {
+  try { return (await navigator.permissions.query({ name })).state; } catch (e) { return ''; }
+}
+
+async function explain(e) {
+  const name = e && e.name;
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    const [cam, mic] = await Promise.all([permission('camera'), permission('microphone')]);
+    if (!window.isSecureContext) return 'The camera only works on a secure (https) page. Open the https:// address instead.';
+    if (cam === 'granted' || mic === 'granted') {
+      const mac = /Mac/.test(navigator.platform || navigator.userAgent);
+      const win = /Win/.test(navigator.platform || navigator.userAgent);
+      return 'Your browser allows this page, but your computer is blocking the browser from the camera or microphone. ' +
+        (mac ? 'On a Mac: System Settings, Privacy & Security, Camera (and Microphone), then turn on your browser and reopen it.'
+          : win ? 'On Windows: Settings, Privacy & security, Camera (and Microphone), then allow desktop apps to use them.'
+          : "Check your device's privacy settings for the camera and microphone.");
+    }
+    return 'Camera and microphone are blocked for this page. Click the camera or lock icon in the address bar, allow them, and they\'ll start here by themselves.';
+  }
+  if (name === 'NotReadableError' || name === 'AbortError') return 'Another app is using your camera or microphone. Close it (for example Zoom, Teams, or another tab with a call) and try again.';
+  if (name === 'NotFoundError') return "No camera or microphone was found. You can still join without a camera if a microphone is connected.";
+  return "Couldn't open your camera or microphone" + (name ? ' (' + name + ')' : '') + '. Try again, or join without a camera.';
+}
+
+// Start the preview by itself when access was already given, and as soon as it's
+// given in the browser's settings while this page is open.
+async function autoAllow() {
+  if (!hasMedia() || S.local) return;
+  const names = ['camera', 'microphone'];
+  const states = await Promise.all(names.map(permission));
+  if (states.includes('granted')) { allow(states[0] === 'granted'); }
+  else if (!states.some(Boolean)) {
+    try { const list = await navigator.mediaDevices.enumerateDevices(); if (list.some(d => d.label)) allow(true); } catch (e) { }
+  }
+  for (const name of names) {
+    try {
+      const st = await navigator.permissions.query({ name });
+      st.onchange = async () => {
+        if (st.state !== 'granted') return;
+        const cam = (await permission('camera')) === 'granted';
+        if (!S.local || (cam && !S.camTrack)) allow(cam);
+      };
+    } catch (e) { }
   }
 }
 
@@ -319,9 +371,11 @@ async function fillDevices() {
 async function allow(withVideo = true) {
   if (!hasMedia()) { $('setupStatus').textContent = "This browser can't use a camera here. Try an up-to-date Chrome, Firefox, or Safari over https."; return false; }
   $('setupStatus').textContent = '';
+  const stop = CameraHelp.watch(t => { $('setupStatus').textContent = t; }, withVideo ? 'camera and microphone' : 'microphone');
   try {
     if (S.local) S.local.getTracks().forEach(t => t.stop());
-    S.local = await getMedia(withVideo);
+    try { S.local = await getMedia(withVideo); } finally { stop(); }
+    $('setupStatus').textContent = '';
     S.camTrack = S.local.getVideoTracks()[0] || null;
     S.camOn = !!S.camTrack;
     $('preview').srcObject = S.local;
@@ -331,9 +385,7 @@ async function allow(withVideo = true) {
     $('goBtn').disabled = false;
     return true;
   } catch (e) {
-    $('setupStatus').textContent = e && e.name === 'NotAllowedError'
-      ? 'Camera and microphone were blocked. Allow them in your browser\'s address bar, then try again.'
-      : "Couldn't open your camera or microphone. Check that no other app is using them.";
+    $('setupStatus').textContent = await explain(e);
     return false;
   }
 }
@@ -744,6 +796,7 @@ else {
     $('setupLede').textContent = 'Check your camera and microphone, then join. Your browsers will connect directly, with no server in between.';
     $('goBtn').textContent = 'Join the call';
   }
+  autoAllow();
 }
 
 // The relay only steps in when a direct connection fails. Say which one this is,
@@ -772,7 +825,7 @@ if (LinkPlay.hasRelay()) document.getElementById('relayOpt').hidden = false;
 <p>Screen sharing swaps the video track in place, so the call doesn't need to reconnect. The page sets a Content Security Policy so the browser blocks it from loading or sending anything else.</p>
 <p>Limits: both people need the page open at the same time. There's no relay server, so some strict office or mobile networks can't connect, and the two browsers see each other's IP address. It's one to one only, and there's no recording.</p>
 <p>If a relay is configured in LinkPlay, it's used only when a direct connection fails, and the call says so. It can't see or hear anything, because the traffic stays encrypted end to end. "Never use a relay" on the setup screen ends the call instead. The published site has no relay configured.</p>
-<p class="pg-more">More like this: <a href="../qr-studio/">QR Studio</a>, <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>, <a href="../video-to-gif/">Video to GIF</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-more">More like this: <a href="../secret-chat/">Secret Chat</a>, <a href="../walkie-talkie/">Walkie-Talkie</a>, <a href="../secret-note/">Secret Note</a>, <a href="../screen-recorder/">Screen Recorder</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/video-call">video-call on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>
