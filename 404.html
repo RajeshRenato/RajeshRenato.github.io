@@ -28,34 +28,38 @@
 <main>
   <h1>Page not found</h1>
   <p id="msg">There's nothing at this address. Search for what you were looking for, or pick something below.</p>
-  <form action="/playground/" method="get" role="search">
+  <form action="/" method="get" role="search">
     <input name="q" id="q" placeholder="Search, like &quot;pdf&quot; or &quot;chess&quot;" aria-label="Search the playground">
     <button>Search</button>
   </form>
   <ul>
-    <li><a href="/playground/chess/">Chess</a></li>
-    <li><a href="/playground/ludo/">Ludo</a></li>
-    <li><a href="/playground/clue-grid/">Clue Grid</a></li>
-    <li><a href="/playground/pdf-toolkit/">PDF Toolkit</a></li>
-    <li><a href="/playground/images-to-pdf/">Images to PDF</a></li>
-    <li><a href="/playground/photo-privacy/">Photo Privacy</a></li>
-    <li><a href="/playground/miami-nights/">Miami Nights</a></li>
-    <li><a href="/playground/daily/">Daily puzzles</a></li>
+    <li><a href="/chess/">Chess</a></li>
+    <li><a href="/ludo/">Ludo</a></li>
+    <li><a href="/clue-grid/">Clue Grid</a></li>
+    <li><a href="/pdf-toolkit/">PDF Toolkit</a></li>
+    <li><a href="/images-to-pdf/">Images to PDF</a></li>
+    <li><a href="/photo-privacy/">Photo Privacy</a></li>
+    <li><a href="/miami-nights/">Miami Nights</a></li>
+    <li><a href="/daily/">Daily puzzles</a></li>
   </ul>
-  <a href="/playground/">See everything in the playground</a>
+  <a href="/">See everything in the playground</a>
 </main>
 <script>
 (() => {
-  // projects that were renamed after they went public
+  // the site used to live under /playground/, and two projects were renamed after they went public
   const MOVED = { 'vicecity': 'miami-nights', 'road-rash': 'midnight-racing' };
-  const parts = location.pathname.split('/').filter(Boolean);
-  const i = parts.indexOf('playground');
-  const slug = (i >= 0 ? parts[i + 1] : parts[0]) || '';
-  if (MOVED[slug]) {
-    location.replace('/playground/' + MOVED[slug] + '/' + location.search + location.hash);
+  let parts = location.pathname.split('/').filter(Boolean);
+  const wasOld = parts[0] === 'playground';
+  if (wasOld) parts = parts.slice(1);
+  const renamed = parts.length > 0 && MOVED[parts[0]];
+  if (renamed) parts[0] = MOVED[parts[0]];
+  if (wasOld || renamed) {
+    const last = parts[parts.length - 1] || '';
+    const path = '/' + parts.join('/') + (parts.length && !/\.[a-z0-9]+$/i.test(last) ? '/' : '');
+    location.replace(path + location.search + location.hash);
     return;
   }
-  const guess = slug.replace(/[-_]+/g, ' ').replace(/\.html?$/, '').trim();
+  const guess = (parts[0] || '').replace(/[-_]+/g, ' ').replace(/\.html?$/, '').trim();
   if (guess) document.getElementById('q').value = guess;
 })();
 </script>

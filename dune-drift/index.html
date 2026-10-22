@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <title>Dune Drift | one-button dune riding game</title>
 <link rel="stylesheet" href="../common/about.css">
-<link rel="canonical" href="https://rajeshrenato.github.io/playground/dune-drift/">
+<link rel="canonical" href="https://rajeshrenato.github.io/dune-drift/">
 <style>
   * { box-sizing:border-box; }
   html, body { margin:0; height:100%; overflow:hidden; background:#160e2c; }
@@ -18,12 +18,12 @@
 <meta property="og:title" content="Dune Drift">
 <meta property="og:description" content="One-button endless ride over rolling dunes at sunset. Hold to dive, release to fly, and flip in the air.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rajeshrenato.github.io/playground/dune-drift/">
-<meta property="og:image" content="https://rajeshrenato.github.io/playground/dune-drift/og.png">
+<meta property="og:url" content="https://rajeshrenato.github.io/dune-drift/">
+<meta property="og:image" content="https://rajeshrenato.github.io/dune-drift/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="One-button endless ride over rolling dunes at sunset. Hold to dive, release to fly, and flip in the air.">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Games", "item": "https://rajeshrenato.github.io/playground/#games"}, {"@type": "ListItem", "position": 3, "name": "Dune Drift", "item": "https://rajeshrenato.github.io/playground/dune-drift/"}]}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Dune Drift", "url": "https://rajeshrenato.github.io/playground/dune-drift/", "description": "One-button endless ride over rolling dunes at sunset. Hold to dive, release to fly, and flip in the air.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Games", "item": "https://rajeshrenato.github.io/#games"}, {"@type": "ListItem", "position": 3, "name": "Dune Drift", "item": "https://rajeshrenato.github.io/dune-drift/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Dune Drift", "url": "https://rajeshrenato.github.io/dune-drift/", "description": "One-button endless ride over rolling dunes at sunset. Hold to dive, release to fly, and flip in the air.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -685,7 +685,7 @@ requestAnimationFrame(frame);
 <h3>How it works</h3>
 <ul><li>The ground is four sine waves added together. Their height grows slowly with distance, so later dunes throw you higher. Slope comes from sampling the same function.</li><li>On the ground, gravity along the slope speeds you up or slows you down. If you're going fast enough over a crest, the ground drops away and you launch on your own.</li><li>Landing compares the board's angle with the slope. Within about 60 degrees you keep riding. Each flip landed scores 100 times your combo, raises the combo (up to 8), and gives a 10% speed boost. A very flat landing with no flips scores 25. A rough landing with no flips resets the combo.</li><li>The sky blends between four color palettes over a 110 second day.</li><li>The scarf is a 14-point chain that trails behind the rider.</li><li>Wind is a looped noise buffer through a low-pass filter that opens up with speed. Flips and landings play short chimes.</li><li>Your best score and distance are saved in <code>localStorage</code>.</li><li>Ghosts: after a run, press G or tap "Share your ghost" to copy a link. The run is packed into the URL as position, height, and spin five times a second, 3 bytes each. Whoever opens it rides alongside your ghost and sees a flag where it wiped out.</li></ul>
 <p class="pg-more">More like this: <a href="../pixel-logic/">Pixel Logic</a>, <a href="../glow-out/">Glow Out</a>, <a href="../flood-rush/">Flood Rush</a>, <a href="../labyrinth/">Labyrinth</a>. Or see <a href="../#games">all games</a>.</p>
-<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/dune-drift">dune-drift on GitHub</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/dune-drift">dune-drift on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>
 </body>

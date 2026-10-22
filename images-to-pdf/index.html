@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <title>Images to PDF | convert JPG and PNG to PDF, no upload</title>
 <link rel="stylesheet" href="../common/about.css">
-<link rel="canonical" href="https://rajeshrenato.github.io/playground/images-to-pdf/">
+<link rel="canonical" href="https://rajeshrenato.github.io/images-to-pdf/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#2f6fd8; --sheet:#ffffff; }
   @media (prefers-color-scheme: dark) {
@@ -70,12 +70,12 @@
 <meta property="og:title" content="Images to PDF">
 <meta property="og:description" content="Turn JPG, PNG, and other photos into one PDF in your browser. JPEGs go in without re-compression, and nothing is uploaded.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rajeshrenato.github.io/playground/images-to-pdf/">
-<meta property="og:image" content="https://rajeshrenato.github.io/playground/images-to-pdf/og.png">
+<meta property="og:url" content="https://rajeshrenato.github.io/images-to-pdf/">
+<meta property="og:image" content="https://rajeshrenato.github.io/images-to-pdf/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Turn JPG, PNG, and other photos into one PDF in your browser. JPEGs go in without re-compression, and nothing is uploaded.">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "Images to PDF", "item": "https://rajeshrenato.github.io/playground/images-to-pdf/"}]}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Images to PDF", "url": "https://rajeshrenato.github.io/playground/images-to-pdf/", "description": "Turn JPG, PNG, and other photos into one PDF in your browser. JPEGs go in without re-compression, and nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Images to PDF", "item": "https://rajeshrenato.github.io/images-to-pdf/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Images to PDF", "url": "https://rajeshrenato.github.io/images-to-pdf/", "description": "Turn JPG, PNG, and other photos into one PDF in your browser. JPEGs go in without re-compression, and nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -487,7 +487,7 @@ render();
 <h3>How it works</h3>
 <ul><li>The JPEG header is read directly: the frame marker gives the width, height, and number of color channels, the Adobe marker says whether CMYK values are stored inverted, and the EXIF block gives the orientation.</li><li>The PDF is written from scratch as a PDF 1.7 file with a classic cross-reference table. Each page holds one image, placed with a transform that scales, centers, and turns it. With Fill, the image is clipped to the area inside the margin.</li><li>JPEGs are stored with the DCTDecode filter, so PDF viewers decode the original data. Lossless images are stored as RGB with the FlateDecode filter, compressed with the browser's CompressionStream, and their transparency becomes a soft mask.</li><li>The file info names the tool and the time it was made. Nothing else about you or your photos is added.</li></ul>
 <p class="pg-more">More like this: <a href="../linkplay/">LinkPlay</a>, <a href="../file-send/">File Send</a>, <a href="../secret-note/">Secret Note</a>, <a href="../secret-chat/">Secret Chat</a>. Or see <a href="../#tools">all tools</a>.</p>
-<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/images-to-pdf">images-to-pdf on GitHub</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/images-to-pdf">images-to-pdf on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>
 </body>

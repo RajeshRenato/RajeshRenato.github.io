@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <title>Daily puzzles | free daily word, sudoku, and logic puzzles</title>
 <link rel="stylesheet" href="../common/about.css">
-<link rel="canonical" href="https://rajeshrenato.github.io/playground/daily/">
+<link rel="canonical" href="https://rajeshrenato.github.io/daily/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --good:#2f9e5b; --bad:#d8392f; }
   @media (prefers-color-scheme: dark) {
@@ -49,12 +49,12 @@
 <meta property="og:title" content="Daily puzzles">
 <meta property="og:description" content="Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rajeshrenato.github.io/playground/daily/">
-<meta property="og:image" content="https://rajeshrenato.github.io/playground/daily/og.png">
+<meta property="og:url" content="https://rajeshrenato.github.io/daily/">
+<meta property="og:image" content="https://rajeshrenato.github.io/daily/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Today", "item": "https://rajeshrenato.github.io/playground/#today"}, {"@type": "ListItem", "position": 3, "name": "Daily puzzles", "item": "https://rajeshrenato.github.io/playground/daily/"}]}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Daily puzzles", "url": "https://rajeshrenato.github.io/playground/daily/", "description": "Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Today", "item": "https://rajeshrenato.github.io/#today"}, {"@type": "ListItem", "position": 3, "name": "Daily puzzles", "item": "https://rajeshrenato.github.io/daily/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Daily puzzles", "url": "https://rajeshrenato.github.io/daily/", "description": "Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -166,7 +166,7 @@ function shareText() {
   const { day, results } = render();
   const line = (name, r) => name + ' ' + (r.short || (r.state === 'todo' ? 'not played' : r.text));
   return 'Playground daily #' + day + '\n' + line('Penta', results.penta) + '\n' + line('Sudoku', results.sudoku) +
-    '\n' + line('Arrow Flux', results.arrow) + '\nhttps://rajeshrenato.github.io/playground/daily/';
+    '\n' + line('Arrow Flux', results.arrow) + '\nhttps://rajeshrenato.github.io/daily/';
 }
 
 $('share').addEventListener('click', async () => {
@@ -189,7 +189,7 @@ addEventListener('storage', render);
 <h3>How it works</h3>
 <p>Each game saves its own result for the day in <code>localStorage</code> (<code>penta_day_N</code>, <code>sud_day_N</code>, <code>af_day_N</code>), and this page reads them, since every page on the site shares one origin. Day <code>N</code> counts from 1 January 2026 and rolls over at midnight UTC, so everyone's day number matches. Nothing is sent anywhere.</p>
 <p class="pg-more">More like this: <a href="../penta/">Penta</a>, <a href="../sudoku/">Sudoku</a>, <a href="../arrow-flux/">Arrow Flux</a>, <a href="../pixel-logic/">Pixel Logic</a>. Or see <a href="../">everything in the playground</a>.</p>
-<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/daily">daily on GitHub</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/daily">daily on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>
 </body>

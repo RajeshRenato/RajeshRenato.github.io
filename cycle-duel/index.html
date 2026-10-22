@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <title>Cycle Duel | Tron light cycle game, play a friend online</title>
 <link rel="stylesheet" href="../common/about.css">
-<link rel="canonical" href="https://rajeshrenato.github.io/playground/cycle-duel/">
+<link rel="canonical" href="https://rajeshrenato.github.io/cycle-duel/">
 <style>
   :root { --bg:#0e0f14; --panel:#1a1b22; --ink:#e8e8e2; --muted:#9a9aa6; --rule:#2e2f38; --p0:#28e0ff; --p1:#ff4fa3; }
   * { box-sizing:border-box; }
@@ -51,12 +51,12 @@
 <meta property="og:title" content="Cycle Duel">
 <meta property="og:description" content="Light-cycle duels: cut your rival off with your trail. Play a friend online with a link, on one keyboard, or against a bot.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rajeshrenato.github.io/playground/cycle-duel/">
-<meta property="og:image" content="https://rajeshrenato.github.io/playground/cycle-duel/og.png">
+<meta property="og:url" content="https://rajeshrenato.github.io/cycle-duel/">
+<meta property="og:image" content="https://rajeshrenato.github.io/cycle-duel/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Light-cycle duels: cut your rival off with your trail. Play a friend online with a link, on one keyboard, or against a bot.">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/playground/#online"}, {"@type": "ListItem", "position": 3, "name": "Cycle Duel", "item": "https://rajeshrenato.github.io/playground/cycle-duel/"}]}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Cycle Duel", "url": "https://rajeshrenato.github.io/playground/cycle-duel/", "description": "Light-cycle duels: cut your rival off with your trail. Play a friend online with a link, on one keyboard, or against a bot.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/#online"}, {"@type": "ListItem", "position": 3, "name": "Cycle Duel", "item": "https://rajeshrenato.github.io/cycle-duel/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Cycle Duel", "url": "https://rajeshrenato.github.io/cycle-duel/", "description": "Light-cycle duels: cut your rival off with your trail. Play a friend online with a link, on one keyboard, or against a bot.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -607,7 +607,7 @@ requestAnimationFrame(frame);
 <p>There is no game server. The two browsers connect directly over a WebRTC data channel, using <a href="../linkplay/">LinkPlay</a>.</p>
 <ul><li>WebRTC needs both sides to swap a connection description first. Here that swap happens through the links: the invite carries the host's description and the reply carries the guest's, each compressed and base64url-encoded. If the host opens the reply link in the same browser, a <code>BroadcastChannel</code> hands it to the game tab automatically.</li><li>Public STUN servers (Google and Cloudflare) tell each browser its public address. Those are the only outside requests the game makes. Some strict networks block direct connections, and there's no relay to fall back on, so on those it won't connect.</li><li>The host runs the game at about 14 ticks a second. The guest sends its turns and draws the snapshots the host sends back. If a snapshot goes missing, the guest asks for a full copy of the board. The ping shown in the corner is the measured round trip.</li></ul>
 <p class="pg-more">More like this: <a href="../type-race/">Type Race</a>, <a href="../sketch-guess/">Sketch &amp; Guess</a>, <a href="../four-in-a-row/">Four in a Row</a>, <a href="../checkers/">Checkers</a>. Or see <a href="../#online">all online games</a>.</p>
-<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/cycle-duel">cycle-duel on GitHub</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/cycle-duel">cycle-duel on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>
 </body>

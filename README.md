@@ -2,7 +2,7 @@
 
 77 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
-Live at https://rajeshrenato.github.io/playground/
+Live at https://rajeshrenato.github.io/
 
 MIT licensed. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). Security notes and private reporting: [SECURITY.md](SECURITY.md).
 
@@ -18,7 +18,7 @@ Play with friends online and no server: [Chess](chess/), [Ludo](ludo/), [Mafia](
 
 A GTA Vice City-style open world: a procedural Miami with traffic AI, police chases, and delivery jobs. The street-level 3D camera is drawn on a plain 2D canvas, with a top-down view one key away. Play cops and robbers with a friend online: one drives the getaway car, the other the police car.
 
-[Play Miami Nights](https://rajeshrenato.github.io/playground/miami-nights/)
+[Play Miami Nights](https://rajeshrenato.github.io/miami-nights/)
 
 ### [Breach](breach/)
 
@@ -26,7 +26,7 @@ A GTA Vice City-style open world: a procedural Miami with traffic AI, police cha
 
 First-person shooter on a raycasting engine written from scratch. Every wall texture, sprite, and sound effect is generated in code at startup.
 
-[Play Breach](https://rajeshrenato.github.io/playground/breach/)
+[Play Breach](https://rajeshrenato.github.io/breach/)
 
 ### [Midnight Racing](midnight-racing/)
 
@@ -34,7 +34,7 @@ First-person shooter on a raycasting engine written from scratch. Every wall tex
 
 Road Rash-style bike combat racing at midnight, on a pseudo-3D road. Punch and kick rivals, take their clubs, dodge two-way traffic, and spend your winnings on faster bikes. Race up to three friends online, or share a link to your run and friends race your ghost.
 
-[Play Midnight Racing](https://rajeshrenato.github.io/playground/midnight-racing/)
+[Play Midnight Racing](https://rajeshrenato.github.io/midnight-racing/)
 
 ### [Arrow Flux](arrow-flux/)
 
@@ -42,7 +42,7 @@ Road Rash-style bike combat racing at midnight, on a pseudo-3D road. Punch and k
 
 Slide tangled arrows off a packed board. The generator builds each board in solution order, so every puzzle is guaranteed solvable, from 6×8 up to 26×37.
 
-[Play Arrow Flux](https://rajeshrenato.github.io/playground/arrow-flux/)
+[Play Arrow Flux](https://rajeshrenato.github.io/arrow-flux/)
 
 ## Everything else
 

@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <title>PDF Toolkit | merge and split PDFs without uploading</title>
 <link rel="stylesheet" href="../common/about.css">
-<link rel="canonical" href="https://rajeshrenato.github.io/playground/pdf-toolkit/">
+<link rel="canonical" href="https://rajeshrenato.github.io/pdf-toolkit/">
 <style>
   :root { --paper:#f3f3ee; --ink:#1a1a18; --muted:#6e6e66; --rule:#dcdcd2; --card:#ffffff; --accent:#d8392f; --sheet:#ffffff; }
   @media (prefers-color-scheme: dark) {
@@ -70,12 +70,12 @@
 <meta property="og:title" content="PDF Toolkit">
 <meta property="og:description" content="Merge, split, reorder, rotate, and delete PDF pages in your browser. Nothing is uploaded.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rajeshrenato.github.io/playground/pdf-toolkit/">
-<meta property="og:image" content="https://rajeshrenato.github.io/playground/pdf-toolkit/og.png">
+<meta property="og:url" content="https://rajeshrenato.github.io/pdf-toolkit/">
+<meta property="og:image" content="https://rajeshrenato.github.io/pdf-toolkit/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Merge, split, reorder, rotate, and delete PDF pages in your browser. Nothing is uploaded.">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/playground/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/playground/#tools"}, {"@type": "ListItem", "position": 3, "name": "PDF Toolkit", "item": "https://rajeshrenato.github.io/playground/pdf-toolkit/"}]}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "PDF Toolkit", "url": "https://rajeshrenato.github.io/playground/pdf-toolkit/", "description": "Merge, split, reorder, rotate, and delete PDF pages in your browser. Nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "PDF Toolkit", "item": "https://rajeshrenato.github.io/pdf-toolkit/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "PDF Toolkit", "url": "https://rajeshrenato.github.io/pdf-toolkit/", "description": "Merge, split, reorder, rotate, and delete PDF pages in your browser. Nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <a class="back" href="../">&larr; all projects</a>
@@ -953,7 +953,7 @@ render();
 <h3>How it works</h3>
 <ul><li>The reader is written from scratch. A tokenizer handles every PDF object type: numbers, names with #xx escapes, literal strings with nesting and escapes, hex strings, arrays, dictionaries, references, and streams.</li><li>It finds the cross-reference data through startxref. It reads both classic xref tables and compressed xref streams (including the PNG predictors they use), follows the /Prev chain of incremental updates so the newest version of each object wins, and unpacks objects stored inside object streams. Compressed data is inflated with the browser's DecompressionStream.</li><li>If the cross-reference data is broken, it rebuilds it by scanning the file for every "N G obj" and keeping the last one of each number.</li><li>It walks the page tree from the catalog and works out each page's inherited resources, media box, crop box, and rotation.</li><li>The writer builds a new PDF 1.7 file with a classic xref table. For each page it copies the page and everything the page refers to, giving the objects new numbers. Objects shared by several pages of the same file, like fonts, are copied once per output file. Inherited values are written onto each page, rotation is added to the page's /Rotate, and stream data is copied without decoding.</li><li>The ZIP for splitting is written by hand, stored without compression, with a CRC-32 per file.</li></ul>
 <p class="pg-more">More like this: <a href="../images-to-pdf/">Images to PDF</a>, <a href="../linkplay/">LinkPlay</a>, <a href="../file-send/">File Send</a>, <a href="../secret-note/">Secret Note</a>. Or see <a href="../#tools">all tools</a>.</p>
-<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/pdf-toolkit">pdf-toolkit on GitHub</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/pdf-toolkit">pdf-toolkit on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>
 </body>

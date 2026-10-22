@@ -17,8 +17,8 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const BASE = 'https://rajeshrenato.github.io/playground/';
-const REPO = 'https://github.com/RajeshRenato/playground/tree/main/';
+const BASE = 'https://rajeshrenato.github.io/';
+const REPO = 'https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/';
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const write = (f, s) => fs.writeFileSync(path.join(ROOT, f), s);
 
