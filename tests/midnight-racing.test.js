@@ -217,3 +217,16 @@ test('online: leaving puts your own level and difficulty back', () => {
   assert.strictEqual(g1.run('G.diff'), 1);
   assert.strictEqual(g1.run('online()'), false);
 });
+
+test('easy and medium rivals stay slower than the starter bike, even when catching up', () => {
+  const limits = { 1: 0.86, 2: 0.97 };
+  for (const d of [1, 2]) {
+    for (const level of [1, 5, 10, 20, 40]) {
+      // the fastest a rival can be: top of the random spread, the level bonus, and the catch-up boost
+      const top = run(`(() => { const D = DIFFS[${d}]; return (D.rival + 0.08 + Math.min(0.08, ${level} * 0.006) * D.levelGain) * D.catchUp; })()`);
+      assert.ok(top < limits[d], `difficulty ${d}, level ${level}: rivals reach ${top.toFixed(3)} of top speed`);
+    }
+  }
+  const hits = run('[1, 2, 3].map(d => DIFFS[d].dmg * 14)');
+  assert.ok(hits[0] < hits[1] && hits[1] < hits[2], 'rivals hit softer on easier settings');
+});

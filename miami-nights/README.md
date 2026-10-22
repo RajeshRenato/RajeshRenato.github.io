@@ -35,7 +35,8 @@ Each browser drives its own car and sends its position 15 times a second. The ot
 ## How it works
 
 - The city is a pure function of tile coordinates (`tileType(tx, ty)`), so nothing is stored and it's the same every visit: road grid, sidewalks, buildings, parks, palms, a beach, and the ocean.
-- Street view projects the same 2D world through a perspective camera at street height. Buildings are extruded with lit windows, and there are curbs, street lamps, and cars built from depth-sorted boxes. Top-down view draws the world directly.
+- Street view projects the same 2D world through a perspective camera at street height. Each block is one raised sidewalk slab with rounded corners and a curb, and the roads have double yellow lines, zebra crossings, and stop lines. Buildings stand on rounded art deco, cut-corner, or square footprints, with lit windows, pale ledges on the deco ones, neon signs, and lit shopfronts under awnings at street level. Top-down view draws the same shapes from above.
+- Traffic is a mix of sports coupes, sedans, hatchbacks, SUVs, and pickups, plus police cars, in modern paint. Each model is a body and a cabin described by cross-sections along its length (`models.js`): sloped ends of the cabin become the windshield and rear window. Faces facing away from the camera are skipped, the rest are lit by their angle to the sun, and the cars get round wheels, headlights, a full-width tail light bar, and model details like a rear wing and stripes, roof rails, a load bed, or a light bar and livery.
 - Driving splits velocity into forward and sideways parts. The handbrake cuts sideways grip so the car slides.
 - Traffic follows lanes on right-hand roads and stops for cars or people in front of it.
 - Crimes raise your wanted level, up to five stars. Carjacking or ramming a police car adds one star, running someone over adds one, and stealing a police car adds two. One police car chases you per star. Stay slow near them for too long and you're busted and fined $150. Lie low and you lose a star every 16 seconds.
@@ -54,6 +55,7 @@ js/
   city.js       procedural map, top-down rendering, collision
   render3d.js   street-level camera
   particles.js  sparks and stains
+  models.js     car models: the shapes of each body style
   entities.js   cars (physics and AI) and pedestrians
   player.js     walking, getting in and out of cars
   missions.js   deliveries

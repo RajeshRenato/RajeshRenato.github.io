@@ -13,7 +13,6 @@ const T_ROAD = 0, T_SIDEWALK = 1, T_BUILDING = 2, T_GRASS = 3, T_SAND = 4, T_WAT
 
 const BLOCK_BASE = ['#35486e', '#5a3a6e', '#6e3a55', '#2f5d68', '#6e5a33', '#3c3f70'];
 const NEON = ['#ff4fa3', '#28e0ff', '#ffd166', '#64ffb4', '#c77bff', '#ff8a5c'];
-const CAR_COLORS = ['#ff6fb0', '#45d9e8', '#ffd166', '#9effb0', '#c77bff', '#ff8a5c', '#f2f2f2', '#7f8cff'];
 
 function isPark(bx, by) { return hash2(bx * 7 + 3, by * 11 + 5) < 0.16; }
 
@@ -85,6 +84,49 @@ function collideCarWorld(car) {
   return impact;
 }
 
+// block shapes, shared by both views
+
+const SLAB_R = 22;   // sidewalk corners are rounded with this radius
+
+// The raised sidewalk slab of block (bx, by): [x0, y0, x1, y1, rounded]. Blocks that
+// run into the beach are cut off square at the sand.
+function slabRect(bx, by) {
+  const x0 = (bx * PERIOD + 2) * TILE, y0 = (by * PERIOD + 2) * TILE;
+  let x1 = x0 + 6 * TILE;
+  const y1 = y0 + 6 * TILE, edge = CITY_EDGE * TILE;
+  const cut = x1 > edge;
+  if (cut) x1 = edge;
+  return [x0, y0, x1, y1, !cut];
+}
+
+// Points around a rectangle, clockwise on screen: square, rounded, or with the
+// corners cut off at 45 degrees.
+function footprint(x0, y0, x1, y1, shape, r) {
+  if (shape === 'box' || !r) return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  const pts = [], n = shape === 'round' ? 5 : 1;
+  for (const [cx, cy, a0] of [[x1 - r, y0 + r, -Math.PI / 2], [x1 - r, y1 - r, 0], [x0 + r, y1 - r, Math.PI / 2], [x0 + r, y0 + r, Math.PI]]) {
+    for (let i = 0; i <= n; i++) { const a = a0 + (i / n) * Math.PI / 2; pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+  }
+  return pts;
+}
+
+// Each building block gets a Miami look: rounded art deco corners, cut corners, or plain.
+function blockShape(bx, by) {
+  const h = hash2(bx * 41 + 7, by * 37 + 3);
+  return h < 0.42 ? { shape: 'round', r: 34 } : h < 0.72 ? { shape: 'chamfer', r: 26 } : { shape: 'box', r: 0 };
+}
+
+// Is (x, y) on a raised sidewalk slab (inside its rounded corners)?
+function onSlab(x, y) {
+  const bx = Math.floor(x / (PERIOD * TILE)), by = Math.floor(y / (PERIOD * TILE));
+  const [x0, y0, x1, y1, round] = slabRect(bx, by);
+  if (x < x0 || x > x1 || y < y0 || y > y1) return false;
+  if (!round) return true;
+  const cx = x < x0 + SLAB_R ? x0 + SLAB_R : x > x1 - SLAB_R ? x1 - SLAB_R : x;
+  const cy = y < y0 + SLAB_R ? y0 + SLAB_R : y > y1 - SLAB_R ? y1 - SLAB_R : y;
+  return (x - cx) * (x - cx) + (y - cy) * (y - cy) <= SLAB_R * SLAB_R;
+}
+
 // rendering
 
 function drawPalm(ctx, x, y, seed) {
@@ -109,90 +151,109 @@ function drawPalm(ctx, x, y, seed) {
 
 function drawTile(ctx, tx, ty, time) {
   const t = tileType(tx, ty), px = tx * TILE, py = ty * TILE;
-  switch (t) {
-    case T_WATER: {
-      ctx.fillStyle = '#0c2e44';
-      ctx.fillRect(px, py, TILE, TILE);
-      if (Math.sin(time * 1.5 + ty * 0.7 + tx * 0.35) > 0.55) {
-        ctx.fillStyle = 'rgba(120,200,230,0.12)';
-        ctx.fillRect(px, py + TILE * 0.4, TILE, 3);
-      }
-      break;
+  if (t === T_WATER) {
+    ctx.fillStyle = '#0c2e44';
+    ctx.fillRect(px, py, TILE, TILE);
+    if (Math.sin(time * 1.5 + ty * 0.7 + tx * 0.35) > 0.55) {
+      ctx.fillStyle = 'rgba(120,200,230,0.12)';
+      ctx.fillRect(px, py + TILE * 0.4, TILE, 3);
     }
-    case T_SAND: {
-      ctx.fillStyle = '#c7a263';
-      ctx.fillRect(px, py, TILE, TILE);
-      if (hash2(tx, ty) < 0.05) drawPalm(ctx, px + TILE / 2, py + TILE / 2, tx * 17 + ty);
-      break;
-    }
-    case T_ROAD: {
-      ctx.fillStyle = '#20242e';
-      ctx.fillRect(px, py, TILE, TILE);
-      const mx = tx % PERIOD, my = ty % PERIOD;
-      if (!(mx < 2 && my < 2)) {
-        ctx.strokeStyle = 'rgba(232,195,90,0.8)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([10, 14]);
-        ctx.beginPath();
-        if (mx === 1 && my >= 2) { ctx.moveTo(px, py); ctx.lineTo(px, py + TILE); }
-        else if (my === 1 && mx >= 2) { ctx.moveTo(px, py); ctx.lineTo(px + TILE, py); }
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-      break;
-    }
-    case T_SIDEWALK: {
-      ctx.fillStyle = '#454b5c';
-      ctx.fillRect(px, py, TILE, TILE);
-      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
-      if (hash2(tx * 3 + 1, ty * 5 + 2) < 0.08) drawPalm(ctx, px + TILE / 2, py + TILE / 2, tx * 31 + ty);
-      break;
-    }
-    case T_GRASS: {
-      ctx.fillStyle = '#1d5438';
-      ctx.fillRect(px, py, TILE, TILE);
-      if (hash2(tx + 9, ty + 4) < 0.15) drawPalm(ctx, px + TILE / 2, py + TILE / 2, tx * 13 + ty * 7);
-      break;
-    }
-    case T_BUILDING: {
-      const bx = (tx / PERIOD) | 0, by = (ty / PERIOD) | 0;
-      ctx.fillStyle = BLOCK_BASE[(hash2(bx, by) * BLOCK_BASE.length) | 0];
-      ctx.fillRect(px, py, TILE, TILE);
-      break;
-    }
+    return;
+  }
+  if (t === T_SAND) { ctx.fillStyle = '#c7a263'; ctx.fillRect(px, py, TILE, TILE); return; }
+  // asphalt, with a little variation; blocks cover most of it
+  ctx.fillStyle = hash2(tx * 5 + 2, ty * 3 + 1) < 0.5 ? '#20242e' : '#22262f';
+  ctx.fillRect(px, py, TILE, TILE);
+  if (t !== T_ROAD) return;
+  const mx = tx % PERIOD, my = ty % PERIOD;
+  if (mx < 2 && my < 2) return;   // intersection
+  ctx.fillStyle = 'rgba(240,198,80,0.85)';
+  // double yellow down the middle
+  if (mx === 1 && my >= 2) { ctx.fillRect(px - 2.6, py, 1.8, TILE); ctx.fillRect(px + 0.8, py, 1.8, TILE); }
+  else if (my === 1 && mx >= 2) { ctx.fillRect(px, py - 2.6, TILE, 1.8); ctx.fillRect(px, py + 0.8, TILE, 1.8); }
+  // zebra crossings and stop lines where a road meets an intersection
+  ctx.fillStyle = 'rgba(236,238,242,0.8)';
+  if (mx < 2 && (my === 2 || my === 7)) {
+    const y0 = my === 2 ? py + 3 : py + TILE - 17;
+    for (let i = 0; i < 4; i++) ctx.fillRect(px + 3 + i * 11.5, y0, 6, 14);
+    // stop line on the lane arriving at the intersection
+    if ((my === 2 && mx === 1) || (my === 7 && mx === 0)) ctx.fillRect(px + 2, my === 2 ? py + 20 : py + TILE - 22, TILE - 4, 2.4);
+  } else if (my < 2 && (mx === 2 || mx === 7)) {
+    const x0 = mx === 2 ? px + 3 : px + TILE - 17;
+    for (let i = 0; i < 4; i++) ctx.fillRect(x0, py + 3 + i * 11.5, 14, 6);
+    if ((mx === 2 && my === 0) || (mx === 7 && my === 1)) ctx.fillRect(mx === 2 ? px + 20 : px + TILE - 22, py + 2, 2.4, TILE - 4);
   }
 }
 
-// rooftop details + neon trim drawn once per visible block
+function pathOf(ctx, pts) {
+  ctx.beginPath();
+  pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  ctx.closePath();
+}
+
+// A block seen from above: the rounded sidewalk slab, then a park or a building.
 function drawBlockDecor(ctx, bx, by) {
   if (bx < 0 || by < 0) return;
   const tx = bx * PERIOD + 3, ty = by * PERIOD + 3;
   const t = tileType(tx, ty);
-  const x = tx * TILE, y = ty * TILE, s = 4 * TILE;
-  if (t === T_BUILDING) {
-    const hv = hash2(bx * 5 + 1, by * 3 + 7);
-    const neon = NEON[(hv * NEON.length) | 0];
-    ctx.fillStyle = 'rgba(0,0,0,0.22)';
-    ctx.fillRect(x + 12, y + 12, s - 24, s - 24);
-    const rng = mulberry32(((bx * 73856093) ^ (by * 19349663)) >>> 0);
-    ctx.fillStyle = 'rgba(255,255,255,0.07)';
-    for (let i = 0; i < 4; i++) ctx.fillRect(x + 16 + rng() * (s - 48), y + 16 + rng() * (s - 48), 12, 12);
-    ctx.globalAlpha = 0.2;
-    ctx.strokeStyle = neon;
-    ctx.lineWidth = 7;
-    ctx.strokeRect(x + 3, y + 3, s - 6, s - 6);
-    ctx.globalAlpha = 1;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x + 3, y + 3, s - 6, s - 6);
-  } else if (t === T_GRASS) {
-    const cx = x + s / 2, cy = y + s / 2;
+  if (t !== T_BUILDING && t !== T_GRASS) return;
+  const [sx0, sy0, sx1, sy1, round] = slabRect(bx, by);
+  const slab = footprint(sx0, sy0, sx1, sy1, round ? 'round' : 'box', SLAB_R);
+  ctx.fillStyle = '#6d7488';           // the curb, a lighter rim
+  pathOf(ctx, slab); ctx.fill();
+  ctx.fillStyle = '#4a5063';
+  pathOf(ctx, footprint(sx0 + 3, sy0 + 3, sx1 - 3, sy1 - 3, round ? 'round' : 'box', SLAB_R - 3)); ctx.fill();
+  // paving joints
+  ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let v = sx0 + 24; v < sx1 - 12; v += 24) { ctx.moveTo(v, sy0 + 3); ctx.lineTo(v, sy0 + TILE); ctx.moveTo(v, sy1 - TILE); ctx.lineTo(v, sy1 - 3); }
+  for (let v = sy0 + 24; v < sy1 - 12; v += 24) { ctx.moveTo(sx0 + 3, v); ctx.lineTo(sx0 + TILE, v); ctx.moveTo(sx1 - TILE, v); ctx.lineTo(sx1 - 3, v); }
+  ctx.stroke();
+
+  const x = tx * TILE, y = ty * TILE, S = 4 * TILE;
+  if (t === T_GRASS) {
+    ctx.fillStyle = '#1d5438';
+    pathOf(ctx, footprint(x - 4, y - 4, x + S + 4, y + S + 4, 'round', 14)); ctx.fill();
+    ctx.strokeStyle = 'rgba(160,140,100,0.35)'; ctx.lineWidth = 6;       // paths to the fountain
+    ctx.beginPath(); ctx.moveTo(x + S / 2, y); ctx.lineTo(x + S / 2, y + S); ctx.moveTo(x, y + S / 2); ctx.lineTo(x + S, y + S / 2); ctx.stroke();
+    const cx = x + S / 2, cy = y + S / 2;
     ctx.fillStyle = '#17486a';
-    ctx.beginPath(); ctx.arc(cx, cy, 14, 0, 7); ctx.fill();
-    ctx.strokeStyle = '#9fd8ef';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(cx, cy, 14, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 16, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#9fd8ef'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, 16, 0, 7); ctx.stroke();
+    return;
+  }
+  const { shape, r } = blockShape(bx, by);
+  const foot = footprint(x, y, x + S, y + S, shape, r);
+  const base = BLOCK_BASE[(hash2(bx, by) * BLOCK_BASE.length) | 0];
+  const neon = NEON[(hash2(bx * 5 + 1, by * 3 + 7) * NEON.length) | 0];
+  // shadow toward the inland side
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.save(); ctx.translate(-10, 8); pathOf(ctx, foot); ctx.fill(); ctx.restore();
+  ctx.fillStyle = base;
+  pathOf(ctx, foot); ctx.fill();
+  // roof: a parapet, then details
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  pathOf(ctx, footprint(x + 10, y + 10, x + S - 10, y + S - 10, shape, Math.max(0, r - 10))); ctx.fill();
+  const rng = mulberry32(((bx * 73856093) ^ (by * 19349663)) >>> 0);
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  for (let i = 0; i < 4; i++) ctx.fillRect(x + 22 + rng() * (S - 62), y + 22 + rng() * (S - 62), 14, 10);
+  if (rng() < 0.5) {   // water tank or a stair house
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.arc(x + S * 0.7, y + S * 0.32, 11, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 2; ctx.stroke();
+  } else { ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(x + S * 0.25, y + S * 0.6, 30, 22); }
+  ctx.globalAlpha = 0.22; ctx.strokeStyle = neon; ctx.lineWidth = 7;
+  pathOf(ctx, footprint(x + 3, y + 3, x + S - 3, y + S - 3, shape, Math.max(0, r - 3))); ctx.stroke();
+  ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function drawPalms(ctx, x0, y0, x1, y1) {
+  for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+    const t = tileType(tx, ty), px = tx * TILE + TILE / 2, py = ty * TILE + TILE / 2;
+    if (t === T_SAND && hash2(tx, ty) < 0.05) drawPalm(ctx, px, py, tx * 17 + ty);
+    else if (t === T_SIDEWALK && hash2(tx * 3 + 1, ty * 5 + 2) < 0.08 && onSlab(px, py)) drawPalm(ctx, px, py, tx * 31 + ty);
+    else if (t === T_GRASS && hash2(tx + 9, ty + 4) < 0.15) drawPalm(ctx, px, py, tx * 13 + ty * 7);
   }
 }
 
@@ -207,6 +268,7 @@ function drawWorld(ctx, cx, cy, w, h, time) {
   for (let by = by0; by <= by1; by++)
     for (let bx = bx0; bx <= bx1; bx++)
       drawBlockDecor(ctx, bx, by);
+  drawPalms(ctx, x0, y0, x1, y1);
 }
 
 // minimap (pre-rendered once, 1px per tile)

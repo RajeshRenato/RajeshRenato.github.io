@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101425'/%3E%3Cpath d='M6 24 C6 12 16 22 18 13 S26 8 26 8' fill='none' stroke='%2359d98e' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='26' cy='8' r='2' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Worm Arena | Slither.io-style game online with friends</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/worm-arena/">
+<style>
+  :root { --bg: #101425; --ink: #eef0ff; --muted: #99a0c4; --panel: rgba(16,20,37,.82); --accent: #59d98e;
+          --lp-bg: #101425; --lp-panel: #1a2038; --lp-veil: rgba(16, 20, 37, .94); --lp-accent: #59d98e; --lp-ink: #eef0ff; --lp-muted: #99a0c4; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  #cv { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 5; }
+  a.back:hover { color: var(--ink); }
+  [hidden] { display: none !important; }
+  .hud { position: fixed; z-index: 4; pointer-events: none; font-variant-numeric: tabular-nums; }
+  #me { left: 14px; bottom: 14px; font-size: 15px; color: var(--muted); }
+  #me b { color: var(--ink); font-size: 22px; }
+  #board { right: 14px; top: 12px; background: var(--panel); border-radius: 10px; padding: 8px 12px; font-size: 13px; min-width: 170px; }
+  #board h3 { margin: 0 0 4px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  #board ol { margin: 0; padding-left: 20px; }
+  #board li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+  #board li.mine { color: var(--accent); font-weight: 700; }
+  #board li span { float: right; margin-left: 10px; color: var(--muted); }
+  #feed { left: 50%; top: 12px; transform: translateX(-50%); text-align: center; font-size: 14px; color: var(--muted); }
+  #feed div { margin-bottom: 2px; }
+  #mini { position: fixed; right: 14px; bottom: 14px; width: 120px; height: 120px; z-index: 4; pointer-events: none; }
+  .msg { position: fixed; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .msg .box { pointer-events: auto; background: var(--panel); border-radius: 16px; padding: 22px 26px; text-align: center; max-width: 380px; }
+  .msg h2 { margin: 0 0 6px; font-size: 30px; }
+  .msg p { margin: 0 0 14px; color: var(--muted); }
+  .btn { font: inherit; font-weight: 700; font-size: 16px; padding: 11px 18px; border-radius: 10px; border: 0; background: var(--accent); color: #0d1a12; cursor: pointer; }
+  .btn.ghost { background: #26304f; color: var(--ink); }
+  .btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  #menuRow { position: fixed; left: 14px; top: 34px; z-index: 5; display: flex; gap: 10px; }
+  #menuRow button { font: inherit; font-size: 13px; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 2px 0; }
+  #boostBtn { position: fixed; right: 22px; bottom: 150px; z-index: 5; width: 84px; height: 84px; border-radius: 50%; border: 0; background: rgba(89,217,142,.25);
+              color: var(--ink); font: 700 15px system-ui, sans-serif; display: none; touch-action: none; }
+  body.touch #boostBtn { display: block; }
+  #keys { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); color: var(--muted); font-size: 13px; z-index: 4; pointer-events: none; }
+  body.touch #keys { display: none; }
+  @media (max-width: 600px) { #board { font-size: 12px; min-width: 140px; } #mini { width: 96px; height: 96px; } }
+</style>
+<meta property="og:title" content="Worm Arena">
+<meta property="og:description" content="A Slither.io-style arena game: eat, grow, and make other worms crash into you. Play online with friends over a link, no server, with bots filling the arena.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/worm-arena/">
+<meta property="og:image" content="https://rajeshrenato.github.io/worm-arena/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A Slither.io-style arena game: eat, grow, and make other worms crash into you. Play online with friends over a link, no server, with bots filling the arena.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/#online"}, {"@type": "ListItem", "position": 3, "name": "Worm Arena", "item": "https://rajeshrenato.github.io/worm-arena/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Worm Arena", "url": "https://rajeshrenato.github.io/worm-arena/", "description": "A Slither.io-style arena game: eat, grow, and make other worms crash into you. Play online with friends over a link, no server, with bots filling the arena.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../" id="back">&larr; all projects</a>
+<div id="menuRow" hidden><button id="inviteBtn" hidden>Invite friends</button><button id="leaveBtn">Menu</button></div>
+<canvas id="cv"></canvas>
+<canvas id="mini" width="240" height="240"></canvas>
+<div class="hud" id="me" hidden></div>
+<div class="hud" id="board" hidden><h3>Longest</h3><ol id="boardList"></ol></div>
+<div class="hud" id="feed"></div>
+<p id="keys" hidden>Steer with the mouse. Hold the mouse button or Space to boost.</p>
+<button id="boostBtn">Boost</button>
+<div class="msg" id="msg" hidden><div class="box" id="msgBox"></div></div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+// ---- the world (run by the host, or locally when playing alone)
+
+const R = 2400;                 // arena radius
+const SPACING = 5;              // distance between body points
+const FOOD_MIN = 1100, BOTS = 12, MAX_WORMS = 22;
+const SPEED = 150, BOOST = 300, CELL = 64;
+const SKINS = [
+  ['#59d98e', '#2f9e63'], ['#ff6b8b', '#c23a5d'], ['#ffc94d', '#d98f1f'], ['#5cc8ff', '#2b84c9'], ['#b48cff', '#7a50d6'],
+  ['#ff8f52', '#cc5a22'], ['#f2f2f2', '#9aa0b4'], ['#7ff0e3', '#2ea79a'], ['#ff5cd6', '#a82e8c'], ['#c6f25c', '#86b02a'],
+];
+const BOT_NAMES = ['Noodle', 'Wiggles', 'Slinky', 'Ziggy', 'Pretzel', 'Doodle', 'Spaghetti', 'Twisty', 'Biscuit', 'Squiggle', 'Mochi', 'Pickle', 'Sprout', 'Ramen', 'Zest', 'Udon'];
+
+const radiusOf = s => 8 + Math.min(20, Math.sqrt(s) * 0.62);
+const segsOf = s => 14 + Math.floor(s / 2.2);
+const turnOf = w => 4.6 / (1 + (radiusOf(w.score) - 8) / 14);
+const angDiff = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
+
+function newWorld() {
+  const W = { food: new Map(), nextFood: 1, worms: new Map(), nextWorm: 1, time: 0, fe: [], fa: [], kills: [], spawned: [] };
+  for (let i = 0; i < FOOD_MIN; i++) addFood(W);
+  return W;
+}
+
+function addFood(W, x, y, v = 1, c) {
+  if (x === undefined) { const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * (R - 60); x = Math.cos(a) * d; y = Math.sin(a) * d; }
+  const f = { id: W.nextFood++, x, y, v, c: c === undefined ? (Math.random() * SKINS.length) | 0 : c };
+  W.food.set(f.id, f);
+  W.fa.push(f);
+  return f;
+}
+
+function spawnWorm(W, { name, skin, bot = false, pid = null }) {
+  // start somewhere quiet: the spot farthest from other heads out of a few tries
+  let best = null, bestD = -1;
+  for (let k = 0; k < 12; k++) {
+    const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * (R * 0.8);
+    const x = Math.cos(a) * d, y = Math.sin(a) * d;
+    let near = Infinity;
+    for (const o of W.worms.values()) if (o.alive) near = Math.min(near, Math.hypot(o.x - x, o.y - y));
+    if (near > bestD) { bestD = near; best = [x, y]; }
+  }
+  const a = Math.random() * Math.PI * 2;
+  const w = { id: W.nextWorm++, name, skin: skin === undefined ? (Math.random() * SKINS.length) | 0 : skin, bot, pid,
+              x: best[0], y: best[1], a, ta: a, boost: false, score: 10, alive: true, body: [], dropT: 0, think: 0, killer: null };
+  for (let i = 0; i < segsOf(w.score); i++) w.body.push([w.x - Math.cos(a) * i * SPACING, w.y - Math.sin(a) * i * SPACING]);
+  W.worms.set(w.id, w);
+  W.spawned.push(w);
+  return w;
+}
+
+// a grid of every body point, for collisions and for bots looking ahead
+function buildGrid(W) {
+  const grid = new Map();
+  for (const w of W.worms.values()) {
+    if (!w.alive) continue;
+    for (let i = 0; i < w.body.length; i += 2) {
+      const p = w.body[i], k = Math.floor(p[0] / CELL) + ',' + Math.floor(p[1] / CELL);
+      let cell = grid.get(k);
+      if (!cell) grid.set(k, (cell = []));
+      cell.push(w, i);
+    }
+  }
+  return grid;
+}
+function nearPoints(grid, x, y, r, fn) {
+  const c0 = Math.floor((x - r) / CELL), c1 = Math.floor((x + r) / CELL), d0 = Math.floor((y - r) / CELL), d1 = Math.floor((y + r) / CELL);
+  for (let cx = c0; cx <= c1; cx++) for (let cy = d0; cy <= d1; cy++) {
+    const cell = grid.get(cx + ',' + cy);
+    if (!cell) continue;
+    for (let k = 0; k < cell.length; k += 2) if (fn(cell[k], cell[k + 1]) === false) return;
+  }
+}
+function foodGrid(W) {
+  const g = new Map();
+  for (const f of W.food.values()) {
+    const k = Math.floor(f.x / CELL) + ',' + Math.floor(f.y / CELL);
+    let cell = g.get(k);
+    if (!cell) g.set(k, (cell = []));
+    cell.push(f);
+  }
+  return g;
+}
+
+function kill(W, w, killer) {
+  if (!w.alive) return;
+  w.alive = false;
+  w.killer = killer ? killer.id : null;
+  if (killer) killer.kills = (killer.kills || 0) + 1;
+  W.kills.push([w.id, killer ? killer.id : 0]);
+  // the body turns into food, worth most of what the worm had
+  const n = Math.max(1, Math.floor(w.body.length / 3));
+  const each = Math.max(1, Math.round((w.score * 0.75) / n));
+  for (let i = 0; i < w.body.length; i += 3) {
+    const p = w.body[i];
+    if (Math.hypot(p[0], p[1]) < R - 20) addFood(W, p[0] + (Math.random() - 0.5) * 10, p[1] + (Math.random() - 0.5) * 10, Math.min(8, each), w.skin);
+  }
+}
+
+function step(W, dt) {
+  W.time += dt;
+  const grid = buildGrid(W), fgrid = foodGrid(W);
+  for (const w of W.worms.values()) {
+    if (!w.alive) continue;
+    if (w.bot) { w.think -= dt; if (w.think <= 0) { botThink(W, w, grid, fgrid); w.think = 0.12 + Math.random() * 0.08; } }
+    const turn = turnOf(w) * dt, d = angDiff(w.a, w.ta);
+    w.a += Math.max(-turn, Math.min(turn, d));
+    const boosting = w.boost && w.score > 14;
+    const sp = boosting ? BOOST : SPEED;
+    w.x += Math.cos(w.a) * sp * dt;
+    w.y += Math.sin(w.a) * sp * dt;
+    // boosting burns length, dropped behind as food
+    if (boosting) {
+      w.dropT += dt;
+      if (w.dropT > 0.12) { w.dropT = 0; w.score -= 1; const t = w.body[w.body.length - 1]; addFood(W, t[0], t[1], 1, w.skin); }
+    }
+    // body: the head moves, and points are laid along its path exactly SPACING apart
+    w.body[0] = [w.x, w.y];
+    if (w.body.length < 2) w.body.push([w.x, w.y]);
+    for (let b1 = w.body[1], d = Math.hypot(w.x - b1[0], w.y - b1[1]); d >= SPACING; b1 = w.body[1], d = Math.hypot(w.x - b1[0], w.y - b1[1])) {
+      w.body.splice(1, 0, [b1[0] + (w.x - b1[0]) / d * SPACING, b1[1] + (w.y - b1[1]) / d * SPACING]);
+    }
+    const want = segsOf(w.score);
+    if (w.body.length > want) w.body.length = want;
+  }
+  // eating
+  for (const w of W.worms.values()) {
+    if (!w.alive) continue;
+    const r = radiusOf(w.score) + 10;
+    const c0 = Math.floor((w.x - r) / CELL), c1 = Math.floor((w.x + r) / CELL), d0 = Math.floor((w.y - r) / CELL), d1 = Math.floor((w.y + r) / CELL);
+    for (let cx = c0; cx <= c1; cx++) for (let cy = d0; cy <= d1; cy++) {
+      const cell = fgrid.get(cx + ',' + cy);
+      if (!cell) continue;
+      for (const f of cell) {
+        if (!W.food.has(f.id)) continue;
+        if ((f.x - w.x) ** 2 + (f.y - w.y) ** 2 < r * r) { W.food.delete(f.id); W.fe.push(f.id); w.score += f.v; }
+      }
+    }
+  }
+  // crashes: a head into another worm's body, or into the edge (checked against where bodies are now)
+  const hits = buildGrid(W);
+  for (const w of W.worms.values()) {
+    if (!w.alive) continue;
+    const hr = radiusOf(w.score);
+    if (Math.hypot(w.x, w.y) > R - hr) { kill(W, w, null); continue; }
+    let hit = null;
+    nearPoints(hits, w.x, w.y, hr + 30, (o, i) => {
+      if (o === w || !o.alive) return;
+      const p = o.body[i], or = radiusOf(o.score);
+      if (!p) return;
+      if ((p[0] - w.x) ** 2 + (p[1] - w.y) ** 2 < (hr * 0.6 + or * 0.8) ** 2) { hit = o; return false; }
+    });
+    if (hit) kill(W, w, hit);
+  }
+  while (W.food.size < FOOD_MIN) addFood(W);
+}
+
+// Bots: stay off the edge, swerve away from bodies ahead, go for food, and
+// sometimes cut in front of a smaller worm.
+function botThink(W, w, grid, fgrid) {
+  const hr = radiusOf(w.score);
+  if (Math.hypot(w.x, w.y) > R * 0.86) { w.ta = Math.atan2(-w.y, -w.x) + (Math.random() - 0.5) * 0.6; w.boost = false; return; }
+  const danger = a => {
+    let worst = 0;
+    for (let d = hr + 12; d <= 150; d += 22) {
+      const px = w.x + Math.cos(a) * d, py = w.y + Math.sin(a) * d;
+      if (Math.hypot(px, py) > R - 30) worst = Math.max(worst, 1.2 - d / 150);
+      nearPoints(grid, px, py, 22 + hr, (o, i) => { if (o !== w) { worst = Math.max(worst, 1.4 - d / 150); return false; } });
+    }
+    return worst;
+  };
+  const ahead = danger(w.a);
+  if (ahead > 0.3) {
+    const l = danger(w.a - 0.9), r = danger(w.a + 0.9);
+    w.ta = w.a + (l < r ? -1.2 : 1.2);
+    w.boost = ahead > 0.9 && w.score > 30 && Math.random() < 0.3;
+    return;
+  }
+  // a smaller worm nearby: get ahead of it
+  if (w.score > 40 && Math.random() < 0.25) {
+    for (const o of W.worms.values()) {
+      if (o === w || !o.alive || o.score > w.score * 0.8) continue;
+      const dx = o.x - w.x, dy = o.y - w.y;
+      if (dx * dx + dy * dy < 260 * 260) {
+        w.ta = Math.atan2(o.y + Math.sin(o.a) * 90 - w.y, o.x + Math.cos(o.a) * 90 - w.x);
+        w.boost = Math.random() < 0.5;
+        return;
+      }
+    }
+  }
+  // the best food close by, worth more the bigger and nearer it is
+  let best = null, bestS = 0;
+  const r = 220, c0 = Math.floor((w.x - r) / CELL), c1 = Math.floor((w.x + r) / CELL), d0 = Math.floor((w.y - r) / CELL), d1 = Math.floor((w.y + r) / CELL);
+  for (let cx = c0; cx <= c1; cx++) for (let cy = d0; cy <= d1; cy++) {
+    const cell = fgrid.get(cx + ',' + cy);
+    if (!cell) continue;
+    for (const f of cell) {
+      const dd = Math.hypot(f.x - w.x, f.y - w.y);
+      const s = f.v / (dd + 30) * (Math.abs(angDiff(w.a, Math.atan2(f.y - w.y, f.x - w.x))) < 1.6 ? 1.5 : 1);
+      if (s > bestS) { bestS = s; best = f; }
+    }
+  }
+  w.boost = false;
+  if (best) w.ta = Math.atan2(best.y - w.y, best.x - w.x);
+  else if (Math.random() < 0.3) w.ta = w.a + (Math.random() - 0.5) * 1.6;
+}
+
+function fillBots(W) {
+  const alive = [...W.worms.values()].filter(w => w.alive);
+  let bots = alive.filter(w => w.bot).length;
+  while (bots < BOTS && alive.length < MAX_WORMS) {
+    const used = new Set(alive.map(w => w.name));
+    const name = BOT_NAMES.find(n => !used.has(n)) || 'Wiggler';
+    alive.push(spawnWorm(W, { name, bot: true }));
+    bots++;
+  }
+}
+
+// ---- network messages
+
+const r1 = v => Math.round(v);
+const metaOf = w => ({ id: w.id, name: w.name, skin: w.skin, bot: w.bot, pid: w.pid });
+function snapshot(W) {
+  const m = { t: 's', w: [], fe: W.fe, fa: W.fa.map(f => [f.id, r1(f.x), r1(f.y), f.v, f.c]), k: W.kills, sp: W.spawned.map(metaOf) };
+  for (const w of W.worms.values()) if (w.alive) m.w.push([w.id, r1(w.x), r1(w.y), Math.round(w.a * 100), w.score, w.boost && w.score > 14 ? 1 : 0]);
+  W.fe = []; W.fa = []; W.kills = []; W.spawned = [];
+  return m;
+}
+function fullState(W, you) {
+  return { t: 'init', you, food: [...W.food.values()].map(f => [f.id, r1(f.x), r1(f.y), f.v, f.c]),
+    worms: [...W.worms.values()].filter(w => w.alive).map(w => ({ ...metaOf(w), score: w.score, body: w.body.filter((_, i) => i % 2 === 0).map(p => [r1(p[0]), r1(p[1])]) })) };
+}
+
+// ---- the game around the world
+
+let mode = null;        // 'solo', 'host', 'guest'
+let W = null;           // host or solo: the world
+let room = null;
+let myWorm = null;      // host or solo: my worm object; guest: my worm id
+let V = null;           // guest: { worms: Map, food: Map }
+let dead = null;        // { by, score } while the death screen is up
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const myName = () => { try { return localStorage.getItem('linkplay_name') || 'You'; } catch (e) { return 'You'; } };
+const best = () => { try { return +localStorage.getItem('wormarena_best') || 0; } catch (e) { return 0; } };
+
+function begin(m) {
+  mode = m;
+  dead = null;
+  $('msg').hidden = true;
+  for (const id of ['me', 'board', 'menuRow']) $(id).hidden = false;
+  $('keys').hidden = false;
+  $('back').hidden = true;
+  $('inviteBtn').hidden = mode !== 'host';
+}
+
+function startSolo() {
+  leaveRoom();
+  W = newWorld();
+  myWorm = spawnWorm(W, { name: myName(), skin: 0 });
+  fillBots(W);
+  begin('solo');
+}
+
+function startHost(r) {
+  if (room !== r) {
+    leaveRoom();
+    room = r;
+    r.on('message', onHostMessage);
+    r.on('roster', () => { for (const p of r.players) if (p.id !== 0 && !welcomed.has(p.id)) welcome(p); });
+    r.on('leave', id => { const w = playerWorm(id); if (w) kill(W, w, null); });
+  }
+  W = newWorld();
+  welcomed.clear();
+  myWorm = spawnWorm(W, { name: r.players[0].name, skin: 0, pid: 0 });
+  for (const p of r.players) if (p.id !== 0) welcome(p);
+  fillBots(W);
+  begin('host');
+}
+
+// players who have been given a worm in this world; after that they respawn by asking
+const welcomed = new Set();
+function playerWorm(pid) { for (const w of W.worms.values()) if (w.alive && w.pid === pid) return w; return null; }
+function welcome(p) {
+  welcomed.add(p.id);
+  const w = spawnWorm(W, { name: p.name, skin: (p.id % (SKINS.length - 1)) + 1, pid: p.id });
+  room.sendTo(p.id, fullState(W, w.id));
+}
+
+function onHostMessage(m, from) {
+  if (!W) return;
+  if (m.t === 'in') {
+    const w = playerWorm(from);
+    if (!w || typeof m.a !== 'number' || !Number.isFinite(m.a)) return;
+    w.ta = m.a;
+    w.boost = m.b === 1;
+  } else if (m.t === 'spawn' && !playerWorm(from)) {
+    const p = room.players.find(x => x.id === from);
+    if (p) { const w = spawnWorm(W, { name: p.name, skin: (p.id % (SKINS.length - 1)) + 1, pid: p.id }); room.sendTo(from, { t: 'you', id: w.id }); }
+  }
+}
+
+function startGuest(r) {
+  if (room !== r) {
+    leaveRoom();
+    room = r;
+    r.on('message', onGuestMessage);
+    r.on('close', () => { if (room === r) message('The host left', 'The arena closed.', [{ label: 'Back to the menu', fn: () => lobby.start() }]); });
+  }
+  V = { worms: new Map(), food: new Map() };
+  myWorm = null;
+  mode = 'guest';
+  message('Joining…', 'Waiting for the arena.', []);
+}
+
+// guest: keep a trail of each worm's head and rebuild its body along it
+const DELAY = 100;
+function onGuestMessage(m) {
+  if (!V) return;
+  const now = performance.now();
+  if (m.t === 'init' && Array.isArray(m.food) && Array.isArray(m.worms)) {
+    V.food = new Map();
+    for (const f of m.food) if (Array.isArray(f) && f.length === 5) V.food.set(f[0], { id: f[0], x: f[1], y: f[2], v: f[3], c: f[4] });
+    V.worms = new Map();
+    for (const w of m.worms) {
+      if (!w || !Array.isArray(w.body)) continue;
+      const vw = guestWorm(w);
+      vw.score = w.score;
+      vw.trail = w.body.filter(p => Array.isArray(p)).map(p => ({ t: now - 10000, x: p[0], y: p[1] }));
+      vw.snaps = [{ t: now - DELAY - 50, x: w.body[0][0], y: w.body[0][1], a: 0, score: w.score, boost: 0 }];
+    }
+    myWorm = m.you;
+    begin('guest');
+  } else if (m.t === 'you' && Number.isInteger(m.id)) {
+    myWorm = m.id;
+    dead = null;
+    $('msg').hidden = true;
+  } else if (m.t === 's' && Array.isArray(m.w)) {
+    if (Array.isArray(m.sp)) for (const s of m.sp) if (s && Number.isInteger(s.id)) guestWorm(s);
+    for (const f of (Array.isArray(m.fa) ? m.fa : [])) if (Array.isArray(f) && f.length === 5) V.food.set(f[0], { id: f[0], x: f[1], y: f[2], v: f[3], c: f[4] });
+    for (const id of (Array.isArray(m.fe) ? m.fe : [])) V.food.delete(id);
+    const seen = new Set();
+    for (const e of m.w) {
+      if (!Array.isArray(e) || e.length !== 6 || !e.slice(1, 5).every(Number.isFinite)) continue;
+      const vw = V.worms.get(e[0]);
+      if (!vw) continue;
+      seen.add(e[0]);
+      vw.alive = true;
+      vw.score = e[4];
+      vw.snaps.push({ t: now, x: e[1], y: e[2], a: e[3] / 100, score: e[4], boost: e[5] });
+      if (vw.snaps.length > 6) vw.snaps.shift();
+      vw.trail.unshift({ t: now, x: e[1], y: e[2] });
+      const keep = segsOf(e[4]) * SPACING + 120;
+      let len = 0;
+      for (let i = 1; i < vw.trail.length; i++) {
+        len += Math.hypot(vw.trail[i].x - vw.trail[i - 1].x, vw.trail[i].y - vw.trail[i - 1].y);
+        if (len > keep) { vw.trail.length = i + 1; break; }
+      }
+    }
+    for (const vw of V.worms.values()) if (!seen.has(vw.id)) { if (vw.alive) vw.diedAt = now; vw.alive = false; }
+    for (const [victim, killer] of (Array.isArray(m.k) ? m.k : [])) onKill(victim, killer, id => V.worms.get(id));
+  }
+}
+function guestWorm(meta) {
+  let vw = V.worms.get(meta.id);
+  if (!vw) { vw = { id: meta.id, trail: [], snaps: [], alive: false, score: 10 }; V.worms.set(meta.id, vw); }
+  vw.name = String(meta.name || 'Worm').slice(0, 16);
+  vw.skin = Number.isInteger(meta.skin) ? ((meta.skin % SKINS.length) + SKINS.length) % SKINS.length : 0;
+  vw.bot = !!meta.bot;
+  return vw;
+}
+
+// what a guest draws for one worm: the head between snapshots, the body along the trail
+function guestShape(vw, now) {
+  const rt = now - DELAY;
+  const s = vw.snaps;
+  if (!s.length) return null;
+  let head = s[s.length - 1];
+  for (let i = s.length - 1; i > 0; i--) {
+    if (s[i - 1].t <= rt && s[i].t >= rt) {
+      const k = (rt - s[i - 1].t) / ((s[i].t - s[i - 1].t) || 1);
+      head = { x: s[i - 1].x + (s[i].x - s[i - 1].x) * k, y: s[i - 1].y + (s[i].y - s[i - 1].y) * k, a: s[i].a, boost: s[i].boost };
+      break;
+    }
+  }
+  const pts = [[head.x, head.y]];
+  const want = segsOf(vw.score);
+  let prev = pts[0], carry = 0;
+  for (const p of vw.trail) {
+    if (p.t > rt) continue;
+    let dx = p.x - prev[0], dy = p.y - prev[1], d = Math.hypot(dx, dy);
+    while (d + carry >= SPACING && pts.length < want) {
+      const k = (SPACING - carry) / d;
+      prev = [prev[0] + dx * k, prev[1] + dy * k];
+      pts.push(prev);
+      dx = p.x - prev[0]; dy = p.y - prev[1]; d = Math.hypot(dx, dy); carry = 0;
+    }
+    carry += d;
+    prev = [p.x, p.y];
+    if (pts.length >= want) break;
+  }
+  return { x: head.x, y: head.y, a: head.a, body: pts, boost: head.boost };
+}
+
+const feed = [];
+function onKill(victim, killer, get) {
+  const v = get(victim), k = killer ? get(killer) : null;
+  if (!v) return;
+  const mine = mode === 'guest' ? myWorm : myWorm && myWorm.id;
+  if (victim === mine) {
+    const score = v.score;
+    if (score > best()) { try { localStorage.setItem('wormarena_best', score); } catch (e) { } }
+    dead = { by: k ? k.name : null, score };
+    message(k ? 'Eaten by ' + k.name : 'You hit the edge', 'You reached a length of ' + score + '. Best: ' + Math.max(best(), score) + '.', [
+      { label: 'Play again', fn: respawn }, { label: 'Menu', ghost: true, fn: () => lobby.start() }]);
+  }
+  if (k && (killer === mine || v.score > 60)) feed.unshift({ text: (killer === mine ? 'You' : k.name) + ' got ' + (victim === mine ? 'you' : v.name), t: performance.now() });
+  feed.length = Math.min(feed.length, 4);
+}
+
+function respawn() {
+  dead = null;
+  $('msg').hidden = true;
+  if (mode === 'guest') room.send({ t: 'spawn' });
+  else myWorm = spawnWorm(W, { name: mode === 'host' ? room.players[0].name : myName(), skin: 0, pid: mode === 'host' ? 0 : null });
+}
+
+function leaveRoom() { const r = room; room = null; if (r) { try { r.close(); } catch (e) { } } }
+
+function message(title, text, buttons) {
+  $('msg').hidden = false;
+  $('msgBox').innerHTML = '<h2>' + esc(title) + '</h2><p>' + esc(text) + '</p>';
+  const row = document.createElement('div');
+  row.style.display = 'flex'; row.style.gap = '10px'; row.style.justifyContent = 'center';
+  for (const b of buttons) {
+    const el = document.createElement('button');
+    el.className = 'btn' + (b.ghost ? ' ghost' : '');
+    el.textContent = b.label;
+    el.onclick = b.fn;
+    row.appendChild(el);
+  }
+  $('msgBox').appendChild(row);
+}
+
+// ---- input
+
+const input = { a: 0, boost: false, keyTurn: 0, keys: false, touchBoost: false };
+let pointer = null, sentA = null, sentB = null, lastSend = 0;
+const cv = $('cv'), g = cv.getContext('2d');
+cv.addEventListener('pointermove', e => { pointer = [e.clientX, e.clientY]; input.keys = false; });
+cv.addEventListener('pointerdown', e => { pointer = [e.clientX, e.clientY]; if (e.pointerType === 'mouse') input.boost = true; });
+addEventListener('pointerup', e => { if (e.pointerType === 'mouse') input.boost = false; });
+addEventListener('keydown', e => {
+  if (e.code === 'Space') { input.boost = true; e.preventDefault(); }
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') { input.keyTurn = -1; input.keys = true; }
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') { input.keyTurn = 1; input.keys = true; }
+});
+addEventListener('keyup', e => {
+  if (e.code === 'Space') input.boost = false;
+  if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && input.keyTurn < 0) input.keyTurn = 0;
+  if ((e.code === 'ArrowRight' || e.code === 'KeyD') && input.keyTurn > 0) input.keyTurn = 0;
+});
+const bb = $('boostBtn');
+bb.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); input.touchBoost = true; });
+bb.addEventListener('pointerup', () => { input.touchBoost = false; });
+bb.addEventListener('pointercancel', () => { input.touchBoost = false; });
+if (matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch');
+
+function readInput(dt, head) {
+  if (!head) return;
+  if (input.keys) input.a = head.a + input.keyTurn * 1.2;
+  else if (pointer) input.a = Math.atan2(pointer[1] - innerHeight / 2, pointer[0] - innerWidth / 2);
+  const boost = input.boost || input.touchBoost;
+  if (mode === 'guest') {
+    const t = performance.now();
+    if (room && (t - lastSend > 50) && (sentA === null || Math.abs(angDiff(sentA, input.a)) > 0.02 || sentB !== boost)) {
+      lastSend = t; sentA = input.a; sentB = boost;
+      room.send({ t: 'in', a: Math.round(input.a * 1000) / 1000, b: boost ? 1 : 0 });
+    }
+  } else if (myWorm && myWorm.alive) { myWorm.ta = input.a; myWorm.boost = boost; }
+}
+
+// ---- drawing
+
+let cam = { x: 0, y: 0, z: 1 };
+function fit() { const dpr = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; }
+addEventListener('resize', fit);
+
+// worms and food as everyone sees them, from the world or from snapshots
+function scene(now) {
+  if (mode === 'guest') {
+    const worms = [];
+    for (const vw of V.worms.values()) {
+      if (!vw.alive) continue;
+      const s = guestShape(vw, now);
+      if (s) worms.push({ id: vw.id, name: vw.name, skin: vw.skin, score: vw.score, bot: vw.bot, ...s });
+    }
+    return { worms, food: V.food.values(), me: worms.find(w => w.id === myWorm) || null };
+  }
+  const worms = [...W.worms.values()].filter(w => w.alive);
+  return { worms, food: W.food.values(), me: myWorm && myWorm.alive ? myWorm : null };
+}
+
+function drawWorm(w, k) {
+  const r = radiusOf(w.score), sk = SKINS[w.skin] || SKINS[0];
+  const pts = w.body;
+  if (pts.length < 2) return;
+  const path = () => { g.beginPath(); g.moveTo(pts[pts.length - 1][0], pts[pts.length - 1][1]); for (let i = pts.length - 2; i >= 0; i--) g.lineTo(pts[i][0], pts[i][1]); };
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  if (w.boost) { path(); g.strokeStyle = sk[0] + '55'; g.lineWidth = r * 2 + 10; g.stroke(); }
+  path(); g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = r * 2 + 3; g.stroke();
+  path(); g.strokeStyle = sk[0]; g.lineWidth = r * 2; g.stroke();
+  // bands of the darker color down the body
+  path(); g.setLineDash([r * 0.9, r * 1.5]); g.strokeStyle = sk[1]; g.lineWidth = r * 1.7; g.stroke(); g.setLineDash([]);
+  path(); g.strokeStyle = 'rgba(255,255,255,0.18)'; g.lineWidth = r * 0.5; g.stroke();
+  // head and eyes
+  const hx = pts[0][0], hy = pts[0][1], a = w.a;
+  g.fillStyle = sk[0]; g.beginPath(); g.arc(hx, hy, r * 1.05, 0, 7); g.fill();
+  for (const s of [-1, 1]) {
+    const ex = hx + Math.cos(a) * r * 0.35 + Math.cos(a + s * Math.PI / 2) * r * 0.48, ey = hy + Math.sin(a) * r * 0.35 + Math.sin(a + s * Math.PI / 2) * r * 0.48;
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(ex, ey, r * 0.36, 0, 7); g.fill();
+    g.fillStyle = '#111'; g.beginPath(); g.arc(ex + Math.cos(a) * r * 0.14, ey + Math.sin(a) * r * 0.14, r * 0.18, 0, 7); g.fill();
+  }
+  if (k) {
+    g.fillStyle = 'rgba(238,240,255,0.8)'; g.font = '600 ' + Math.max(11, 12 / cam.z) + 'px system-ui, sans-serif'; g.textAlign = 'center';
+    g.fillText(w.name, hx, hy - r - 10);
+  }
+}
+
+function render(now) {
+  const S = scene(now);
+  const dpr = cv.width / innerWidth;
+  if (S.me) {
+    const targetZ = Math.max(0.42, Math.min(1, 1.1 - (radiusOf(S.me.score) - 8) / 40)) * Math.min(1.2, Math.max(0.7, Math.min(innerWidth, innerHeight) / 760));
+    cam.x += (S.me.x - cam.x) * 0.2; cam.y += (S.me.y - cam.y) * 0.2; cam.z += (targetZ - cam.z) * 0.05;
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = '#0a0d1a'; g.fillRect(0, 0, cv.width, cv.height);
+  const z = cam.z * dpr;
+  g.setTransform(z, 0, 0, z, cv.width / 2 - cam.x * z, cv.height / 2 - cam.y * z);
+  const vw = innerWidth / cam.z / 2 + 60, vh = innerHeight / cam.z / 2 + 60;
+  // arena floor: a hexagon pattern inside the circle
+  g.save();
+  g.beginPath(); g.arc(0, 0, R, 0, 7); g.clip();
+  g.fillStyle = '#121833'; g.fillRect(cam.x - vw, cam.y - vh, vw * 2, vh * 2);
+  g.strokeStyle = 'rgba(120,140,220,0.07)'; g.lineWidth = 2;
+  const hs = 46, hx0 = Math.floor((cam.x - vw) / (hs * 1.5)) - 1, hx1 = Math.ceil((cam.x + vw) / (hs * 1.5)) + 1;
+  const hy0 = Math.floor((cam.y - vh) / (hs * 1.732)) - 1, hy1 = Math.ceil((cam.y + vh) / (hs * 1.732)) + 1;
+  g.beginPath();
+  for (let i = hx0; i <= hx1; i++) for (let j = hy0; j <= hy1; j++) {
+    const cx = i * hs * 1.5, cy = j * hs * 1.732 + (i & 1 ? hs * 0.866 : 0);
+    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; const x = cx + Math.cos(a) * hs, y = cy + Math.sin(a) * hs; k ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.closePath();
+  }
+  g.stroke();
+  g.restore();
+  g.strokeStyle = 'rgba(255,90,110,0.7)'; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, R, 0, 7); g.stroke();
+  // food, glowing
+  g.globalCompositeOperation = 'lighter';
+  const pulse = now / 400;
+  for (const f of S.food) {
+    if (Math.abs(f.x - cam.x) > vw || Math.abs(f.y - cam.y) > vh) continue;
+    const col = SKINS[f.c] ? SKINS[f.c][0] : '#fff', rr = 3 + Math.sqrt(f.v) * 2.2 + Math.sin(pulse + f.id) * 0.6;
+    g.fillStyle = col + '30'; g.beginPath(); g.arc(f.x, f.y, rr * 2.4, 0, 7); g.fill();
+    g.fillStyle = col; g.beginPath(); g.arc(f.x, f.y, rr, 0, 7); g.fill();
+  }
+  g.globalCompositeOperation = 'source-over';
+  // worms, smaller ones first so big ones lie on top
+  const worms = S.worms.slice().sort((a, b) => a.score - b.score);
+  for (const w of worms) {
+    if (Math.abs(w.x - cam.x) > vw + 400 || Math.abs(w.y - cam.y) > vh + 400) continue;
+    drawWorm(w, w !== S.me);
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  hud(S, now);
+}
+
+let hudT = 0;
+function hud(S, now) {
+  if (now - hudT > 250) {
+    hudT = now;
+    const ranked = S.worms.slice().sort((a, b) => b.score - a.score);
+    const meId = S.me ? S.me.id : null;
+    $('boardList').innerHTML = ranked.slice(0, 8).map(w => '<li' + (w.id === meId ? ' class="mine"' : '') + '>' + esc(w.name) + '<span>' + w.score + '</span></li>').join('');
+    $('me').innerHTML = S.me ? 'Length <b>' + S.me.score + '</b> &nbsp;Rank ' + (ranked.indexOf(S.me) + 1) + ' of ' + ranked.length : '';
+    $('feed').innerHTML = feed.filter(f => now - f.t < 5000).map(f => '<div>' + esc(f.text) + '</div>').join('');
+  }
+  const m = $('mini'), mg = m.getContext('2d'), s = m.width / (R * 2);
+  mg.clearRect(0, 0, m.width, m.height);
+  mg.fillStyle = 'rgba(16,20,37,0.75)'; mg.beginPath(); mg.arc(m.width / 2, m.height / 2, m.width / 2 - 2, 0, 7); mg.fill();
+  mg.strokeStyle = 'rgba(255,90,110,0.6)'; mg.lineWidth = 2; mg.stroke();
+  for (const w of S.worms) {
+    if (w !== S.me && w.score < 40) continue;
+    mg.fillStyle = w === S.me ? '#fff' : (SKINS[w.skin] || SKINS[0])[0];
+    mg.beginPath(); mg.arc(m.width / 2 + w.x * s, m.height / 2 + w.y * s, w === S.me ? 5 : 2 + Math.min(4, w.score / 120), 0, 7); mg.fill();
+  }
+}
+
+// ---- the loop
+
+let last = 0, acc = 0, lastSnap = 0;
+const DT = 1 / 60;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, (now - last) / 1000 || 0);
+  last = now;
+  if (!mode) return;
+  if (mode === 'guest' && !V.worms.size) return;
+  if (mode !== 'guest') {
+    readInput(dt, myWorm && myWorm.alive ? myWorm : null);
+    acc += dt;
+    let n = 0;
+    while (acc >= DT && n++ < 6) { acc -= DT; step(W, DT); }
+    if (acc > DT) acc = 0;
+    // death of my own worm, and kills for the feed
+    if (W.kills.length) for (const [v, k] of W.kills) onKill(v, k, id => W.worms.get(id));
+    fillBots(W);
+    if (mode === 'host' && room && now - lastSnap > 50) { lastSnap = now; room.send(snapshot(W)); }
+    else if (mode === 'solo') { W.fe = []; W.fa = []; W.kills = []; W.spawned = []; }
+    // tidy away long-dead worms
+    if (W.worms.size > 60) for (const [id, w] of W.worms) if (!w.alive && id < W.nextWorm - 50) W.worms.delete(id);
+  } else {
+    const me = V.worms.get(myWorm);
+    readInput(dt, me && me.alive ? { a: (me.snaps[me.snaps.length - 1] || { a: 0 }).a } : null);
+  }
+  render(now);
+}
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'worm-arena',
+  title: 'Worm Arena',
+  blurb: 'Eat to grow. Hold to boost. Make the other worms crash into you, and they turn into food.',
+  min: 2,
+  max: 8,
+  extra: [{ label: 'Play now', note: 'You and twelve bots. Best length: ' + best() + '.', onClick: startSolo }],
+  onStart: startHost,
+  onJoin: startGuest,
+});
+const lobbyStart = lobby.start;
+lobby.start = () => {
+  leaveRoom(); mode = null; W = null; V = null; myWorm = null; dead = null;
+  $('msg').hidden = true;
+  for (const id of ['me', 'board', 'menuRow', 'keys']) $(id).hidden = true;
+  $('back').hidden = false;
+  lobbyStart();
+};
+$('leaveBtn').onclick = () => lobby.start();
+$('inviteBtn').onclick = () => lobby.reopen();
+fit();
+requestAnimationFrame(frame);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Worm Arena</h2>
+<p>A Slither.io-style arena game. Steer a worm around a big round arena, eat the glowing food to grow, and make other worms run their heads into your body. When a worm crashes, it bursts into food for everyone else. Play alone against bots, or with up to 7 friends online over a link.</p>
+<h3>Play</h3>
+<ul><li>Steer with the mouse: your worm heads toward the pointer. The arrow keys or A and D turn too.</li><li>Hold the mouse button or Space to boost. Boosting doubles your speed but burns length, which drops behind you as food.</li><li>On a phone, touch where you want to go, and hold the Boost button.</li><li>Running your head into another worm's body, or into the red edge of the arena, ends your run. Your body turns into food.</li><li>Bigger worms are wider and turn a little slower. The camera zooms out as you grow.</li></ul>
+<p>"Play now" starts a game against twelve bots. To play friends, click "Play with friends" and send each friend their own invite; they send back a reply link. Press Start when everyone is in. "Invite friends" in the game makes more invites, and new players drop into the arena as they join. Bots fill the arena either way, and the leaderboard shows the eight longest worms. Your best length is saved in this browser.</p>
+<h3>How it works</h3>
+<ul><li>The host's browser runs the whole arena 60 times a second: movement, eating, crashes, food, and the bots. Each worm's body is a list of points laid exactly 5 units apart along the path its head took.</li><li>Crashes are checked with a grid of every body point, so each head only looks at the bodies near it.</li><li>Bots look ahead along their heading for bodies and the edge and turn toward whichever side is clearer, go for the best food nearby, and big bots sometimes try to cut in front of smaller worms.</li><li>Guests get the whole arena once when they join, then a small update 20 times a second: each worm's head position, heading, and length, plus the food eaten and added. A guest rebuilds every body from the trail of head positions, so long worms cost no more to send than short ones. Guests draw everything a tenth of a second behind, sliding between updates, so movement stays smooth.</li><li>It uses <a href="../linkplay/">LinkPlay</a> for the connection, with no game server.</li></ul>
+<p class="pg-more">More like this: <a href="../battle-tanks/">Battle Tanks</a>, <a href="../sketch-guess/">Sketch &amp; Guess</a>, <a href="../watch-party/">Watch Party</a>, <a href="../mafia/">Mafia</a>. Or see <a href="../#online">all online games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/worm-arena">worm-arena on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

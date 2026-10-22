@@ -31,7 +31,7 @@ function fogged(rgb, t, shade, alpha) {
 
 function isRaised(t) { return t === T_SIDEWALK || t === T_GRASS || t === T_BUILDING; }
 function groundZ(x, y) {
-  return isRaised(tileType(Math.floor(x / TILE), Math.floor(y / TILE))) ? CURB_H : 0;
+  return isRaised(tileType(Math.floor(x / TILE), Math.floor(y / TILE))) && onSlab(x, y) ? CURB_H : 0;
 }
 
 // projection
@@ -196,7 +196,7 @@ GROUND_RGB[T_BUILDING] = [26, 29, 40];
 function drawGround(time) {
   const R = Math.ceil(FAR / TILE);
   const ctx0 = Math.floor(SCam.x / TILE), cty0 = Math.floor(SCam.y / TILE);
-  const raised = [];
+  const marks = [];
 
   for (let ty = cty0 - R; ty <= cty0 + R; ty++) {
     for (let tx = ctx0 - R; tx <= ctx0 + R; tx++) {
@@ -208,12 +208,11 @@ function drawGround(time) {
       if (Math.abs(s) > (f + TILE * 2) * 1.1) continue;
 
       const t = tileType(tx, ty);
-      const rgb = GROUND_RGB[t];
-      // per-tile shade noise
-      let shade = 0.93 + hash2(tx * 3 + 11, ty * 7 + 5) * 0.14;
+      // blocks are drawn as whole slabs below; under them is road
+      const rgb = t === T_WATER || t === T_SAND ? GROUND_RGB[t] : GROUND_RGB[T_ROAD];
+      let shade = 0.94 + hash2(tx * 3 + 11, ty * 7 + 5) * 0.1;
       if (t === T_WATER) {
         shade = 1 + 0.14 * Math.sin(time * 1.5 + tx * 0.35 + ty * 0.7);
-        // sun glint on the water
         const az = Math.atan2(dy, dx);
         const glint = Math.cos(az - SUN_A);
         if (glint > 0.86) shade += (glint - 0.86) * 5 * (0.5 + 0.5 * Math.sin(time * 3 + tx * 1.3 + ty * 2.1));
@@ -221,45 +220,77 @@ function drawGround(time) {
       const fog = Math.min(1, Math.max(0, f / FAR));
       const x0 = tx * TILE - 0.6, y0 = ty * TILE - 0.6, x1 = x0 + TILE + 1.2, y1 = y0 + TILE + 1.2;
       fillPoly3D([[x0, y0, 0], [x1, y0, 0], [x1, y1, 0], [x0, y1, 0]], fogged(rgb, fog, shade));
-
-      if (isRaised(t) && f < 1000) raised.push({ tx, ty, t, f, fog, shade });
-
-      // lane dashes on the nearer roads
-      if (t === T_ROAD && f < FAR * 0.55) {
-        const mx = ((tx % PERIOD) + PERIOD) % PERIOD, my = ((ty % PERIOD) + PERIOD) % PERIOD;
-        const dashStyle = fogged([232, 195, 90], fog, 1, 0.8);
-        if (mx === 1 && my >= 2) {
-          const lx = tx * TILE;
-          fillPoly3D([[lx - 1.2, y0 + 3, 0], [lx + 1.2, y0 + 3, 0], [lx + 1.2, y0 + 13, 0], [lx - 1.2, y0 + 13, 0]], dashStyle);
-          fillPoly3D([[lx - 1.2, y0 + 27, 0], [lx + 1.2, y0 + 27, 0], [lx + 1.2, y0 + 37, 0], [lx - 1.2, y0 + 37, 0]], dashStyle);
-        } else if (my === 1 && mx >= 2) {
-          const ly = ty * TILE;
-          fillPoly3D([[x0 + 3, ly - 1.2, 0], [x0 + 13, ly - 1.2, 0], [x0 + 13, ly + 1.2, 0], [x0 + 3, ly + 1.2, 0]], dashStyle);
-          fillPoly3D([[x0 + 27, ly - 1.2, 0], [x0 + 37, ly - 1.2, 0], [x0 + 37, ly + 1.2, 0], [x0 + 27, ly + 1.2, 0]], dashStyle);
-        }
-      }
+      if (t === T_ROAD && f < FAR * 0.6) marks.push([tx, ty, fog]);
     }
   }
+  for (const [tx, ty, fog] of marks) drawRoadMarks(tx, ty, fog);
+  drawSlabs(time);
+}
 
-  // raised slabs: tops first (they only ever overlap farther, lower ground),
-  // then curb faces along road/beach edges
-  for (const r of raised) {
-    const x0 = r.tx * TILE - 0.6, y0 = r.ty * TILE - 0.6, x1 = x0 + TILE + 1.2, y1 = y0 + TILE + 1.2;
-    fillPoly3D([[x0, y0, CURB_H], [x1, y0, CURB_H], [x1, y1, CURB_H], [x0, y1, CURB_H]],
-      fogged(GROUND_RGB[r.t], r.fog, r.shade));
+// double yellow center lines, zebra crossings, and stop lines
+function drawRoadMarks(tx, ty, fog) {
+  const mx = ((tx % PERIOD) + PERIOD) % PERIOD, my = ((ty % PERIOD) + PERIOD) % PERIOD;
+  if (mx < 2 && my < 2) return;
+  const px = tx * TILE, py = ty * TILE;
+  const rect = (x0, y0, x1, y1, style) => fillPoly3D([[x0, y0, 0.05], [x1, y0, 0.05], [x1, y1, 0.05], [x0, y1, 0.05]], style);
+  const yellow = fogged([240, 198, 80], fog, 1, 0.85), white = fogged([236, 238, 242], fog, 1, 0.8);
+  if (mx === 1 && my >= 2) { rect(px - 2.6, py, px - 0.8, py + TILE, yellow); rect(px + 0.8, py, px + 2.6, py + TILE, yellow); }
+  else if (my === 1 && mx >= 2) { rect(px, py - 2.6, px + TILE, py - 0.8, yellow); rect(px, py + 0.8, px + TILE, py + 2.6, yellow); }
+  if (fog > 0.4) return;
+  if (mx < 2 && (my === 2 || my === 7)) {
+    const y0 = my === 2 ? py + 3 : py + TILE - 17;
+    for (let i = 0; i < 4; i++) rect(px + 3 + i * 11.5, y0, px + 9 + i * 11.5, y0 + 14, white);
+    if ((my === 2 && mx === 1) || (my === 7 && mx === 0)) { const yy = my === 2 ? py + 20 : py + TILE - 22; rect(px + 2, yy, px + TILE - 2, yy + 2.4, white); }
+  } else if (my < 2 && (mx === 2 || mx === 7)) {
+    const x0 = mx === 2 ? px + 3 : px + TILE - 17;
+    for (let i = 0; i < 4; i++) rect(x0, py + 3 + i * 11.5, x0 + 14, py + 9 + i * 11.5, white);
+    if ((mx === 2 && my === 0) || (mx === 7 && my === 1)) { const xx = mx === 2 ? px + 20 : px + TILE - 22; rect(xx, py + 2, xx + 2.4, py + TILE - 2, white); }
   }
-  for (const r of raised) {
-    if (r.f > 750) continue;
-    const x0 = r.tx * TILE, y0 = r.ty * TILE, x1 = x0 + TILE, y1 = y0 + TILE;
-    const curb = fogged([96, 104, 126], r.fog, 1);
-    if (!isRaised(tileType(r.tx, r.ty - 1)) && SCam.y < y0)
-      fillPoly3D([[x0, y0, 0], [x1, y0, 0], [x1, y0, CURB_H], [x0, y0, CURB_H]], curb);
-    if (!isRaised(tileType(r.tx, r.ty + 1)) && SCam.y > y1)
-      fillPoly3D([[x1, y1, 0], [x0, y1, 0], [x0, y1, CURB_H], [x1, y1, CURB_H]], curb);
-    if (!isRaised(tileType(r.tx - 1, r.ty)) && SCam.x < x0)
-      fillPoly3D([[x0, y1, 0], [x0, y0, 0], [x0, y0, CURB_H], [x0, y1, CURB_H]], curb);
-    if (!isRaised(tileType(r.tx + 1, r.ty)) && SCam.x > x1)
-      fillPoly3D([[x1, y0, 0], [x1, y1, 0], [x1, y1, CURB_H], [x1, y0, CURB_H]], curb);
+}
+
+// Each block's sidewalk is one raised slab with rounded corners, a lighter curb,
+// and paving joints up close. Parks get a rounded lawn.
+function drawSlabs(time) {
+  const BP = PERIOD * TILE, R = Math.ceil(FAR / BP) + 1;
+  const cbx = Math.floor(SCam.x / BP), cby = Math.floor(SCam.y / BP);
+  const list = [];
+  for (let by = cby - R; by <= cby + R; by++) for (let bx = cbx - R; bx <= cbx + R; bx++) {
+    const t = tileType(bx * PERIOD + 3, by * PERIOD + 3);
+    if (t !== T_BUILDING && t !== T_GRASS) continue;
+    const wx = (bx * PERIOD + 5) * TILE, wy = (by * PERIOD + 5) * TILE;
+    const dx = wx - SCam.x, dy = wy - SCam.y;
+    const f = dx * cosYaw + dy * sinYaw;
+    if (f < -BP || f > FAR + BP / 2) continue;
+    if (Math.abs(-dx * sinYaw + dy * cosYaw) > (f + BP * 1.5) * 1.1) continue;
+    list.push({ bx, by, t, f, fog: Math.min(1, Math.max(0, f / FAR)) });
+  }
+  list.sort((a, b) => b.f - a.f);
+  for (const { bx, by, t, f, fog } of list) {
+    const [x0, y0, x1, y1, round] = slabRect(bx, by);
+    const shape = round ? 'round' : 'box';
+    const outer = footprint(x0, y0, x1, y1, shape, SLAB_R);
+    fillPoly3D(outer.map(p => [p[0], p[1], CURB_H]), fogged([110, 118, 140], fog, 1));
+    fillPoly3D(footprint(x0 + 3, y0 + 3, x1 - 3, y1 - 3, shape, SLAB_R - 3).map(p => [p[0], p[1], CURB_H]), fogged(GROUND_RGB[T_SIDEWALK], fog, 1));
+    // curb faces toward the camera
+    const curb = fogged([92, 99, 120], fog, 1);
+    for (let i = 0; i < outer.length; i++) {
+      const A = outer[i], B = outer[(i + 1) % outer.length];
+      const nx = B[1] - A[1], ny = -(B[0] - A[0]);
+      if (nx * (SCam.x - A[0]) + ny * (SCam.y - A[1]) <= 0) continue;
+      fillPoly3D([[A[0], A[1], 0], [B[0], B[1], 0], [B[0], B[1], CURB_H], [A[0], A[1], CURB_H]], curb);
+    }
+    if (f < 520) {
+      const joint = fogged([0, 0, 0], fog, 1, 0.14);
+      for (let v = x0 + 24; v < x1 - 12; v += 24) { line3D([v, y0 + 3, CURB_H + 0.05], [v, y0 + TILE, CURB_H + 0.05], joint, 1); line3D([v, y1 - TILE, CURB_H + 0.05], [v, y1 - 3, CURB_H + 0.05], joint, 1); }
+      for (let v = y0 + 24; v < y1 - 12; v += 24) { line3D([x0 + 3, v, CURB_H + 0.05], [x0 + TILE, v, CURB_H + 0.05], joint, 1); line3D([x1 - TILE, v, CURB_H + 0.05], [x1 - 3, v, CURB_H + 0.05], joint, 1); }
+    }
+    if (t === T_GRASS) {
+      const gx = (bx * PERIOD + 3) * TILE, gy = (by * PERIOD + 3) * TILE, S = 4 * TILE;
+      fillPoly3D(footprint(gx - 4, gy - 4, gx + S + 4, gy + S + 4, 'round', 14).map(p => [p[0], p[1], CURB_H + 0.1]), fogged(GROUND_RGB[T_GRASS], fog, 1));
+      const pathC = fogged([150, 132, 96], fog, 1, 0.45);
+      fillPoly3D([[gx + S / 2 - 3, gy, CURB_H + 0.15], [gx + S / 2 + 3, gy, CURB_H + 0.15], [gx + S / 2 + 3, gy + S, CURB_H + 0.15], [gx + S / 2 - 3, gy + S, CURB_H + 0.15]], pathC);
+      fillPoly3D([[gx, gy + S / 2 - 3, CURB_H + 0.15], [gx + S, gy + S / 2 - 3, CURB_H + 0.15], [gx + S, gy + S / 2 + 3, CURB_H + 0.15], [gx, gy + S / 2 + 3, CURB_H + 0.15]], pathC);
+    }
   }
 }
 
@@ -269,84 +300,78 @@ function faceQuad(A, B, z0, z1) {
   return [[A[0], A[1], z0], [B[0], B[1], z0], [B[0], B[1], z1], [A[0], A[1], z1]];
 }
 
-function drawBoxFaces(x0, y0, x1, y1, z0, hgt, base, fog, neon, winSeed) {
-  const faces = [
-    [[x0, y0], [x1, y0], 0.72, SCam.y < y0, 0],   // north
-    [[x1, y1], [x0, y1], 0.95, SCam.y > y1, 1],   // south
-    [[x0, y1], [x0, y0], 0.62, SCam.x < x0, 2],   // west
-    [[x1, y0], [x1, y1], 0.85, SCam.x > x1, 3]    // east
-  ];
-  for (const [A, B, shade, vis, fid] of faces) {
-    if (!vis) continue;
+// Walls of a building over a footprint (points clockwise on screen), from z0 up to hgt.
+function drawPrism(foot, z0, hgt, base, fog, neon, winSeed, deco, ground) {
+  for (let i = 0; i < foot.length; i++) {
+    const A = foot[i], B = foot[(i + 1) % foot.length];
+    const ex = B[0] - A[0], ey = B[1] - A[1], len = Math.hypot(ex, ey);
+    const nx = ey / len, ny = -ex / len;               // outward
+    if (nx * (SCam.x - A[0]) + ny * (SCam.y - A[1]) <= 0) continue;
+    // lit from the sun side, darker away from it
+    const shade = 0.62 + 0.3 * Math.max(0, nx * Math.cos(SUN_A) + ny * Math.sin(SUN_A)) + 0.08 * Math.max(0, -ny);
     fillPoly3D(faceQuad(A, B, z0, hgt), fogged(base, fog, shade));
-
-    const floors = Math.max(2, Math.min(8, ((hgt - z0) / 26) | 0));
+    const floors = Math.max(2, Math.min(9, ((hgt - z0) / 24) | 0));
     const fh = (hgt - z0) / floors;
-    if (fog < 0.3) {
-      // full window grid, lit and dark, per-face deterministic
-      const cols = 5;
-      for (let fl = 0; fl < floors; fl++) {
-        const z = z0 + fl * fh + fh * 0.22;
+    const fid = i;
+    if (len > 60 && fog < 0.32) {
+      const cols = Math.max(2, Math.round(len / 36));
+      for (let fl = ground ? 1 : 0; fl < floors; fl++) {
+        const z = z0 + fl * fh + fh * 0.24;
         for (let cI = 0; cI < cols; cI++) {
-          const u0 = 0.08 + cI * (0.84 / cols), u1 = u0 + (0.84 / cols) * 0.62;
+          const u0 = 0.06 + cI * (0.88 / cols), u1 = u0 + (0.88 / cols) * (deco ? 0.8 : 0.62);
           const lit = hash2(winSeed + fid * 977 + cI * 131, fl * 53 + winSeed) < 0.34;
-          const ax = A[0] + (B[0] - A[0]) * u0, ay = A[1] + (B[1] - A[1]) * u0;
-          const bx2 = A[0] + (B[0] - A[0]) * u1, by2 = A[1] + (B[1] - A[1]) * u1;
-          fillPoly3D(faceQuad([ax, ay], [bx2, by2], z, z + fh * 0.5),
-            lit
-              ? fogged(hash2(winSeed + cI, fl + fid) < 0.65 ? [255, 221, 148] : [140, 228, 255], fog, 1, 0.9)
-              : fogged([12, 14, 24], fog, 1, 0.75));
+          fillPoly3D(faceQuad([A[0] + ex * u0, A[1] + ey * u0], [A[0] + ex * u1, A[1] + ey * u1], z, z + fh * (deco ? 0.42 : 0.5)),
+            lit ? fogged(hash2(winSeed + cI, fl + fid) < 0.65 ? [255, 221, 148] : [140, 228, 255], fog, 1, 0.9) : fogged([12, 14, 24], fog, 1, 0.75));
         }
       }
     } else if (fog < 0.55) {
-      // mid distance: floor bands instead of windows
       const band = fogged([0, 0, 0], fog, 1, 0.2);
-      for (let fl = 1; fl < floors; fl++) {
-        const z = z0 + fl * fh;
-        fillPoly3D(faceQuad(A, B, z, z + 2.5), band);
-      }
+      for (let fl = 1; fl < floors; fl++) fillPoly3D(faceQuad(A, B, z0 + fl * fh, z0 + fl * fh + 2.5), band);
     }
-
-    // vertical neon sign near street level on some facades
-    if (fog < 0.42 && hash2(winSeed + fid * 311, winSeed * 2 + 9) < 0.4) {
+    // art deco: a pale ledge over every floor, wrapping the rounded corners too
+    if (deco && fog < 0.6) {
+      const ledge = fogged([236, 226, 210], fog, shade, 0.55);
+      for (let fl = 1; fl < floors; fl++) fillPoly3D(faceQuad(A, B, z0 + fl * fh - 1.6, z0 + fl * fh + 0.6), ledge);
+    }
+    // the ground floor: a lit shopfront under an awning
+    if (ground && len > 60 && fog < 0.45) {
+      const glow = hash2(winSeed + fid * 7, 13) < 0.7;
+      fillPoly3D(faceQuad([A[0] + ex * 0.08, A[1] + ey * 0.08], [A[0] + ex * 0.92, A[1] + ey * 0.92], z0 + 2, z0 + fh * 0.78),
+        glow ? fogged([255, 206, 150], fog, 1, 0.55) : fogged([30, 34, 48], fog, 1, 0.9));
+      fillPoly3D([[A[0] + ex * 0.06, A[1] + ey * 0.06, z0 + fh * 0.86], [A[0] + ex * 0.94, A[1] + ey * 0.94, z0 + fh * 0.86],
+        [A[0] + ex * 0.94 + nx * 7, A[1] + ey * 0.94 + ny * 7, z0 + fh * 0.72], [A[0] + ex * 0.06 + nx * 7, A[1] + ey * 0.06 + ny * 7, z0 + fh * 0.72]], fogged(hexRGB(neon), fog, 0.7, 0.9));
+    }
+    if (len > 60 && fog < 0.42 && hash2(winSeed + fid * 311, winSeed * 2 + 9) < 0.4) {
       const u = 0.12 + hash2(winSeed + fid, 77) * 0.7;
-      const sx0 = A[0] + (B[0] - A[0]) * u, sy0 = A[1] + (B[1] - A[1]) * u;
-      const sx1 = A[0] + (B[0] - A[0]) * (u + 0.07), sy1 = A[1] + (B[1] - A[1]) * (u + 0.07);
-      const zTop = Math.min(hgt - 8, z0 + 64);
-      fillPoly3D(faceQuad([sx0, sy0], [sx1, sy1], z0 + 8, zTop), fogged(hexRGB(neon), fog, 1, 0.25));
-      const ix0 = A[0] + (B[0] - A[0]) * (u + 0.018), iy0 = A[1] + (B[1] - A[1]) * (u + 0.018);
-      const ix1 = A[0] + (B[0] - A[0]) * (u + 0.052), iy1 = A[1] + (B[1] - A[1]) * (u + 0.052);
-      fillPoly3D(faceQuad([ix0, iy0], [ix1, iy1], z0 + 11, zTop - 3), fogged(hexRGB(neon), fog, 1, 0.9));
+      const zTop = Math.min(hgt - 8, z0 + 70), zBot = z0 + (ground ? fh + 4 : 8);
+      fillPoly3D(faceQuad([A[0] + ex * u, A[1] + ey * u], [A[0] + ex * (u + 0.07), A[1] + ey * (u + 0.07)], zBot, zTop), fogged(hexRGB(neon), fog, 1, 0.25));
+      fillPoly3D(faceQuad([A[0] + ex * (u + 0.018), A[1] + ey * (u + 0.018)], [A[0] + ex * (u + 0.052), A[1] + ey * (u + 0.052)], zBot + 3, zTop - 3), fogged(hexRGB(neon), fog, 1, 0.9));
     }
-
-    // neon trim along the roofline
     ctx.globalAlpha = (1 - fog) * 0.9;
     line3D([A[0], A[1], hgt], [B[0], B[1], hgt], neon, 6);
     ctx.globalAlpha = (1 - fog);
     line3D([A[0], A[1], hgt], [B[0], B[1], hgt], '#ffffff', 1.5);
     ctx.globalAlpha = 1;
   }
-  if (EYE > hgt) {
-    fillPoly3D([[x0, y0, hgt], [x1, y0, hgt], [x1, y1, hgt], [x0, y1, hgt]], fogged(base, fog, 0.5));
-  }
+  if (EYE > hgt) fillPoly3D(foot.map(p => [p[0], p[1], hgt]), fogged(base, fog, 0.5));
 }
 
 function drawBlock(bx, by, fog) {
   const x0 = (bx * PERIOD + 3) * TILE, y0 = (by * PERIOD + 3) * TILE;
   const S = 4 * TILE, x1 = x0 + S, y1 = y0 + S;
   const base = hexRGB(BLOCK_BASE[(hash2(bx, by) * BLOCK_BASE.length) | 0]);
-  const hv = hash2(bx * 5 + 1, by * 3 + 7);
-  const neon = NEON[(hv * NEON.length) | 0];
+  const neon = NEON[(hash2(bx * 5 + 1, by * 3 + 7) * NEON.length) | 0];
   const hgt = 90 + hash2(bx * 9 + 2, by * 7 + 5) * 180;
   const winSeed = ((bx * 73856093) ^ (by * 19349663)) >>> 0;
+  const { shape, r } = blockShape(bx, by);
+  const deco = shape === 'round';
+  drawPrism(footprint(x0, y0, x1, y1, shape, r), CURB_H, hgt, base, fog, neon, winSeed % 10007, deco, true);
 
-  drawBoxFaces(x0, y0, x1, y1, CURB_H, hgt, base, fog, neon, winSeed % 10007);
-
-  // setback tower on some blocks
+  // a setback tower on some blocks, in the same style
   if (hash2(bx * 17 + 3, by * 13 + 1) < 0.35) {
     const inset = S * 0.22;
-    drawBoxFaces(x0 + inset, y0 + inset, x1 - inset, y1 - inset,
-      hgt, hgt + 50 + hash2(bx * 23, by * 29) * 90, base, fog, neon, winSeed % 7001);
+    drawPrism(footprint(x0 + inset, y0 + inset, x1 - inset, y1 - inset, shape, Math.max(0, r - inset * 0.5)),
+      hgt, hgt + 50 + hash2(bx * 23, by * 29) * 90, base, fog, neon, winSeed % 7001, deco, false);
   }
 }
 
@@ -482,73 +507,132 @@ function collectPalms(list) {
 
 // cars
 
+// light comes from the sun side and above
+const CAR_LIGHT = (() => { const v = [0.55, -0.3, 0.78], n = Math.hypot(v[0], v[1], v[2]); return v.map(x => x / n); })();
+
+// Newell's method: the normal of a (possibly slightly bent) polygon
+function polyNormal(P) {
+  let nx = 0, ny = 0, nz = 0;
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length];
+    nx += (a[1] - b[1]) * (a[2] + b[2]);
+    ny += (a[2] - b[2]) * (a[0] + b[0]);
+    nz += (a[0] - b[0]) * (a[1] + b[1]);
+  }
+  const n = Math.hypot(nx, ny, nz) || 1;
+  return [nx / n, ny / n, nz / n];
+}
+
 function drawCar3D(c, time, fog) {
-  const fxv = Math.cos(c.angle), fyv = Math.sin(c.angle);
-  const pxv = -fyv, pyv = fxv;
-  const pt = (lo, la) => [c.x + fxv * lo + pxv * la, c.y + fyv * lo + pyv * la];
-  const L = c.len / 2, Wd = c.wid / 2;
-  const bodyRGB = c.wrecked ? [74, 74, 79] : hexRGB(c.color);
+  const { m, faces, bodyCount } = modelFaces(c.model);
+  const fxv = Math.cos(c.angle), fyv = Math.sin(c.angle), pxv = -fyv, pyv = fxv;
   const gz = groundZ(c.x, c.y);
-  const BODY_Z = gz + 3.5, BODY_H = gz + 12, CAB_H = gz + 19;
+  const at = (lo, la, z) => [c.x + fxv * lo + pxv * la, c.y + fyv * lo + pyv * la, gz + z];
+  const L = m.len / 2, Wd = m.wid / 2;
+  const paint = c.wrecked ? [70, 70, 76] : hexRGB(c.color);
+  const camP = [SCam.x, SCam.y, EYE];
+  const mid = [c.x, c.y, gz + 9];
 
-  fillPoly3D([
-    [...pt(-L - 2, -Wd - 2), gz + 0.4], [...pt(L + 2, -Wd - 2), gz + 0.4],
-    [...pt(L + 2, Wd + 2), gz + 0.4], [...pt(-L - 2, Wd + 2), gz + 0.4]
-  ], 'rgba(0,0,0,0.35)');
+  // soft shadow, a rounded box a little bigger than the car
+  const sh = [];
+  for (let i = 0; i < 16; i++) {
+    const a = i / 16 * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+    const k = Math.pow(Math.abs(ca), 0.25) * Math.sign(ca), j = Math.pow(Math.abs(sa), 0.25) * Math.sign(sa);
+    sh.push(at(k * (L + 2), j * (Wd + 2), 0.4));
+  }
+  fillPoly3D(sh, 'rgba(0,0,0,0.38)');
 
-  // depth-sort the car faces
-  const faces = [];
-  const addFace = (A, B, z0, z1, style) => {
-    const mx = (A[0] + B[0]) / 2 - SCam.x, my = (A[1] + B[1]) / 2 - SCam.y;
-    faces.push({ d: mx * cosYaw + my * sinYaw, q: faceQuad(A, B, z0, z1), style });
+  const toward = (P, n) => {
+    let gx = 0, gy = 0, gzz = 0;
+    for (const p of P) { gx += p[0]; gy += p[1]; gzz += p[2]; }
+    gx /= P.length; gy /= P.length; gzz /= P.length;
+    if (n[0] * (gx - mid[0]) + n[1] * (gy - mid[1]) + n[2] * (gzz - mid[2]) < 0) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
+    const vis = n[0] * (camP[0] - gx) + n[1] * (camP[1] - gy) + n[2] * (camP[2] - gzz) > 0;
+    return { vis, d: (gx - SCam.x) * cosYaw + (gy - SCam.y) * sinYaw };
   };
-  const addTop = (corners, z, style) => {
-    faces.push({ d: camSpace(c.x, c.y, z).f, q: corners.map(q => [q[0], q[1], z]), style });
+  const styleFor = (role, n) => {
+    const lit = Math.max(0, n[0] * CAR_LIGHT[0] + n[1] * CAR_LIGHT[1] + n[2] * CAR_LIGHT[2]);
+    if (role === 'paint') return fogged(paint, fog, 0.5 + 0.62 * lit + (n[2] > 0.8 ? 0.08 : 0));
+    if (role === 'roof') return c.model === 'police' && !c.wrecked ? fogged([235, 238, 244], fog, 0.6 + 0.45 * lit) : fogged(paint, fog, 0.48 + 0.6 * lit);
+    if (role === 'bed') return fogged([26, 28, 34], fog, 1);
+    // glass: dark, with the sky reflected in surfaces that face up
+    return n[2] > 0.35 ? fogged([38, 56, 90], fog, 0.75 + 0.45 * lit) : fogged([16, 22, 36], fog, 0.9 + 0.4 * lit);
+  };
+  const draw = list => {
+    const out = [];
+    for (const f of list) {
+      const P = f.pts.map(p => at(p[0], p[1], p[2]));
+      const n = polyNormal(P);
+      const t = toward(P, n);
+      if (t.vis) out.push({ P, style: styleFor(f.role, n), d: t.d });
+    }
+    out.sort((a, b) => b.d - a.d);
+    for (const o of out) fillPoly3D(o.P, o.style);
   };
 
-  const wheel = fogged([16, 17, 22], fog);
-  for (const side of [-1, 1]) {
-    for (const lo of [-L * 0.55, L * 0.55]) {
-      addFace(pt(lo - 4.5, side * (Wd + 0.6)), pt(lo + 4.5, side * (Wd + 0.6)), gz, gz + 7, wheel);
+  draw(faces.slice(0, bodyCount));
+
+  // police livery: a dark band along each visible side, under the windows
+  if (m.livery && !c.wrecked) {
+    for (const s of [-1, 1]) {
+      if ((pxv * s) * (camP[0] - c.x) + (pyv * s) * (camP[1] - c.y) <= 0) continue;
+      const zb = beltAt(m, 0) - 4.4, zt = beltAt(m, 0) - 1.2;
+      fillPoly3D([at(-L * 0.78, s * (Wd + 0.15), zb), at(L * 0.6, s * (Wd + 0.15), zb), at(L * 0.6, s * (Wd + 0.15), zt), at(-L * 0.78, s * (Wd + 0.15), zt)], fogged([24, 40, 92], fog, 1));
     }
   }
-
-  addFace(pt(-L, -Wd), pt(L, -Wd), BODY_Z, BODY_H, fogged(bodyRGB, fog, 0.72));
-  addFace(pt(L, Wd), pt(-L, Wd), BODY_Z, BODY_H, fogged(bodyRGB, fog, 0.72));
-  addFace(pt(L, -Wd), pt(L, Wd), BODY_Z, BODY_H, fogged(bodyRGB, fog, 0.88));
-  addFace(pt(-L, Wd), pt(-L, -Wd), BODY_Z, BODY_H, fogged(bodyRGB, fog, 0.6));
-  addTop([pt(-L, -Wd), pt(L, -Wd), pt(L, Wd), pt(-L, Wd)], BODY_H, fogged(bodyRGB, fog, 1));
-  addTop([pt(L * 0.5, -Wd * 0.65), pt(L * 0.92, -Wd * 0.65), pt(L * 0.92, Wd * 0.65), pt(L * 0.5, Wd * 0.65)],
-    BODY_H + 0.1, fogged(bodyRGB, fog, 1.25, 0.6));
-
-  // cabin: bright windshield, darker side/back glass
-  const cl0 = -L * 0.62, cl1 = L * 0.45, cw = Wd * 0.8;
-  const glass = fogged([14, 24, 42], fog, 1, 0.95);
-  const shield = fogged([80, 130, 180], fog, 1, 0.95);
-  addFace(pt(cl0, -cw), pt(cl1, -cw), BODY_H, CAB_H, glass);
-  addFace(pt(cl1, cw), pt(cl0, cw), BODY_H, CAB_H, glass);
-  addFace(pt(cl1, -cw), pt(cl1, cw), BODY_H, CAB_H, shield);
-  addFace(pt(cl0, cw), pt(cl0, -cw), BODY_H, CAB_H, glass);
-  addTop([pt(cl0, -cw), pt(cl1, -cw), pt(cl1, cw), pt(cl0, cw)], CAB_H,
-    c.kind === 'police' && !c.wrecked ? fogged([233, 237, 242], fog, 0.9) : fogged(bodyRGB, fog, 0.92));
-
-  if (c.kind === 'police' && !c.wrecked) {
-    const ph = Math.floor(time * 6) % 2 === 0;
-    addTop([pt(-4, -cw * 0.7), pt(0, -cw * 0.7), pt(0, cw * 0.7), pt(-4, cw * 0.7)], CAB_H + 3, ph ? '#ff4356' : '#3b6cff');
-    addTop([pt(0, -cw * 0.7), pt(4, -cw * 0.7), pt(4, cw * 0.7), pt(0, cw * 0.7)], CAB_H + 3, ph ? '#3b6cff' : '#ff4356');
-  }
-  if (!c.wrecked) {
-    for (const sgn of [-1, 1]) {
-      addFace(pt(L + 0.3, sgn * Wd * 0.75 - 2), pt(L + 0.3, sgn * Wd * 0.75 + 2), gz + 5, gz + 10, fogged([255, 233, 168], fog * 0.4, 1));
+  // racing stripes over the hood and trunk
+  if (m.stripe && !c.wrecked) {
+    for (const off of [-2.2, 1.0]) {
+      for (const [a0, a1] of [[-0.9, -0.6], [0.48, 0.92]]) {
+        const pts = [];
+        for (const [a, la] of [[a0, off], [a1, off], [a1, off + 1.4], [a0, off + 1.4]]) pts.push(at(a * L, la, beltAt(m, a) + 0.08));
+        fillPoly3D(pts, fogged([250, 250, 250], fog, 0.95, 0.85));
+      }
     }
   }
-  for (const sgn of [-1, 1]) {
-    addFace(pt(-L - 0.3, sgn * Wd * 0.75 + 2), pt(-L - 0.3, sgn * Wd * 0.75 - 2), gz + 5, gz + 10,
-      c.braking ? '#ff2038' : fogged([122, 20, 32], fog, 1));
+  // wheels on the side facing the camera: a tire and a lighter rim
+  for (const s of [-1, 1]) {
+    if ((pxv * s) * (camP[0] - c.x) + (pyv * s) * (camP[1] - c.y) <= 0) continue;
+    for (const lo of [-L * m.track * 1.25, L * m.track * 1.25]) {
+      const r = m.wheel, la = s * (Wd * 0.99);
+      const ring = k => { const out = []; for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; out.push(at(lo + Math.cos(a) * r * k, la, r + Math.sin(a) * r * k)); } return out; };
+      fillPoly3D(ring(1), fogged([14, 15, 19], fog));
+      fillPoly3D(ring(0.58), fogged(c.wrecked ? [60, 60, 64] : [150, 156, 168], fog));
+      fillPoly3D(ring(0.18), fogged([40, 42, 48], fog));
+    }
+  }
+  // lights: headlights on the nose, a full-width bar at the back
+  const front = m.body[m.body.length - 1], rear = m.body[0];
+  const fwdVis = fxv * (camP[0] - c.x) + fyv * (camP[1] - c.y) > 0;
+  if (fwdVis && !c.wrecked) {
+    const zA = front[2] + (front[3] - front[2]) * 0.45, zB = front[3] - 0.3;
+    for (const s of [-1, 1]) {
+      fillPoly3D([at(L + 0.3, s * Wd * front[1] * 0.92, zA), at(L + 0.3, s * Wd * front[1] * 0.45, zA), at(L + 0.3, s * Wd * front[1] * 0.45, zB), at(L + 0.3, s * Wd * front[1] * 0.92, zB)],
+        fogged([255, 244, 214], fog * 0.4, 1));
+    }
+  }
+  if (!fwdVis) {
+    const zA = rear[3] - 2.4, zB = rear[3] - 0.9, w = Wd * rear[1] * 0.92;
+    fillPoly3D([at(-L - 0.3, -w, zA), at(-L - 0.3, w, zA), at(-L - 0.3, w, zB), at(-L - 0.3, -w, zB)], c.braking ? '#ff2038' : fogged([150, 18, 34], fog, 1));
+  }
+  // rear wing
+  if (m.spoiler && !c.wrecked) {
+    const z = rear[3] + 2.6;
+    for (const s of [-0.55, 0.55]) fillPoly3D([at(-L * 0.9, s * Wd, rear[3]), at(-L * 0.86, s * Wd, rear[3]), at(-L * 0.86, s * Wd, z), at(-L * 0.9, s * Wd, z)], fogged([20, 22, 28], fog));
+    fillPoly3D([at(-L * 0.98, -Wd * 0.92, z), at(-L * 0.84, -Wd * 0.92, z + 0.4), at(-L * 0.84, Wd * 0.92, z + 0.4), at(-L * 0.98, Wd * 0.92, z)], fogged([20, 22, 28], fog, 1.2));
   }
 
-  faces.sort((a, b) => b.d - a.d);
-  for (const fc of faces) fillPoly3D(fc.q, fc.style);
+  draw(faces.slice(bodyCount));
+
+  const roofZ = Math.max(...m.cabin.map(q => q[2]));
+  if (m.rails && !c.wrecked) {
+    for (const s of [-1, 1]) fillPoly3D([at(-L * 0.8, s * Wd * 0.72, roofZ + 1.2), at(L * 0.22, s * Wd * 0.72, roofZ + 1.2), at(L * 0.22, s * Wd * 0.62, roofZ + 1.2), at(-L * 0.8, s * Wd * 0.62, roofZ + 1.2)], fogged([22, 24, 30], fog));
+  }
+  if (m.lightbar && !c.wrecked) {
+    const ph = Math.floor(time * 6) % 2 === 0, z = roofZ + 2;
+    fillPoly3D([at(-3, -Wd * 0.62, z), at(3, -Wd * 0.62, z), at(3, 0, z), at(-3, 0, z)], ph ? '#ff4356' : '#3b6cff');
+    fillPoly3D([at(-3, 0, z), at(3, 0, z), at(3, Wd * 0.62, z), at(-3, Wd * 0.62, z)], ph ? '#3b6cff' : '#ff4356');
+  }
 }
 
 function collectCars(list, time) {

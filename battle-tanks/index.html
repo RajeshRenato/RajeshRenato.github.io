@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23000'/%3E%3Crect x='6' y='8' width='4' height='18' fill='%23e7a210'/%3E%3Crect x='22' y='8' width='4' height='18' fill='%23e7a210'/%3E%3Crect x='10' y='11' width='12' height='12' fill='%23f3d65c'/%3E%3Crect x='15' y='3' width='2' height='12' fill='%23f3d65c'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Battle Tanks | Battle City (Tank 1990) style game online</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/battle-tanks/">
+<style>
+  :root { --bg: #1a1a1a; --ink: #f2f2f2; --muted: #a8a8a8;
+          --lp-bg: #111; --lp-panel: #222; --lp-veil: rgba(10, 10, 10, .94); --lp-accent: #e7a210; --lp-ink: #f2f2f2; --lp-muted: #a8a8a8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #cv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  a.back { position: fixed; top: 10px; left: 12px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 5; }
+  a.back:hover { color: var(--ink); }
+  [hidden] { display: none !important; }
+  #menuBtn { position: fixed; top: 8px; right: 12px; z-index: 5; font: inherit; font-size: 13px; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  #keys { position: fixed; left: 0; right: 0; bottom: 8px; text-align: center; color: var(--muted); font-size: 12px; z-index: 4; pointer-events: none; }
+  #pad { position: fixed; left: 0; right: 0; bottom: 0; display: none; justify-content: space-between; align-items: flex-end; padding: 0 22px calc(18px + env(safe-area-inset-bottom)); z-index: 4; pointer-events: none; }
+  body.touch #pad { display: flex; }
+  body.touch #keys { display: none; }
+  .dpad { position: relative; width: 150px; height: 150px; pointer-events: auto; touch-action: none; }
+  .dpad span { position: absolute; width: 50px; height: 50px; background: rgba(255,255,255,.12); border-radius: 8px; }
+  .dpad .u { left: 50px; top: 0; } .dpad .d { left: 50px; bottom: 0; } .dpad .l { left: 0; top: 50px; } .dpad .r { right: 0; top: 50px; }
+  .dpad span.on { background: rgba(231,162,16,.5); }
+  #fire { pointer-events: auto; width: 86px; height: 86px; border-radius: 50%; border: 0; background: rgba(231,74,16,.55); color: #fff; font: 700 15px system-ui, sans-serif; touch-action: none; margin-bottom: 30px; }
+</style>
+<meta property="og:title" content="Battle Tanks">
+<meta property="og:description" content="A Battle City (Tank 1990) style game: defend the eagle from 20 enemy tanks per stage. Brick walls, power-ups, and two players on one keyboard or online.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/battle-tanks/">
+<meta property="og:image" content="https://rajeshrenato.github.io/battle-tanks/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A Battle City (Tank 1990) style game: defend the eagle from 20 enemy tanks per stage. Brick walls, power-ups, and two players on one keyboard or online.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/#online"}, {"@type": "ListItem", "position": 3, "name": "Battle Tanks", "item": "https://rajeshrenato.github.io/battle-tanks/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Battle Tanks", "url": "https://rajeshrenato.github.io/battle-tanks/", "description": "A Battle City (Tank 1990) style game: defend the eagle from 20 enemy tanks per stage. Brick walls, power-ups, and two players on one keyboard or online.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../" id="back">&larr; all projects</a>
+<button id="menuBtn" hidden>Menu</button>
+<div id="wrap"><canvas id="cv" width="256" height="224" aria-label="The battlefield"></canvas></div>
+<p id="keys"></p>
+<div id="pad"><div class="dpad" id="dpad"><span class="u"></span><span class="d"></span><span class="l"></span><span class="r"></span></div><button id="fire">Fire</button></div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+// ---- the field: 26 x 26 cells of 8 px; a tank is 2 x 2 cells (16 px)
+
+const N = 26, C = 8, F = N * C;   // field size in pixels: 208
+const E = 0, BRICK = 1, STEEL = 2, WATER = 3, TREES = 4, ICE = 5;
+const DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
+const BASE = { x: 12 * C, y: 24 * C };                 // the eagle, 16 x 16
+const P_SPAWN = [[8 * C, 24 * C], [16 * C, 24 * C]];
+const E_SPAWN = [[0, 0], [12 * C, 0], [24 * C, 0]];
+const ENEMY = {
+  basic: { speed: 30, bullet: 110, hp: 1, score: 100 },
+  fast: { speed: 60, bullet: 110, hp: 1, score: 200 },
+  power: { speed: 40, bullet: 200, hp: 1, score: 300 },
+  armor: { speed: 30, bullet: 140, hp: 4, score: 400 },
+};
+const POWERS = ['helmet', 'clock', 'shovel', 'star', 'grenade', 'tank'];
+
+// Stages, 13 x 13 tiles. Each tile is 2 x 2 cells:
+// B brick, S steel, W water, F trees, I ice, . empty; l r t b are half bricks
+// (left, right, top, bottom). The fort around the eagle is added on top.
+const STAGES = [
+  ['.............', '.B.B.B.B.B.B.', '.B.B.B.B.B.B.', '.B.B.BSB.B.B.', '.B.B.B.B.B.B.', '.....b.b.....', 'S.tt.....tt.S',
+   '.....t.t.....', '.B.B.BBB.B.B.', '.B.B.B.B.B.B.', '.B.B.....B.B.', '.B.B.....B.B.', '.............'],
+  ['...S...S.....', '.B.S...B.B.B.', '.B.....BBB.B.', '.B...B.....S.', 'F..B..S.BFB..', 'FF....B..F...', '.BBBFFF.S...S',
+   '...SF.B.B.B..', 'S.BBF.B..B.B.', '..BB....BB...', '.B..B.BBB.B..', '.B.BB.....B..', '.....B...B...'],
+  ['....F...F....', '.FF...B...FF.', '.F..WWWWW..F.', '.B..B...B..B.', '.B.BBB.BBB.B.', '.....S.S.....', 'WW.B.....B.WW',
+   '...B.III.B...', '.SS..III..SS.', '.B.BB...BB.B.', '.B..B...B..B.', '.BB.......BB.', '.............'],
+  ['.......S.....', '.SS.B..S..B..', '.S..B.....BS.', '.S.BBB.S.BBS.', '...B.....B...', '.B...SSS...B.', '.BB.B...B.BB.',
+   '....B.F.B....', 'SS..BFFFB..SS', '....B.F.B....', '.BB.......BB.', '.B..BB.BB..B.', '.............'],
+  ['..FF.....FF..', '.FFFF.B.FFFF.', 'FF.BB.B.BB.FF', 'F..B.....B..F', '..BB.SSS.BB..', '.....F.F.....', 'BB.FFFFFFF.BB',
+   '...F.B.B.F...', '.B.F.BBB.F.B.', '.B...........', '.BB.BB.BB.BB.', '.B..B...B..B.', '.............'],
+  ['.............', '.SB.B...B.BS.', '.B..IIIII..B.', '.B.BIIIIIB.B.', '...BI...IB...', '.WW.I.S.I.WW.', '....I...I....',
+   '.BB.IIIII.BB.', '.B...B.B...B.', '.B.B.....B.B.', '.BBB.B.B.BBB.', '.....B.B.....', '.............'],
+];
+const FORT = [];
+for (let x = 11; x <= 14; x++) FORT.push([x, 23]);
+for (const y of [24, 25]) { FORT.push([11, y]); FORT.push([14, y]); }
+
+function buildMap(stage) {
+  const rows = STAGES[(stage - 1) % STAGES.length];
+  const m = new Uint8Array(N * N);
+  const set = (cx, cy, v) => { if (cx >= 0 && cy >= 0 && cx < N && cy < N) m[cy * N + cx] = v; };
+  for (let ty = 0; ty < 13; ty++) for (let tx = 0; tx < 13; tx++) {
+    const ch = rows[ty][tx], x = tx * 2, y = ty * 2;
+    const v = { B: BRICK, S: STEEL, W: WATER, F: TREES, I: ICE, l: BRICK, r: BRICK, t: BRICK, b: BRICK }[ch];
+    if (!v) continue;
+    for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+      if (ch === 'l' && dx) continue;
+      if (ch === 'r' && !dx) continue;
+      if (ch === 't' && dy) continue;
+      if (ch === 'b' && !dy) continue;
+      set(x + dx, y + dy, v);
+    }
+  }
+  // the eagle's tile, the fort, and room to spawn
+  for (const [x, y] of [[12, 24], [13, 24], [12, 25], [13, 25]]) set(x, y, E);
+  for (const [x, y] of FORT) set(x, y, BRICK);
+  for (const [px, py] of P_SPAWN.concat(E_SPAWN)) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) set(px / C + dx, py / C + dy, E);
+  return m;
+}
+
+// The 20 enemies of a stage, harder mixes later on. Tanks 4, 11, and 18 carry a power-up.
+function enemyQueue(stage) {
+  const s = Math.min(stage, 12);
+  const n = { armor: Math.min(8, Math.max(0, s - 2)), power: Math.min(6, Math.floor(s / 2)), fast: Math.min(7, 2 + Math.floor(s / 2)) };
+  n.basic = Math.max(0, 20 - n.armor - n.power - n.fast);
+  const list = [];
+  for (const k of ['basic', 'fast', 'power', 'armor']) for (let i = 0; i < n[k]; i++) list.push(k);
+  // spread the strong ones through the wave, deterministically per stage
+  let seed = stage * 9301 + 49297;
+  const rnd = () => ((seed = (seed * 233280 + 49297) % 233280) / 233280);
+  for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+  return list.map((type, i) => ({ type, bonus: i === 3 || i === 10 || i === 17 }));
+}
+
+// ---- game state
+
+let G = null;
+function newGame(players) {
+  G = { stage: 1, players: players.map((p, i) => ({ slot: i, name: p.name, lives: 3, score: 0, level: 0, kills: { basic: 0, fast: 0, power: 0, armor: 0 }, input: { dir: '', fire: false }, tank: null, dead: false, respawn: 0 })),
+        phase: 'intro', phaseT: 0, over: false, events: [] };
+  startStage(1);
+  return G;
+}
+
+function startStage(stage) {
+  G.stage = stage;
+  G.map = buildMap(stage);
+  G.mapChanged = true;
+  G.queue = enemyQueue(stage);
+  G.tanks = []; G.bullets = []; G.blasts = []; G.power = null;
+  G.spawnT = 1; G.spawnAt = 0; G.freeze = 0; G.shovel = 0; G.baseDead = false;
+  G.phase = 'intro'; G.phaseT = 0; G.nextId = 1;
+  for (const p of G.players) {
+    p.kills = { basic: 0, fast: 0, power: 0, armor: 0 };
+    p.tank = null;
+    if (p.lives > 0 || !p.dead) { p.dead = false; p.respawn = 0.01; }
+  }
+}
+
+const cellAt = (cx, cy) => (cx < 0 || cy < 0 || cx >= N || cy >= N ? STEEL : G.map[cy * N + cx]);
+
+function makeTank(kind, x, y, dir, extra = {}) {
+  const t = { id: G.nextId++, kind, x, y, dir, cool: 0, slide: 0, shield: 0, frozen: 0, anim: 0, hp: 1, ...extra };
+  G.tanks.push(t);
+  return t;
+}
+
+function spawnPlayer(p) {
+  const [x, y] = P_SPAWN[p.slot];
+  p.tank = makeTank('player', x, y, 'u', { slot: p.slot, shield: 3, spawnT: 0.6 });
+}
+
+// Can a 16 x 16 tank stand at (x, y)? Bricks, steel, water, the eagle, the edge, and other tanks block it.
+function tankFits(t, x, y) {
+  if (x < 0 || y < 0 || x > F - 16 || y > F - 16) return false;
+  for (let cy = Math.floor(y / C); cy <= Math.floor((y + 15.99) / C); cy++)
+    for (let cx = Math.floor(x / C); cx <= Math.floor((x + 15.99) / C); cx++) {
+      const v = cellAt(cx, cy);
+      if (v === BRICK || v === STEEL || v === WATER) return false;
+    }
+  if (x < BASE.x + 16 && x + 16 > BASE.x && y < BASE.y + 16 && y + 16 > BASE.y) return false;
+  for (const o of G.tanks) {
+    if (o === t || o.spawnT > 0) continue;
+    // a tank that already overlaps another may move apart, never further in
+    if (x < o.x + 16 && x + 16 > o.x && y < o.y + 16 && y + 16 > o.y) {
+      const was = t.x < o.x + 16 && t.x + 16 > o.x && t.y < o.y + 16 && t.y + 16 > o.y;
+      if (!was || Math.hypot(x - o.x, y - o.y) < Math.hypot(t.x - o.x, t.y - o.y)) return false;
+    }
+  }
+  return true;
+}
+
+function onIce(t) { return cellAt(Math.floor((t.x + 8) / C), Math.floor((t.y + 8) / C)) === ICE; }
+
+// Moves a tank one step. Turning snaps it to the 8 px grid, the way the classic plays.
+function drive(t, dir, speed, dt) {
+  if (dir && dir !== t.dir) {
+    const turnAxis = (dir === 'u' || dir === 'd') !== (t.dir === 'u' || t.dir === 'd');
+    if (turnAxis) {
+      const sx = Math.round(t.x / C) * C, sy = Math.round(t.y / C) * C;
+      if (tankFits(t, sx, sy)) { t.x = sx; t.y = sy; }
+    }
+    t.dir = dir;
+  }
+  let moving = !!dir;
+  if (!moving && t.slide > 0) { moving = true; t.slide -= dt; }
+  if (!moving) return false;
+  if (dir && onIce(t)) t.slide = 0.35;
+  const [dx, dy] = DIRS[t.dir];
+  const nx = t.x + dx * speed * dt, ny = t.y + dy * speed * dt;
+  t.anim += dt * speed;
+  if (tankFits(t, nx, ny)) { t.x = nx; t.y = ny; return true; }
+  // blocked: creep up to the obstacle in halving steps
+  for (let k = speed * dt / 2; k > 0.2; k /= 2) if (tankFits(t, t.x + dx * k, t.y + dy * k)) { t.x += dx * k; t.y += dy * k; }
+  t.slide = 0;
+  return false;
+}
+
+function fire(t) {
+  const isPlayer = t.kind === 'player';
+  const lvl = isPlayer ? G.players[t.slot].level : 0;
+  const max = isPlayer && lvl >= 2 ? 2 : 1;
+  if (t.cool > 0 || G.bullets.filter(b => b.owner === t.id).length >= max) return false;
+  const speed = isPlayer ? (lvl >= 1 ? 240 : 150) : ENEMY[t.kind].bullet;
+  const [dx, dy] = DIRS[t.dir];
+  G.bullets.push({ owner: t.id, player: isPlayer, slot: t.slot, x: t.x + 8 + dx * 8 - 2, y: t.y + 8 + dy * 8 - 2, dir: t.dir, speed, power: isPlayer && lvl >= 3 });
+  t.cool = 0.12;
+  G.events.push('shoot');
+  return true;
+}
+
+function blast(x, y, big) { G.blasts.push({ x, y, t: 0, big }); G.events.push(big ? 'boom' : 'hit'); }
+
+// A bullet hits the wall: bricks in an 8 px strip across its path break, steel only for a star-3 shot.
+function bulletVsMap(b) {
+  const cx = b.x + 2, cy = b.y + 2, [dx, dy] = DIRS[b.dir];
+  const cells = dx ? [[cx + dx * 2, cy - 4], [cx + dx * 2, cy + 3]] : [[cx - 4, cy + dy * 2], [cx + 3, cy + dy * 2]];
+  let hit = false;
+  for (const [px, py] of cells) {
+    const gx = Math.floor(px / C), gy = Math.floor(py / C);
+    if (px < 0 || py < 0 || px >= F || py >= F) { hit = true; continue; }
+    const v = cellAt(gx, gy);
+    if (v === BRICK || (v === STEEL && b.power)) { G.map[gy * N + gx] = E; G.mapChanged = true; hit = true; }
+    else if (v === STEEL) { hit = true; G.events.push('clank'); }
+  }
+  return hit;
+}
+
+const overlap = (ax, ay, aw, ah, bx, by, bw, bh) => ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+
+function hitTank(t, b) {
+  if (t.kind === 'player') {
+    if (b.player) { t.frozen = 2; return; }               // a teammate's shot just stuns
+    if (t.shield > 0) return;
+    blast(t.x + 8, t.y + 8, true);
+    G.tanks = G.tanks.filter(o => o !== t);
+    const p = G.players[t.slot];
+    p.tank = null; p.level = 0;
+    p.lives--;
+    if (p.lives > 0) p.respawn = 1.2; else p.dead = true;
+    return;
+  }
+  if (!b.player) return;                                    // enemies don't hurt each other
+  if (t.bonus) { t.bonus = false; dropPower(); }
+  t.hp--;
+  if (t.hp > 0) { G.events.push('clank'); return; }
+  blast(t.x + 8, t.y + 8, true);
+  G.tanks = G.tanks.filter(o => o !== t);
+  const p = G.players[b.slot];
+  if (p) { p.score += ENEMY[t.kind].score; p.kills[t.kind]++; }
+}
+
+function dropPower() {
+  for (let k = 0; k < 30; k++) {
+    const x = Math.floor(Math.random() * 12) * 16, y = Math.floor(Math.random() * 11) * 16;
+    if (!overlap(x, y, 16, 16, BASE.x - 16, BASE.y - 16, 48, 32)) { G.power = { kind: POWERS[Math.floor(Math.random() * POWERS.length)], x, y, t: 15 }; G.events.push('bonus'); return; }
+  }
+}
+
+function takePower(p, t) {
+  const k = G.power.kind;
+  G.power = null;
+  p.score += 500;
+  G.events.push('power');
+  if (k === 'helmet') t.shield = 10;
+  else if (k === 'clock') G.freeze = 8;
+  else if (k === 'shovel') { G.shovel = 15; for (const [x, y] of FORT) G.map[y * N + x] = STEEL; G.mapChanged = true; }
+  else if (k === 'star') p.level = Math.min(3, p.level + 1);
+  else if (k === 'grenade') { for (const e of G.tanks.filter(o => o.kind !== 'player' && !(o.spawnT > 0))) { blast(e.x + 8, e.y + 8, true); G.tanks = G.tanks.filter(o => o !== e); } }
+  else if (k === 'tank') p.lives++;
+}
+
+// Enemy brains: keep rolling, turn when blocked or now and then (mostly downward,
+// toward the eagle), and shoot often, especially at walls and when lined up.
+function enemyThink(t, dt) {
+  t.turnT = (t.turnT || 0) - dt;
+  t.fireT = (t.fireT || 0) - dt;
+  const moved = t.lastMoved !== false;
+  if (!moved || t.turnT <= 0) {
+    const r = Math.random();
+    const toBase = t.x < BASE.x - 8 ? 'r' : t.x > BASE.x + 8 ? 'l' : 'd';
+    t.dir = r < 0.4 ? 'd' : r < 0.6 ? toBase : r < 0.75 ? 'l' : r < 0.9 ? 'r' : 'u';
+    t.turnT = 0.8 + Math.random() * 2.2;
+    if (!moved && Math.random() < 0.6) t.fireT = 0;
+  }
+  const lined = G.tanks.some(o => o.kind === 'player' && (Math.abs(o.x - t.x) < 8 || Math.abs(o.y - t.y) < 8)) || Math.abs(t.x - BASE.x) < 8;
+  if (t.fireT <= 0 || (lined && Math.random() < dt * 2)) { fire(t); t.fireT = 0.5 + Math.random() * 1.5; }
+}
+
+function step(dt) {
+  if (!G || G.over) return;
+  G.phaseT += dt;
+  if (G.phase === 'intro') { if (G.phaseT > 1.6) { G.phase = 'play'; G.phaseT = 0; } return; }
+  if (G.phase === 'tally') { if (G.phaseT > 4.5) startStage(G.stage + 1); return; }
+  if (G.phase === 'lost') { if (G.phaseT > 3.5) G.over = true; }
+
+  // players
+  for (const p of G.players) {
+    if (!p.tank && !p.dead && p.respawn > 0) { p.respawn -= dt; if (p.respawn <= 0) spawnPlayer(p); }
+    const t = p.tank;
+    if (!t || G.phase === 'lost') continue;
+    if (t.spawnT > 0) { t.spawnT -= dt; continue; }
+    t.cool -= dt; t.shield = Math.max(0, t.shield - dt);
+    if (t.frozen > 0) { t.frozen -= dt; continue; }
+    t.lastMoved = drive(t, p.input.dir, 48, dt);
+    if (p.input.fire) fire(t);
+    if (G.power && overlap(t.x, t.y, 16, 16, G.power.x, G.power.y, 16, 16)) takePower(p, t);
+  }
+  // enemies arrive one at a time, at most 4 (6 with two players) on the field
+  const enemies = G.tanks.filter(t => t.kind !== 'player');
+  G.spawnT -= dt;
+  if (G.queue.length && enemies.length < (G.players.length > 1 ? 6 : 4) && G.spawnT <= 0 && G.phase === 'play') {
+    const [x, y] = E_SPAWN[G.spawnAt % 3];
+    if (!G.tanks.some(o => overlap(x, y, 16, 16, o.x, o.y, 16, 16))) {
+      const next = G.queue.shift();
+      makeTank(next.type, x, y, 'd', { hp: ENEMY[next.type].hp, bonus: next.bonus, spawnT: 0.9 });
+      G.spawnAt++;
+      G.spawnT = Math.max(1.2, 3 - G.stage * 0.15);
+    }
+  }
+  G.freeze = Math.max(0, G.freeze - dt);
+  for (const t of enemies) {
+    if (t.spawnT > 0) { t.spawnT -= dt; continue; }
+    t.cool -= dt;
+    if (G.freeze > 0 || G.phase === 'lost') continue;
+    enemyThink(t, dt);
+    t.lastMoved = drive(t, t.dir, ENEMY[t.kind].speed, dt);
+  }
+  // shovel wears off: the fort goes back to brick, fully rebuilt
+  if (G.shovel > 0) { G.shovel -= dt; if (G.shovel <= 0) { for (const [x, y] of FORT) G.map[y * N + x] = BRICK; G.mapChanged = true; } }
+  if (G.power) { G.power.t -= dt; if (G.power.t <= 0) G.power = null; }
+
+  // bullets, in small steps so fast ones can't skip through a brick
+  for (const b of G.bullets.slice()) {
+    if (!G.bullets.includes(b)) continue;
+    const [dx, dy] = DIRS[b.dir];
+    let left = b.speed * dt, dead = false;
+    while (left > 0 && !dead) {
+      const s = Math.min(3, left);
+      left -= s;
+      b.x += dx * s; b.y += dy * s;
+      if (bulletVsMap(b)) { blast(b.x + 2, b.y + 2, false); dead = true; break; }
+      if (!G.baseDead && overlap(b.x, b.y, 4, 4, BASE.x, BASE.y, 16, 16)) { G.baseDead = true; blast(BASE.x + 8, BASE.y + 8, true); dead = true; break; }
+      for (const t of G.tanks) {
+        if (t.id === b.owner || t.spawnT > 0) continue;
+        if (overlap(b.x, b.y, 4, 4, t.x, t.y, 16, 16)) {
+          if (t.kind === 'player' || b.player) { hitTank(t, b); dead = true; }
+          break;
+        }
+      }
+      if (dead) break;
+      // bullets cancel each other out
+      for (const o of G.bullets) {
+        if (o !== b && o.player !== b.player && overlap(b.x, b.y, 4, 4, o.x, o.y, 4, 4)) { G.bullets = G.bullets.filter(q => q !== o); dead = true; break; }
+      }
+    }
+    if (dead) G.bullets = G.bullets.filter(q => q !== b);
+  }
+  for (const x of G.blasts) x.t += dt;
+  G.blasts = G.blasts.filter(x => x.t < (x.big ? 0.5 : 0.25));
+
+  if (G.phase === 'play') {
+    if (G.baseDead || G.players.every(p => p.dead)) { G.phase = 'lost'; G.phaseT = 0; G.events.push('lost'); }
+    else if (!G.queue.length && !G.tanks.some(t => t.kind !== 'player')) { G.phase = 'clear'; G.phaseT = 0; }
+  } else if (G.phase === 'clear' && G.phaseT > 2) { G.phase = 'tally'; G.phaseT = 0; for (const p of G.players) if (p.dead && p.lives <= 0) p.dead = true; }
+}
+
+// ---- drawing (at 256 x 224, scaled up with crisp pixels)
+
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+const OX = 16, OY = 8;   // the field's corner on the canvas
+const PAL = { gray: '#636363', brick: '#9c4a00', brick2: '#d8783c', mortar: '#3a1c00', steel: '#bcbcbc', steel2: '#ffffff', steel3: '#7c7c7c',
+  water: '#2038ec', water2: '#7c9cfc', tree: '#0d7a1a', tree2: '#58d854', ice: '#cfd6e0', ice2: '#ffffff' };
+const TANK_COL = { p0: ['#e7a210', '#f3d65c', '#8c5a00'], p1: ['#2f8f3a', '#9be15d', '#155a20'], enemy: ['#9c9c9c', '#e6e6e6', '#4a4a4a'],
+  armor3: ['#2f8f3a', '#9be15d', '#155a20'], armor2: ['#c08a10', '#f3d65c', '#6c4a00'], bonus: ['#c8282a', '#ff7b6b', '#6a0d0d'] };
+
+function rect(x, y, w, h, c) { g.fillStyle = c; g.fillRect(OX + x, OY + y, w, h); }
+
+function drawCell(cx, cy, v, time) {
+  const x = cx * C, y = cy * C;
+  if (v === BRICK) {
+    rect(x, y, C, C, PAL.brick);
+    rect(x, y + 3, C, 1, PAL.mortar); rect(x, y + 7, C, 1, PAL.mortar);
+    rect(x + ((cy & 1) ? 1 : 5), y, 1, 3, PAL.mortar); rect(x + ((cy & 1) ? 5 : 1), y + 4, 1, 3, PAL.mortar);
+    rect(x, y, C, 1, PAL.brick2);
+  } else if (v === STEEL) {
+    rect(x, y, C, C, PAL.steel); rect(x + 2, y + 2, 4, 4, PAL.steel2); rect(x, y + 7, C, 1, PAL.steel3); rect(x + 7, y, 1, C, PAL.steel3);
+  } else if (v === WATER) {
+    rect(x, y, C, C, PAL.water);
+    const ph = Math.floor(time * 2) % 2;
+    rect(x + (ph ? 1 : 4), y + 2, 3, 1, PAL.water2); rect(x + (ph ? 4 : 1), y + 5, 3, 1, PAL.water2);
+  } else if (v === ICE) {
+    rect(x, y, C, C, PAL.ice); rect(x + 1, y + 5, 1, 1, PAL.ice2); rect(x + 2, y + 4, 1, 1, PAL.ice2); rect(x + 5, y + 2, 1, 1, PAL.ice2); rect(x + 6, y + 1, 1, 1, PAL.ice2);
+  }
+}
+function drawTrees(cx, cy) {
+  const x = cx * C, y = cy * C;
+  rect(x, y, C, C, PAL.tree);
+  for (const [a, b] of [[1, 1], [5, 0], [3, 3], [0, 5], [6, 4], [3, 6]]) rect(x + a, y + b, 2, 2, PAL.tree2);
+}
+
+// A tank, drawn facing up then rotated: two treads that roll, a hull, a turret, and a barrel.
+function drawTank(t, time) {
+  const cols = t.kind === 'player' ? TANK_COL['p' + t.slot]
+    : t.bonus && Math.floor(time * 6) % 2 ? TANK_COL.bonus
+    : t.kind === 'armor' ? (t.hp >= 4 ? TANK_COL.armor3 : t.hp === 3 ? TANK_COL.armor2 : t.hp === 2 ? TANK_COL.armor3 : TANK_COL.enemy) : TANK_COL.enemy;
+  const [body, light, dark] = cols;
+  g.save();
+  g.translate(OX + Math.round(t.x) + 8, OY + Math.round(t.y) + 8);
+  g.rotate({ u: 0, r: Math.PI / 2, d: Math.PI, l: -Math.PI / 2 }[t.dir]);
+  const fast = t.kind === 'fast', heavy = t.kind === 'armor' || t.kind === 'power';
+  const tread = heavy ? 4 : 3;
+  for (const sx of [-8, 8 - tread]) {
+    g.fillStyle = dark; g.fillRect(sx, -7, tread, 15);
+    g.fillStyle = light;
+    for (let k = 0; k < 4; k++) g.fillRect(sx, -7 + ((k * 4 + Math.floor(t.anim / 2)) % 15), tread, 1);
+  }
+  g.fillStyle = body; g.fillRect(-8 + tread, fast ? -4 : -5, 16 - tread * 2, fast ? 10 : 12);
+  g.fillStyle = light; g.fillRect(-8 + tread, fast ? -4 : -5, 16 - tread * 2, 1);
+  g.fillStyle = dark; g.fillRect(-3, -2, 6, 6);
+  g.fillStyle = light; g.fillRect(-2, -1, 3, 3);
+  g.fillStyle = body; g.fillRect(-1, heavy ? -9 : -8, 2, 8);
+  if (t.kind === 'power') { g.fillStyle = light; g.fillRect(-1, -9, 2, 2); }
+  g.restore();
+  if (t.shield > 0 && Math.floor(time * 12) % 2) {
+    g.strokeStyle = '#ffffff'; g.lineWidth = 1;
+    g.strokeRect(OX + Math.round(t.x) - 0.5, OY + Math.round(t.y) - 0.5, 17, 17);
+  }
+}
+
+function drawSpawnStar(x, y, time) {
+  const k = 2 + Math.abs(Math.sin(time * 10)) * 6;
+  g.fillStyle = '#ffffff';
+  g.fillRect(OX + x + 8 - 0.5, OY + y + 8 - k, 1, k * 2);
+  g.fillRect(OX + x + 8 - k, OY + y + 8 - 0.5, k * 2, 1);
+  g.fillRect(OX + x + 7, OY + y + 7, 2, 2);
+}
+
+function drawEagle(dead) {
+  const x = BASE.x, y = BASE.y;
+  if (dead) {
+    rect(x + 2, y + 6, 12, 8, '#636363'); rect(x + 4, y + 3, 8, 4, '#4a4a4a'); rect(x + 6, y + 10, 4, 2, '#000');
+    return;
+  }
+  const c = '#9c9c9c', h = '#e6e6e6';
+  rect(x + 6, y + 1, 4, 3, h); rect(x + 7, y + 4, 2, 2, c);
+  rect(x + 1, y + 3, 4, 2, c); rect(x + 11, y + 3, 4, 2, c);
+  rect(x + 2, y + 5, 12, 4, c); rect(x + 4, y + 9, 8, 3, c); rect(x + 5, y + 12, 6, 3, h);
+  rect(x + 7, y + 6, 2, 6, h);
+}
+
+function drawPower(p, time) {
+  if (p.t < 4 && Math.floor(time * 8) % 2) return;
+  if (Math.floor(time * 4) % 4 === 3) return;
+  const x = p.x, y = p.y;
+  rect(x, y, 16, 15, '#ffffff'); rect(x + 1, y + 1, 14, 13, '#1a1a6a');
+  const w = '#ffffff', r = '#e84a3a';
+  if (p.kind === 'helmet') { rect(x + 4, y + 5, 8, 5, w); rect(x + 3, y + 9, 10, 2, w); rect(x + 6, y + 3, 4, 2, w); }
+  else if (p.kind === 'clock') { rect(x + 4, y + 3, 8, 9, w); rect(x + 5, y + 4, 6, 7, '#1a1a6a'); rect(x + 7, y + 5, 1, 4, w); rect(x + 8, y + 8, 2, 1, w); }
+  else if (p.kind === 'shovel') { rect(x + 7, y + 2, 2, 7, w); rect(x + 5, y + 8, 6, 5, w); rect(x + 6, y + 2, 4, 1, w); }
+  else if (p.kind === 'star') { rect(x + 7, y + 2, 2, 11, w); rect(x + 3, y + 6, 10, 2, w); rect(x + 5, y + 4, 6, 6, w); }
+  else if (p.kind === 'grenade') { rect(x + 5, y + 5, 7, 8, w); rect(x + 7, y + 3, 3, 2, w); rect(x + 10, y + 2, 2, 2, r); }
+  else { rect(x + 3, y + 4, 2, 9, w); rect(x + 11, y + 4, 2, 9, w); rect(x + 5, y + 6, 6, 6, w); rect(x + 7, y + 2, 2, 5, w); }
+}
+
+function drawBlast(b) {
+  const k = b.t / (b.big ? 0.5 : 0.25), r = (b.big ? 14 : 6) * (0.4 + k * 0.6);
+  const cols = ['#ffffff', '#ffd23f', '#e84a3a', '#7a1d6a'];
+  for (let i = 0; i < 4; i++) {
+    const rr = r * (1 - i * 0.22);
+    g.fillStyle = cols[i];
+    g.fillRect(OX + Math.round(b.x - rr), OY + Math.round(b.y - rr * 0.6), Math.round(rr * 2), Math.round(rr * 1.2));
+    g.fillRect(OX + Math.round(b.x - rr * 0.6), OY + Math.round(b.y - rr), Math.round(rr * 1.2), Math.round(rr * 2));
+  }
+}
+
+function text(s, x, y, col = '#000', size = 8) {
+  g.fillStyle = col; g.font = 'bold ' + size + 'px ui-monospace, Menlo, Consolas, monospace'; g.textBaseline = 'top';
+  g.fillText(s, x, y);
+}
+
+function drawHud(S) {
+  // enemies left: small tank marks, two columns
+  const left = S.left;
+  for (let i = 0; i < left; i++) {
+    const x = 232 + (i % 2) * 9, y = 24 + Math.floor(i / 2) * 9;
+    g.fillStyle = '#000'; g.fillRect(x, y, 7, 7); g.fillStyle = '#636363'; g.fillRect(x + 2, y + 2, 3, 3);
+  }
+  S.players.forEach((p, i) => {
+    const y = 128 + i * 26;
+    text(i ? 'IIP' : 'IP', 230, y);
+    g.fillStyle = TANK_COL['p' + i][0]; g.fillRect(230, y + 11, 7, 7);
+    text(String(Math.max(0, p.lives)), 240, y + 10);
+  });
+  // the stage flag
+  g.fillStyle = '#000'; g.fillRect(232, 186, 1, 14);
+  g.fillStyle = '#e84a3a'; g.fillRect(233, 186, 10, 7);
+  text(String(S.stage), 236, 202);
+}
+
+// Everyone draws from the same view of the game: the host's G, or the copy a guest got.
+function viewOf() {
+  if (mode === 'guest') return V;
+  if (!G) return null;
+  return { stage: G.stage, phase: G.phase, phaseT: G.phaseT, map: G.map, tanks: G.tanks, bullets: G.bullets, blasts: G.blasts, power: G.power,
+    baseDead: G.baseDead, players: G.players.map(p => ({ lives: p.lives, score: p.score, kills: p.kills, dead: p.dead, level: p.level })),
+    left: G.queue.length, over: G.over };
+}
+
+function render(time) {
+  const S = viewOf();
+  g.fillStyle = PAL.gray; g.fillRect(0, 0, 256, 224);
+  if (!S || !S.map) return;
+  if (S.phase === 'intro') {
+    g.fillStyle = PAL.gray; g.fillRect(0, 0, 256, 224);
+    text('STAGE ' + S.stage, 100, 104, '#000', 10);
+    return;
+  }
+  if (S.phase === 'tally') { drawTally(S); return; }
+  rect(0, 0, F, F, '#000');
+  for (let cy = 0; cy < N; cy++) for (let cx = 0; cx < N; cx++) { const v = S.map[cy * N + cx]; if (v && v !== TREES) drawCell(cx, cy, v, time); }
+  drawEagle(S.baseDead);
+  for (const t of S.tanks) { if (t.spawnT > 0) drawSpawnStar(t.x, t.y, time); else drawTank(t, time); }
+  g.fillStyle = '#ffffff';
+  for (const b of S.bullets) g.fillRect(OX + Math.round(b.x), OY + Math.round(b.y), 3, 3);
+  for (let cy = 0; cy < N; cy++) for (let cx = 0; cx < N; cx++) if (S.map[cy * N + cx] === TREES) drawTrees(cx, cy);
+  for (const b of S.blasts) drawBlast(b);
+  if (S.power) drawPower(S.power, time);
+  drawHud(S);
+  if (S.phase === 'lost') {
+    const y = Math.max(96, 224 - S.phaseT * 90);
+    text('GAME', 96, y, '#e84a3a', 12); text('OVER', 96, y + 13, '#e84a3a', 12);
+  }
+}
+
+function drawTally(S) {
+  g.fillStyle = '#000'; g.fillRect(0, 0, 256, 224);
+  text('STAGE ' + S.stage, 96, 16, '#fff', 9);
+  const kinds = ['basic', 'fast', 'power', 'armor'];
+  S.players.forEach((p, i) => {
+    const x = i ? 150 : 24;
+    text((i ? 'II' : 'I') + '-PLAYER', x, 40, '#e84a3a');
+    text(String(p.score), x, 54, '#ffd23f');
+    kinds.forEach((k, j) => text(String(p.kills[k]).padStart(2) + ' x ' + ENEMY[k].score, x, 76 + j * 18, '#fff'));
+    text('TOTAL ' + kinds.reduce((s, k) => s + p.kills[k], 0), x, 160, '#fff');
+  });
+}
+
+function fitCanvas() {
+  const pad = document.body.classList.contains('touch') ? 190 : 40;
+  const k = Math.max(1, Math.min((innerWidth - 8) / 256, (innerHeight - pad) / 224));
+  const s = k >= 2 ? Math.floor(k) : k;
+  cv.style.width = Math.floor(256 * s) + 'px'; cv.style.height = Math.floor(224 * s) + 'px';
+  document.getElementById('wrap').style.alignItems = document.body.classList.contains('touch') ? 'flex-start' : 'center';
+  document.getElementById('wrap').style.paddingTop = document.body.classList.contains('touch') ? '40px' : '0';
+}
+addEventListener('resize', fitCanvas);
+
+// ---- sound
+
+let actx = null, muted = false;
+function sfx(kind) {
+  if (muted) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime, o = actx.createOscillator(), v = actx.createGain();
+    const spec = { shoot: ['square', 520, 160, 0.07], hit: ['square', 200, 90, 0.06], clank: ['square', 900, 700, 0.05], boom: ['sawtooth', 140, 30, 0.35],
+      power: ['square', 600, 1300, 0.25], bonus: ['triangle', 880, 1760, 0.18], lost: ['sawtooth', 300, 60, 1] }[kind];
+    if (!spec) return;
+    o.type = spec[0]; o.frequency.setValueAtTime(spec[1], t); o.frequency.exponentialRampToValueAtTime(spec[2], t + spec[3]);
+    v.gain.setValueAtTime(0.08, t); v.gain.exponentialRampToValueAtTime(0.0001, t + spec[3]);
+    o.connect(v).connect(actx.destination); o.start(t); o.stop(t + spec[3] + 0.02);
+  } catch (e) { }
+}
+
+// ---- input
+
+const held = [];   // { code, set, dir }
+const KEYS = { KeyW: ['a', 'u'], KeyA: ['a', 'l'], KeyS: ['a', 'd'], KeyD: ['a', 'r'], ArrowUp: ['b', 'u'], ArrowLeft: ['b', 'l'], ArrowDown: ['b', 'd'], ArrowRight: ['b', 'r'] };
+const FIRE_KEYS = { Space: 'a', KeyF: 'a', KeyJ: 'a', Enter: 'b', Slash: 'b', ShiftRight: 'b', KeyL: 'b' };
+const fireHeld = { a: false, b: false };
+let touchDir = '', touchFire = false;
+
+addEventListener('keydown', e => {
+  if (!document.getElementById('lobby').hidden || (e.target && e.target.tagName === 'INPUT')) return;
+  if (KEYS[e.code]) { e.preventDefault(); if (!held.some(h => h.code === e.code)) held.push({ code: e.code, set: KEYS[e.code][0], dir: KEYS[e.code][1] }); }
+  else if (FIRE_KEYS[e.code]) { e.preventDefault(); fireHeld[FIRE_KEYS[e.code]] = true; }
+  else if (e.code === 'KeyM') muted = !muted;
+  else if (e.code === 'KeyP' && mode !== 'guest' && G && G.phase === 'play') paused = !paused;
+});
+addEventListener('keyup', e => {
+  const k = held.findIndex(h => h.code === e.code); if (k >= 0) held.splice(k, 1);
+  if (FIRE_KEYS[e.code]) fireHeld[FIRE_KEYS[e.code]] = false;
+});
+addEventListener('blur', () => { held.length = 0; fireHeld.a = fireHeld.b = false; touchDir = ''; touchFire = false; });
+
+// In one-player and online games either set of keys works; with two on one keyboard, a is WASD and b is the arrows.
+function inputFor(set) {
+  let dir = '';
+  for (let k = held.length - 1; k >= 0; k--) if (set === 'any' || held[k].set === set) { dir = held[k].dir; break; }
+  const fire = set === 'any' ? fireHeld.a || fireHeld.b : fireHeld[set];
+  if (set === 'any' || set === 'a') return { dir: dir || touchDir, fire: fire || touchFire };
+  return { dir, fire };
+}
+
+(function touchControls() {
+  const pad = document.getElementById('dpad');
+  const at = e => {
+    const r = pad.getBoundingClientRect(), dx = e.clientX - r.left - r.width / 2, dy = e.clientY - r.top - r.height / 2;
+    touchDir = Math.hypot(dx, dy) < 12 ? '' : Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u');
+    for (const s of pad.children) s.classList.toggle('on', s.className.startsWith(touchDir) && !!touchDir);
+  };
+  const end = () => { touchDir = ''; for (const s of pad.children) s.classList.remove('on'); };
+  pad.addEventListener('pointerdown', e => { try { pad.setPointerCapture(e.pointerId); } catch (x) { } at(e); });
+  pad.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'touch') at(e); });
+  pad.addEventListener('pointerup', end); pad.addEventListener('pointercancel', end);
+  const fb = document.getElementById('fire');
+  fb.addEventListener('pointerdown', e => { e.preventDefault(); touchFire = true; });
+  fb.addEventListener('pointerup', () => { touchFire = false; });
+  fb.addEventListener('pointercancel', () => { touchFire = false; });
+  if (matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch');
+})();
+
+// ---- modes and the network
+
+let mode = null;       // 'one', 'two', 'host', 'guest'
+let room = null, V = null, paused = false;
+
+function begin(m) {
+  mode = m;
+  paused = false;
+  document.getElementById('back').hidden = true;
+  document.getElementById('menuBtn').hidden = false;
+  document.getElementById('keys').textContent = m === 'two'
+    ? 'Player 1: WASD and Space. Player 2: arrow keys and Enter. P pauses, M mutes.'
+    : 'Move with the arrow keys or WASD. Fire with Space. P pauses, M mutes.';
+  fitCanvas();
+}
+function startOne() { leaveRoom(); newGame([{ name: 'You' }]); begin('one'); }
+function startTwo() { leaveRoom(); newGame([{ name: 'P1' }, { name: 'P2' }]); begin('two'); }
+
+function startOnline(r) {
+  if (room !== r) {
+    leaveRoom();
+    room = r;
+    if (r.isHost) {
+      r.on('message', (m, from) => {
+        if (!G || m.t !== 'in' || !G.players[1]) return;
+        G.players[1].input = { dir: DIRS[m.d] && Object.prototype.hasOwnProperty.call(DIRS, m.d) ? m.d : '', fire: m.f === 1 };
+      });
+      r.on('leave', () => { if (G && G.players[1]) { const p = G.players[1]; if (p.tank) G.tanks = G.tanks.filter(t => t !== p.tank); p.tank = null; p.dead = true; p.lives = 0; } });
+    } else {
+      r.on('message', onGuest);
+      r.on('close', () => { if (room === r) { mode = null; lobby.start(); } });
+    }
+  }
+  if (r.isHost) { newGame([{ name: r.players[0].name }, { name: (r.players[1] || {}).name || 'P2' }]); begin('host'); }
+  else { V = null; begin('guest'); }
+}
+
+function snapshot() {
+  const m = { t: 's', stage: G.stage, phase: G.phase, pt: Math.round(G.phaseT * 10) / 10, base: G.baseDead ? 1 : 0, left: G.queue.length, over: G.over ? 1 : 0,
+    tk: G.tanks.map(t => [t.kind, t.slot === undefined ? -1 : t.slot, Math.round(t.x * 10) / 10, Math.round(t.y * 10) / 10, t.dir, t.hp, t.bonus ? 1 : 0, t.shield > 0 ? 1 : 0, t.spawnT > 0 ? 1 : 0, Math.round(t.anim)]),
+    bu: G.bullets.map(b => [Math.round(b.x), Math.round(b.y)]),
+    bl: G.blasts.map(b => [Math.round(b.x), Math.round(b.y), Math.round(b.t * 100) / 100, b.big ? 1 : 0]),
+    pw: G.power ? [G.power.kind, G.power.x, G.power.y, Math.round(G.power.t)] : null,
+    pl: G.players.map(p => [p.lives, p.score, p.dead ? 1 : 0, p.level, p.kills.basic, p.kills.fast, p.kills.power, p.kills.armor]),
+    ev: G.events.slice(0, 6) };
+  if (G.mapChanged) { m.map = Array.from(G.map).join(''); G.mapChanged = false; }
+  return m;
+}
+
+const KINDS = ['player', 'basic', 'fast', 'power', 'armor'];
+function onGuest(m) {
+  if (m.t !== 's' || !Array.isArray(m.tk) || !Array.isArray(m.pl)) return;
+  const map = typeof m.map === 'string' && m.map.length === N * N && /^[0-5]+$/.test(m.map) ? Uint8Array.from(m.map, ch => +ch) : V && V.map;
+  if (!map) return;
+  const num = v => (Number.isFinite(v) ? v : 0);
+  V = {
+    stage: num(m.stage), phase: ['intro', 'play', 'clear', 'tally', 'lost'].includes(m.phase) ? m.phase : 'play', phaseT: num(m.pt), map, baseDead: m.base === 1, left: Math.max(0, Math.min(20, num(m.left))),
+    tanks: m.tk.filter(a => Array.isArray(a) && KINDS.includes(a[0]) && DIRS[a[4]] && Object.prototype.hasOwnProperty.call(DIRS, a[4]))
+      .map(a => ({ kind: a[0], slot: a[1] === 1 ? 1 : 0, x: num(a[2]), y: num(a[3]), dir: a[4], hp: num(a[5]), bonus: a[6] === 1, shield: a[7] ? 1 : 0, spawnT: a[8] ? 1 : 0, anim: num(a[9]) })),
+    bullets: (Array.isArray(m.bu) ? m.bu : []).filter(Array.isArray).map(a => ({ x: num(a[0]), y: num(a[1]) })),
+    blasts: (Array.isArray(m.bl) ? m.bl : []).filter(Array.isArray).map(a => ({ x: num(a[0]), y: num(a[1]), t: num(a[2]), big: a[3] === 1 })),
+    power: Array.isArray(m.pw) && POWERS.includes(m.pw[0]) ? { kind: m.pw[0], x: num(m.pw[1]), y: num(m.pw[2]), t: num(m.pw[3]) } : null,
+    players: m.pl.slice(0, 2).filter(Array.isArray).map(a => ({ lives: num(a[0]), score: num(a[1]), dead: a[2] === 1, level: num(a[3]), kills: { basic: num(a[4]), fast: num(a[5]), power: num(a[6]), armor: num(a[7]) } })),
+    over: m.over === 1,
+  };
+  for (const e of (Array.isArray(m.ev) ? m.ev : [])) sfx(e);
+}
+
+function leaveRoom() { const r = room; room = null; if (r) { try { r.close(); } catch (e) { } } }
+
+// ---- the loop
+
+let last = 0, acc = 0, lastSnap = 0, sentIn = '';
+const DT = 1 / 60;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, (now - last) / 1000 || 0);
+  last = now;
+  if (!mode) return;
+  if (mode === 'guest') {
+    const inp = inputFor('any'), key = inp.dir + (inp.fire ? 1 : 0);
+    if (room && key !== sentIn) { sentIn = key; room.send({ t: 'in', d: inp.dir, f: inp.fire ? 1 : 0 }); }
+  } else if (G) {
+    if (mode === 'two') { G.players[0].input = inputFor('a'); G.players[1].input = inputFor('b'); }
+    else G.players[0].input = inputFor('any');
+    if (!paused) {
+      acc += dt;
+      let n = 0;
+      while (acc >= DT && n++ < 6) { acc -= DT; step(DT); }
+      if (acc > DT) acc = 0;
+    }
+    for (const e of G.events) sfx(e);
+    if (mode === 'host' && room && now - lastSnap > 33) { lastSnap = now; room.send(snapshot()); }
+    G.events.length = 0;
+    if (G.over && !shownOver) { shownOver = true; setTimeout(() => { shownOver = false; if (G && G.over) lobby.start(); }, 2500); }
+  }
+  render(now / 1000);
+  if (paused) { text('PAUSE', 106, 100, '#e84a3a', 10); }
+}
+let shownOver = false;
+
+const lobby = Lobby.mount(document.getElementById('lobby'), {
+  game: 'battle-tanks',
+  title: 'Battle Tanks',
+  blurb: 'Defend the eagle. Twenty enemy tanks a stage, brick walls to blast through, and power-ups from the flashing red tanks.',
+  min: 2,
+  max: 2,
+  extra: [
+    { label: '1 player', note: 'Arrow keys or WASD to move, Space to fire.', onClick: startOne },
+    { label: '2 players, one keyboard', note: 'WASD and Space, against the arrow keys and Enter. Defend the eagle together.', onClick: startTwo },
+  ],
+  onStart: startOnline,
+  onJoin: startOnline,
+});
+const lobbyStart = lobby.start;
+lobby.start = () => { leaveRoom(); mode = null; G = null; V = null; document.getElementById('menuBtn').hidden = true; document.getElementById('back').hidden = false; document.getElementById('keys').textContent = ''; lobbyStart(); };
+document.getElementById('menuBtn').onclick = () => lobby.start();
+fitCanvas();
+requestAnimationFrame(frame);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Battle Tanks</h2>
+<p>A Battle City (Tank 1990) style game. Twenty enemy tanks roll in each stage, and you defend the eagle at the bottom of the field. Shoot through brick walls, hide under trees, slide on ice, and pick up power-ups from the flashing red tanks. Play alone, with two players on one keyboard, or co-op with a friend online. Original code, stages, and pixel art.</p>
+<h3>Play</h3>
+<table><tr><td>Keys</td><td></td></tr><tr><td>Arrow keys or WASD</td><td>move</td></tr><tr><td>Space</td><td>fire</td></tr><tr><td>P</td><td>pause</td></tr><tr><td>M</td><td>sound on and off</td></tr></table>
+<p>With two players on one keyboard, player 1 uses WASD and Space, and player 2 the arrow keys and Enter. On a phone, use the pad on the left and the Fire button on the right.</p>
+<p>To play a friend online, click "Play a friend online" and send the invite; they send back a reply link, and the game starts as soon as they're in.</p>
+<h3>Rules</h3>
+<ul><li>Each stage has 20 enemy tanks. Up to four are on the field at once (six with two players), and they arrive at the three gates along the top.</li><li>Basic tanks are slow, fast tanks are quick, power tanks fire fast shots, and armored tanks take four hits (their color changes as they weaken).</li><li>A shot breaks an 8-pixel strip of brick. Steel stops shots, unless you've collected three stars. Water stops tanks but not shots. Trees hide tanks, and ice keeps you sliding.</li><li>If a shot hits the eagle, or every player is out of lives, the game is over. Everyone starts with three lives.</li><li>A shot from your teammate doesn't hurt you; it stops you for two seconds.</li><li>Shots that meet in the air cancel out.</li></ul>
+<p>Tanks 4, 11, and 18 of each stage flash red. Hit one and a power-up appears somewhere on the field for 15 seconds:</p>
+<table><tr><td>Power-up</td><td></td></tr><tr><td>Helmet</td><td>a shield for 10 seconds</td></tr><tr><td>Clock</td><td>freezes every enemy for 8 seconds</td></tr><tr><td>Shovel</td><td>steel walls around the eagle for 15 seconds; then the brick fort comes back, fully rebuilt</td></tr><tr><td>Star</td><td>stronger shots: faster, then two at once, then steel-breaking</td></tr><tr><td>Grenade</td><td>destroys every enemy on the field</td></tr><tr><td>Tank</td><td>one more life</td></tr></table>
+<p>Scores: 100 for a basic tank, 200 fast, 300 power, 400 armored, and 500 for a power-up. After each stage, a tally shows what each player destroyed. There are six stages, and then they repeat with harder enemy mixes.</p>
+<h3>How it works</h3>
+<ul><li>The field is 26 by 26 cells of 8 pixels, drawn at 256 by 224 like the original and scaled up with crisp pixels. A tank is 2 by 2 cells. When a tank turns, it snaps to the 8-pixel grid, so it fits through gaps the way the original's tanks do.</li><li>Bullets move in steps of 3 pixels so fast ones can't skip through a brick, and each hit clears the strip of cells across the bullet's path.</li><li>Enemies keep rolling, turn when they're blocked or every second or two (mostly downward, toward the eagle), and fire often, especially when they're lined up with a player or the eagle.</li><li>Online, the host's browser runs the game, and the guest sends its keys and draws snapshots sent 30 times a second. The map is only sent when bricks change. It uses <a href="../linkplay/">LinkPlay</a> for the connection, with no game server.</li><li>The sounds are synthesized with the Web Audio API.</li></ul>
+<p class="pg-more">More like this: <a href="../sketch-guess/">Sketch &amp; Guess</a>, <a href="../watch-party/">Watch Party</a>, <a href="../mafia/">Mafia</a>, <a href="../trivia-night/">Trivia Night</a>. Or see <a href="../#online">all online games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/battle-tanks">battle-tanks on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

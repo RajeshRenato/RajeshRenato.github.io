@@ -2,12 +2,13 @@
 // cars (player physics + AI), pedestrians
 
 class Car {
-  constructor(x, y, angle, color, kind = 'civ') {
+  constructor(x, y, angle, color, kind = 'civ', model) {
     this.x = x; this.y = y; this.angle = angle;
     this.vx = 0; this.vy = 0;
     this.color = color; this.kind = kind;
+    this.model = CAR_MODELS[model] ? model : kind === 'police' ? 'police' : 'sedan';
     this.hp = 100; this.wrecked = false;
-    this.len = 40; this.wid = 21;
+    this.len = CAR_MODELS[this.model].len; this.wid = CAR_MODELS[this.model].wid;
     this.throttle = 0; this.steer = 0; this.hand = false; this.braking = false;
     this.hasDriver = false;
     this.ai = null;          // {dir, target} for traffic
@@ -64,46 +65,68 @@ class Car {
     if (this.hp <= 0) { this.hp = 0; this.wrecked = true; }
   }
 
+  // top-down: the same model as the street view, seen from above
   draw(ctx, time) {
+    const m = CAR_MODELS[this.model], L = m.len / 2, W = m.wid / 2;
+    const paint = this.wrecked ? '#4a4a4f' : this.color;
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    const L = this.len, W = this.wid;
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    rr(ctx, -L / 2 + 3, -W / 2 + 3, L, W, 6); ctx.fill();
-    ctx.fillStyle = '#14161c';
-    for (const sx of [-L / 2 + 6, L / 2 - 14])
-      for (const sy of [-W / 2 - 1, W / 2 - 3])
-        ctx.fillRect(sx, sy, 8, 4);
-    ctx.fillStyle = this.wrecked ? '#4a4a4f' : this.color;
-    rr(ctx, -L / 2, -W / 2, L, W, 6); ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-    ctx.lineWidth = 1.5;
-    rr(ctx, -L / 2, -W / 2, L, W, 6); ctx.stroke();
-    ctx.fillStyle = 'rgba(10,20,35,0.8)';
-    rr(ctx, L * 0.08, -W / 2 + 3, L * 0.2, W - 6, 3); ctx.fill();
-    rr(ctx, -L * 0.33, -W / 2 + 3, L * 0.16, W - 6, 3); ctx.fill();
+    const outline = (secs, inset = 1) => {
+      ctx.beginPath();
+      secs.forEach(([a, w], i) => (i ? ctx.lineTo(a * L, -w * W * inset) : ctx.moveTo(a * L, -w * W * inset)));
+      for (let i = secs.length - 1; i >= 0; i--) ctx.lineTo(secs[i][0] * L, secs[i][1] * W * inset);
+      ctx.closePath();
+    };
+    ctx.lineJoin = 'round';
+    // shadow and wheels
+    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+    outline(m.body); ctx.save(); ctx.translate(3, 3); ctx.fill(); ctx.restore();
+    ctx.fillStyle = '#121318';
+    for (const lo of [-L * m.track * 1.25, L * m.track * 1.25]) for (const s of [-1, 1]) ctx.fillRect(lo - 4.5, s * W - (s > 0 ? 3 : 0) - (s < 0 ? 1 : 0), 9, 4);
+    // body, a little lighter down the middle
+    const g = ctx.createLinearGradient(0, -W, 0, W);
+    g.addColorStop(0, paint); g.addColorStop(0.5, this.wrecked ? paint : shadeHex(paint, 1.18)); g.addColorStop(1, paint);
+    ctx.fillStyle = g;
+    outline(m.body); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 1.2; ctx.stroke();
+    if (m.bed) { ctx.fillStyle = '#1b1d23'; ctx.fillRect(-L * 0.94, -W * 0.8, L * 0.8, W * 1.6); }
+    if (m.stripe && !this.wrecked) { ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(-L * 0.92, -2.3, L * 1.86, 1.5); ctx.fillRect(-L * 0.92, 0.9, L * 1.86, 1.5); }
+    // cabin: glass where it slopes, roof where it's flat
+    const cab = m.cabin;
+    for (let i = 0; i < cab.length - 1; i++) {
+      const [a0, w0, z0] = cab[i], [a1, w1, z1] = cab[i + 1];
+      const slope = Math.abs(z1 - z0) / Math.max(0.01, Math.abs(a1 - a0) * L);
+      ctx.fillStyle = slope > 0.35 ? 'rgba(14,24,42,0.92)' : this.model === 'police' && !this.wrecked ? '#eef1f5' : shadeHex(paint, 0.92);
+      ctx.beginPath();
+      ctx.moveTo(a0 * L, -w0 * W); ctx.lineTo(a1 * L, -w1 * W); ctx.lineTo(a1 * L, w1 * W); ctx.lineTo(a0 * L, w0 * W);
+      ctx.closePath(); ctx.fill();
+    }
+    if (m.rails) { ctx.fillStyle = '#16181e'; ctx.fillRect(-L * 0.8, -W * 0.74, L, 1.6); ctx.fillRect(-L * 0.8, W * 0.74 - 1.6, L, 1.6); }
     if (this.kind === 'police' && !this.wrecked) {
       const ph = Math.floor(time * 6) % 2 === 0;
-      ctx.fillStyle = ph ? '#ff4356' : '#3b6cff';
-      ctx.fillRect(-5, -W / 2 + 4, 5, W - 8);
-      ctx.fillStyle = ph ? '#3b6cff' : '#ff4356';
-      ctx.fillRect(0, -W / 2 + 4, 5, W - 8);
+      ctx.fillStyle = ph ? '#ff4356' : '#3b6cff'; ctx.fillRect(-3, -W * 0.62, 6, W * 0.62);
+      ctx.fillStyle = ph ? '#3b6cff' : '#ff4356'; ctx.fillRect(-3, 0, 6, W * 0.62);
     }
+    // lights
     if (!this.wrecked) {
-      ctx.fillStyle = '#ffe9a8';
-      ctx.fillRect(L / 2 - 3, -W / 2 + 3, 3, 4);
-      ctx.fillRect(L / 2 - 3, W / 2 - 7, 3, 4);
+      ctx.fillStyle = '#fff1c9';
+      const fw = m.body[m.body.length - 1][1] * W;
+      ctx.fillRect(L - 2.2, -fw * 0.9, 2.2, fw * 0.45); ctx.fillRect(L - 2.2, fw * 0.45, 2.2, fw * 0.45);
     }
-    ctx.fillStyle = this.braking ? '#ff2038' : '#7a1420';
-    ctx.fillRect(-L / 2, -W / 2 + 3, 3, 4);
-    ctx.fillRect(-L / 2, W / 2 - 7, 3, 4);
-    if (this.wrecked) {
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.fillRect(L * 0.1, -W / 2 + 2, L * 0.3, W - 4);
-    }
+    ctx.fillStyle = this.braking ? '#ff2038' : '#8a1626';
+    const rw = m.body[0][1] * W * 0.9;
+    ctx.fillRect(-L, -rw, 1.8, rw * 2);
+    if (this.wrecked) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-L * 0.2, -W * 0.7, L * 0.6, W * 1.4); }
     ctx.restore();
   }
+}
+
+// a color made lighter (k > 1) or darker (k < 1)
+function shadeHex(hex, k) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = v => Math.max(0, Math.min(255, Math.round(v * k)));
+  return 'rgb(' + f(n >> 16) + ',' + f((n >> 8) & 255) + ',' + f(n & 255) + ')';
 }
 
 function drawHeadlights(ctx, car) {

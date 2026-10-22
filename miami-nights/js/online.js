@@ -179,8 +179,8 @@ const Online = {
     for (const c of [this.car, this.remote]) { const i = Game.cars.indexOf(c); if (i >= 0) Game.cars.splice(i, 1); }
     const style = role => (role === 'robber' ? ['#ff6fb0', 'civ'] : ['#e9edf2', 'police']);
     const [mc, mk] = style(this.myRole()), [tc, tk] = style(this.myRole() === 'robber' ? 'cop' : 'robber');
-    this.car = new Car(mine.x, mine.y, mine.a, mc, mk);
-    this.remote = new Car(theirs.x, theirs.y, theirs.a, tc, tk);
+    this.car = new Car(mine.x, mine.y, mine.a, mc, mk, mk === 'police' ? 'police' : 'sports');
+    this.remote = new Car(theirs.x, theirs.y, theirs.a, tc, tk, tk === 'police' ? 'police' : 'sports');
     this.remote.remote = true;
     this.spawn = mine;
     Game.cars.push(this.car, this.remote);

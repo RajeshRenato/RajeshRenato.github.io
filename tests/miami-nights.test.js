@@ -143,3 +143,27 @@ test('online: leaving returns to the solo game', () => {
   assert.strictEqual(m.guest.run('Game.state'), 'menu');
   assert.strictEqual(m.host.run('Online.active'), false);
 });
+
+test('every car model builds a closed body and cabin, and traffic uses a mix of them', () => {
+  for (const name of ['sports', 'sedan', 'hatch', 'suv', 'pickup', 'police']) {
+    const info = JSON.parse(run(`JSON.stringify((() => { const f = modelFaces('${name}'); return { n: f.faces.length, body: f.bodyCount, bad: f.faces.filter(q => q.pts.some(p => p.some(v => !Number.isFinite(v)))).length, roles: [...new Set(f.faces.map(q => q.role))] }; })())`));
+    assert.ok(info.n > 20 && info.body > 10, name + ' has a body and a cabin');
+    assert.strictEqual(info.bad, 0, name + ' has no broken points');
+    assert.ok(info.roles.includes('paint') && info.roles.includes('glass'), name + ' has paint and glass');
+  }
+  const models = new Set(JSON.parse(run(`JSON.stringify(Array.from({ length: 200 }, (_, i) => pickTrafficModel(i / 200)))`)));
+  assert.ok(models.size >= 5, 'five body styles in traffic');
+  assert.strictEqual(run(`new Car(0, 0, 0, '#fff', 'police').model`), 'police');
+  assert.strictEqual(run(`new Car(0, 0, 0, '#fff', 'civ', 'suv').len`), 44);
+});
+
+test('sidewalk corners are rounded: the curb follows the curve', () => {
+  // block (1, 1): its slab starts at tile 10, 10
+  const x0 = 10 * 48, y0 = 10 * 48;
+  assert.strictEqual(run(`onSlab(${x0 + 2}, ${y0 + 2})`), false, 'the very corner is road');
+  assert.strictEqual(run(`onSlab(${x0 + 22}, ${y0 + 2})`), true, 'along the edge is sidewalk');
+  assert.strictEqual(run(`onSlab(${x0 + 30}, ${y0 + 30})`), true);
+  assert.strictEqual(run(`groundZ(${x0 + 2}, ${y0 + 2})`), 0, 'cars at the corner sit on the road');
+  assert.strictEqual(run(`footprint(0, 0, 100, 100, 'round', 20).length`), 24);
+  assert.strictEqual(run(`footprint(0, 0, 100, 100, 'chamfer', 20).length`), 8);
+});

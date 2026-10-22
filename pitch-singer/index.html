@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob: mediastream:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23201628'/%3E%3Cpath d='M4 22 C9 22 9 12 14 12 S19 18 23 14 S27 8 29 9' fill='none' stroke='%23ffb347' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Pitch Singer | karaoke singing game and online tuner</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/pitch-singer/">
+<style>
+  :root { --bg: #201628; --panel: #2e2138; --panel2: #3b2c47; --ink: #fbefe3; --muted: #b8a7bd; --gold: #ffb347; --good: #7ee0a1; --off: #ff7a7a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; min-height: 100vh; }
+  [hidden] { display: none !important; }
+  button { font: inherit; cursor: pointer; color: inherit; }
+  button:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  a.back { position: absolute; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; }
+  a.back:hover { color: var(--ink); }
+  main { max-width: 1100px; margin: 0 auto; padding: 46px 18px 40px; }
+  header.top { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
+  header.top h1 { font-size: 34px; margin: 0; letter-spacing: -.5px; }
+  .modes { display: flex; gap: 6px; background: var(--panel); padding: 4px; border-radius: 12px; }
+  .modes button { border: 0; background: none; padding: 8px 14px; border-radius: 9px; font-weight: 600; color: var(--muted); }
+  .modes button[aria-selected="true"] { background: var(--panel2); color: var(--ink); }
+  .mic { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+  .mic i { width: 9px; height: 9px; border-radius: 50%; background: #6c5a72; }
+  .mic.on i { background: var(--good); box-shadow: 0 0 8px var(--good); }
+  .btn { font-weight: 700; font-size: 15px; padding: 10px 16px; border-radius: 10px; border: 0; background: var(--gold); color: #2a1a12; }
+  .btn.ghost { background: var(--panel2); color: var(--ink); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .note { background: var(--panel); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; color: var(--muted); line-height: 1.5; }
+  .note b { color: var(--ink); }
+  .err { color: var(--off); }
+
+  /* songs */
+  .songs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .song { text-align: left; border: 2px solid transparent; background: var(--panel); border-radius: 14px; padding: 14px; }
+  .song[aria-pressed="true"] { border-color: var(--gold); }
+  .song b { display: block; font-size: 17px; }
+  .song span { color: var(--muted); font-size: 13px; }
+  .song em { display: block; font-style: normal; color: var(--gold); font-size: 13px; margin-top: 6px; min-height: 1em; }
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .bar label { color: var(--muted); font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+  .bar select { font: inherit; background: var(--panel); color: var(--ink); border: 1px solid var(--panel2); border-radius: 8px; padding: 6px 8px; }
+  .score { margin-left: auto; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .score small { font-size: 14px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .stage { position: relative; background: #170f1d; border-radius: 16px; overflow: hidden; }
+  .stage canvas { display: block; width: 100%; height: min(52vh, 420px); }
+  .lyrics { min-height: 46px; padding: 12px 16px; font-size: 22px; text-align: center; color: var(--muted); line-height: 1.4; }
+  .lyrics b { color: var(--gold); }
+  .lyrics span.done { color: var(--ink); }
+  .big { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(23,15,29,.82); gap: 10px; }
+  .big h2 { font-size: 46px; margin: 0; }
+  .big p { margin: 0; color: var(--muted); font-size: 17px; }
+  .stars { font-size: 36px; letter-spacing: 6px; color: var(--gold); }
+  .feedback { position: absolute; right: 16px; top: 12px; font-weight: 800; font-size: 20px; }
+
+  /* tuner */
+  .tuner { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+  .dial { background: var(--panel); border-radius: 18px; padding: 24px; text-align: center; }
+  .dial canvas { width: 100%; max-width: 520px; height: auto; aspect-ratio: 2 / 1.15; }
+  .noteName { font-size: 92px; font-weight: 800; line-height: 1; margin-top: -10px; }
+  .noteName sub { font-size: 34px; color: var(--muted); vertical-align: baseline; margin-left: 2px; }
+  .hz { color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 8px; font-size: 18px; }
+  .inTune { color: var(--good); }
+  .side { background: var(--panel); border-radius: 18px; padding: 18px; }
+  .side h3 { margin: 0 0 10px; font-size: 16px; }
+  .strings { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 18px; }
+  .strings span { min-width: 46px; text-align: center; padding: 8px 6px; border-radius: 9px; background: var(--panel2); font-weight: 700; }
+  .strings span.on { background: var(--gold); color: #2a1a12; }
+  .range { font-size: 22px; font-weight: 700; }
+  .range small { display: block; font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+
+  /* note match */
+  .match { background: var(--panel); border-radius: 18px; padding: 26px; text-align: center; }
+  .match .target { font-size: 80px; font-weight: 800; }
+  .meter { position: relative; height: 28px; max-width: 520px; margin: 18px auto; border-radius: 14px; background: var(--panel2); overflow: hidden; }
+  .meter .zone { position: absolute; left: 45%; width: 10%; top: 0; bottom: 0; background: rgba(126,224,161,.25); }
+  .meter .dot { position: absolute; top: 4px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: var(--ink); left: 50%; transition: left .08s linear; }
+  .hold { height: 8px; max-width: 520px; margin: 0 auto 14px; border-radius: 4px; background: var(--panel2); overflow: hidden; }
+  .hold i { display: block; height: 100%; width: 0; background: var(--good); }
+  .rounds { color: var(--muted); }
+
+  @media (max-width: 760px) {
+    .tuner { grid-template-columns: 1fr; }
+    header.top h1 { font-size: 28px; }
+    .mic { margin-left: 0; }
+    .lyrics { font-size: 18px; }
+    .noteName { font-size: 72px; }
+  }
+</style>
+<meta property="og:title" content="Pitch Singer">
+<meta property="og:description" content="Sing along and see your voice as a line against the melody, scored like karaoke. Also a note-matching ear trainer and a precise tuner. The microphone stays on your device.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/pitch-singer/">
+<meta property="og:image" content="https://rajeshrenato.github.io/pitch-singer/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Sing along and see your voice as a line against the melody, scored like karaoke. Also a note-matching ear trainer and a precise tuner. The microphone stays on your device.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Games", "item": "https://rajeshrenato.github.io/#games"}, {"@type": "ListItem", "position": 3, "name": "Pitch Singer", "item": "https://rajeshrenato.github.io/pitch-singer/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Pitch Singer", "url": "https://rajeshrenato.github.io/pitch-singer/", "description": "Sing along and see your voice as a line against the melody, scored like karaoke. Also a note-matching ear trainer and a precise tuner. The microphone stays on your device.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <header class="top">
+    <h1>Pitch Singer</h1>
+    <div class="modes" role="tablist">
+      <button role="tab" data-mode="sing" aria-selected="true">Sing</button>
+      <button role="tab" data-mode="match" aria-selected="false">Note Match</button>
+      <button role="tab" data-mode="tune" aria-selected="false">Tuner</button>
+    </div>
+    <span class="mic" id="micState"><i></i><span id="micText">Microphone off</span></span>
+  </header>
+
+  <div class="note" id="micNote">
+    <p style="margin:0 0 10px"><b>Sing a song and watch your voice as a line against the melody.</b> Any octave counts, so low and high voices both score. The sound never leaves your device.</p>
+    <button class="btn" id="micBtn">Turn on the microphone</button> <span class="err" id="micErr"></span>
+  </div>
+
+  <section id="sing">
+    <div class="songs" id="songs"></div>
+    <div class="bar">
+      <button class="btn" id="playBtn">Start singing</button>
+      <button class="btn ghost" id="hearBtn">Hear the tune</button>
+      <label>Speed <select id="speed"><option value="0.8">Slow</option><option value="1" selected>Normal</option><option value="1.2">Fast</option></select></label>
+      <label>Tune plays <select id="voice"><option value="-12">Low</option><option value="0" selected>Middle</option><option value="12">High</option></select></label>
+      <span class="score" id="score">0<small>%</small></span>
+    </div>
+    <div class="stage"><canvas id="roll" width="1100" height="420"></canvas><div class="feedback" id="feedback"></div><div class="big" id="overlay" hidden></div></div>
+    <div class="lyrics" id="lyrics">&nbsp;</div>
+  </section>
+
+  <section id="match" hidden>
+    <div class="match">
+      <p class="rounds" id="matchRound">Hear a note, then sing it back and hold it. Ten notes.</p>
+      <div class="target" id="matchTarget">?</div>
+      <div class="meter" aria-hidden="true"><div class="zone"></div><div class="dot" id="matchDot"></div></div>
+      <div class="hold"><i id="matchHold"></i></div>
+      <p id="matchMsg">Any octave counts.</p>
+      <div class="bar" style="justify-content:center"><button class="btn" id="matchBtn">Start</button><button class="btn ghost" id="againBtn" hidden>Play the note again</button></div>
+    </div>
+  </section>
+
+  <section id="tune" hidden>
+    <div class="tuner">
+      <div class="dial">
+        <canvas id="dial" width="520" height="300"></canvas>
+        <div class="noteName" id="tNote">&ndash;</div>
+        <div class="hz" id="tHz">Play or sing a note</div>
+      </div>
+      <div class="side">
+        <h3>Instrument</h3>
+        <div class="bar"><select id="inst">
+          <option value="">Any note</option>
+          <option value="E2 A2 D3 G3 B3 E4">Guitar, standard</option>
+          <option value="D2 A2 D3 G3 B3 E4">Guitar, drop D</option>
+          <option value="E1 A1 D2 G2">Bass</option>
+          <option value="G4 C4 E4 A4">Ukulele</option>
+          <option value="G3 D4 A4 E5">Violin</option>
+          <option value="C3 G3 D4 A4">Viola</option>
+          <option value="C2 G2 D3 A3">Cello</option>
+        </select></div>
+        <div class="strings" id="strings"></div>
+        <h3>Reference</h3>
+        <div class="bar"><label>A4 = <select id="a4"><option>432</option><option>436</option><option>438</option><option selected>440</option><option>442</option><option>444</option></select> Hz</label></div>
+        <h3>Your voice range</h3>
+        <div class="range" id="range">&ndash;<small>Sing your lowest and highest notes.</small></div>
+        <button class="btn ghost" id="rangeReset" style="margin-top:10px;font-size:13px;padding:6px 10px">Reset</button>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="../common/camera.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+let A4 = 440;
+
+// ---- pitch
+
+const freqToMidi = f => 69 + 12 * Math.log2(f / A4);
+const midiToFreq = m => A4 * Math.pow(2, (m - 69) / 12);
+const midiName = m => { const n = Math.round(m); return NAMES[((n % 12) + 12) % 12] + (Math.floor(n / 12) - 1); };
+const parseNote = s => { const m = /^([A-G])(♯|#)?(-?\d)$/.exec(s); if (!m) return null; return (+m[3] + 1) * 12 + [0, 2, 4, 5, 7, 9, 11]['CDEFGAB'.indexOf(m[1])] + (m[2] ? 1 : 0); };
+// distance from p to the nearest octave of t, in semitones (-6 to 6)
+const foldDiff = (p, t) => { let d = (p - t) % 12; if (d > 6) d -= 12; if (d < -6) d += 12; return d; };
+
+// YIN pitch detection (de Cheveigné and Kawahara, 2002). Returns { freq, clarity } or null.
+function yin(buf, sr, threshold = 0.12) {
+  const n = buf.length, half = n >> 1;
+  let sum = 0;
+  for (let i = 0; i < n; i++) sum += buf[i] * buf[i];
+  if (Math.sqrt(sum / n) < 0.008) return null;
+  const minTau = Math.max(2, Math.floor(sr / 1400)), maxTau = Math.min(half - 1, Math.ceil(sr / 55));
+  const d = new Float32Array(maxTau + 2);
+  for (let tau = 1; tau <= maxTau + 1; tau++) {
+    let s = 0;
+    for (let i = 0; i < half; i++) { const x = buf[i] - buf[i + tau]; s += x * x; }
+    d[tau] = s;
+  }
+  // cumulative mean normalized difference
+  d[0] = 1;
+  let run = 0;
+  for (let tau = 1; tau <= maxTau + 1; tau++) { run += d[tau]; d[tau] = run ? d[tau] * tau / run : 1; }
+  let tau = -1;
+  for (let t = minTau; t <= maxTau; t++) {
+    if (d[t] < threshold) { while (t + 1 <= maxTau && d[t + 1] < d[t]) t++; tau = t; break; }
+  }
+  if (tau < 0) return null;
+  const a = d[tau - 1], b = d[tau], c = d[tau + 1];
+  const shift = (a + c - 2 * b) ? (a - c) / (2 * (a + c - 2 * b)) : 0;
+  return { freq: sr / (tau + shift), clarity: 1 - b };
+}
+
+// ---- songs: [midi, beats, syllable]; 0 is a rest. All public domain melodies.
+
+const C4 = 60, D4 = 62, E4 = 64, F4 = 65, G4 = 67, A4n = 69, B4 = 71, C5 = 72, D5 = 74, E5 = 76, F5 = 77, G5 = 79, G3 = 55, A3 = 57;
+const SONGS = [
+  { id: 'twinkle', title: 'Twinkle, Twinkle, Little Star', who: 'Traditional', bpm: 96, notes: [
+    [C4, 1, 'Twin-'], [C4, 1, 'kle'], [G4, 1, 'twin-'], [G4, 1, 'kle'], [A4n, 1, 'lit-'], [A4n, 1, 'tle'], [G4, 2, 'star,'],
+    [F4, 1, 'how'], [F4, 1, 'I'], [E4, 1, 'won-'], [E4, 1, 'der'], [D4, 1, 'what'], [D4, 1, 'you'], [C4, 2, 'are.'],
+    [G4, 1, 'Up'], [G4, 1, 'a-'], [F4, 1, 'bove'], [F4, 1, 'the'], [E4, 1, 'world'], [E4, 1, 'so'], [D4, 2, 'high,'],
+    [G4, 1, 'like'], [G4, 1, 'a'], [F4, 1, 'dia-'], [F4, 1, 'mond'], [E4, 1, 'in'], [E4, 1, 'the'], [D4, 2, 'sky.'],
+    [C4, 1, 'Twin-'], [C4, 1, 'kle'], [G4, 1, 'twin-'], [G4, 1, 'kle'], [A4n, 1, 'lit-'], [A4n, 1, 'tle'], [G4, 2, 'star,'],
+    [F4, 1, 'how'], [F4, 1, 'I'], [E4, 1, 'won-'], [E4, 1, 'der'], [D4, 1, 'what'], [D4, 1, 'you'], [C4, 2, 'are.'] ] },
+  { id: 'mary', title: 'Mary Had a Little Lamb', who: 'Traditional', bpm: 104, notes: [
+    [E4, 1, 'Ma-'], [D4, 1, 'ry'], [C4, 1, 'had'], [D4, 1, 'a'], [E4, 1, 'lit-'], [E4, 1, 'tle'], [E4, 2, 'lamb,'],
+    [D4, 1, 'lit-'], [D4, 1, 'tle'], [D4, 2, 'lamb,'], [E4, 1, 'lit-'], [G4, 1, 'tle'], [G4, 2, 'lamb.'],
+    [E4, 1, 'Ma-'], [D4, 1, 'ry'], [C4, 1, 'had'], [D4, 1, 'a'], [E4, 1, 'lit-'], [E4, 1, 'tle'], [E4, 1, 'lamb,'], [E4, 1, 'its'],
+    [D4, 1, 'fleece'], [D4, 1, 'was'], [E4, 1, 'white'], [D4, 1, 'as'], [C4, 4, 'snow.'] ] },
+  { id: 'row', title: 'Row, Row, Row Your Boat', who: 'Traditional', bpm: 100, notes: [
+    [C4, 1.5, 'Row,'], [C4, 1.5, 'row,'], [C4, 1, 'row'], [D4, 0.5, 'your'], [E4, 1.5, 'boat'],
+    [E4, 1, 'gent-'], [D4, 0.5, 'ly'], [E4, 1, 'down'], [F4, 0.5, 'the'], [G4, 3, 'stream.'],
+    [C5, 0.5, 'Mer-'], [C5, 0.5, 'ri-'], [C5, 0.5, 'ly,'], [G4, 0.5, 'mer-'], [G4, 0.5, 'ri-'], [G4, 0.5, 'ly,'],
+    [E4, 0.5, 'mer-'], [E4, 0.5, 'ri-'], [E4, 0.5, 'ly,'], [C4, 0.5, 'mer-'], [C4, 0.5, 'ri-'], [C4, 0.5, 'ly,'],
+    [G4, 1, 'life'], [F4, 0.5, 'is'], [E4, 1, 'but'], [D4, 0.5, 'a'], [C4, 3, 'dream.'] ] },
+  { id: 'jacques', title: 'Are You Sleeping (Frère Jacques)', who: 'Traditional', bpm: 100, notes: [
+    [C4, 1, 'Are'], [D4, 1, 'you'], [E4, 1, 'sleep-'], [C4, 1, 'ing,'], [C4, 1, 'are'], [D4, 1, 'you'], [E4, 1, 'sleep-'], [C4, 1, 'ing,'],
+    [E4, 1, 'Bro-'], [F4, 1, 'ther'], [G4, 2, 'John,'], [E4, 1, 'Bro-'], [F4, 1, 'ther'], [G4, 2, 'John?'],
+    [G4, 0.5, 'Morn-'], [A4n, 0.5, 'ing'], [G4, 0.5, 'bells'], [F4, 0.5, 'are'], [E4, 1, 'ring-'], [C4, 1, 'ing,'],
+    [G4, 0.5, 'morn-'], [A4n, 0.5, 'ing'], [G4, 0.5, 'bells'], [F4, 0.5, 'are'], [E4, 1, 'ring-'], [C4, 1, 'ing,'],
+    [C4, 1, 'ding,'], [G3, 1, 'dang,'], [C4, 2, 'dong,'], [C4, 1, 'ding,'], [G3, 1, 'dang,'], [C4, 2, 'dong.'] ] },
+  { id: 'ode', title: 'Ode to Joy', who: 'Beethoven', bpm: 104, notes: [
+    [E4, 1, 'Joy-'], [E4, 1, 'ful,'], [F4, 1, 'joy-'], [G4, 1, 'ful,'], [G4, 1, 'we'], [F4, 1, 'a-'], [E4, 1, 'dore'], [D4, 1, 'thee,'],
+    [C4, 1, 'God'], [C4, 1, 'of'], [D4, 1, 'glo-'], [E4, 1, 'ry,'], [E4, 1.5, 'Lord'], [D4, 0.5, 'of'], [D4, 2, 'love.'],
+    [E4, 1, 'Hearts'], [E4, 1, 'un-'], [F4, 1, 'fold'], [G4, 1, 'like'], [G4, 1, 'flowers'], [F4, 1, 'be-'], [E4, 1, 'fore'], [D4, 1, 'thee,'],
+    [C4, 1, 'o-'], [C4, 1, 'pening'], [D4, 1, 'to'], [E4, 1, 'the'], [D4, 1.5, 'sun'], [C4, 0.5, 'a-'], [C4, 2, 'bove.'] ] },
+  { id: 'jingle', title: 'Jingle Bells', who: 'James Lord Pierpont', bpm: 120, notes: [
+    [E4, 1, 'Jin-'], [E4, 1, 'gle'], [E4, 2, 'bells,'], [E4, 1, 'jin-'], [E4, 1, 'gle'], [E4, 2, 'bells,'],
+    [E4, 1, 'jin-'], [G4, 1, 'gle'], [C4, 1.5, 'all'], [D4, 0.5, 'the'], [E4, 4, 'way!'],
+    [F4, 1, 'Oh'], [F4, 1, 'what'], [F4, 1.5, 'fun'], [F4, 0.5, 'it'], [F4, 1, 'is'], [E4, 1, 'to'], [E4, 1, 'ride'], [E4, 0.5, 'in'], [E4, 0.5, 'a'],
+    [E4, 1, 'one'], [D4, 1, 'horse'], [D4, 1, 'o-'], [E4, 1, 'pen'], [D4, 2, 'sleigh,'], [G4, 2, 'hey!'],
+    [E4, 1, 'Jin-'], [E4, 1, 'gle'], [E4, 2, 'bells,'], [E4, 1, 'jin-'], [E4, 1, 'gle'], [E4, 2, 'bells,'],
+    [E4, 1, 'jin-'], [G4, 1, 'gle'], [C4, 1.5, 'all'], [D4, 0.5, 'the'], [E4, 4, 'way!'],
+    [F4, 1, 'Oh'], [F4, 1, 'what'], [F4, 1.5, 'fun'], [F4, 0.5, 'it'], [F4, 1, 'is'], [E4, 1, 'to'], [E4, 1, 'ride'], [E4, 0.5, 'in'], [E4, 0.5, 'a'],
+    [G4, 1, 'one'], [G4, 1, 'horse'], [F4, 1, 'o-'], [D4, 1, 'pen'], [C4, 4, 'sleigh.'] ] },
+  { id: 'birthday', title: 'Happy Birthday', who: 'Mildred and Patty Hill', bpm: 92, notes: [
+    [G4, 0.75, 'Hap-'], [G4, 0.25, 'py'], [A4n, 1, 'birth-'], [G4, 1, 'day'], [C5, 1, 'to'], [B4, 2, 'you,'],
+    [G4, 0.75, 'hap-'], [G4, 0.25, 'py'], [A4n, 1, 'birth-'], [G4, 1, 'day'], [D5, 1, 'to'], [C5, 2, 'you,'],
+    [G4, 0.75, 'hap-'], [G4, 0.25, 'py'], [G5, 1, 'birth-'], [E5, 1, 'day'], [C5, 1, 'dear'], [B4, 1, 'fri-'], [A4n, 2, 'end,'],
+    [F5, 0.75, 'hap-'], [F5, 0.25, 'py'], [E5, 1, 'birth-'], [C5, 1, 'day'], [D5, 1, 'to'], [C5, 2, 'you!'] ] },
+];
+
+// Each note's start and end in beats.
+function timeline(song) {
+  let b = 0;
+  return song.notes.map(([m, len, word]) => { const n = { m, start: b, end: b + len, word }; b += len; return n; });
+}
+
+// ---- scoring
+
+// How good one moment is: on the note (within 25 cents) is full marks, close is part.
+function frameScore(p, t) {
+  if (p === null) return 0;
+  const d = Math.abs(foldDiff(p, t));
+  return d <= 0.25 ? 1 : d <= 0.6 ? 0.6 : d <= 1 ? 0.25 : 0;
+}
+
+// A run through a song. feed(beat, midiOrNull) every frame; the score is the
+// average of each note's average, in percent.
+function newRun(song) {
+  const notes = timeline(song).map(n => ({ ...n, sum: 0, frames: 0 }));
+  return {
+    song, notes, trail: [],
+    feed(beat, p) {
+      this.trail.push([beat, p]);
+      if (this.trail.length > 4000) this.trail.splice(0, 1000);
+      for (const n of notes) {
+        // a little slack at both ends for reaction time and the mic's delay
+        if (beat >= n.start + 0.1 && beat < n.end - 0.05) { n.sum += frameScore(p, n.m); n.frames++; }
+      }
+    },
+    noteScore(n) { return n.frames ? n.sum / n.frames : 0; },
+    score(upToBeat = Infinity) {
+      const done = notes.filter(n => n.end <= upToBeat && n.frames);
+      return done.length ? Math.round(100 * done.reduce((s, n) => s + this.noteScore(n), 0) / done.length) : 0;
+    },
+  };
+}
+const starsFor = pct => (pct >= 85 ? 3 : pct >= 70 ? 2 : pct >= 50 ? 1 : 0);
+
+// ---- audio in
+
+let audio = null, analyser = null, micStream = null, sampleBuf = null;
+let current = null;      // smoothed { midi, freq } or null
+const recent = [];
+
+async function startMic() {
+  $('micErr').textContent = '';
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const stop = CameraHelp.watch(t => { $('micErr').textContent = t; }, 'microphone');
+    try { micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
+    finally { stop(); }
+    $('micErr').textContent = '';
+    const src = audio.createMediaStreamSource(micStream);
+    analyser = audio.createAnalyser();
+    analyser.fftSize = 2048;
+    src.connect(analyser);
+    sampleBuf = new Float32Array(analyser.fftSize);
+    if (audio.state === 'suspended') await audio.resume();
+    $('micNote').hidden = true;
+    $('micState').classList.add('on');
+    $('micText').textContent = 'Listening';
+    return true;
+  } catch (e) {
+    $('micErr').textContent = await CameraHelp.explain(e, 'microphone');
+    CameraHelp.onGranted('microphone', () => { if (!analyser) startMic(); });
+    return false;
+  }
+}
+
+// One reading per frame, smoothed with the median of the last three.
+function listen() {
+  if (!analyser) return null;
+  analyser.getFloatTimeDomainData(sampleBuf);
+  const r = yin(sampleBuf, audio.sampleRate);
+  recent.push(r && r.clarity > 0.8 ? freqToMidi(r.freq) : null);
+  if (recent.length > 3) recent.shift();
+  const voiced = recent.filter(v => v !== null);
+  if (voiced.length < 2) { current = null; return null; }
+  voiced.sort((a, b) => a - b);
+  const m = voiced[voiced.length >> 1];
+  current = { midi: m, freq: midiToFreq(m) };
+  return m;
+}
+
+// ---- sound out
+
+function tone(midi, at, len, vol = 0.18) {
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = 'triangle';
+  o.frequency.value = midiToFreq(midi);
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(vol, at + 0.02);
+  g.gain.setValueAtTime(vol, at + Math.max(0.03, len - 0.06));
+  g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+  o.connect(g).connect(audio.destination);
+  o.start(at); o.stop(at + len + 0.02);
+}
+function click(at, high) {
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.frequency.value = high ? 1800 : 1200;
+  g.gain.setValueAtTime(0.12, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.05);
+  o.connect(g).connect(audio.destination);
+  o.start(at); o.stop(at + 0.06);
+}
+function ensureAudio() { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); }
+
+// ---- Sing
+
+let song = SONGS[0], run = null, playing = null;   // playing: { t0 (audio time of beat 0), spb (seconds per beat), until, hearing }
+const best = id => { try { return +localStorage.getItem('pitchsinger_best_' + id) || 0; } catch (e) { return 0; } };
+
+function drawSongs() {
+  $('songs').innerHTML = '';
+  for (const s of SONGS) {
+    const b = document.createElement('button');
+    b.className = 'song';
+    b.setAttribute('aria-pressed', s === song ? 'true' : 'false');
+    const bs = best(s.id);
+    const part = (tag, text) => { const el = document.createElement(tag); el.textContent = text; b.appendChild(el); };
+    part('b', s.title);
+    part('span', s.who + ', ' + s.notes.length + ' notes');
+    part('em', bs ? 'Best ' + bs + '% ' + '★'.repeat(starsFor(bs)) : '');
+    b.onclick = () => { if (playing) stopSong(); song = s; drawSongs(); drawRoll(); };
+    $('songs').appendChild(b);
+  }
+}
+
+const speed = () => +$('speed').value || 1;
+const beatNow = () => (playing ? (audio.currentTime - playing.t0) / playing.spb : -4);
+
+async function startSong(hearing) {
+  if (!hearing && !analyser && !(await startMic())) return;
+  ensureAudio();
+  stopSong();
+  const spb = 60 / (song.bpm * speed());
+  const t0 = audio.currentTime + 0.3 + 4 * spb;
+  for (let i = 0; i < 4; i++) click(audio.currentTime + 0.3 + i * spb, i === 0);
+  const tl = timeline(song);
+  if (hearing) for (const n of tl) if (n.m) tone(n.m + (+$('voice').value), t0 + n.start * spb, (n.end - n.start) * spb * 0.95);
+  playing = { t0, spb, until: tl[tl.length - 1].end + 1, hearing };
+  run = hearing ? null : newRun(song);
+  $('overlay').hidden = true;
+  $('playBtn').textContent = 'Stop';
+  $('hearBtn').disabled = true;
+}
+
+function stopSong(finished) {
+  if (!playing) return;
+  const wasHearing = playing.hearing;
+  playing = null;
+  $('playBtn').textContent = 'Start singing';
+  $('hearBtn').disabled = false;
+  $('feedback').textContent = '';
+  if (finished && run && !wasHearing) showResult(run.score());
+}
+
+function showResult(pct) {
+  const prev = best(song.id);
+  if (pct > prev) { try { localStorage.setItem('pitchsinger_best_' + song.id, pct); } catch (e) { } }
+  const s = starsFor(pct);
+  const o = $('overlay');
+  o.hidden = false;
+  o.innerHTML = '<div class="stars">' + '★'.repeat(s) + '<span style="opacity:.25">' + '★'.repeat(3 - s) + '</span></div><h2>' + pct + '%</h2><p>' +
+    (pct > prev && prev ? 'A new best, up from ' + prev + '%.' : pct >= 85 ? 'Right on the notes.' : pct >= 70 ? 'Nicely done.' : pct >= 50 ? 'Getting there. Try it slower, or hear the tune first.' : 'Hear the tune first, then sing along.') +
+    '</p><div class="bar" style="justify-content:center;margin-top:8px"><button class="btn" id="againSong">Sing it again</button></div>';
+  $('againSong').onclick = () => startSong(false);
+  drawSongs();
+}
+
+// The piano roll: notes scroll left past a line, and your voice draws itself in.
+function drawRoll() {
+  const cv = $('roll'), g = cv.getContext('2d');
+  const W = cv.clientWidth || 1100, H = cv.clientHeight || 420, dpr = Math.min(2, devicePixelRatio || 1);
+  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  const tl = timeline(song), ms = tl.filter(n => n.m).map(n => n.m);
+  const lo = Math.min(...ms) - 2, hi = Math.max(...ms) + 2, rows = hi - lo + 1, rh = H / rows;
+  const y = m => H - (m - lo + 0.5) * rh;
+  const beat = beatNow(), pxb = Math.max(60, W / 10), headX = W * 0.28, x = b => headX + (b - beat) * pxb;
+  // rows, with the note names of the white keys
+  g.font = '12px system-ui, sans-serif';
+  for (let m = lo; m <= hi; m++) {
+    const black = [1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12);
+    g.fillStyle = black ? 'rgba(255,255,255,.015)' : 'rgba(255,255,255,.04)';
+    g.fillRect(0, y(m) - rh / 2, W, rh - 1);
+    if (!black) { g.fillStyle = 'rgba(251,239,227,.35)'; g.fillText(midiName(m), 6, y(m) + 4); }
+  }
+  // target notes
+  tl.forEach((n, i) => {
+    if (!n.m) return;
+    const x0 = x(n.start), x1 = x(n.end);
+    if (x1 < 0 || x0 > W) return;
+    const rn = run && run.notes[i], q = rn && rn.frames ? run.noteScore(rn) : null;
+    const top = y(n.m) - rh * 0.38, h = rh * 0.76;
+    g.fillStyle = q === null ? 'rgba(255,179,71,.28)' : q > 0.7 ? 'rgba(126,224,161,.75)' : q > 0.35 ? 'rgba(255,179,71,.7)' : 'rgba(255,122,122,.45)';
+    g.beginPath(); g.roundRect ? g.roundRect(x0 + 1, top, Math.max(4, x1 - x0 - 3), h, Math.min(8, h / 2)) : g.rect(x0 + 1, top, x1 - x0 - 3, h); g.fill();
+    g.fillStyle = 'rgba(251,239,227,.8)';
+    g.fillText(n.word, x0 + 4, top - 4);
+  });
+  // the line where you sing
+  g.fillStyle = 'rgba(251,239,227,.5)';
+  g.fillRect(headX - 1, 0, 2, H);
+  // your voice, moved to the octave nearest the melody so it lines up
+  if (run) {
+    const at = b => { const n = tl.find(k => k.m && b >= k.start - 1 && b < k.end + 1) || tl.find(k => k.m); return n.m; };
+    g.lineWidth = 4; g.lineCap = 'round';
+    let prev = null;
+    for (const [b, p] of run.trail) {
+      if (p === null || x(b) < -10) { prev = null; continue; }
+      const t = at(b), shown = t + foldDiff(p, t), px = x(b), py = y(shown);
+      if (prev && px - prev[0] < 12) {
+        g.strokeStyle = Math.abs(foldDiff(p, t)) <= 0.25 ? '#ffd27a' : 'rgba(251,239,227,.85)';
+        g.beginPath(); g.moveTo(prev[0], prev[1]); g.lineTo(px, py); g.stroke();
+      }
+      prev = [px, py];
+    }
+  } else if (current && !playing) {
+    const m = (lo + hi) / 2, shown = Math.round(m) + foldDiff(current.midi, Math.round(m));
+    g.fillStyle = '#ffd27a'; g.beginPath(); g.arc(headX, y(shown), 7, 0, 7); g.fill();
+  }
+  if (playing && beat < 0) {
+    g.fillStyle = 'rgba(251,239,227,.9)'; g.font = '800 64px system-ui, sans-serif'; g.textAlign = 'center';
+    g.fillText(String(Math.ceil(-beat)), W / 2, H / 2 + 20); g.textAlign = 'left';
+  }
+}
+
+function drawLyrics() {
+  const tl = timeline(song), b = beatNow();
+  let i = tl.findIndex(n => b < n.end);
+  if (i < 0) i = tl.length - 1;
+  // show the line the current syllable is in: lines end at punctuation
+  let s = i;
+  while (s > 0 && !/[,.!?]$/.test(tl[s - 1].word)) s--;
+  let e = i;
+  while (e < tl.length - 1 && !/[,.!?]$/.test(tl[e].word)) e++;
+  const parts = [];
+  for (let k = s; k <= e; k++) {
+    const w = tl[k].word.replace(/[&<>]/g, '');
+    const shown = k === i && playing && b >= -0.2 ? '<b>' + w + '</b>' : k < i && playing ? '<span class="done">' + w + '</span>' : w;
+    parts.push(shown + (w.endsWith('-') ? '' : ' '));
+  }
+  $('lyrics').innerHTML = parts.join('').trim() || '&nbsp;';
+}
+
+// ---- Note Match
+
+let match = null;   // { round, target, since, held, score, startAt }
+const MATCH_ROUNDS = 10, HOLD = 0.8;
+
+async function startMatch() {
+  if (!analyser && !(await startMic())) return;
+  ensureAudio();
+  match = { round: 0, score: 0 };
+  nextMatch();
+}
+function nextMatch() {
+  match.round++;
+  if (match.round > MATCH_ROUNDS) {
+    const pct = Math.round(match.score / MATCH_ROUNDS);
+    try { if (pct > (+localStorage.getItem('pitchsinger_match') || 0)) localStorage.setItem('pitchsinger_match', pct); } catch (e) { }
+    $('matchTarget').textContent = pct + '%';
+    $('matchRound').textContent = 'Done. Ten notes, scored for how close and how quickly you matched them.';
+    $('matchMsg').textContent = 'Best: ' + (+localStorage.getItem('pitchsinger_match') || pct) + '%';
+    $('matchBtn').textContent = 'Play again'; $('matchBtn').hidden = false; $('againBtn').hidden = true;
+    match = null;
+    return;
+  }
+  match.target = 55 + Math.floor(Math.random() * 18);   // G3 to C5
+  match.held = 0; match.startAt = audio.currentTime + 0.1; match.done = false;
+  tone(match.target, audio.currentTime + 0.05, 1.1, 0.22);
+  $('matchTarget').textContent = NAMES[match.target % 12];
+  $('matchRound').textContent = 'Note ' + match.round + ' of ' + MATCH_ROUNDS + '. Sing it back and hold it.';
+  $('matchMsg').textContent = 'Any octave counts.';
+  $('matchBtn').hidden = true; $('againBtn').hidden = false;
+}
+function matchStep(dt) {
+  if (!match || match.done) return;
+  const p = current ? current.midi : null;
+  const d = p === null ? null : foldDiff(p, match.target);
+  $('matchDot').style.left = d === null ? '50%' : Math.max(2, Math.min(98, 50 + d * 50)) + '%';
+  $('matchDot').style.opacity = d === null ? 0.25 : 1;
+  if (d !== null && Math.abs(d) <= 0.25) match.held += dt; else match.held = Math.max(0, match.held - dt * 0.5);
+  $('matchHold').style.width = Math.min(100, 100 * match.held / HOLD) + '%';
+  const waited = audio.currentTime - match.startAt;
+  if (match.held >= HOLD) {
+    match.done = true;
+    const pts = Math.round(Math.max(40, 100 - Math.max(0, waited - 1.5) * 10));
+    match.score += pts;
+    $('matchMsg').textContent = 'Matched! +' + pts;
+    setTimeout(nextMatch, 900);
+  } else if (waited > 9) {
+    match.done = true;
+    $('matchMsg').textContent = 'Out of time. It was ' + NAMES[match.target % 12] + '.';
+    setTimeout(nextMatch, 1200);
+  }
+}
+
+// ---- Tuner
+
+let range = { lo: null, hi: null };
+try { const r = JSON.parse(localStorage.getItem('pitchsinger_range') || 'null'); if (r && Number.isFinite(r.lo) && Number.isFinite(r.hi)) range = r; } catch (e) { }
+let rangeVotes = new Map();
+
+function strings() { return ($('inst').value || '').split(' ').filter(Boolean).map(parseNote); }
+
+// The string a note is closest to, or null for "any note".
+function nearestString(midi, list) {
+  if (!list.length) return null;
+  return list.reduce((b, s) => (Math.abs(midi - s) < Math.abs(midi - b) ? s : b), list[0]);
+}
+
+function tuneStep() {
+  const list = strings();
+  const p = current ? current.midi : null;
+  let target = null, cents = null;
+  if (p !== null) {
+    target = list.length ? nearestString(p, list) : Math.round(p);
+    cents = Math.round((p - target) * 100);
+    if (Math.abs(cents) > 400) cents = null;
+    trackRange(p);
+  }
+  $('strings').innerHTML = list.map(s => '<span' + (s === target ? ' class="on"' : '') + '>' + midiName(s) + '</span>').join('');
+  if (target === null || cents === null) { drawDial(null); return; }
+  const n = midiName(target);
+  $('tNote').innerHTML = n.replace(/(-?\d+)$/, '<sub>$1</sub>');
+  $('tNote').className = 'noteName' + (Math.abs(cents) <= 5 ? ' inTune' : '');
+  $('tHz').textContent = current.freq.toFixed(1) + ' Hz, ' + (cents === 0 ? 'in tune' : (cents > 0 ? '+' : '') + cents + ' cents' + (Math.abs(cents) <= 5 ? ', in tune' : cents > 0 ? ', too high' : ', too low'));
+  drawDial(cents);
+}
+
+// Only notes held for a few frames count toward the range, so a squeak doesn't.
+function trackRange(p) {
+  const k = Math.round(p);
+  rangeVotes.set(k, (rangeVotes.get(k) || 0) + 1);
+  if (rangeVotes.get(k) < 12 || k < 28 || k > 96) return;
+  if (range.lo === null || k < range.lo) range.lo = k;
+  if (range.hi === null || k > range.hi) range.hi = k;
+  try { localStorage.setItem('pitchsinger_range', JSON.stringify(range)); } catch (e) { }
+  drawRange();
+}
+function drawRange() {
+  $('range').innerHTML = range.lo === null ? '&ndash;<small>Sing your lowest and highest notes.</small>'
+    : midiName(range.lo) + ' to ' + midiName(range.hi) + '<small>' + (range.hi - range.lo) + ' semitones, about ' + ((range.hi - range.lo) / 12).toFixed(1) + ' octaves</small>';
+}
+
+function drawDial(cents) {
+  const cv = $('dial'), g = cv.getContext('2d'), W = cv.width, H = cv.height, cx = W / 2, cy = H - 20, r = H - 50;
+  g.clearRect(0, 0, W, H);
+  g.lineCap = 'round';
+  for (let c = -50; c <= 50; c += 5) {
+    const a = Math.PI * (1.5 + c / 100 * 1.1), big = c % 25 === 0;
+    g.strokeStyle = Math.abs(c) <= 5 ? '#7ee0a1' : 'rgba(251,239,227,' + (big ? 0.6 : 0.25) + ')';
+    g.lineWidth = big ? 4 : 2;
+    g.beginPath(); g.moveTo(cx + Math.cos(a) * (r - (big ? 26 : 14)), cy + Math.sin(a) * (r - (big ? 26 : 14))); g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); g.stroke();
+  }
+  g.fillStyle = 'rgba(251,239,227,.5)'; g.font = '14px system-ui, sans-serif'; g.textAlign = 'center';
+  g.fillText('flat', cx - r * 0.78, cy - 8); g.fillText('sharp', cx + r * 0.78, cy - 8);
+  if (cents === null) { $('tNote').innerHTML = '&ndash;'; $('tNote').className = 'noteName'; $('tHz').textContent = 'Play or sing a note'; return; }
+  const c = Math.max(-50, Math.min(50, cents)), a = Math.PI * (1.5 + c / 100 * 1.1);
+  g.strokeStyle = Math.abs(cents) <= 5 ? '#7ee0a1' : '#ffb347'; g.lineWidth = 5;
+  g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * (r - 34), cy + Math.sin(a) * (r - 34)); g.stroke();
+  g.fillStyle = g.strokeStyle; g.beginPath(); g.arc(cx, cy, 9, 0, 7); g.fill();
+}
+
+// ---- the loop
+
+let mode = 'sing', lastT = 0;
+function frame(t) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, (t - lastT) / 1000 || 0);
+  lastT = t;
+  const p = listen();
+  if (mode === 'sing') {
+    if (playing) {
+      const b = beatNow();
+      if (run && b >= 0) {
+        run.feed(b, p);
+        const tl = run.notes, n = tl.find(k => k.m && b >= k.start && b < k.end);
+        $('feedback').textContent = n && p !== null ? (Math.abs(foldDiff(p, n.m)) <= 0.25 ? 'On it' : foldDiff(p, n.m) > 0 ? 'A bit high' : 'A bit low') : '';
+        $('feedback').style.color = n && p !== null && Math.abs(foldDiff(p, n.m)) <= 0.25 ? 'var(--good)' : 'var(--muted)';
+        $('score').innerHTML = run.score(b) + '<small>%</small>';
+      }
+      if (b > playing.until) stopSong(true);
+    }
+    drawRoll();
+    drawLyrics();
+  } else if (mode === 'match') matchStep(dt);
+  else tuneStep();
+}
+
+function setMode(m) {
+  mode = m;
+  if (m !== 'sing') stopSong();
+  for (const b of document.querySelectorAll('[data-mode]')) b.setAttribute('aria-selected', b.dataset.mode === m ? 'true' : 'false');
+  for (const s of ['sing', 'match', 'tune']) $(s).hidden = s !== m;
+  if (m === 'tune' && !analyser) startMic();
+}
+
+for (const b of document.querySelectorAll('[data-mode]')) b.onclick = () => setMode(b.dataset.mode);
+$('micBtn').onclick = startMic;
+$('playBtn').onclick = () => (playing ? stopSong() : startSong(false));
+$('hearBtn').onclick = () => startSong(true);
+$('matchBtn').onclick = startMatch;
+$('againBtn').onclick = () => { if (match && !match.done) { tone(match.target, audio.currentTime + 0.05, 1.1, 0.22); } };
+$('a4').onchange = () => { A4 = +$('a4').value; };
+$('rangeReset').onclick = () => { range = { lo: null, hi: null }; rangeVotes = new Map(); try { localStorage.removeItem('pitchsinger_range'); } catch (e) { } drawRange(); };
+addEventListener('keydown', e => { if (e.code === 'Space' && mode === 'sing' && e.target === document.body) { e.preventDefault(); $('playBtn').click(); } });
+(async () => { try { if ((await navigator.permissions.query({ name: 'microphone' })).state === 'granted') startMic(); } catch (e) { } })();
+drawSongs();
+drawRange();
+requestAnimationFrame(frame);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Pitch Singer</h2>
+<p>Sing along and see your voice as a line against the melody, scored like karaoke. It also has an ear trainer that plays a note for you to sing back, and a precise tuner for your voice or an instrument. The microphone stays on your device.</p>
+<h3>Use</h3>
+<p>The microphone needs <code>https://</code> or <code>http://localhost</code>. Headphones help when you play the tune, so the speaker doesn't sing along with you.</p>
+<p>### Sing</p>
+<p>Pick a song. Hear the tune plays the melody once. Start singing gives you four clicks to count in, then the notes scroll past a line, with the words on them and the whole line of lyrics underneath. As you sing, your voice draws itself in: gold when you're on the note, white when you're off. Notes turn green, orange, or red behind you, and the score counts up.</p>
+<p>Any octave counts, so a deep voice and a high voice score the same for the same tune. The speed can be slow, normal, or fast, and "Tune plays" sets how high Hear the tune plays it. Your best score for each song is kept in this browser, with up to three stars.</p>
+<p>The songs are all public domain: Twinkle, Twinkle, Little Star; Mary Had a Little Lamb; Row, Row, Row Your Boat; Are You Sleeping (Frère Jacques); Ode to Joy; Jingle Bells; and Happy Birthday.</p>
+<p>### Note Match</p>
+<p>A note plays and its name shows. Sing it back and hold it for a moment. A dot shows how far off you are, and a bar fills while you're on it. Ten notes, scored for how close and how fast you got there. Any octave counts here too.</p>
+<p>### Tuner</p>
+<p>Sing or play a note to see its name, its frequency, and how many cents sharp or flat it is. Within 5 cents, it shows in green. Pick an instrument (guitar, drop D, bass, ukulele, violin, viola, or cello) to tune to its strings, or leave it on any note. The reference A can be set from 432 to 444 Hz. It also keeps track of the lowest and highest notes you've held, to show your vocal range.</p>
+<h3>Scoring</h3>
+<p>Every frame (about 60 a second) is scored against the note you should be singing: within 25 cents (a quarter of a semitone) is full marks, within 60 cents is 60%, within a semitone is 25%, and anything further or silence is 0. A note's score is the average over its length, leaving a little room at the start for reaction time and the microphone's delay. The song's score is the average over its notes. Three stars at 85%, two at 70%, one at 50%.</p>
+<h3>How it works</h3>
+<ul><li>Pitch is found with the YIN algorithm (de Cheveigné and Kawahara, 2002), written from scratch: the difference between the sound and shifted copies of itself, normalized, then the first dip below a threshold, refined with a parabola between samples. It works from 55 Hz to 1400 Hz, which covers voices and most instruments, and ignores silence and noise.</li><li>Each reading is the median of the last three, which removes one-frame jumps. The microphone is opened with echo cancellation, noise suppression, and automatic gain turned off, since those change the sound in ways that confuse pitch tracking.</li><li>"Any octave counts" works by folding: the distance between your note and the target is wrapped into one octave, from 6 semitones down to 6 up. The line on screen is drawn in the octave nearest the melody, so it lines up with the notes whatever your range.</li><li>The melody, the clicks, and Note Match's notes are played with the Web Audio API.</li></ul>
+<p class="pg-more">More like this: <a href="../breach/">Breach</a>, <a href="../arrow-flux/">Arrow Flux</a>, <a href="../miami-nights/">Miami Nights</a>, <a href="../dune-drift/">Dune Drift</a>. Or see <a href="../#games">all games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/pitch-singer">pitch-singer on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

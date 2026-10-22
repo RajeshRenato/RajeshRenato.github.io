@@ -86,17 +86,17 @@ function initGame() {
   cam.y = spawnPoint.y - H / 2;
 
   // starter car beside the spawn point
-  const starter = new Car(44.5 * TILE, 40.5 * TILE, Math.PI, '#ff6fb0');
+  const starter = new Car(44.5 * TILE, 40.5 * TILE, Math.PI, '#ff6fb0', 'civ', 'sports');
   Game.cars.push(starter);
 
   for (let i = 0; i < 26; i++) {
     const s = randomParkSpot();
-    if (s) Game.cars.push(new Car(s.x, s.y, s.angle, pick(CAR_COLORS)));
+    if (s) Game.cars.push(new Car(s.x, s.y, s.angle, pick(MODEL_PAINT), 'civ', pickTrafficModel(Math.random())));
   }
   for (let i = 0; i < 34; i++) {
     const t = randomRoadTileNear(Player.x, Player.y, 300, 1600);
     if (t) {
-      const c = new Car((t.tx + 0.5) * TILE, (t.ty + 0.5) * TILE, Math.atan2(t.dir.y, t.dir.x), pick(CAR_COLORS));
+      const c = new Car((t.tx + 0.5) * TILE, (t.ty + 0.5) * TILE, Math.atan2(t.dir.y, t.dir.x), pick(MODEL_PAINT), 'civ', pickTrafficModel(Math.random()));
       c.hasDriver = true;
       c.ai = { dir: t.dir, target: null };
       Game.cars.push(c);

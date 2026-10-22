@@ -34,6 +34,7 @@
   .go button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b3365a; }
   button:focus-visible, input:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
   .small { font-size: 13px; color: var(--muted); }
+  .small.warn { color: #ffb4a8; font-size: 14px; line-height: 1.45; }
   #big { font-size: 64px; font-weight: 900; color: var(--sun); margin: 4px 0; }
   #tools { position: fixed; right: 12px; top: 10px; z-index: 3; display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted);
            background: rgba(20, 14, 26, .55); padding: 6px 10px; border-radius: 10px; }
@@ -76,6 +77,7 @@
   </div>
 </div>
 
+<script src="../common/camera.js"></script>
 <script>
 'use strict';
 
@@ -285,17 +287,28 @@ function readCamera() {
 async function startCamera() {
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no camera api');
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    const stop = CameraHelp.watch(t => { $('camNote').textContent = t; $('camNote').classList.add('warn'); });
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false }); }
+    finally { stop(); }
+    $('camNote').classList.remove('warn');
     video.srcObject = stream;
     await video.play();
     G.camera = true;
     return true;
   } catch (e) {
     G.camera = false;
-    $('camNote').textContent = "The camera isn't available, so this game uses swipes. Use a mouse or your finger.";
+    // stay on the menu and say why, so the button doesn't seem to do nothing
+    $('camNote').textContent = (await CameraHelp.explain(e, 'camera')) + ' Or play with the mouse or touch instead.';
+    $('camNote').classList.add('warn');
+    if (!waitingForCamera) {
+      waitingForCamera = true;
+      CameraHelp.onGranted('camera', async () => { if (G.mode === 'menu' && await startCamera()) startGame(pick, true); });
+    }
     return false;
   }
 }
+let waitingForCamera = false;
 
 function stopCamera() {
   const s = video.srcObject;
@@ -533,7 +546,7 @@ let pick = 'classic';
 function setPick(g) { pick = g; $('mClassic').classList.toggle('on', g === 'classic'); $('mZen').classList.toggle('on', g === 'zen'); }
 $('mClassic').onclick = () => setPick('classic');
 $('mZen').onclick = () => setPick('zen');
-$('camBtn').onclick = async () => { const ok = await startCamera(); startGame(pick, ok); };
+$('camBtn').onclick = async () => { if (await startCamera()) startGame(pick, true); };
 $('swipeBtn').onclick = () => { stopCamera(); startGame(pick, false); };
 $('againBtn').onclick = () => startGame(G.game, G.camera);
 $('menuBtn').onclick = () => { G.mode = 'menu'; $('over').hidden = true; $('menu').hidden = false; $('tools').hidden = true; };
@@ -565,7 +578,7 @@ requestAnimationFrame(frame);
 <p>The hold-still step at the start measures how much the picture changes on its own (camera noise, flicker, a fan in the background) and raises the bar by that much. The sensitivity slider moves both the per-pixel threshold and the share of a fruit that has to move.</p>
 <p>The camera picture never leaves the device. Nothing is recorded or sent.</p>
 <p>Limits: any movement counts, not just hands, so a busy background or someone walking past can slice fruit. A plain background and good light work best. If the camera isn't available or permission is refused, the game switches to swipes.</p>
-<p class="pg-more">More like this: <a href="../dune-drift/">Dune Drift</a>, <a href="../pixel-logic/">Pixel Logic</a>, <a href="../glow-out/">Glow Out</a>, <a href="../flood-rush/">Flood Rush</a>. Or see <a href="../#games">all games</a>.</p>
+<p class="pg-more">More like this: <a href="../pitch-singer/">Pitch Singer</a>, <a href="../breach/">Breach</a>, <a href="../arrow-flux/">Arrow Flux</a>, <a href="../miami-nights/">Miami Nights</a>. Or see <a href="../#games">all games</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/fruit-slicer">fruit-slicer on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='17' rx='3' fill='%231d1640'/%3E%3Crect x='11' y='24' width='10' height='3' rx='1.5' fill='%231d1640'/%3E%3Ccircle cx='11' cy='13.5' r='3.5' fill='%23ffcf3f'/%3E%3Ccircle cx='21' cy='13.5' r='3.5' fill='%23ff6fb0'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Couch Party | party games on your TV with phones as controllers</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/couch-party/">
+<style>
+  :root { --bg: #1d1640; --panel: #2a2160; --panel2: #352a78; --ink: #fff7e8; --muted: #b9b2d9; --sun: #ffcf3f; --red: #e5484d; --green: #30a46c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  [hidden] { display: none !important; }
+  button { font: inherit; cursor: pointer; color: inherit; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+  a.back { position: absolute; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 5; }
+  a.back:hover { color: var(--ink); }
+  .btn { font-weight: 700; font-size: 17px; padding: 12px 20px; border-radius: 12px; border: 0; background: var(--sun); color: #1d1640; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn.ghost { background: var(--panel2); color: var(--ink); }
+  .link { border: 0; background: none; color: var(--muted); text-decoration: underline; padding: 4px 0; font-size: 14px; }
+
+  /* ---- the TV */
+  #tv { min-height: 100vh; padding: 46px clamp(16px, 4vw, 56px) 30px; display: flex; flex-direction: column; }
+  .tvhead { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tvhead h1 { font-size: clamp(34px, 5vw, 62px); margin: 0; letter-spacing: -1px; }
+  .tvhead h1 span { color: var(--sun); }
+  .tvhead p { margin: 0; color: var(--muted); font-size: 18px; }
+  .lobby { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: clamp(20px, 4vw, 48px); align-items: start; flex: 1; }
+  .join { background: var(--panel); border-radius: 22px; padding: 22px; }
+  .join .qr { background: #fff; border-radius: 14px; padding: 10px; width: max-content; margin: 0 auto 14px; }
+  .join .qr canvas { display: block; width: min(250px, 60vw); height: min(250px, 60vw); image-rendering: pixelated; }
+  .join ol { margin: 0 0 14px; padding-left: 22px; line-height: 1.5; font-size: 16px; color: var(--muted); }
+  .join ol b { color: var(--ink); }
+  .cam { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #0d0a24; margin-bottom: 10px; }
+  .cam video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+  .cam .msg { position: absolute; left: 8px; right: 8px; bottom: 6px; font-size: 13px; text-align: center; text-shadow: 0 1px 2px #000; }
+  .err { color: #ff9b9b; font-weight: 600; font-size: 14px; min-height: 1.2em; }
+  .side h2 { font-size: 24px; margin: 0 0 12px; }
+  .players { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 26px; min-height: 54px; }
+  .chip { display: inline-flex; align-items: center; gap: 10px; background: var(--panel); border-radius: 999px; padding: 9px 18px 9px 10px; font-size: 20px; font-weight: 700; }
+  .chip i { width: 30px; height: 30px; border-radius: 50%; background: var(--c); }
+  .chip small { font-weight: 500; color: var(--muted); font-size: 15px; }
+  .nobody { color: var(--muted); font-size: 18px; padding: 12px 0; }
+  .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .game { text-align: left; background: var(--panel); border: 3px solid transparent; border-radius: 18px; padding: 18px; min-height: 150px; display: flex; flex-direction: column; gap: 6px; }
+  .game:hover:not(:disabled) { border-color: var(--sun); }
+  .game:disabled { opacity: .45; cursor: default; }
+  .game b { font-size: 24px; }
+  .game span { color: var(--muted); font-size: 15px; line-height: 1.4; }
+  .game em { margin-top: auto; font-style: normal; color: var(--sun); font-weight: 700; font-size: 14px; }
+  .note { color: var(--muted); font-size: 13px; margin-top: 18px; max-width: 760px; line-height: 1.5; }
+
+  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; }
+  #sumoCv { display: block; width: min(92vw, 84vh); height: min(92vw, 84vh); }
+  .banner { font-size: clamp(30px, 5vw, 64px); font-weight: 800; }
+  .sub { color: var(--muted); font-size: clamp(16px, 2vw, 22px); }
+  .quizq { font-size: clamp(26px, 3.6vw, 50px); font-weight: 800; max-width: 1100px; line-height: 1.2; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(1100px, 100%); }
+  .opt { display: flex; align-items: center; gap: 14px; padding: 18px 22px; border-radius: 16px; font-size: clamp(18px, 2.4vw, 30px); font-weight: 700; text-align: left; background: var(--oc); }
+  .opt .shape { font-size: 1.1em; opacity: .9; }
+  .opt.dim { opacity: .3; }
+  .opt .who { margin-left: auto; font-size: 15px; font-weight: 600; opacity: .9; }
+  .timer { width: min(1100px, 100%); height: 10px; border-radius: 5px; background: var(--panel); overflow: hidden; }
+  .timer i { display: block; height: 100%; background: var(--sun); width: 100%; transition: width .2s linear; }
+  .answered { color: var(--muted); font-size: 18px; }
+  .light { width: clamp(160px, 26vw, 300px); height: clamp(160px, 26vw, 300px); border-radius: 50%; background: var(--red); box-shadow: 0 0 80px rgba(229,72,77,.5); }
+  .light.go { background: var(--green); box-shadow: 0 0 100px rgba(48,164,108,.7); }
+  .light.idle { background: var(--panel2); box-shadow: none; }
+  table.board { border-collapse: collapse; font-size: clamp(18px, 2.2vw, 28px); min-width: min(640px, 100%); }
+  table.board td { padding: 10px 16px; border-bottom: 1px solid var(--panel2); text-align: left; }
+  table.board td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  table.board i { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background: var(--c); margin-right: 10px; vertical-align: -2px; }
+  table.board tr:first-child td { color: var(--sun); font-weight: 800; }
+  .tvfoot { display: flex; gap: 12px; justify-content: center; margin-top: 10px; }
+
+  /* ---- the phone */
+  #phone { position: fixed; inset: 0; display: flex; flex-direction: column; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+  #phone .screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; gap: 14px; }
+  #phone h2 { font-size: 28px; margin: 0; }
+  #phone p { color: var(--muted); margin: 0; line-height: 1.45; max-width: 340px; }
+  #phone .me { display: inline-flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; }
+  #phone .me i { width: 26px; height: 26px; border-radius: 50%; background: var(--c); }
+  #phone input { font-size: 20px; padding: 12px 14px; border-radius: 12px; border: 0; width: min(300px, 80vw); text-align: center; }
+  #phone .qr { background: #fff; padding: 10px; border-radius: 14px; }
+  #phone .qr canvas { display: block; width: min(300px, 76vw); height: min(300px, 76vw); image-rendering: pixelated; }
+  .pad { position: relative; width: min(78vw, 46vh); height: min(78vw, 46vh); border-radius: 50%; background: var(--panel); box-shadow: inset 0 0 0 4px var(--panel2); touch-action: none; }
+  .pad .nub { position: absolute; left: 50%; top: 50%; width: 34%; height: 34%; margin: -17% 0 0 -17%; border-radius: 50%; background: var(--c, var(--sun)); pointer-events: none; }
+  .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; flex: 1; max-height: 70vh; }
+  .answers button { border: 0; border-radius: 18px; background: var(--oc); font-size: 19px; font-weight: 800; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #fff; }
+  .answers button .shape { font-size: 34px; }
+  .answers button:active { transform: scale(.97); }
+  .tap { width: 100%; flex: 1; border: 0; border-radius: 26px; font-size: 40px; font-weight: 900; color: #fff; background: var(--red); }
+  .tap.go { background: var(--green); }
+  .tap.done { background: var(--panel2); font-size: 30px; }
+</style>
+<meta property="og:title" content="Couch Party">
+<meta property="og:description" content="Party games on a big screen with everyone's phones as controllers, Jackbox-style. Scan a code to join. Sumo, a quiz, and a reaction race, with no app and no server.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/couch-party/">
+<meta property="og:image" content="https://rajeshrenato.github.io/couch-party/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Party games on a big screen with everyone's phones as controllers, Jackbox-style. Scan a code to join. Sumo, a quiz, and a reaction race, with no app and no server.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/#online"}, {"@type": "ListItem", "position": 3, "name": "Couch Party", "item": "https://rajeshrenato.github.io/couch-party/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Couch Party", "url": "https://rajeshrenato.github.io/couch-party/", "description": "Party games on a big screen with everyone's phones as controllers, Jackbox-style. Scan a code to join. Sumo, a quiz, and a reaction race, with no app and no server.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../" id="back">&larr; all projects</a>
+
+<section id="tv" hidden>
+  <div class="tvhead"><h1>Couch <span>Party</span></h1><p id="tvSub">Put this on the big screen. Everyone joins with their phone.</p></div>
+
+  <div class="lobby" id="tvLobby">
+    <div class="join">
+      <div class="qr" id="joinQrBox"><canvas id="joinQr" width="250" height="250" aria-label="QR code to join with a phone"></canvas></div>
+      <ol>
+        <li><b>Scan this</b> with your phone's camera and open the link.</li>
+        <li>Type your name, then <b>hold your phone up</b> to this computer's camera.</li>
+      </ol>
+      <div class="cam" id="cam" hidden><video id="video" playsinline muted></video><div class="msg" id="camMsg">Hold a phone up here</div></div>
+      <button class="btn" id="camBtn">Turn on the camera</button>
+      <p class="err" id="camErr"></p>
+    </div>
+    <div class="side">
+      <h2 id="playersTitle">Players</h2>
+      <div class="players" id="players"><span class="nobody">Nobody yet. Scan the code to join.</span></div>
+      <h2>Pick a game</h2>
+      <div class="games">
+        <button class="game" data-game="sumo"><b>Sumo</b><span>Steer with your phone, tilt it or use the stick. Push everyone off the ring before it shrinks.</span><em>2 or more players</em></button>
+        <button class="game" data-game="quiz"><b>Quiz</b><span>Seven questions on the screen. Answer on your phone; faster right answers score more.</span><em>1 or more players</em></button>
+        <button class="game" data-game="reflex"><b>Green Light</b><span>Wait for green, then tap. Five rounds. Tap too soon and you're out for the round.</span><em>1 or more players</em></button>
+      </div>
+      <p class="note">Phones connect straight to this computer, with no server in between. Up to 8 players. Everyone needs to be on a network that allows direct connections; the same Wi-Fi is best. Keep this page open; if it closes, the party ends.</p>
+    </div>
+  </div>
+
+  <div class="stage" id="tvStage" hidden></div>
+</section>
+
+<section id="phone" hidden>
+  <div class="screen" id="pName">
+    <h2>Join the party</h2>
+    <input id="nameIn" maxlength="12" placeholder="Your name" autocomplete="nickname">
+    <button class="btn" id="joinBtn">Join</button>
+    <p class="err" id="joinErr"></p>
+  </div>
+  <div class="screen" id="pReply" hidden>
+    <h2>Hold this up to the TV's camera</h2>
+    <div class="qr"><canvas id="replyQr" width="300" height="300" aria-label="QR code for the computer's camera"></canvas></div>
+    <p>Point the screen at the computer's camera until you're in.</p>
+  </div>
+  <div class="screen" id="pCtl" hidden></div>
+</section>
+
+<script src="../common/qr.js"></script>
+<script src="../common/jsqr/jsQR.js"></script>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../common/camera.js"></script>
+<script src="../linkplay/qrpair.js"></script>
+<script src="../trivia-night/questions.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const STUN = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
+const MAX_PLAYERS = 8;
+const OPT_COLORS = ['#e5484d', '#3e7bfa', '#e0921c', '#30a46c'];
+const SHAPES = ['▲', '◆', '●', '■'];
+const T = { quiz: 15000, reveal: 4500, reflexWait: [1500, 4500], reflexGo: 3000, reflexNext: 3500, sumoNext: 2600 };
+const now = () => performance.now();
+
+let room = null;
+
+// ===================================================================== TV
+
+let G = null;                     // the game being played
+const scores = new Map();         // id -> points this session
+const timers = new Set();
+const later = (fn, ms) => { const t = setTimeout(() => { timers.delete(t); fn(); }, ms); timers.add(t); return t; };
+function stopTimers() { for (const t of timers) clearTimeout(t); timers.clear(); }
+const players = () => (room ? room.players.filter(p => p.id !== 0) : []);
+const player = id => players().find(p => p.id === id) || { name: '?', color: '#888' };
+const addPoints = (id, n) => { scores.set(id, (scores.get(id) || 0) + n); if (G && G.pts) G.pts.set(id, (G.pts.get(id) || 0) + n); };
+function toAll(m) { if (room) room.send(m); }
+function toOne(id, m) { if (room) room.sendTo(id, m); }
+
+function startTv() {
+  $('tv').hidden = false;
+  room = Room.create('couch-party', 'TV');
+  room.on('roster', () => { drawPlayers(); if (!pending) newSlot(); });
+  room.on('leave', id => onLeave(id));
+  room.on('message', onTvMessage);
+  drawPlayers();
+  newSlot();
+  (async () => { try { if ((await navigator.permissions.query({ name: 'camera' })).state === 'granted') startCamera(); } catch (e) { } })();
+}
+
+// ---- joining: one offer at a time, shown as a QR code
+
+let pending = null;
+async function newSlot() {
+  if (typeof RTCPeerConnection === 'undefined' || !room) return;
+  if (players().length >= MAX_PLAYERS) { pending = null; $('joinQrBox').hidden = true; return; }
+  $('joinQrBox').hidden = false;
+  const id = crypto.getRandomValues(new Uint8Array(4));
+  const pc = new RTCPeerConnection({ iceServers: STUN });
+  const ch = pc.createDataChannel('cp', { ordered: true });
+  ch.addEventListener('open', () => room.addChannel(ch));
+  const slot = { id, pc };
+  pending = slot;
+  try {
+    await pc.setLocalDescription(await pc.createOffer());
+    await waitIce(pc);
+    if (pending !== slot) return;
+    slot.link = location.origin + location.pathname + '#c=' + packDesc('offer', id, parseSdp(pc.localDescription.sdp));
+    drawQr($('joinQr'), slot.link);
+  } catch (e) { $('camErr').textContent = "This browser can't make direct connections. Try an up-to-date Chrome, Edge, Firefox, or Safari."; }
+}
+
+async function onScan(text) {
+  if (!text.startsWith('CPR') || !pending || !pending.link) return;
+  const d = unpackDesc(text.slice(3));
+  // a phone that already joined may still be showing its code: ignore it
+  if (!d || d.kind !== 'answer' || d.id.join() !== Array.from(pending.id).join()) return;
+  const slot = pending;
+  pending = null;
+  $('camMsg').textContent = 'Got it. Connecting…';
+  try { await slot.pc.setRemoteDescription({ type: 'answer', sdp: buildSdp(d) }); } catch (e) { }
+  setTimeout(() => { $('camMsg').textContent = 'Hold a phone up here'; }, 1500);
+  newSlot();
+}
+
+let scanner = null;
+async function startCamera() {
+  if (scanner) return;
+  $('camErr').textContent = '';
+  try { scanner = await startScanner($('video'), onScan, t => { $('camErr').textContent = t; }); $('camErr').textContent = ''; }
+  catch (e) {
+    $('camErr').textContent = (await cameraError(e)) + ' Phones need it to join.';
+    if (typeof CameraHelp !== 'undefined') CameraHelp.onGranted('camera', () => { $('camErr').textContent = ''; startCamera(); });
+    return;
+  }
+  $('cam').hidden = false;
+  $('camBtn').hidden = true;
+}
+
+function drawPlayers() {
+  const ps = players();
+  $('playersTitle').textContent = ps.length ? 'Players (' + ps.length + ')' : 'Players';
+  $('players').innerHTML = ps.length ? ps.map(p => '<span class="chip" style="--c:' + p.color + '"><i></i>' + esc(p.name) +
+    (scores.get(p.id) ? ' <small>' + scores.get(p.id) + '</small>' : '') + '</span>').join('') : '<span class="nobody">Nobody yet. Scan the code to join.</span>';
+  for (const b of document.querySelectorAll('[data-game]')) b.disabled = ps.length < (b.dataset.game === 'sumo' ? 2 : 1);
+}
+
+function onLeave(id) {
+  if (!G) return;
+  if (G.kind === 'sumo') { const b = G.bodies && G.bodies.find(x => x.id === id); if (b && b.alive) { b.alive = false; b.fell = G.t; } }
+  if (G.kind === 'quiz' && G.open && players().every(p => G.answers.has(p.id))) quizReveal();
+  if (G.kind === 'reflex' && G.phase === 'go' && players().every(p => G.taps.has(p.id))) reflexEnd();
+}
+
+function onTvMessage(m, from) {
+  if (!G) return;
+  if (m.t === 'in' && G.kind === 'sumo') sumoInput(from, m.x, m.y);
+  else if (m.t === 'ans' && G.kind === 'quiz') quizAnswer(from, m.q, m.a);
+  else if (m.t === 'tap' && G.kind === 'reflex') reflexTap(from, m.r, m.ms, m.early === true);
+}
+
+function tvView(stage) {
+  $('tvLobby').hidden = stage;
+  $('tvStage').hidden = !stage;
+  document.querySelector('.tvhead').hidden = stage;
+  $('back').hidden = stage;
+}
+
+function backToLobby() {
+  stopTimers();
+  G = null;
+  tvView(false);
+  $('tvSub').textContent = 'Pick another game, or more people can join.';
+  toAll({ t: 'screen', s: 'lobby' });
+  drawPlayers();
+}
+
+function startGame(kind) {
+  if (players().length < (kind === 'sumo' ? 2 : 1)) return;
+  stopTimers();
+  tvView(true);
+  if (kind === 'sumo') sumoStart();
+  else if (kind === 'quiz') quizStart();
+  else reflexStart();
+}
+
+// Final standings for a game, then back to the games.
+function results(title) {
+  stopTimers();
+  const pts = G.pts;
+  const rows = players().map(p => ({ p, n: pts.get(p.id) || 0, total: scores.get(p.id) || 0 })).sort((a, b) => b.n - a.n || b.total - a.total);
+  G = { kind: 'results' };
+  rows.forEach((r, i) => toOne(r.p.id, { t: 'screen', s: 'result', place: i + 1, of: rows.length, pts: r.n }));
+  $('tvStage').innerHTML = '<div class="banner">' + esc(title) + '</div>' +
+    '<table class="board">' + rows.map(r => '<tr><td><i style="--c:' + r.p.color + '"></i>' + esc(r.p.name) + '</td><td class="n">' + r.n + '</td><td class="n" style="color:var(--muted)">' + r.total + ' total</td></tr>').join('') + '</table>' +
+    '<div class="tvfoot"><button class="btn" id="toLobby">Back to the games</button></div>';
+  $('toLobby').onclick = backToLobby;
+  setTimeout(() => { try { $('toLobby').focus(); } catch (e) { } }, 50);
+}
+
+// ---- Sumo
+
+const SUMO = { r: 9, acc: 420, damp: 3, max: 110, bounce: 1.6 };
+function sumoStart() {
+  G = { kind: 'sumo', round: 0, rounds: 3, pts: new Map(), wins: new Map() };
+  sumoRound();
+}
+function sumoRound() {
+  G.round++;
+  const ps = players();
+  G.t = 0; G.R = 100; G.count = 3; G.over = -1; G.done = false;
+  G.bodies = ps.map((p, i) => {
+    const a = (i / ps.length) * Math.PI * 2 - Math.PI / 2;
+    return { id: p.id, x: Math.cos(a) * 55, y: Math.sin(a) * 55, vx: 0, vy: 0, ax: 0, ay: 0, alive: true, fell: -1 };
+  });
+  toAll({ t: 'screen', s: 'sumo' });
+  $('tvStage').innerHTML = '<div class="sub" id="sumoInfo"></div><canvas id="sumoCv" width="900" height="900"></canvas>';
+  sumoInfo();
+}
+function sumoInfo() { const el = $('sumoInfo'); if (el) el.textContent = 'Round ' + G.round + ' of ' + G.rounds + '. Push everyone off the ring.'; }
+
+function sumoInput(id, x, y) {
+  const b = G.bodies && G.bodies.find(o => o.id === id);
+  if (!b || typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)) return;
+  const len = Math.hypot(x, y), k = len > 1 ? 1 / len : 1;
+  b.ax = x * k; b.ay = y * k;
+}
+
+function sumoStep(dt) {
+  if (!G || G.kind !== 'sumo' || G.done) return;
+  if (G.count > 0) { G.count -= dt; return; }
+  G.t += dt;
+  G.R = Math.max(40, 100 - Math.max(0, G.t - 6) * 1.7);
+  const live = G.bodies.filter(b => b.alive);
+  for (const b of live) {
+    b.vx += b.ax * SUMO.acc * dt; b.vy += b.ay * SUMO.acc * dt;
+    const f = Math.exp(-SUMO.damp * dt);
+    b.vx *= f; b.vy *= f;
+    const sp = Math.hypot(b.vx, b.vy);
+    if (sp > SUMO.max) { b.vx *= SUMO.max / sp; b.vy *= SUMO.max / sp; }
+    b.x += b.vx * dt; b.y += b.vy * dt;
+  }
+  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+    const a = live[i], b = live[j];
+    let dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+    if (d >= SUMO.r * 2) continue;
+    if (d < 1e-6) { dx = 1; dy = 0; d = 1e-6; }
+    const nx = dx / d, ny = dy / d, push = (SUMO.r * 2 - d) / 2;
+    a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
+    const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+    if (rel < 0) {
+      const j2 = -SUMO.bounce * rel;
+      a.vx -= nx * j2; a.vy -= ny * j2; b.vx += nx * j2; b.vy += ny * j2;
+    }
+  }
+  for (const b of live) if (Math.hypot(b.x, b.y) > G.R) { b.alive = false; b.fell = G.t; }
+  const left = G.bodies.filter(b => b.alive).length;
+  const end = G.bodies.length > 1 ? left <= 1 : left === 0 || G.t > 40;
+  if (end && G.over < 0) G.over = G.t;
+  if (G.over >= 0 && G.t - G.over > 1) sumoRoundEnd();
+}
+
+function sumoRoundEnd() {
+  G.done = true;
+  const alive = G.bodies.filter(b => b.alive);
+  const winner = alive.length === 1 ? alive[0].id : null;
+  if (winner !== null) { addPoints(winner, 500); G.wins.set(winner, (G.wins.get(winner) || 0) + 1); }
+  const el = $('sumoInfo');
+  if (el) el.textContent = winner !== null ? player(winner).name + ' wins round ' + G.round + '!' : 'Nobody left standing.';
+  for (const b of G.bodies) toOne(b.id, { t: 'screen', s: 'note', text: b.id === winner ? 'You won the round!' : b.alive ? 'Round over' : 'You fell off. Next round soon.' });
+  if (G.round >= G.rounds) later(() => results('Sumo'), T.sumoNext);
+  else later(sumoRound, T.sumoNext);
+}
+
+function sumoDraw() {
+  const cv = $('sumoCv');
+  if (!cv || !G || G.kind !== 'sumo') return;
+  const g = cv.getContext('2d'), W = cv.width, k = W / 230, c = W / 2;
+  g.clearRect(0, 0, W, W);
+  g.fillStyle = '#120d2e'; g.beginPath(); g.arc(c, c, 104 * k, 0, 7); g.fill();
+  g.fillStyle = '#e9d8a6'; g.beginPath(); g.arc(c, c, G.R * k, 0, 7); g.fill();
+  g.strokeStyle = '#b5543a'; g.lineWidth = 3 * k; g.beginPath(); g.arc(c, c, (G.R - 2) * k, 0, 7); g.stroke();
+  g.strokeStyle = 'rgba(181,84,58,.35)'; g.lineWidth = 1.2 * k;
+  g.beginPath(); g.moveTo(c - 12 * k, c - 8 * k); g.lineTo(c - 12 * k, c + 8 * k); g.moveTo(c + 12 * k, c - 8 * k); g.lineTo(c + 12 * k, c + 8 * k); g.stroke();
+  for (const b of G.bodies) {
+    let s = 1;
+    if (!b.alive) { const t = G.t - b.fell; if (t > 0.7) continue; s = 1 - t / 0.7; }
+    const p = player(b.id);
+    g.globalAlpha = s;
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.arc(c + b.x * k, c + (b.y + 2) * k, SUMO.r * k * s, 0, 7); g.fill();
+    g.fillStyle = p.color; g.beginPath(); g.arc(c + b.x * k, c + b.y * k, SUMO.r * k * s, 0, 7); g.fill();
+    g.fillStyle = '#fff'; g.font = '700 ' + Math.round(5 * k) + 'px system-ui, sans-serif'; g.textAlign = 'center';
+    g.fillText(p.name, c + b.x * k, c + (b.y - SUMO.r - 3) * k);
+    g.globalAlpha = 1;
+  }
+  if (G.count > 0) {
+    g.fillStyle = '#fff'; g.font = '800 ' + Math.round(40 * k) + 'px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(String(Math.ceil(G.count)), c, c);
+    g.textBaseline = 'alphabetic';
+  }
+}
+
+// ---- Quiz
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function quizStart() {
+  const qs = shuffle(QUESTIONS.slice()).slice(0, 7);
+  G = { kind: 'quiz', qs, i: -1, pts: new Map(), answers: new Map(), open: false };
+  quizNext();
+}
+function quizNext() {
+  G.i++;
+  if (G.i >= G.qs.length) return results('Quiz');
+  const q = G.qs[G.i];
+  G.opts = shuffle(q.slice(2, 6));
+  G.correct = G.opts.indexOf(q[2]);
+  G.answers = new Map();
+  G.open = true;
+  G.started = now();
+  toAll({ t: 'screen', s: 'quiz', q: G.i, opts: G.opts });
+  quizDraw();
+  G.timer = later(quizReveal, T.quiz);
+}
+function quizAnswer(id, q, a) {
+  if (!G.open || q !== G.i || !Number.isInteger(a) || a < 0 || a > 3 || G.answers.has(id) || !players().some(p => p.id === id)) return;
+  G.answers.set(id, { a, ms: now() - G.started });
+  toOne(id, { t: 'screen', s: 'note', text: 'Locked in. Look at the screen.' });
+  quizDraw();
+  if (players().every(p => G.answers.has(p.id))) quizReveal();
+}
+function quizReveal() {
+  if (!G || G.kind !== 'quiz' || !G.open) return;
+  G.open = false;
+  clearTimeout(G.timer);
+  for (const p of players()) {
+    const ans = G.answers.get(p.id);
+    const right = !!ans && ans.a === G.correct;
+    const n = right ? 500 + Math.round(500 * Math.max(0, 1 - ans.ms / T.quiz)) : 0;
+    if (n) addPoints(p.id, n);
+    toOne(p.id, { t: 'screen', s: 'note', text: right ? 'Right! +' + n : ans ? 'Not this time.' : 'Too slow.' });
+  }
+  quizDraw(true);
+  later(quizNext, T.reveal);
+}
+function quizDraw(reveal) {
+  const q = G.qs[G.i];
+  const who = k => players().filter(p => (G.answers.get(p.id) || {}).a === k).map(p => esc(p.name)).join(', ');
+  $('tvStage').innerHTML = '<div class="sub">Question ' + (G.i + 1) + ' of ' + G.qs.length + ', ' + esc(q[0]) + '</div>' +
+    '<div class="quizq">' + esc(q[1]) + '</div>' +
+    '<div class="opts">' + G.opts.map((o, k) => '<div class="opt' + (reveal && k !== G.correct ? ' dim' : '') + '" style="--oc:' + OPT_COLORS[k] + '"><span class="shape">' + SHAPES[k] + '</span>' + esc(o) +
+      (reveal ? '<span class="who">' + who(k) + '</span>' : '') + '</div>').join('') + '</div>' +
+    (reveal ? '' : '<div class="timer"><i id="qTimer"></i></div><div class="answered">' + G.answers.size + ' of ' + players().length + ' answered</div>');
+}
+
+// ---- Green Light: wait for green, then tap. Times are measured on each phone.
+
+function reflexStart() {
+  G = { kind: 'reflex', round: 0, rounds: 5, pts: new Map() };
+  reflexRound();
+}
+function reflexRound() {
+  G.round++;
+  if (G.round > G.rounds) return results('Green Light');
+  G.phase = 'wait';
+  G.taps = new Map();
+  toAll({ t: 'screen', s: 'reflex', phase: 'wait', r: G.round });
+  reflexDraw();
+  const [a, b] = T.reflexWait;
+  later(reflexGo, a + Math.random() * (b - a));
+}
+function reflexGo() {
+  if (G.phase !== 'wait') return;
+  G.phase = 'go';
+  toAll({ t: 'screen', s: 'reflex', phase: 'go', r: G.round });
+  reflexDraw();
+  G.timer = later(reflexEnd, T.reflexGo);
+}
+function reflexTap(id, r, ms, early) {
+  if (r !== G.round || G.phase === 'done' || G.taps.has(id) || !players().some(p => p.id === id)) return;
+  if (early || G.phase === 'wait') G.taps.set(id, { early: true });
+  else if (typeof ms === 'number' && ms >= 60 && ms <= 5000) G.taps.set(id, { ms: Math.round(ms) });
+  else G.taps.set(id, { early: true });
+  reflexDraw();
+  if (G.phase === 'go' && players().every(p => G.taps.has(p.id))) reflexEnd();
+}
+function reflexEnd() {
+  if (G.phase === 'done') return;
+  G.phase = 'done';
+  clearTimeout(G.timer);
+  const ranked = players().filter(p => G.taps.get(p.id) && G.taps.get(p.id).ms).sort((a, b) => G.taps.get(a.id).ms - G.taps.get(b.id).ms);
+  ranked.forEach((p, i) => { if (i < 3) addPoints(p.id, [300, 200, 100][i]); });
+  for (const p of players()) {
+    const t = G.taps.get(p.id);
+    const place = ranked.indexOf(p);
+    toOne(p.id, { t: 'screen', s: 'note', text: !t ? 'No tap this time.' : t.early ? 'Too soon!' : t.ms + ' ms' + (place === 0 ? ', fastest!' : '') });
+  }
+  reflexDraw();
+  later(reflexRound, T.reflexNext);
+}
+function reflexDraw() {
+  const rows = players().map(p => ({ p, t: G.taps.get(p.id) }));
+  const done = G.phase === 'done';
+  if (done) rows.sort((a, b) => ((a.t && a.t.ms) || 1e9) - ((b.t && b.t.ms) || 1e9));
+  $('tvStage').innerHTML = '<div class="sub">Round ' + G.round + ' of ' + G.rounds + '</div>' +
+    '<div class="light' + (G.phase === 'go' ? ' go' : done ? ' idle' : '') + '"></div>' +
+    '<div class="banner">' + (G.phase === 'wait' ? 'Wait for it…' : G.phase === 'go' ? 'TAP!' : 'Times') + '</div>' +
+    '<table class="board">' + rows.map(r => '<tr><td><i style="--c:' + r.p.color + '"></i>' + esc(r.p.name) + '</td><td class="n">' +
+      (!r.t ? (done ? 'no tap' : '') : r.t.early ? 'too soon' : done ? r.t.ms + ' ms' : 'tapped') + '</td></tr>').join('') + '</table>';
+}
+
+// ---- the TV loop
+
+let lastFrame = 0;
+function frame(t) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (t - lastFrame) / 1000 || 0);
+  lastFrame = t;
+  if (G && G.kind === 'sumo') {
+    let left = dt;
+    while (left > 0) { const s = Math.min(1 / 120, left); sumoStep(s); left -= s; }
+    sumoDraw();
+  }
+  if (G && G.kind === 'quiz' && G.open) { const el = $('qTimer'); if (el) el.style.width = Math.max(0, 100 * (1 - (now() - G.started) / T.quiz)) + '%'; }
+}
+
+// ================================================================== phone
+
+let me = { name: '', color: '#ffcf3f' };
+let ctl = { s: null, q: -1, r: 0, goAt: 0, tapped: false, sent: { x: 0, y: 0 }, x: 0, y: 0, tilt: false, base: null };
+let joinPc = null;
+
+function startPhone(code) {
+  $('phone').hidden = false;
+  $('back').hidden = true;
+  try { $('nameIn').value = localStorage.getItem('linkplay_name') || ''; } catch (e) { }
+  $('joinBtn').onclick = () => phoneJoin(code);
+  $('nameIn').onkeydown = e => { if (e.key === 'Enter') phoneJoin(code); };
+}
+
+function phoneShow(id) { for (const s of ['pName', 'pReply', 'pCtl']) $(s).hidden = s !== id; }
+
+async function phoneJoin(code) {
+  const name = $('nameIn').value.trim().slice(0, 12) || 'Player';
+  try { localStorage.setItem('linkplay_name', name); } catch (e) { }
+  const d = unpackDesc(code);
+  if (!d || d.kind !== 'offer') { $('joinErr').textContent = "This code didn't work. Scan the code on the TV again."; return; }
+  $('joinBtn').disabled = true;
+  try {
+    joinPc = new RTCPeerConnection({ iceServers: STUN });
+    joinPc.addEventListener('datachannel', e => {
+      const ch = e.channel;
+      const go = () => startController(Room.joinChannel(ch, name));
+      if (ch.readyState === 'open') go(); else ch.addEventListener('open', go);
+    });
+    joinPc.addEventListener('connectionstatechange', () => {
+      if (joinPc.connectionState === 'failed') { phoneShow('pName'); $('joinBtn').disabled = false; $('joinErr').textContent = "Couldn't connect. Both need to be on a network that allows it; the same Wi-Fi is best. Scan the TV's code again."; }
+    });
+    await joinPc.setRemoteDescription({ type: 'offer', sdp: buildSdp(d) });
+    await joinPc.setLocalDescription(await joinPc.createAnswer());
+    await waitIce(joinPc);
+    drawQr($('replyQr'), 'CPR' + packDesc('answer', d.id, parseSdp(joinPc.localDescription.sdp)));
+    try { history.replaceState(null, '', location.pathname + '#joined'); } catch (e) { }
+    phoneShow('pReply');
+  } catch (e) {
+    $('joinBtn').disabled = false;
+    $('joinErr').textContent = "Couldn't set up a connection. Scan the TV's code again.";
+  }
+}
+
+function startController(r) {
+  room = r;
+  phoneShow('pCtl');
+  r.on('roster', ps => { const mine = ps.find(p => p.id === r.me); if (mine) { me = mine; if (ctl.s === 'lobby' || !ctl.s) ctlLobby(); } });
+  r.on('message', onPhoneMessage);
+  r.on('close', () => { ctl.s = 'closed'; ctlNote('The TV left', 'The party ended on the big screen.'); });
+  ctlLobby();
+  try { if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {}); } catch (e) { }
+}
+
+const ctlEl = () => $('pCtl');
+const meHtml = () => '<span class="me" style="--c:' + esc(me.color || '#ffcf3f') + '"><i></i>' + esc(me.name || '') + '</span>';
+function ctlLobby() { ctl.s = 'lobby'; ctlEl().innerHTML = meHtml() + '<h2>You\'re in</h2><p>Look at the big screen. The game starts from there.</p>'; }
+function ctlNote(title, text) { ctlEl().innerHTML = meHtml() + '<h2>' + esc(title) + '</h2>' + (text ? '<p>' + esc(text) + '</p>' : ''); }
+
+function onPhoneMessage(m) {
+  if (m.t !== 'screen' || typeof m.s !== 'string') return;
+  if (m.s === 'lobby') ctlLobby();
+  else if (m.s === 'note') { ctl.s = 'note'; ctlNote(String(m.text || '').slice(0, 80)); }
+  else if (m.s === 'sumo') ctlSumo();
+  else if (m.s === 'quiz' && Number.isInteger(m.q) && Array.isArray(m.opts) && m.opts.length === 4) ctlQuiz(m.q, m.opts.map(o => String(o).slice(0, 80)));
+  else if (m.s === 'reflex' && Number.isInteger(m.r)) ctlReflex(m.r, m.phase);
+  else if (m.s === 'result' && Number.isInteger(m.place)) {
+    ctl.s = 'result';
+    const ord = n => n + (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');
+    ctlNote(m.place === 1 ? 'You won!' : 'You came ' + ord(m.place), (Number.isFinite(m.pts) ? m.pts : 0) + ' points this game. Look at the big screen.');
+  }
+}
+
+// Sumo: a stick, or tilt the phone.
+function ctlSumo() {
+  ctl.s = 'sumo'; ctl.x = ctl.y = 0;
+  ctlEl().innerHTML = meHtml() + '<div class="pad" id="pad" style="--c:' + esc(me.color) + '"><div class="nub" id="nub"></div></div>' +
+    '<button class="btn ghost" id="tiltBtn">' + (ctl.tilt ? 'Use the stick' : 'Steer by tilting') + '</button><p id="ctlHint">' + (ctl.tilt ? 'Tilt the phone to roll.' : 'Drag to roll.') + '</p>';
+  const pad = $('pad'), nub = $('nub');
+  const at = e => {
+    if (ctl.tilt) return;
+    const r = pad.getBoundingClientRect(), dx = (e.clientX - r.left - r.width / 2) / (r.width / 2), dy = (e.clientY - r.top - r.height / 2) / (r.height / 2);
+    const len = Math.hypot(dx, dy), k = len > 1 ? 1 / len : 1;
+    setStick(dx * k, dy * k);
+  };
+  pad.addEventListener('pointerdown', e => { try { pad.setPointerCapture(e.pointerId); } catch (x) { } at(e); });
+  pad.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'touch') at(e); });
+  const end = () => { if (!ctl.tilt) setStick(0, 0); };
+  pad.addEventListener('pointerup', end);
+  pad.addEventListener('pointercancel', end);
+  $('tiltBtn').onclick = toggleTilt;
+  drawNub();
+}
+function setStick(x, y) { ctl.x = x; ctl.y = y; drawNub(); }
+function drawNub() { const n = $('nub'); if (n) n.style.transform = 'translate(' + ctl.x * 100 + '%,' + ctl.y * 100 + '%)'; }
+
+async function toggleTilt() {
+  if (!ctl.tilt) {
+    try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) { if ((await DeviceOrientationEvent.requestPermission()) !== 'granted') throw new Error('no'); } }
+    catch (e) { const h = $('ctlHint'); if (h) h.textContent = "Tilting isn't allowed on this phone. Use the stick."; return; }
+    ctl.base = null;
+  }
+  ctl.tilt = !ctl.tilt;
+  setStick(0, 0);
+  ctlSumo();
+}
+addEventListener('deviceorientation', e => {
+  if (!ctl.tilt || ctl.s !== 'sumo' || e.beta === null) return;
+  if (!ctl.base) ctl.base = { b: e.beta, g: e.gamma };
+  const clamp = v => Math.max(-1, Math.min(1, v));
+  setStick(clamp((e.gamma - ctl.base.g) / 25), clamp((e.beta - ctl.base.b) / 25));
+});
+setInterval(() => {
+  if (!room || room.isHost || ctl.s !== 'sumo') return;
+  if (Math.abs(ctl.x - ctl.sent.x) < 0.02 && Math.abs(ctl.y - ctl.sent.y) < 0.02 && !(ctl.x || ctl.y)) return;
+  ctl.sent = { x: ctl.x, y: ctl.y };
+  room.send({ t: 'in', x: Math.round(ctl.x * 100) / 100, y: Math.round(ctl.y * 100) / 100 });
+}, 50);
+
+function ctlQuiz(q, opts) {
+  ctl.s = 'quiz'; ctl.q = q;
+  ctlEl().innerHTML = '<div class="answers">' + opts.map((o, k) => '<button data-a="' + k + '" style="--oc:' + OPT_COLORS[k] + '"><span class="shape">' + SHAPES[k] + '</span>' + esc(o) + '</button>').join('') + '</div>';
+  for (const b of ctlEl().querySelectorAll('[data-a]')) b.onclick = () => {
+    if (ctl.s !== 'quiz' || ctl.q !== q) return;
+    ctl.s = 'answered';
+    room.send({ t: 'ans', q, a: +b.dataset.a });
+    ctlNote('Locked in', 'Look at the screen.');
+  };
+}
+
+function ctlReflex(r, phase) {
+  if (phase === 'wait') {
+    ctl.s = 'reflex'; ctl.r = r; ctl.tapped = false; ctl.goAt = 0;
+    ctlEl().innerHTML = '<button class="tap" id="tap">Wait for green…</button>';
+    $('tap').addEventListener('pointerdown', reflexPress);
+  } else if (phase === 'go' && ctl.s === 'reflex' && ctl.r === r && !ctl.tapped) {
+    ctl.goAt = now();
+    const b = $('tap');
+    if (b) { b.className = 'tap go'; b.textContent = 'TAP!'; }
+  }
+}
+function reflexPress(e) {
+  if (e) e.preventDefault();
+  if (ctl.s !== 'reflex' || ctl.tapped) return;
+  ctl.tapped = true;
+  const b = $('tap');
+  if (!ctl.goAt) { room.send({ t: 'tap', r: ctl.r, early: true }); if (b) { b.className = 'tap done'; b.textContent = 'Too soon!'; } return; }
+  const ms = Math.round(now() - ctl.goAt);
+  room.send({ t: 'tap', r: ctl.r, ms });
+  if (b) { b.className = 'tap done'; b.textContent = ms + ' ms'; }
+}
+
+// ================================================================== start
+
+for (const b of document.querySelectorAll('[data-game]')) b.onclick = () => startGame(b.dataset.game);
+$('camBtn').onclick = startCamera;
+addEventListener('beforeunload', e => { if (room && room.isHost && players().length) { e.preventDefault(); e.returnValue = ''; } });
+
+(function route() {
+  const m = /^#c=([A-Za-z0-9_-]+)$/.exec(location.hash);
+  if (m) startPhone(m[1]);
+  else if (location.hash === '#joined') { $('phone').hidden = false; $('back').hidden = true; phoneShow('pName'); $('joinErr').textContent = 'To join again, scan the code on the TV.'; $('joinBtn').hidden = true; $('nameIn').hidden = true; }
+  else startTv();
+  requestAnimationFrame(frame);
+})();
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Couch Party</h2>
+<p>Party games for a room full of people, Jackbox-style. Put the page on a big screen, a laptop or a TV connected to one, and everyone plays with their own phone as the controller. Up to 8 players, no app, no account, and no server.</p>
+<h3>Play</h3>
+<p>Open this page on the computer that's showing the big screen. It needs <code>https://</code> or <code>http://localhost</code> for the camera.</p>
+<ul><li>Each player points their phone's camera at the code on the big screen and opens the link. 2. They type a name and tap Join. Their phone shows a code. 3. They hold the phone up to the computer's camera. A moment later their name appears on the big screen, and the screen shows a fresh code for the next person.</li></ul>
+<p>Then pick a game on the big screen:</p>
+<ul><li>Sumo: everyone is a ball on a round ring. Steer with the stick on your phone, or tap "Steer by tilting" and tilt it. Bump the others off the edge. The ring starts shrinking after a few seconds, so every round ends. Last one on wins the round; three rounds. 2 or more players.</li><li>Quiz: seven questions from <a href="../trivia-night/">Trivia Night</a>'s 320, shown on the big screen. Answer on your phone in 15 seconds; a right answer scores 500 points plus up to 500 more for speed.</li><li>Green Light: wait for green, then tap. Tap too soon and you're out for that round. The three fastest score 300, 200, and 100. Five rounds. Times are measured on each phone from the moment it turned green, so a slow connection doesn't cost you.</li></ul>
+<p>Points add up across games. After each game the big screen shows the standings and each phone shows your place.</p>
+<h3>How it works</h3>
+<ul><li>Every phone connects straight to the computer with WebRTC, the computer passes nothing on, and it runs the games. Phones send their stick position about 20 times a second, their answers, and their taps.</li><li>Pairing uses the same QR codes as <a href="../phone-to-laptop/">Phone to Laptop</a> (<code>linkplay/qrpair.js</code>): the big screen shows a connection offer as a link in a QR code, and the phone answers with a QR code the computer's camera reads. Both are packed down to about 130 bytes so they're easy to scan. Each code works for one phone, and the computer ignores a phone's code once that phone has joined.</li><li>The computer reads codes with the browser's built-in barcode reader where there is one, and otherwise with <a href="https://github.com/cozmo/jsQR">jsQR</a>, included in this repo under <code>common/jsqr</code>.</li><li>Players, names, and colors come from <a href="../linkplay/">LinkPlay</a>'s rooms.</li><li>Sumo is a small physics simulation on the computer, stepped 120 times a second: input pushes each ball, friction slows it, and balls that touch bounce apart.</li></ul>
+<p>Phones need to reach the computer directly. On the same Wi-Fi that nearly always works; some guest and office networks block it.</p>
+<p class="pg-more">More like this: <a href="../worm-arena/">Worm Arena</a>, <a href="../battle-tanks/">Battle Tanks</a>, <a href="../sketch-guess/">Sketch &amp; Guess</a>, <a href="../watch-party/">Watch Party</a>. Or see <a href="../#online">all online games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/couch-party">couch-party on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

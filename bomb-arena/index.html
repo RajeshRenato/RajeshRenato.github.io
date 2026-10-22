@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f4033'/%3E%3Ccircle cx='15' cy='18' r='9' fill='%2315171c'/%3E%3Cpath d='M19 10 L23 6' stroke='%23c9a46a' stroke-width='2.5'/%3E%3Ccircle cx='24' cy='5.5' r='2.6' fill='%23ffc93c'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Bomb Arena | Bomberman-style game online with friends</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/bomb-arena/">
+<style>
+  :root { --bg: #1b211c; --bar: #232b24; --ink: #ece6d3; --muted: #9aa391; --rule: #35413a; --gold: #ffc93c;
+          --lp-bg: #1b211c; --lp-panel: #232b24; --lp-veil: rgba(27, 33, 28, .95); --lp-accent: #ffc93c; --lp-ink: #ece6d3; --lp-muted: #9aa391; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+         display: flex; flex-direction: column; height: 100dvh; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  #bar { display: flex; align-items: center; gap: 14px; padding: 10px 14px; flex-wrap: wrap; min-height: 48px; }
+  #bar a.back { color: var(--muted); font-size: 13px; text-decoration: none; }
+  #bar a.back:hover { color: var(--ink); }
+  #chips { display: flex; gap: 8px 16px; flex-wrap: wrap; flex: 1; justify-content: center; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; white-space: nowrap; }
+  .chip i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px rgba(0,0,0,.35); }
+  .chip.me .nm { font-weight: 700; }
+  .chip.out { opacity: .4; }
+  .chip.out .nm { text-decoration: line-through; }
+  .chip b { font-weight: 400; letter-spacing: 1px; color: var(--muted); }
+  .chip b em { font-style: normal; color: var(--gold); }
+  #side { display: flex; gap: 12px; align-items: center; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #clock.sd { color: #ff8a5c; font-weight: 600; }
+  #bar button { font: inherit; font-size: 13px; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px 2px; }
+  #bar button:hover { color: var(--ink); }
+  #bar button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #stage { flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; padding: 0 10px; }
+  canvas { display: block; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.35); touch-action: none; }
+  #msg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(400px, calc(100% - 32px));
+         background: rgba(27, 33, 28, .94); border: 1.5px solid var(--rule); border-radius: 12px; padding: 20px 22px; text-align: center; }
+  #msg[hidden] { display: none; }
+  #msg h2 { margin: 0 0 6px; font-size: 26px; }
+  #msg p { margin: 0 0 12px; color: var(--muted); line-height: 1.45; }
+  #msg .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+  #msg button { font: inherit; font-weight: 600; font-size: 15px; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+                border: 1.5px solid var(--ink); background: var(--bar); color: var(--ink); }
+  #msg button:hover { background: var(--ink); color: var(--bg); }
+  #msg button.quiet { border: 0; background: none; color: var(--muted); text-decoration: underline; font-weight: 500; }
+  #msg button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #msg label { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); margin-bottom: 12px; cursor: pointer; }
+  #keys { text-align: center; color: var(--muted); font-size: 13px; margin: 10px 0 14px; min-height: 1em; }
+  #pad { display: none; justify-content: space-between; align-items: center; padding: 10px 26px calc(14px + env(safe-area-inset-bottom)); }
+  body.touch #pad { display: flex; }
+  body.touch #keys { display: none; }
+  #stick { width: 132px; height: 132px; border-radius: 50%; border: 2px solid var(--rule); background: rgba(255,255,255,.03); position: relative; touch-action: none; }
+  #stick::before, #stick::after { content: ''; position: absolute; background: var(--rule); left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  #stick::before { width: 2px; height: 70%; }
+  #stick::after { width: 70%; height: 2px; }
+  #nub { position: absolute; width: 48px; height: 48px; border-radius: 50%; background: var(--muted); left: 42px; top: 42px; opacity: .55; z-index: 1; pointer-events: none; }
+  #bombBtn { width: 96px; height: 96px; border-radius: 50%; border: 0; background: #15171c; color: var(--gold); font: 700 16px system-ui, sans-serif;
+             box-shadow: inset 0 -6px 0 rgba(255,255,255,.06), 0 0 0 3px var(--rule); touch-action: none; }
+  #bombBtn:active { transform: scale(.95); }
+</style>
+<meta property="og:title" content="Bomb Arena">
+<meta property="og:description" content="A Bomberman-style arena for 2 to 4 players online, connected by links with no server. Bots fill the empty corners, or play them alone.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/bomb-arena/">
+<meta property="og:image" content="https://rajeshrenato.github.io/bomb-arena/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A Bomberman-style arena for 2 to 4 players online, connected by links with no server. Bots fill the empty corners, or play them alone.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/#online"}, {"@type": "ListItem", "position": 3, "name": "Bomb Arena", "item": "https://rajeshrenato.github.io/bomb-arena/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Bomb Arena", "url": "https://rajeshrenato.github.io/bomb-arena/", "description": "A Bomberman-style arena for 2 to 4 players online, connected by links with no server. Bots fill the empty corners, or play them alone.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<div id="bar">
+  <a class="back" href="../">&larr; all projects</a>
+  <div id="chips"></div>
+  <div id="side"><span id="stats"></span><span id="clock"></span><button id="soundBtn"></button><button id="menuBtn" hidden>Menu</button></div>
+</div>
+<div id="stage"><canvas id="cv" aria-label="The arena"></canvas><div id="msg" hidden></div></div>
+<p id="keys"></p>
+<div id="pad"><div id="stick"><div id="nub"></div></div><button id="bombBtn">Bomb</button></div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+// ---- rules
+
+const W = 15, H = 13, STEP = 1 / 60;
+const FUSE = 2.4, FLAME = 0.55, SD_AT = 90, SD_EVERY = 0.35, WINS_TO = 3;
+const SLOT_COLORS = ['#3fa7ff', '#ff5d73', '#ffc93c', '#5fd68a'];
+const BOT_NAMES = ['Rusty', 'Pebble', 'Widget', 'Moss'];
+const SPAWNS = [[1, 1], [W - 2, H - 2], [W - 2, 1], [1, H - 2]];
+const DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
+const OPP = { u: 'd', d: 'u', l: 'r', r: 'l' };
+const MAX = { bombs: 8, fire: 8, speed: 4 };
+const idx = (x, y) => y * W + x;
+const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+const isDir = d => d === 'u' || d === 'd' || d === 'l' || d === 'r';
+const isPower = c => c === 'b' || c === 'f' || c === 's';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// '#' wall, '+' crate, '.' floor, and power-ups lying on the floor: 'b' one more bomb, 'f' longer flames, 's' faster
+function makeGrid(rnd) {
+  const grid = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++)
+    grid.push(x === 0 || y === 0 || x === W - 1 || y === H - 1 || (x % 2 === 0 && y % 2 === 0) ? '#' : '.');
+  const clear = new Set();
+  for (const [sx, sy] of SPAWNS) for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) clear.add(idx(sx + dx, sy + dy));
+  for (let i = 0; i < grid.length; i++) if (grid[i] === '.' && !clear.has(i) && rnd() < 0.72) grid[i] = '+';
+  return grid;
+}
+
+// The order the walls close in during sudden death: the outer ring first, then inward.
+function spiral() {
+  const out = [];
+  let x0 = 1, y0 = 1, x1 = W - 2, y1 = H - 2;
+  while (x0 <= x1 && y0 <= y1) {
+    for (let x = x0; x <= x1; x++) out.push(idx(x, y0));
+    for (let y = y0 + 1; y <= y1; y++) out.push(idx(x1, y));
+    if (y1 > y0) for (let x = x1 - 1; x >= x0; x--) out.push(idx(x, y1));
+    if (x1 > x0) for (let y = y1 - 1; y > y0; y--) out.push(idx(x0, y));
+    x0++; y0++; x1--; y1--;
+  }
+  return out;
+}
+
+function newRound(list, seed) {
+  const rnd = rng(seed);
+  const grid = makeGrid(rnd), hidden = new Map();
+  grid.forEach((c, i) => {
+    if (c === '+' && rnd() < 0.32) { const r = rnd(); hidden.set(i, r < 0.42 ? 'b' : r < 0.84 ? 'f' : 's'); }
+  });
+  const players = list.map((s, k) => ({
+    slot: k, bot: !!s.bot, id: s.id === undefined ? null : s.id, keys: s.keys || null,
+    x: SPAWNS[k][0], y: SPAWNS[k][1], moving: false, ox: 0, oy: 0, tx: 0, ty: 0, mdir: '',
+    dir: '', face: 'd', want: false, alive: !s.gone, deadAt: -1, bombs: 1, fire: 2, speed: 0, nextThink: 0,
+  }));
+  return { grid, hidden, players, bombs: [], flames: new Map(), burning: new Map(), time: 0,
+           order: spiral(), sd: 0, sdNext: SD_AT, over: -1, rnd, events: [] };
+}
+
+const speedOf = p => 3.7 + 0.6 * p.speed;
+const bombAt = (G, i) => G.bombs.some(b => b.i === i);
+const tileOf = p => idx(Math.round(p.x), Math.round(p.y));
+
+function walkable(G, x, y) {
+  if (!inside(x, y)) return false;
+  const i = idx(x, y), c = G.grid[i];
+  return c !== '#' && c !== '+' && !bombAt(G, i);
+}
+
+// Moves from tile to tile. You can turn back halfway, and you can always walk off a bomb you're standing on.
+function move(G, p, dt) {
+  let left = speedOf(p) * dt;
+  for (let n = 0; n < 4 && left > 1e-9; n++) {
+    if (p.moving) {
+      if (p.dir && p.dir === OPP[p.mdir] && G.grid[idx(p.ox, p.oy)] !== '#') reverse(p);
+      const dist = Math.abs(p.tx - p.x) + Math.abs(p.ty - p.y);
+      if (dist <= left) {
+        p.x = p.tx; p.y = p.ty; p.moving = false; left -= dist;
+        if (p.bot) { p.dir = ''; p.nextThink = 0; break; }
+      } else {
+        p.x += Math.sign(p.tx - p.x) * left; p.y += Math.sign(p.ty - p.y) * left; left = 0;
+      }
+    } else {
+      if (!isDir(p.dir)) break;
+      p.face = p.dir;
+      const nx = p.x + DIRS[p.dir][0], ny = p.y + DIRS[p.dir][1];
+      if (!walkable(G, nx, ny)) break;
+      p.ox = p.x; p.oy = p.y; p.tx = nx; p.ty = ny; p.moving = true; p.mdir = p.dir;
+    }
+  }
+}
+
+function reverse(p) {
+  [p.tx, p.ox] = [p.ox, p.tx];
+  [p.ty, p.oy] = [p.oy, p.ty];
+  p.mdir = OPP[p.mdir];
+  p.face = p.mdir;
+}
+
+function placeBomb(G, p) {
+  const x = Math.round(p.x), y = Math.round(p.y), i = idx(x, y);
+  if (!p.alive || G.grid[i] === '#' || G.grid[i] === '+' || bombAt(G, i)) return false;
+  if (G.bombs.filter(b => b.owner === p.slot).length >= p.bombs) return false;
+  G.bombs.push({ i, x, y, owner: p.slot, t: FUSE, fire: p.fire });
+  return true;
+}
+
+// The tiles a bomb at (x, y) would burn. Flames stop at walls, and at the first crate, power-up, or bomb they hit.
+function blast(G, x, y, fire, bombs = G.bombs) {
+  const out = [idx(x, y)];
+  for (const d of 'udlr') {
+    for (let k = 1; k <= fire; k++) {
+      const nx = x + DIRS[d][0] * k, ny = y + DIRS[d][1] * k, i = idx(nx, ny), c = G.grid[i];
+      if (c === '#') break;
+      out.push(i);
+      if (c !== '.' || bombs.some(b => b.i === i)) break;
+    }
+  }
+  return out;
+}
+
+function explode(G, due) {
+  const queue = due.slice(), done = new Set();
+  while (queue.length) {
+    const b = queue.shift();
+    if (done.has(b)) continue;
+    done.add(b);
+    G.bombs = G.bombs.filter(o => o !== b);
+    for (const i of blast(G, b.x, b.y, b.fire)) {
+      G.flames.set(i, FLAME);
+      const c = G.grid[i];
+      if (c === '+') { if (!G.burning.has(i)) G.burning.set(i, G.hidden.get(i) || '.'); }
+      else if (isPower(c)) G.grid[i] = '.';
+      for (const o of G.bombs) if (o.i === i && !done.has(o)) queue.push(o);
+    }
+    G.events.push({ k: 'boom', i: b.i });
+  }
+}
+
+function kill(G, p) {
+  if (!p.alive) return;
+  p.alive = false;
+  p.deadAt = G.time;
+  p.dir = '';
+  G.events.push({ k: 'out', slot: p.slot });
+}
+
+function power(p, c) {
+  if (c === 'b') p.bombs = Math.min(MAX.bombs, p.bombs + 1);
+  else if (c === 'f') p.fire = Math.min(MAX.fire, p.fire + 1);
+  else if (c === 's') p.speed = Math.min(MAX.speed, p.speed + 1);
+}
+
+function closeIn(G) {
+  while (G.sd < G.order.length && G.grid[G.order[G.sd]] === '#') G.sd++;
+  if (G.sd >= G.order.length) return;
+  const i = G.order[G.sd++];
+  G.grid[i] = '#';
+  G.bombs = G.bombs.filter(b => b.i !== i);
+  G.flames.delete(i);
+  G.burning.delete(i);
+  for (const p of G.players) {
+    if (!p.alive) continue;
+    if (tileOf(p) === i) kill(G, p);
+    else if (p.moving && idx(p.tx, p.ty) === i) reverse(p);
+  }
+}
+
+function step(G, dt) {
+  G.time += dt;
+  for (const p of G.players) if (p.alive && p.bot && !p.moving && G.time >= p.nextThink) { botThink(G, p); p.nextThink = G.time + 0.12; }
+  for (const p of G.players) {
+    if (!p.alive) continue;
+    if (p.want) { p.want = false; placeBomb(G, p); }
+    move(G, p, dt);
+  }
+  for (const b of G.bombs) b.t -= dt;
+  const due = G.bombs.filter(b => b.t <= 0);
+  if (due.length) explode(G, due);
+  for (const [i, t] of G.flames) {
+    if (t - dt > 0) { G.flames.set(i, t - dt); continue; }
+    G.flames.delete(i);
+    if (G.burning.has(i)) { G.grid[i] = G.burning.get(i); G.burning.delete(i); }
+  }
+  for (const p of G.players) {
+    if (!p.alive) continue;
+    const i = tileOf(p);
+    if (G.flames.has(i) || G.grid[i] === '#') kill(G, p);
+    else if (isPower(G.grid[i])) { power(p, G.grid[i]); G.grid[i] = '.'; G.events.push({ k: 'pick', slot: p.slot }); }
+  }
+  if (G.time >= G.sdNext) { closeIn(G); G.sdNext += SD_EVERY; }
+  if (G.over < 0 && G.players.filter(p => p.alive).length <= 1) G.over = G.time;
+}
+
+// The slot that won, or -1 for a draw. Decided a moment after the last death, so two players caught in the same blast both lose.
+const roundWinner = G => { const alive = G.players.filter(p => p.alive); return alive.length === 1 ? alive[0].slot : -1; };
+const roundDone = G => G.over >= 0 && G.time - G.over >= 1;
+
+// ---- bots
+
+// For each tile, the seconds until fire reaches it (0 if it's burning now, Infinity if nothing is coming).
+function danger(G, extra) {
+  const D = new Array(W * H).fill(Infinity);
+  for (const i of G.flames.keys()) D[i] = 0;
+  const bs = G.bombs.map(b => ({ i: b.i, x: b.x, y: b.y, t: b.t, fire: b.fire }));
+  if (extra) bs.push(extra);
+  const reach = bs.map(b => blast(G, b.x, b.y, b.fire, bs));
+  for (let changed = true; changed;) {
+    changed = false;
+    bs.forEach((a, k) => { for (const i of reach[k]) for (const o of bs) if (o.i === i && o.t > a.t) { o.t = a.t; changed = true; } });
+  }
+  bs.forEach((a, k) => { for (const i of reach[k]) D[i] = Math.min(D[i], a.t); });
+  return D;
+}
+
+// Breadth-first search from the bot's tile. score(i, steps) gives a cost for tiles worth going to, or null.
+// Careful routes avoid every tile that's about to burn; escapes may cross one if they'll be past it in time.
+function route(G, p, D, score, careful) {
+  const start = tileOf(p), sp = speedOf(p);
+  const prev = new Map([[start, -1]]), dist = new Map([[start, 0]]), q = [start];
+  let best = null;
+  while (q.length) {
+    const i = q.shift(), d = dist.get(i);
+    const s = score(i, d);
+    if (s !== null && (!best || s < best.s)) best = { i, s };
+    if (d >= 16) continue;
+    const x = i % W, y = (i / W) | 0;
+    for (const k of 'udlr') {
+      const nx = x + DIRS[k][0], ny = y + DIRS[k][1], j = idx(nx, ny);
+      if (dist.has(j) || !walkable(G, nx, ny) || G.flames.has(j)) continue;
+      if (D[j] < Infinity) {
+        const at = (d + 1) / sp;
+        if (careful || (at + 0.3 > D[j] && at < D[j] + FLAME + 0.15)) continue;
+      }
+      dist.set(j, d + 1); prev.set(j, i); q.push(j);
+    }
+  }
+  if (!best) return null;
+  if (best.i === start) return { here: true };
+  let i = best.i;
+  while (prev.get(i) !== start) i = prev.get(i);
+  const dx = (i % W) - (start % W), dy = ((i / W) | 0) - ((start / W) | 0);
+  return { dir: dx > 0 ? 'r' : dx < 0 ? 'l' : dy > 0 ? 'd' : 'u', goal: best.i };
+}
+
+function targets(G, p, at, enemies) {
+  let crates = 0, foes = 0;
+  for (const i of blast(G, at % W, (at / W) | 0, p.fire)) {
+    if (G.grid[i] === '+' && !G.burning.has(i)) crates++;
+    if (enemies.includes(i)) foes++;
+  }
+  return { crates, foes };
+}
+
+function botThink(G, p) {
+  const here = tileOf(p), x = here % W, y = (here / W) | 0;
+  const D = danger(G);
+  p.dir = '';
+  if (D[here] < Infinity) {
+    const r = route(G, p, D, (i, d) => (D[i] === Infinity ? d : null), false);
+    if (r && r.dir) p.dir = r.dir;
+    return;
+  }
+  const enemies = G.players.filter(o => o.alive && o !== p).map(tileOf);
+  const mine = G.bombs.filter(b => b.owner === p.slot).length;
+  if (mine < p.bombs && !bombAt(G, here)) {
+    const t = targets(G, p, here, enemies);
+    if ((t.foes && G.rnd() < 0.55) || (t.crates && G.rnd() < 0.85)) {
+      const extra = { i: here, x, y, t: FUSE, fire: p.fire };
+      const D2 = danger(G, extra);
+      G.bombs.push(extra);
+      const r = route(G, p, D2, (i, d) => (D2[i] === Infinity ? d : null), false);
+      G.bombs.pop();
+      if (r && r.dir) { p.want = true; p.dir = r.dir; return; }
+    }
+  }
+  const r = route(G, p, D, (i, d) => {
+    if (D[i] !== Infinity) return null;
+    if (isPower(G.grid[i])) return d - 5;
+    if (mine >= p.bombs || bombAt(G, i)) return null;
+    const t = targets(G, p, i, enemies);
+    if (t.crates) return d + 1 - Math.min(t.crates, 3) * 0.3;
+    if (t.foes) return d + 2;
+    return null;
+  }, true);
+  if (r && r.dir) { p.dir = r.dir; return; }
+  if (G.rnd() < 0.25) {
+    const ways = 'udlr'.split('').filter(k => {
+      const nx = x + DIRS[k][0], ny = y + DIRS[k][1];
+      return walkable(G, nx, ny) && D[idx(nx, ny)] === Infinity;
+    });
+    if (ways.length) p.dir = ways[(G.rnd() * ways.length) | 0];
+  }
+}
+
+// ---- the match
+
+let mode = null;          // 'local', 'host', or 'guest'
+let room = null;
+let slots = [];           // [{ name, color, bot, id, keys, gone }]
+let wins = [];
+let G = null;             // the live round, on the host or a local game
+let view = null;          // what a guest sees, from the host's snapshots
+let phase = 'menu';       // 'play', 'roundEnd', 'matchEnd', 'menu'
+let endAt = 0, mySlot = 0, botsOn = true, localKind = 'solo', roundNo = 0, lastWinner = -1;
+const $ = id => document.getElementById(id);
+const savedName = () => { try { return localStorage.getItem('linkplay_name') || ''; } catch (e) { return ''; } };
+
+function botSlots(list) {
+  let b = 0;
+  while (list.length < 4) list.push({ name: BOT_NAMES[b++], bot: true });
+  return list;
+}
+
+function startLocal(kind) {
+  leaveRoom();
+  mode = 'local'; localKind = kind; mySlot = 0;
+  const list = kind === 'duo'
+    ? [{ name: 'Left', keys: 'wasd' }, { name: 'Right', keys: 'arrows' }]
+    : [{ name: savedName() || 'You', keys: 'any' }];
+  slots = (botsOn || kind === 'solo' ? botSlots(list) : list).map((s, k) => ({ ...s, color: SLOT_COLORS[k] }));
+  startMatch();
+}
+
+function startOnline(r) {
+  if (room !== r) {
+    leaveRoom();
+    room = r;
+    if (r.isHost) {
+      r.on('message', onHostMessage);
+      r.on('leave', id => {
+        const k = slots.findIndex(s => s.id === id && !s.bot);
+        if (k < 0) return;
+        slots[k].gone = true;
+        if (G && G.players[k]) kill(G, G.players[k]);
+        drawHud(true);
+      });
+    } else {
+      r.on('message', onGuestMessage);
+      r.on('close', () => {
+        if (room !== r) return;
+        phase = 'menu';
+        message('The host left', 'The game ended because the host closed it or lost the connection.', [{ label: 'Back to the menu', fn: () => lobby.start() }]);
+      });
+    }
+  }
+  mode = r.isHost ? 'host' : 'guest';
+  if (r.isHost) {
+    mySlot = 0;
+    const list = r.players.slice(0, 4).map(p => ({ name: p.name, id: p.id, keys: p.id === 0 ? 'any' : null }));
+    slots = (botsOn ? botSlots(list) : list).map((s, k) => ({ ...s, color: SLOT_COLORS[k] }));
+    startMatch();
+  } else {
+    phase = 'menu';
+    message('Connected', 'Waiting for the host to start.', []);
+  }
+}
+
+function leaveRoom() {
+  const r = room;
+  room = null;
+  if (r) { try { r.close(); } catch (e) { } }
+}
+
+function startMatch() {
+  wins = slots.map(() => 0);
+  roundNo = 0;
+  startRound();
+}
+
+function startRound() {
+  roundNo++;
+  G = newRound(slots, (Math.random() * 2 ** 32) >>> 0);
+  phase = 'play';
+  hideMessage();
+  if (mode === 'host') room.send({ t: 'round', slots: publicSlots(), wins, n: roundNo });
+  drawHud(true);
+}
+
+const publicSlots = () => slots.map(s => ({ name: s.name, color: s.color, bot: !!s.bot, id: s.bot ? null : s.id, gone: !!s.gone }));
+
+function endRound() {
+  lastWinner = roundWinner(G);
+  if (lastWinner >= 0) wins[lastWinner]++;
+  const matchOver = wins.some(w => w >= WINS_TO);
+  phase = matchOver ? 'matchEnd' : 'roundEnd';
+  endAt = performance.now();
+  if (mode === 'host') { room.send(snapshot(G)); room.send({ t: 'end', w: lastWinner, wins, m: matchOver }); }
+  showEnd();
+  drawHud(true);
+}
+
+function showEnd() {
+  const who = lastWinner < 0 ? null : slots[lastWinner];
+  const name = who ? (lastWinner === mySlot && mode !== 'local' ? 'You' : who.name) : null;
+  if (phase === 'roundEnd') {
+    message(name ? name + (name === 'You' ? ' win' : ' wins') + ' the round' : 'Nobody survived', 'Next round in a moment.', []);
+    return;
+  }
+  const title = name ? name + (name === 'You' ? ' win' : ' wins') + ' the match' : 'Match over';
+  if (mode === 'guest') {
+    message(title, 'Waiting for the host to start another match.', [{ label: 'Leave', quiet: true, fn: () => lobby.start() }]);
+    return;
+  }
+  const btns = [{ label: 'Play again', fn: () => (mode === 'host' ? startOnline(room) : startLocal(localKind)) }];
+  if (mode === 'host') btns.push({ label: 'Invite more', quiet: true, fn: () => lobby.reopen() });
+  btns.push({ label: 'Menu', quiet: true, fn: () => lobby.start() });
+  message(title, '', btns, mode === 'host' || localKind === 'duo');
+}
+
+function message(title, text, buttons, botToggle) {
+  const m = $('msg');
+  m.hidden = false;
+  m.innerHTML = '<h2>' + esc(title) + '</h2>' + (text ? '<p>' + esc(text) + '</p>' : '') +
+    (botToggle ? '<label><input type="checkbox" id="botsOn"' + (botsOn ? ' checked' : '') + '> Bots in the empty corners</label>' : '') +
+    '<div class="row"></div>';
+  const row = m.querySelector('.row');
+  for (const b of buttons) {
+    const el = document.createElement('button');
+    el.textContent = b.label;
+    if (b.quiet) el.className = 'quiet';
+    el.onclick = b.fn;
+    if (row) row.appendChild(el);
+  }
+  const box = m.querySelector('#botsOn');
+  if (box) box.onchange = () => { botsOn = box.checked; };
+}
+function hideMessage() { $('msg').hidden = true; }
+
+// ---- network
+
+function snapshot(G) {
+  const r2 = v => Math.round(v * 100) / 100;
+  return { t: 's', g: G.grid.join(''), tm: Math.round(G.time * 10) / 10,
+    p: G.players.map(p => [r2(p.x), r2(p.y), p.alive ? 1 : 0, p.face, p.bombs, p.fire, p.speed]),
+    b: G.bombs.map(b => [b.i, Math.round(b.t * 10)]), f: [...G.flames.keys()], k: [...G.burning.keys()] };
+}
+
+function onHostMessage(m, from) {
+  if (!G || phase !== 'play') return;
+  const p = G.players.find(o => !o.bot && o.id === from);
+  if (!p || !p.alive) return;
+  if (m.t === 'in') p.dir = isDir(m.d) ? m.d : '';
+  else if (m.t === 'bomb') p.want = true;
+}
+
+const tileList = a => Array.isArray(a) && a.length <= W * H && a.every(i => Number.isInteger(i) && i >= 0 && i < W * H);
+
+function onGuestMessage(m) {
+  if (m.t === 'round') {
+    if (!Array.isArray(m.slots) || !m.slots.length || m.slots.length > 4) return;
+    slots = m.slots.map((s, k) => ({
+      name: String((s && s.name) || 'Player').slice(0, 16), color: SLOT_COLORS[k], bot: !!(s && s.bot),
+      id: s && Number.isInteger(s.id) ? s.id : null, gone: !!(s && s.gone),
+    }));
+    wins = slots.map((s, k) => (Array.isArray(m.wins) && Number.isInteger(m.wins[k]) ? Math.max(0, Math.min(WINS_TO, m.wins[k])) : 0));
+    mySlot = slots.findIndex(s => !s.bot && s.id === room.me);
+    view = null;
+    phase = 'play';
+    sentDir = null;
+    hideMessage();
+    drawHud(true);
+  } else if (m.t === 's') {
+    applySnapshot(m);
+  } else if (m.t === 'end') {
+    if (!Array.isArray(m.wins)) return;
+    wins = slots.map((s, k) => (Number.isInteger(m.wins[k]) ? Math.max(0, Math.min(WINS_TO, m.wins[k])) : 0));
+    lastWinner = Number.isInteger(m.w) && m.w >= 0 && m.w < slots.length ? m.w : -1;
+    phase = m.m ? 'matchEnd' : 'roundEnd';
+    showEnd();
+    drawHud(true);
+  }
+}
+
+function applySnapshot(m) {
+  if (!slots.length || typeof m.g !== 'string' || m.g.length !== W * H || !/^[#+.bfs]+$/.test(m.g)) return false;
+  if (!Array.isArray(m.p) || m.p.length !== slots.length) return false;
+  const ok = m.p.every(a => Array.isArray(a) && a.length === 7 && a[0] >= 0 && a[0] < W && a[1] >= 0 && a[1] < H && isDir(a[3]) &&
+    [4, 5, 6].every(k => Number.isInteger(a[k]) && a[k] >= 0 && a[k] <= 8));
+  if (!ok || !tileList(m.f) || !tileList(m.k) || !Array.isArray(m.b) || !m.b.every(b => Array.isArray(b) && tileList([b[0]]) && Number.isFinite(b[1]))) return false;
+  const time = Number.isFinite(m.tm) ? m.tm : 0;
+  const before = view;
+  view = {
+    grid: m.g.split(''), time, bombs: m.b.map(b => ({ i: b[0], t: b[1] / 10 })), flames: new Set(m.f), burning: new Set(m.k),
+    players: m.p.map((a, k) => {
+      const old = before && before.players[k];
+      const alive = !!a[2];
+      const far = !old || Math.abs(old.dx - a[0]) + Math.abs(old.dy - a[1]) > 2;
+      return { slot: k, x: a[0], y: a[1], dx: far ? a[0] : old.dx, dy: far ? a[1] : old.dy, alive, face: a[3],
+               bombs: a[4], fire: a[5], speed: a[6], deadAt: alive ? -1 : old && old.deadAt >= 0 ? old.deadAt : old && old.alive ? time : -1 };
+    }),
+  };
+  if (before && m.f.some(i => !before.flames.has(i))) boom();
+  return true;
+}
+
+// ---- input
+
+const held = [];   // keys being held, latest last: { code, set, dir }
+const KEYS = { KeyW: ['wasd', 'u'], KeyA: ['wasd', 'l'], KeyS: ['wasd', 'd'], KeyD: ['wasd', 'r'],
+               ArrowUp: ['arrows', 'u'], ArrowLeft: ['arrows', 'l'], ArrowDown: ['arrows', 'd'], ArrowRight: ['arrows', 'r'] };
+const BOMB_KEYS = { Space: 'wasd', KeyX: 'wasd', KeyQ: 'wasd', Enter: 'arrows', Slash: 'arrows', ShiftRight: 'arrows' };
+let touchDir = '', sentDir = null;
+
+function dirFor(keys) {
+  for (let k = held.length - 1; k >= 0; k--) if (keys === 'any' || held[k].set === keys) return held[k].dir;
+  return keys === 'any' || keys === 'wasd' ? touchDir : '';
+}
+
+function bombPressed(set) {
+  if (phase !== 'play') return;
+  if (mode === 'guest') { if (room) room.send({ t: 'bomb' }); return; }
+  if (!G) return;
+  const p = G.players.find(o => !o.bot && o.keys && (o.keys === 'any' || !set || o.keys === set));
+  if (p && p.alive) p.want = true;
+}
+
+function readInput() {
+  if (phase !== 'play') return;
+  if (mode === 'guest') {
+    const d = dirFor('any');
+    if (d !== sentDir && room) { sentDir = d; room.send({ t: 'in', d }); }
+    return;
+  }
+  if (G) for (const p of G.players) if (p.keys && p.alive) p.dir = dirFor(p.keys);
+}
+
+addEventListener('keydown', e => {
+  if (!$('lobby').hidden || e.target.tagName === 'INPUT') return;
+  if (KEYS[e.code]) {
+    e.preventDefault();
+    if (!held.some(h => h.code === e.code)) held.push({ code: e.code, set: KEYS[e.code][0], dir: KEYS[e.code][1] });
+  } else if (BOMB_KEYS[e.code] && phase === 'play') {
+    e.preventDefault();
+    if (!e.repeat) bombPressed(BOMB_KEYS[e.code]);
+  } else if (e.code === 'Enter' && phase === 'matchEnd' && mode !== 'guest') {
+    e.preventDefault();
+    mode === 'host' ? startOnline(room) : startLocal(localKind);
+  }
+});
+addEventListener('keyup', e => { const k = held.findIndex(h => h.code === e.code); if (k >= 0) held.splice(k, 1); });
+addEventListener('blur', () => { held.length = 0; touchDir = ''; });
+
+(function touchControls() {
+  const stick = $('stick'), nub = $('nub');
+  let pid = null;
+  const at = e => {
+    const r = stick.getBoundingClientRect(), dx = e.clientX - r.left - r.width / 2, dy = e.clientY - r.top - r.height / 2;
+    const len = Math.hypot(dx, dy), max = r.width / 2 - 20, k = len > max ? max / len : 1;
+    nub.style.transform = 'translate(' + dx * k + 'px,' + dy * k + 'px)';
+    touchDir = len < 14 ? '' : Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u');
+  };
+  const end = () => { pid = null; touchDir = ''; nub.style.transform = ''; };
+  stick.addEventListener('pointerdown', e => { pid = e.pointerId; try { stick.setPointerCapture(pid); } catch (x) { } at(e); });
+  stick.addEventListener('pointermove', e => { if (e.pointerId === pid) at(e); });
+  stick.addEventListener('pointerup', end);
+  stick.addEventListener('pointercancel', end);
+  $('bombBtn').addEventListener('pointerdown', e => { e.preventDefault(); bombPressed('wasd'); });
+  if (matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch');
+})();
+
+// ---- sound
+
+let sound = true, audio = null;
+try { sound = localStorage.getItem('bombarena_sound') !== 'off'; } catch (e) { }
+function boom() {
+  if (!sound) return;
+  try {
+    audio = audio || new AudioContext();
+    const n = Math.floor(audio.sampleRate * 0.4), buf = audio.createBuffer(1, n, audio.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+    const src = audio.createBufferSource(), lp = audio.createBiquadFilter(), g = audio.createGain();
+    src.buffer = buf; lp.type = 'lowpass'; lp.frequency.value = 700; g.gain.value = 0.6;
+    src.connect(lp).connect(g).connect(audio.destination);
+    src.start();
+  } catch (e) { }
+}
+function drawSound() { $('soundBtn').textContent = sound ? 'Sound on' : 'Sound off'; }
+$('soundBtn').onclick = () => { sound = !sound; try { localStorage.setItem('bombarena_sound', sound ? 'on' : 'off'); } catch (e) { } drawSound(); };
+$('menuBtn').onclick = () => lobby.start();
+drawSound();
+
+// ---- drawing
+
+const cv = $('cv'), g = cv.getContext('2d');
+let T = 32;
+
+function fit() {
+  const st = $('stage'), dpr = Math.min(2, devicePixelRatio || 1);
+  T = Math.max(12, Math.floor(Math.min((st.clientWidth - 20) / W, (st.clientHeight - 8) / H)));
+  cv.width = W * T * dpr; cv.height = H * T * dpr;
+  cv.style.width = W * T + 'px'; cv.style.height = H * T + 'px';
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', fit);
+
+// One shape for both the host's game and a guest's copy of it.
+function scene() {
+  if (mode === 'guest') {
+    if (!view) return null;
+    return { grid: view.grid, time: view.time, bombs: view.bombs, flames: view.flames, burning: view.burning,
+             players: view.players.map(p => ({ ...p, x: p.dx, y: p.dy })) };
+  }
+  if (!G) return null;
+  return { grid: G.grid, time: G.time, bombs: G.bombs, flames: G.flames, burning: G.burning, players: G.players };
+}
+
+function rr(x, y, w, h, r) { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); }
+
+function drawBombIcon(cx, cy, r) {
+  g.fillStyle = '#15171c'; g.beginPath(); g.arc(cx, cy + r * 0.15, r, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.arc(cx - r * 0.35, cy - r * 0.15, r * 0.28, 0, 7); g.fill();
+}
+
+function render(now) {
+  const s = scene();
+  g.fillStyle = '#2b3a2f';
+  g.fillRect(0, 0, W * T, H * T);
+  if (!s) return;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = idx(x, y), c = s.grid[i], px = x * T, py = y * T;
+    if (c === '#') {
+      g.fillStyle = '#4b5059'; g.fillRect(px, py, T, T);
+      g.fillStyle = '#5f6570'; g.fillRect(px, py, T, T * 0.22);
+      g.fillStyle = '#3a3e46'; g.fillRect(px, py + T * 0.86, T, T * 0.14);
+      continue;
+    }
+    g.fillStyle = (x + y) % 2 ? '#2f4033' : '#2b3a2f';
+    g.fillRect(px, py, T, T);
+    if (c === '+') {
+      const burn = s.burning.has(i);
+      g.fillStyle = burn ? '#d9692b' : '#b07a3f'; rr(px + 1.5, py + 1.5, T - 3, T - 3, T * 0.12); g.fill();
+      g.fillStyle = burn ? '#a8441c' : '#8a5a2b';
+      g.fillRect(px + 1.5, py + T * 0.32, T - 3, T * 0.08);
+      g.fillRect(px + 1.5, py + T * 0.62, T - 3, T * 0.08);
+      g.fillRect(px + T * 0.18, py + 1.5, T * 0.08, T - 3);
+      g.fillRect(px + T * 0.74, py + 1.5, T * 0.08, T - 3);
+    } else if (isPower(c)) {
+      const cx = px + T / 2, cy = py + T / 2;
+      g.fillStyle = '#efe4c6'; rr(px + T * 0.14, py + T * 0.14, T * 0.72, T * 0.72, T * 0.16); g.fill();
+      if (c === 'b') drawBombIcon(cx, cy, T * 0.2);
+      else if (c === 'f') {
+        g.fillStyle = '#ff7a1f'; g.beginPath();
+        g.moveTo(cx, py + T * 0.22); g.quadraticCurveTo(cx + T * 0.26, cy + T * 0.05, cx, py + T * 0.78);
+        g.quadraticCurveTo(cx - T * 0.26, cy + T * 0.05, cx, py + T * 0.22); g.fill();
+        g.fillStyle = '#ffd166'; g.beginPath(); g.arc(cx, cy + T * 0.12, T * 0.09, 0, 7); g.fill();
+      } else {
+        g.strokeStyle = '#2f7fd0'; g.lineWidth = Math.max(2, T * 0.09); g.lineCap = 'round'; g.lineJoin = 'round';
+        for (const o of [-0.12, 0.1]) { g.beginPath(); g.moveTo(cx + (o - 0.08) * T, cy - T * 0.16); g.lineTo(cx + (o + 0.08) * T, cy); g.lineTo(cx + (o - 0.08) * T, cy + T * 0.16); g.stroke(); }
+      }
+    }
+  }
+  const pulse = (now || 0) / 1000;
+  for (const b of s.bombs) {
+    const cx = (b.i % W + 0.5) * T, cy = (((b.i / W) | 0) + 0.5) * T;
+    const r = T * (0.33 + 0.03 * Math.sin(pulse * (b.t < 0.8 ? 26 : 10)));
+    drawBombIcon(cx, cy, r);
+    g.strokeStyle = '#c9a46a'; g.lineWidth = Math.max(1.5, T * 0.06);
+    g.beginPath(); g.moveTo(cx + r * 0.45, cy - r * 0.55); g.lineTo(cx + r * 0.75, cy - r * 0.95); g.stroke();
+    g.fillStyle = (pulse * 8 | 0) % 2 ? '#ffd166' : '#ff7a1f';
+    g.beginPath(); g.arc(cx + r * 0.8, cy - r, T * 0.07, 0, 7); g.fill();
+  }
+  for (const i of (s.flames.keys ? s.flames.keys() : s.flames)) {
+    const x = i % W, y = (i / W) | 0, px = x * T, py = y * T;
+    const has = j => (s.flames.has(j) ? 1 : 0);
+    const l = has(i - 1) && x > 0, r = has(i + 1) && x < W - 1, u = has(i - W), d = has(i + W);
+    for (const [col, inset] of [['#ff5a1f', 0.08], ['#ffb02e', 0.22], ['#fff3c4', 0.36]]) {
+      g.fillStyle = col;
+      const a = inset * T;
+      g.fillRect(px + (l ? 0 : a), py + a, T - (l ? 0 : a) - (r ? 0 : a), T - 2 * a);
+      g.fillRect(px + a, py + (u ? 0 : a), T - 2 * a, T - (u ? 0 : a) - (d ? 0 : a));
+    }
+  }
+  for (const p of s.players) {
+    let fade = 1;
+    if (!p.alive) {
+      if (p.deadAt < 0 || s.time - p.deadAt > 0.9) continue;
+      fade = 1 - (s.time - p.deadAt) / 0.9;
+    }
+    const color = (slots[p.slot] || {}).color || '#fff';
+    const cx = (p.x + 0.5) * T, bob = p.alive && (p.moving || mode === 'guest') ? Math.abs(Math.sin((p.x + p.y) * Math.PI)) * T * 0.05 : 0;
+    const cy = (p.y + 0.5) * T - bob;
+    g.globalAlpha = fade;
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(cx, (p.y + 0.86) * T, T * 0.3, T * 0.08, 0, 0, 7); g.fill();
+    g.fillStyle = color; g.beginPath(); g.arc(cx, cy, T * 0.36, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = Math.max(1.5, T * 0.05); g.stroke();
+    const [fx, fy] = DIRS[p.face] || [0, 1];
+    for (const side of [-1, 1]) {
+      const ex = cx + fx * T * 0.12 + (fy ? side * T * 0.12 : 0), ey = cy + fy * T * 0.1 + (fx ? side * T * 0.1 : -T * 0.04);
+      if (!p.alive) {
+        g.strokeStyle = '#15171c'; g.lineWidth = Math.max(1.5, T * 0.04);
+        g.beginPath(); g.moveTo(ex - T * 0.05, ey - T * 0.05); g.lineTo(ex + T * 0.05, ey + T * 0.05);
+        g.moveTo(ex + T * 0.05, ey - T * 0.05); g.lineTo(ex - T * 0.05, ey + T * 0.05); g.stroke();
+        continue;
+      }
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(ex, ey, T * 0.085, 0, 7); g.fill();
+      g.fillStyle = '#15171c'; g.beginPath(); g.arc(ex + fx * T * 0.035, ey + fy * T * 0.035, T * 0.045, 0, 7); g.fill();
+    }
+    if (p.slot === mySlot && mode !== 'local' || (mode === 'local' && localKind === 'solo' && p.slot === 0)) {
+      g.fillStyle = '#fff';
+      g.beginPath(); g.moveTo(cx - T * 0.1, cy - T * 0.62); g.lineTo(cx + T * 0.1, cy - T * 0.62); g.lineTo(cx, cy - T * 0.5); g.fill();
+    }
+    g.globalAlpha = 1;
+  }
+}
+
+let hudKey = '';
+function drawHud(force) {
+  const s = scene();
+  const key = JSON.stringify([slots.map(x => x.name + x.gone), wins, s && s.players.map(p => p.alive)]);
+  if (force || key !== hudKey) {
+    hudKey = key;
+    $('chips').innerHTML = slots.map((sl, k) => {
+      const p = s && s.players[k], out = sl.gone || (p && !p.alive);
+      const me = (mode !== 'local' || localKind === 'solo') && k === mySlot;
+      return '<span class="chip' + (out ? ' out' : '') + (me ? ' me' : '') + '" style="--c:' + sl.color + '"><i></i><span class="nm">' + esc(sl.name) + '</span>' +
+        '<b><em>' + '&#9679;'.repeat(wins[k] || 0) + '</em>' + '&#9675;'.repeat(WINS_TO - (wins[k] || 0)) + '</b></span>';
+    }).join('');
+  }
+  const me = s && (mode !== 'local' || localKind === 'solo') ? s.players[mySlot] : null;
+  $('stats').textContent = me && phase !== 'menu' ? 'Bombs ' + me.bombs + ', flame ' + me.fire + ', speed ' + (me.speed + 1) : '';
+  const left = s ? SD_AT - s.time : SD_AT;
+  $('clock').textContent = !s || phase === 'menu' ? '' : left > 0 ? Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0') : 'Walls closing in';
+  $('clock').className = s && left <= 0 ? 'sd' : '';
+  $('menuBtn').hidden = mode === null || !$('lobby').hidden;
+  $('keys').textContent = mode === 'local' && localKind === 'duo'
+    ? 'Left player: WASD to move, Space to drop a bomb. Right player: arrow keys and Enter.'
+    : mode ? 'Move with the arrow keys or WASD. Drop a bomb with Space.' : '';
+}
+
+let last = 0, acc = 0, lastSent = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+  last = now;
+  readInput();
+  if (mode !== 'guest' && G && phase === 'play') {
+    // once only bots are left, play it out at double speed
+    const fast = !G.players.some(p => !p.bot && p.alive) ? 2 : 1;
+    acc += dt * fast;
+    let n = 0;
+    while (acc >= STEP && n++ < 12) { acc -= STEP; step(G, STEP); }
+    if (acc > STEP) acc = 0;
+    if (G.events.some(e => e.k === 'boom')) boom();
+    G.events.length = 0;
+    if (mode === 'host' && room && now - lastSent > 50) { lastSent = now; room.send(snapshot(G)); }
+    if (roundDone(G)) endRound();
+  } else if (mode === 'guest' && view) {
+    const k = Math.min(1, dt * 18);
+    for (const p of view.players) { p.dx += (p.x - p.dx) * k; p.dy += (p.y - p.dy) * k; }
+  }
+  if (phase === 'roundEnd' && mode !== 'guest' && now - endAt > 2600) startRound();
+  render(now);
+  drawHud(false);
+}
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'bomb-arena',
+  title: 'Bomb Arena',
+  blurb: 'Drop bombs, blow up crates, grab power-ups, and be the last one standing. First to 3 rounds wins.',
+  min: 2,
+  max: 4,
+  extra: [
+    { label: 'Play against bots', note: 'You and three bots.', onClick: () => startLocal('solo') },
+    { label: 'Two players, one keyboard', note: 'WASD and Space against the arrow keys and Enter.', onClick: () => startLocal('duo') },
+  ],
+  onStart: startOnline,
+  onJoin: startOnline,
+});
+// leaving through the lobby ends whatever was running
+const lobbyStart = lobby.start;
+lobby.start = () => { leaveRoom(); mode = null; G = null; view = null; phase = 'menu'; slots = []; hideMessage(); lobbyStart(); drawHud(true); };
+
+fit();
+requestAnimationFrame(frame);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Bomb Arena</h2>
+<p>A Bomberman-style arena game. Drop bombs, blow up crates, pick up what's inside, and be the last one standing. First to win 3 rounds takes the match.</p>
+<p>Play with up to 3 friends online, against bots, or with two people on one keyboard. Bots fill any empty corners, and the host can turn them off between matches.</p>
+<h3>Play</h3>
+<p>To play friends: click "Play with friends" and send each friend their own invite. Each of them sends back a reply link; open it in your browser or paste it in. Press Start when everyone is in.</p>
+<ul><li>Move with the arrow keys or WASD, and drop a bomb with Space.</li><li>Two on one keyboard: the left player uses WASD and Space, the right player the arrow keys and Enter.</li><li>On a phone, use the stick on the left and the Bomb button on the right.</li></ul>
+<h3>Rules</h3>
+<ul><li>A bomb goes off after about 2.4 seconds. The flames go out in a cross and stop at the first wall, crate, or bomb they reach. A bomb caught in the flames goes off too.</li><li>You start with one bomb at a time and flames 2 tiles long. Some crates hide a power-up: one more bomb, longer flames, or more speed. Flames burn up any power-up lying in the open.</li><li>You can't walk through crates or bombs, but you can always walk off the bomb you just dropped.</li><li>After 90 seconds the walls start closing in from the outside, so every round ends.</li><li>If the last two players go down in the same blast, nobody wins the round.</li></ul>
+<h3>How online play works</h3>
+<p>It uses <a href="../linkplay/">LinkPlay</a>: browsers connect directly over WebRTC, and the invite and reply links carry the connection details. The host's browser runs the game and the bots. Guests send their key presses, and the host sends everyone the state of the arena 20 times a second.</p>
+<p class="pg-more">More like this: <a href="../couch-party/">Couch Party</a>, <a href="../worm-arena/">Worm Arena</a>, <a href="../battle-tanks/">Battle Tanks</a>, <a href="../sketch-guess/">Sketch &amp; Guess</a>. Or see <a href="../#online">all online games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/bomb-arena">bomb-arena on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>
