@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23f9d56e'/%3E%3Cpath d='M8 4 L8 28 M16 4 L16 28 M8 10 H16 M8 16 H16 M8 22 H16' stroke='%238a5a2b' stroke-width='2.4'/%3E%3Cpath d='M26 5 C18 10 30 16 22 22 S20 28 24 28' fill='none' stroke='%232a9d4b' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Snakes &amp; Ladders | play online with friends or bots</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/snakes-ladders/">
+<style>
+  :root { --bg: #f4efe1; --ink: #23201b; --muted: #6f695e; --card: #fffdf6; --rule: #ddd3bd;
+          --lp-bg: #f4efe1; --lp-panel: #fffdf6; --lp-field: #ffffff; --lp-ink: #23201b; --lp-muted: #6f695e; --lp-rule: #ddd3bd;
+          --lp-veil: rgba(244, 239, 225, .97); --lp-accent: #2a9d4b; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  [hidden] { display: none !important; }
+  #app { display: flex; gap: 22px; justify-content: center; align-items: flex-start; padding: 44px 14px 24px; flex-wrap: wrap; }
+  #boardWrap { position: relative; }
+  canvas { display: block; border-radius: 12px; box-shadow: 0 3px 0 var(--rule); }
+  #side { width: 270px; display: flex; flex-direction: column; gap: 12px; }
+  #status { font-size: 19px; font-weight: 700; min-height: 2.6em; }
+  #dice { width: 96px; height: 96px; border-radius: 18px; border: 0; background: var(--card); cursor: pointer; box-shadow: 0 3px 0 var(--rule); display: grid; place-items: center; padding: 0; }
+  #dice:disabled { cursor: default; opacity: .55; }
+  #dice:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  #dice svg { width: 72px; height: 72px; }
+  #dice.rolling svg { animation: tumble .5s cubic-bezier(.3, .7, .4, 1); }
+  @keyframes tumble { 0% { transform: rotate(0) scale(1); } 30% { transform: rotate(-160deg) scale(.8); } 70% { transform: rotate(40deg) scale(1.08); } 100% { transform: rotate(0) scale(1); } }
+  #players { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: 12px; }
+  #players li { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-bottom: 1px solid var(--bg); font-size: 15px; }
+  #players li:last-child { border-bottom: 0; }
+  #players li.on { font-weight: 700; }
+  #players i { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  #players .at { margin-left: auto; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  #log { font-size: 13px; color: var(--muted); line-height: 1.5; min-height: 3em; flex: 1; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button.act { font: inherit; font-weight: 700; font-size: 15px; padding: 9px 15px; border-radius: 9px; border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); cursor: pointer; }
+  button.act:hover { background: var(--ink); color: var(--card); }
+  button.quiet { font: inherit; border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px 0; }
+  #setup { position: absolute; inset: 0; background: rgba(244, 239, 225, .95); border-radius: 12px; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; }
+  #setup h2 { margin: 0; font-size: 24px; }
+  #setup p { margin: 0; color: var(--muted); max-width: 34ch; }
+  #setup label { display: inline-flex; gap: 8px; align-items: center; font-size: 15px; }
+  .seats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seat { font: inherit; font-size: 15px; font-weight: 600; padding: 10px 12px; border-radius: 10px; border: 2px solid; background: var(--card); cursor: pointer; min-width: 132px; }
+  .seat small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  .opts { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  @media (max-width: 700px) { #side { width: min(100%, 440px); } #app { padding-top: 40px; gap: 14px; } #dice { width: 80px; height: 80px; } #dice svg { width: 60px; height: 60px; } }
+  @media (prefers-reduced-motion: reduce) { #dice.rolling svg { animation: none; } }
+</style>
+<meta property="og:title" content="Snakes &amp; Ladders">
+<meta property="og:description" content="Snakes and ladders for 2 to 4 players. Play friends online with a link, pass one phone around, or play against bots. Climb the ladders, dodge the snakes, first to 100 wins.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/snakes-ladders/">
+<meta property="og:image" content="https://rajeshrenato.github.io/snakes-ladders/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Snakes and ladders for 2 to 4 players. Play friends online with a link, pass one phone around, or play against bots. Climb the ladders, dodge the snakes, first to 100 wins.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/#online"}, {"@type": "ListItem", "position": 3, "name": "Snakes & Ladders", "item": "https://rajeshrenato.github.io/snakes-ladders/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Snakes & Ladders", "url": "https://rajeshrenato.github.io/snakes-ladders/", "description": "Snakes and ladders for 2 to 4 players. Play friends online with a link, pass one phone around, or play against bots. Climb the ladders, dodge the snakes, first to 100 wins.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="app">
+  <div id="boardWrap"><canvas id="c"></canvas><div id="setup" hidden></div></div>
+  <div id="side">
+    <div id="status"></div>
+    <div class="row"><button id="dice" aria-label="Roll the dice" disabled></button><div id="log"></div></div>
+    <ul id="players"></ul>
+    <div class="row" id="actions"></div>
+  </div>
+</div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const now = () => performance.now();
+
+const COLORS = ['#e5484d', '#2a9d4b', '#f5a700', '#3e7bfa'];
+const NAMES = ['Red', 'Green', 'Yellow', 'Blue'];
+
+// ---- the board: squares 1 to 100, snaking up from the bottom left
+
+const LADDERS = { 3: 22, 8: 30, 20: 41, 28: 55, 36: 57, 51: 72, 63: 81, 71: 92 };
+const SNAKES = { 17: 4, 31: 12, 48: 26, 62: 40, 66: 45, 87: 57, 93: 69, 95: 76, 99: 79 };
+
+// The column and row (0 at the bottom) of square n.
+function cellOf(n) {
+  const r = Math.floor((n - 1) / 10), k = (n - 1) % 10;
+  return [r % 2 ? 9 - k : k, r];
+}
+
+// Where a roll takes a token: square by square, then up a ladder or down a snake.
+// rules: { start6, exact }. Returns { to, steps: [squares passed], jump: { from, to, kind } | null, moved }.
+function plan(pos, roll, rules) {
+  if (pos === 0 && rules.start6 && roll !== 6) return { to: 0, steps: [], jump: null, moved: false };
+  let target = pos + roll;
+  if (target > 100) {
+    if (rules.exact) return { to: pos, steps: [], jump: null, moved: false };
+    target = 100;
+  }
+  const steps = [];
+  for (let s = pos + 1; s <= target; s++) steps.push(s);
+  const up = LADDERS[target], down = SNAKES[target];
+  const jump = up ? { from: target, to: up, kind: 'ladder' } : down ? { from: target, to: down, kind: 'snake' } : null;
+  return { to: jump ? jump.to : target, steps, jump, moved: true };
+}
+
+// ---- the game
+
+const G = { seats: [], pos: [0, 0, 0, 0], turn: 0, roll: 0, sixes: 0, phase: 'setup', winner: -1, last: null, log: [], botAt: 0,
+            rules: { start6: false, exact: true } };
+let setupSeats = [{ kind: 'human' }, { kind: 'bot' }, { kind: 'off' }, { kind: 'off' }];
+let room = null, local = false;
+
+function runsGame() { return local || (room && room.isHost); }
+function myId() { return room ? room.me : 0; }
+function mySeats() {
+  if (local) return G.seats.map((s, i) => (s && s.kind === 'human' ? i : -1)).filter(i => i >= 0);
+  return G.seats.map((s, i) => (s && s.kind === 'human' && s.id === myId() ? i : -1)).filter(i => i >= 0);
+}
+const active = seat => !!G.seats[seat];
+const isBot = seat => G.seats[seat] && G.seats[seat].kind === 'bot';
+function note(text) { G.log.push(text); if (G.log.length > 3) G.log.shift(); }
+function seatName(seat) { const s = G.seats[seat]; return !s ? NAMES[seat] : s.kind === 'bot' ? NAMES[seat] + ' bot' : s.name || NAMES[seat]; }
+
+function startGame(seats, rules) {
+  G.seats = seats;
+  G.rules = { start6: !!rules.start6, exact: rules.exact !== false };
+  G.pos = [0, 0, 0, 0];
+  G.turn = seats.findIndex(Boolean);
+  G.roll = 0; G.sixes = 0; G.phase = 'roll'; G.winner = -1; G.last = null; G.log = []; G.seq = 0;
+  G.botAt = now() + 700;
+  note(seatName(G.turn) + ' goes first.');
+  publish();
+}
+
+function nextTurn() {
+  let s = G.turn;
+  do s = (s + 1) % 4; while (!active(s));
+  G.turn = s; G.sixes = 0; G.phase = 'roll'; G.roll = 0;
+  G.botAt = now() + 650;
+}
+
+// How long a move takes to watch: each square, plus the ride.
+const moveTime = p => p.steps.length * 190 + (p.jump ? 1100 : 0) + 250;
+
+function doRoll(seat, rand = Math.random) {
+  if (G.phase !== 'roll' || seat !== G.turn) return;
+  const roll = 1 + Math.floor(rand() * 6);
+  G.roll = roll;
+  G.sixes = roll === 6 ? G.sixes + 1 : 0;
+  if (G.sixes === 3) {
+    note(seatName(seat) + ' rolled three sixes, so the turn passes.');
+    G.phase = 'pause'; G.pauseUntil = now() + 1200; G.after = 'next';
+    publish();
+    return;
+  }
+  const p = plan(G.pos[seat], roll, G.rules);
+  G.seq++;
+  G.last = { seat, from: G.pos[seat], roll, steps: p.steps, jump: p.jump, seq: G.seq };
+  if (!p.moved) note(seatName(seat) + ' rolled ' + roll + (G.pos[seat] === 0 ? ' and needs a six to start.' : ' and needs exactly ' + (100 - G.pos[seat]) + '.'));
+  else if (p.jump && p.jump.kind === 'ladder') note(seatName(seat) + ' rolled ' + roll + ' and climbed a ladder from ' + p.jump.from + ' to ' + p.jump.to + '!');
+  else if (p.jump) note(seatName(seat) + ' rolled ' + roll + ' and slid down a snake from ' + p.jump.from + ' to ' + p.jump.to + '.');
+  else note(seatName(seat) + ' rolled ' + roll + '.');
+  G.pos[seat] = p.to;
+  if (p.to === 100) {
+    G.phase = 'over'; G.winner = seat;
+    note(seatName(seat) + ' reached 100 and wins!');
+    publish();
+    return;
+  }
+  G.phase = 'pause';
+  G.pauseUntil = now() + (p.moved ? moveTime(p) : 900);
+  G.after = roll === 6 ? 'again' : 'next';
+  publish();
+}
+
+function tick() {
+  if (!runsGame() || G.phase === 'setup' || G.phase === 'over') return;
+  const t = now();
+  if (G.phase === 'pause' && t > G.pauseUntil) {
+    if (G.after === 'again') { G.phase = 'roll'; G.roll = 0; G.botAt = t + 500; note(seatName(G.turn) + ' rolled a six and goes again.'); }
+    else nextTurn();
+    publish();
+    return;
+  }
+  if (G.phase === 'roll' && isBot(G.turn) && t > G.botAt) doRoll(G.turn);
+}
+
+// ---- sharing the game
+
+function snapshot() {
+  return { t: 'state', seats: G.seats, pos: G.pos, turn: G.turn, roll: G.roll, phase: G.phase, winner: G.winner, last: G.last, log: G.log, rules: G.rules };
+}
+let V = snapshot();
+function publish() {
+  const s = snapshot();
+  if (room && room.isHost) room.send(s);
+  apply(s);
+}
+// A guest checks the state before using it.
+function valid(s) {
+  return s && Array.isArray(s.seats) && s.seats.length === 4 && Array.isArray(s.pos) && s.pos.length === 4 &&
+    s.pos.every(p => Number.isInteger(p) && p >= 0 && p <= 100) && Number.isInteger(s.turn) && s.turn >= 0 && s.turn < 4 &&
+    ['setup', 'roll', 'pause', 'over'].includes(s.phase) && Array.isArray(s.log);
+}
+function apply(s) {
+  if (!valid(s)) return;
+  const prev = V;
+  V = JSON.parse(JSON.stringify(s));
+  V.log = V.log.map(x => String(x).slice(0, 140)).slice(-3);
+  if (s.last && (!prev.last || s.last.seq !== prev.last.seq)) { startMove(s.last); shakeDice(); }
+  render();
+}
+
+function act(m) {
+  if (runsGame()) { if (mySeats().includes(G.turn) && m.t === 'roll') doRoll(G.turn); }
+  else if (room) room.send(m);
+}
+
+function attach(r) {
+  room = r; local = false;
+  room.on('message', (m, from) => {
+    if (!room.isHost) { if (m.t === 'state') apply(m); return; }
+    const s = G.seats[G.turn];
+    if (!s || s.kind !== 'human' || s.id !== from) return;
+    if (m.t === 'roll') doRoll(G.turn);
+  });
+  room.on('roster', () => {
+    if (room.isHost && G.phase === 'setup') renderSetup();
+    if (room.isHost && G.phase !== 'setup') room.send(snapshot());
+    render();
+  });
+  room.on('leave', id => {
+    if (G.phase === 'setup') return;
+    G.seats.forEach((s, i) => { if (s && s.kind === 'human' && s.id === id) { G.seats[i] = { kind: 'bot' }; note(NAMES[i] + ' left. A bot took over.'); } });
+    G.botAt = now() + 600;
+    publish();
+  });
+  room.on('close', () => { room = null; G.phase = 'setup'; V = snapshot(); lobby.start(); render(); });
+  if (room.isHost) { G.phase = 'setup'; renderSetup(); }
+  render();
+}
+
+function startLocalSetup() {
+  if (room) { try { room.close(); } catch (e) { } room = null; }
+  local = true;
+  G.phase = 'setup';
+  V = snapshot();
+  renderSetup();
+  render();
+}
+
+let fillBots = false;
+const rulesHtml = () => '<div class="opts"><label><input type="checkbox" id="start6"' + (G.rules.start6 ? ' checked' : '') + '> Roll a six to start</label>' +
+  '<label><input type="checkbox" id="exact"' + (G.rules.exact ? ' checked' : '') + '> Land on 100 exactly</label></div>';
+function readRules(el) {
+  const a = el.querySelector('#start6'), b = el.querySelector('#exact');
+  if (a) G.rules.start6 = !!a.checked;
+  if (b) G.rules.exact = !!b.checked;
+  return G.rules;
+}
+function renderSetup() {
+  const el = $('setup');
+  el.hidden = false;
+  if (local) {
+    el.innerHTML = '<h2>Who\'s playing?</h2><p>Tap a seat to switch it between a player on this device, a bot, or empty.</p>' +
+      '<div class="seats">' + setupSeats.map((s, i) => '<button class="seat" data-i="' + i + '" style="border-color:' + COLORS[i] + '">' + NAMES[i] +
+        '<small>' + (s.kind === 'human' ? 'player' : s.kind === 'bot' ? 'bot' : 'empty') + '</small></button>').join('') + '</div>' + rulesHtml() +
+      '<button class="act" id="goBtn">Start</button>';
+    for (const b of el.querySelectorAll('.seat')) b.onclick = () => {
+      readRules(el);
+      const s = setupSeats[+b.dataset.i];
+      s.kind = s.kind === 'human' ? 'bot' : s.kind === 'bot' ? 'off' : 'human';
+      renderSetup();
+    };
+    const go = el.querySelector('#goBtn');
+    if (go) go.onclick = () => {
+      const seats = setupSeats.map((s, i) => (s.kind === 'off' ? null : s.kind === 'bot' ? { kind: 'bot' } : { kind: 'human', name: NAMES[i] }));
+      if (seats.filter(Boolean).length < 2) return;
+      el.hidden = true;
+      startGame(seats, readRules(el));
+    };
+    return;
+  }
+  const people = room.players.length;
+  el.innerHTML = '<h2>Ready?</h2><p>' + people + (people === 1 ? ' person is' : ' people are') + ' here, and seats go in join order.</p>' +
+    '<label><input type="checkbox" id="botsBox"' + (fillBots ? ' checked' : '') + '> Fill empty seats with bots</label>' + rulesHtml() +
+    '<button class="act" id="goBtn">Start</button>';
+  const box = el.querySelector('#botsBox'), go = el.querySelector('#goBtn');
+  if (box) box.onchange = () => { fillBots = box.checked; };
+  if (go) go.onclick = () => {
+    const seats = [null, null, null, null];
+    room.players.slice(0, 4).forEach((p, i) => { seats[i] = { kind: 'human', id: p.id, name: p.name }; });
+    if (fillBots) for (let i = 0; i < 4; i++) if (!seats[i]) seats[i] = { kind: 'bot' };
+    if (seats.filter(Boolean).length < 2) return;
+    el.hidden = true;
+    startGame(seats, readRules(el));
+  };
+}
+
+// ---- drawing
+
+const cv = $('c');
+let ctx = cv.getContext('2d');   // swapped for an offscreen canvas while the board is drawn once
+let S = 600, cs = 60;
+function resize() {
+  const avail = Math.min(innerWidth - 28, innerWidth > 760 ? innerHeight - 70 : 640, 660);
+  cs = Math.floor(Math.max(300, avail) / 10);
+  S = cs * 10;
+  const d = Math.min(2.5, devicePixelRatio || 1);
+  cv.width = S * d; cv.height = S * d;
+  cv.style.width = S + 'px'; cv.style.height = S + 'px';
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener('resize', resize);
+resize();
+
+// the middle of square n, in board units (squares are 1 x 1)
+const center = n => { const [c, r] = cellOf(n); return [c + 0.5, 9.5 - r]; };
+
+const TILE = ['#fbe6a2', '#f6c99c', '#bfe3d6', '#d5c8e8', '#c8e3a8'];
+function drawBoard() {
+  ctx.fillStyle = '#fffaf0';
+  ctx.fillRect(0, 0, S, S);
+  for (let n = 1; n <= 100; n++) {
+    const [c, r] = cellOf(n), x = c * cs, y = (9 - r) * cs;
+    ctx.fillStyle = TILE[(c + r * 3) % TILE.length];
+    ctx.fillRect(x, y, cs, cs);
+    if ((c + r) % 2) { ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fillRect(x, y, cs, cs); }
+    ctx.fillStyle = 'rgba(35,32,27,0.55)';
+    ctx.font = '600 ' + Math.round(cs * 0.22) + 'px system-ui, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(String(n), x + cs * 0.08, y + cs * 0.06);
+  }
+  ctx.strokeStyle = 'rgba(35,32,27,0.12)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(i * cs, 0); ctx.lineTo(i * cs, S); ctx.moveTo(0, i * cs); ctx.lineTo(S, i * cs); ctx.stroke(); }
+  // the finish
+  const [fx, fy] = center(100);
+  ctx.font = Math.round(cs * 0.42) + 'px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('🏁', fx * cs, fy * cs + cs * 0.08);
+  for (const [a, b] of Object.entries(LADDERS)) drawLadder(+a, b);
+  for (const [a, b] of Object.entries(SNAKES)) drawSnake(+a, b);
+}
+
+function drawLadder(from, to) {
+  const [x0, y0] = center(from), [x1, y1] = center(to);
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy), nx = -dy / len * 0.2, ny = dx / len * 0.2;
+  ctx.lineCap = 'round';
+  for (const [col, w] of [['rgba(0,0,0,0.18)', 0.13], ['#8a5a2b', 0.09]]) {
+    ctx.strokeStyle = col; ctx.lineWidth = w * cs;
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo((x0 + nx * s) * cs + (col[0] === 'r' ? 2 : 0), (y0 + ny * s) * cs + (col[0] === 'r' ? 3 : 0)); ctx.lineTo((x1 + nx * s) * cs + (col[0] === 'r' ? 2 : 0), (y1 + ny * s) * cs + (col[0] === 'r' ? 3 : 0)); ctx.stroke(); }
+  }
+  ctx.strokeStyle = '#b07a3f'; ctx.lineWidth = 0.065 * cs;
+  const rungs = Math.max(2, Math.round(len / 0.38));
+  for (let i = 1; i < rungs; i++) {
+    const t = i / rungs, cx = x0 + dx * t, cy = y0 + dy * t;
+    ctx.beginPath(); ctx.moveTo((cx - nx) * cs, (cy - ny) * cs); ctx.lineTo((cx + nx) * cs, (cy + ny) * cs); ctx.stroke();
+  }
+}
+
+// a snake: a wavy body from its head (on the higher square) down to its tail
+function snakePoints(from, to) {
+  const [x0, y0] = center(from), [x1, y1] = center(to);
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
+  const waves = Math.max(1.5, len / 1.6), amp = 0.28, pts = [];
+  for (let i = 0; i <= 60; i++) {
+    const t = i / 60, w = Math.sin(t * Math.PI * 2 * waves) * amp * Math.sin(Math.PI * Math.min(1, t * 1.15));
+    pts.push([x0 + dx * t + nx * w, y0 + dy * t + ny * w]);
+  }
+  return pts;
+}
+const SNAKE_COLS = [['#2a9d4b', '#a6e3a1'], ['#7a3fbf', '#d0b3ff'], ['#d9480f', '#ffc078'], ['#1971c2', '#a5d8ff'], ['#c2255c', '#ffb3d1']];
+function drawSnake(from, to) {
+  const pts = snakePoints(from, to), [c1, c2] = SNAKE_COLS[from % SNAKE_COLS.length];
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  // the body gets thinner toward the tail
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = 1; i < pts.length; i++) {
+      const t = i / pts.length, w = (0.2 - t * 0.13) * cs;
+      ctx.strokeStyle = pass === 0 ? 'rgba(0,0,0,0.2)' : pass === 1 ? c1 : (i % 6 < 3 ? c2 : c1);
+      ctx.lineWidth = pass === 0 ? w + 2 : pass === 1 ? w : w * 0.45;
+      ctx.beginPath();
+      ctx.moveTo(pts[i - 1][0] * cs + (pass === 0 ? 2 : 0), pts[i - 1][1] * cs + (pass === 0 ? 3 : 0));
+      ctx.lineTo(pts[i][0] * cs + (pass === 0 ? 2 : 0), pts[i][1] * cs + (pass === 0 ? 3 : 0));
+      ctx.stroke();
+    }
+  }
+  // the head, with eyes and a tongue
+  const [hx, hy] = pts[0], [ax, ay] = pts[3], a = Math.atan2(hy - ay, hx - ax);
+  ctx.save(); ctx.translate(hx * cs, hy * cs); ctx.rotate(a);
+  ctx.strokeStyle = '#d6336c'; ctx.lineWidth = 0.025 * cs;
+  ctx.beginPath(); ctx.moveTo(0.14 * cs, 0); ctx.lineTo(0.27 * cs, 0); ctx.moveTo(0.27 * cs, 0); ctx.lineTo(0.32 * cs, -0.04 * cs); ctx.moveTo(0.27 * cs, 0); ctx.lineTo(0.32 * cs, 0.04 * cs); ctx.stroke();
+  ctx.fillStyle = c1; ctx.beginPath(); ctx.ellipse(0, 0, 0.18 * cs, 0.14 * cs, 0, 0, 7); ctx.fill();
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0.05 * cs, s * 0.065 * cs, 0.045 * cs, 0, 7); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0.065 * cs, s * 0.065 * cs, 0.022 * cs, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// The board only changes size, so it's drawn once onto its own canvas.
+let boardImg = null;
+function bakeBoard() {
+  boardImg = document.createElement('canvas');
+  const d = Math.min(2.5, devicePixelRatio || 1);
+  boardImg.width = S * d; boardImg.height = S * d;
+  const keep = ctx;
+  ctx = boardImg.getContext('2d');
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  try { drawBoard(); } finally { ctx = keep; }
+  boardImg.size = S;
+}
+
+// Tokens move one square at a time, then ride the ladder or snake.
+let anim = null;   // { seat, path: [[x, y]...], t0, dur }
+const shown = [0, 0, 0, 0];  // where each token is drawn (square), until an animation settles it
+function startMove(last) {
+  const path = [center(Math.max(1, last.from))];
+  if (last.from === 0) path[0] = [-0.6, 9.5];
+  for (const s of last.steps) path.push(center(s));
+  const hops = path.length - 1;
+  let ride = [];
+  if (last.jump) {
+    if (last.jump.kind === 'ladder') { const a = center(last.jump.from), b = center(last.jump.to); for (let i = 1; i <= 12; i++) ride.push([a[0] + (b[0] - a[0]) * i / 12, a[1] + (b[1] - a[1]) * i / 12]); }
+    else ride = snakePoints(last.jump.from, last.jump.to).filter((_, i) => i % 3 === 0).slice(1).concat([center(last.jump.to)]);
+  }
+  anim = { seat: last.seat, path, hops, ride, t0: now(), final: last.jump ? last.jump.to : (last.steps.length ? last.steps[last.steps.length - 1] : last.from) };
+}
+
+function tokenXY(seat, time) {
+  if (anim && anim.seat === seat) {
+    const t = time - anim.t0, hopT = 190;
+    if (t < anim.hops * hopT) {
+      const i = Math.floor(t / hopT), f = (t % hopT) / hopT;
+      const a = anim.path[i], b = anim.path[i + 1];
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f - Math.sin(f * Math.PI) * 0.35, 1 + Math.sin(f * Math.PI) * 0.12];
+    }
+    const rt = t - anim.hops * hopT;
+    if (anim.ride.length && rt < 1000) {
+      const k = rt / 1000 * (anim.ride.length - 1), i = Math.floor(k), f = k - i;
+      const a = anim.ride[i], b = anim.ride[Math.min(anim.ride.length - 1, i + 1)];
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, 1.1];
+    }
+    anim = null;
+  }
+  const p = V.pos[seat];
+  if (p === 0) return [-0.6, 9.5 - seat * 0.0, 1];
+  return [...center(p), 1];
+}
+
+function drawToken(x, y, seat, scale, glow) {
+  const r = 0.2 * cs * scale;
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y + r * 0.85, r * 0.9, r * 0.32, 0, 0, 7); ctx.fill();
+  if (glow) { ctx.fillStyle = COLORS[seat] + '44'; ctx.beginPath(); ctx.arc(x, y, r * 1.7, 0, 7); ctx.fill(); }
+  const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(0.25, COLORS[seat]); g.addColorStop(1, shade(COLORS[seat], 0.6));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1.2; ctx.stroke();
+}
+function shade(hex, k) { const n = parseInt(hex.slice(1), 16); const f = v => Math.round(v * k); return 'rgb(' + f(n >> 16) + ',' + f((n >> 8) & 255) + ',' + f(n & 255) + ')'; }
+
+function draw() {
+  const t = now();
+  if (!boardImg || boardImg.size !== S) bakeBoard();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(boardImg, 0, 0);
+  const d = Math.min(2.5, devicePixelRatio || 1);
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  if (!V.seats.length) return;
+  // tokens sharing a square sit side by side
+  const spots = [];
+  for (let s = 0; s < 4; s++) if (V.seats[s]) spots.push([s, ...tokenXY(s, t)]);
+  const byKey = {};
+  for (const sp of spots) { const k = Math.round(sp[1] * 4) + ',' + Math.round(sp[2] * 4); (byKey[k] = byKey[k] || []).push(sp); }
+  for (const group of Object.values(byKey)) group.forEach((sp, i) => {
+    const off = group.length > 1 ? [[-0.16, -0.12], [0.16, -0.12], [-0.16, 0.14], [0.16, 0.14]][i] : [0, 0];
+    const [s, x, y, sc] = sp;
+    drawToken(Math.max(0.25, x + off[0]) * cs, (y + off[1]) * cs, s, sc * (group.length > 1 ? 0.8 : 1), s === V.turn && V.phase === 'roll');
+  });
+}
+
+// ---- side panel
+
+const PIPS = { 1: [[2, 2]], 2: [[1, 1], [3, 3]], 3: [[1, 1], [2, 2], [3, 3]], 4: [[1, 1], [3, 1], [1, 3], [3, 3]], 5: [[1, 1], [3, 1], [2, 2], [1, 3], [3, 3]], 6: [[1, 1], [3, 1], [1, 2], [3, 2], [1, 3], [3, 3]] };
+function diceSvg(n, color) {
+  const pips = (PIPS[n] || []).map(([x, y]) => '<circle cx="' + (x * 6 + 2) + '" cy="' + (y * 6 + 2) + '" r="2.2" fill="#fff"/>').join('');
+  return '<svg viewBox="0 0 26 26"><rect x="1" y="1" width="24" height="24" rx="5" fill="' + color + '"/>' + pips + '</svg>';
+}
+function shakeDice() { const d = $('dice'); d.classList.remove('rolling'); void d.offsetWidth; d.classList.add('rolling'); }
+function canAct() { if (V.phase === 'setup' || V.phase === 'over') return false; const s = V.seats[V.turn]; if (!s || s.kind !== 'human') return false; return local || s.id === myId(); }
+function seatNameV(i) { const s = V.seats[i]; return !s ? NAMES[i] : s.kind === 'bot' ? NAMES[i] + ' bot' : String(s.name || NAMES[i]).slice(0, 16); }
+function canSee(i) { const s = V.seats[i]; return !!s && s.kind === 'human' && !local && s.id === myId(); }
+
+function render() {
+  const playing = V.seats.length && V.phase !== 'setup';
+  const dice = $('dice');
+  dice.innerHTML = diceSvg(V.roll || (playing ? 0 : 6), playing ? COLORS[V.turn] : '#bdb3a0');
+  dice.disabled = !(V.phase === 'roll' && canAct());
+  let st = '';
+  if (!playing) st = room || local ? 'Setting up…' : '';
+  else if (V.phase === 'over') st = canSee(V.winner) ? 'You win!' : seatNameV(V.winner) + ' wins!';
+  else if (V.phase === 'roll' && canAct()) st = local ? seatNameV(V.turn) + ', roll the dice' : 'Your turn. Roll the dice.';
+  else st = seatNameV(V.turn) + (V.phase === 'roll' ? ' is rolling…' : ' is moving…');
+  $('status').textContent = st;
+  $('status').style.color = playing && V.phase !== 'over' ? COLORS[V.turn] : '';
+  $('log').textContent = V.log.join(' ');
+  $('players').innerHTML = playing ? V.seats.map((s, i) => s ? '<li class="' + (i === V.turn && V.phase !== 'over' ? 'on' : '') + '"><i style="background:' + COLORS[i] + '"></i>' +
+    esc(seatNameV(i)) + (canSee(i) ? ' (you)' : '') + '<span class="at">' + (V.pos[i] ? 'on ' + V.pos[i] : 'not started') + '</span></li>' : '').join('') : '';
+  let a = '';
+  if (V.phase === 'over' && runsGame()) a += '<button class="act" id="againBtn">Play again</button>';
+  if (room && room.isHost) a += '<button class="quiet" id="inviteBtn">Invite more</button>';
+  if (room || local) a += '<button class="quiet" id="leaveBtn">Leave</button>';
+  if ($('actions').dataset.html !== a) {
+    $('actions').innerHTML = a; $('actions').dataset.html = a;
+    const ag = $('actions').querySelector('#againBtn'), iv = $('actions').querySelector('#inviteBtn'), lv = $('actions').querySelector('#leaveBtn');
+    if (ag) ag.onclick = () => { G.phase = 'setup'; if (local) { V = snapshot(); renderSetup(); render(); } else { publish(); renderSetup(); } };
+    if (iv) iv.onclick = () => lobby.reopen();
+    if (lv) lv.onclick = () => { if (room) { try { room.close(); } catch (e) { } } room = null; local = false; G.phase = 'setup'; G.seats = []; V = snapshot(); $('setup').hidden = true; lobby.start(); render(); };
+  }
+}
+
+$('dice').addEventListener('click', () => act({ t: 'roll' }));
+addEventListener('keydown', e => {
+  if ((e.key === ' ' || e.key === 'Enter') && V.phase === 'roll' && canAct() && !(e.target && /INPUT|BUTTON/.test(e.target.tagName) && e.target.id !== 'dice')) { e.preventDefault(); act({ t: 'roll' }); }
+});
+
+function frame() { tick(); draw(); requestAnimationFrame(frame); }
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'snakes-ladders',
+  title: 'Snakes & Ladders',
+  blurb: 'Roll the dice, climb the ladders, slide down the snakes. First to reach 100 wins. A six gets you another roll.',
+  min: 2, max: 4,
+  extra: [{ label: 'Play on this device', note: 'Against bots, or pass the phone around.', onClick: startLocalSetup }],
+  onStart: attach,
+  onJoin: attach,
+});
+render();
+requestAnimationFrame(frame);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Snakes &amp; Ladders</h2>
+<p>Snakes and ladders for 2 to 4 players. Roll the dice, climb the ladders, slide down the snakes, and be the first to reach 100. Play friends online with a link, pass one phone around, or fill seats with bots.</p>
+<h3>Play</h3>
+<p>"Play on this device" lets you set each of the four seats to a player, a bot, or empty. To play online, click "Play with friends" and send each friend their own invite; they send back a reply link. Seats go in join order, and the host can fill the rest with bots. If someone leaves, a bot takes their seat.</p>
+<p>Click the dice, or press Space or Enter, to roll on your turn.</p>
+<h3>Rules</h3>
+<ul><li>Tokens start off the board, next to square 1.</li><li>Landing at the foot of a ladder takes you up it; landing on a snake's head takes you down to its tail.</li><li>A six rolls again. Three sixes in a row and the turn passes, with the third six not moved.</li><li>Two options before you start: "Roll a six to start" (off by default) and "Land on 100 exactly" (on by default; a roll that would go past 100 doesn't move you).</li></ul>
+<p>The board has 8 ladders and 9 snakes. Tokens hop square by square, then climb or slide, so you can follow every move.</p>
+<h3>How it works</h3>
+<ul><li>The board is drawn once onto its own canvas whenever its size changes, and tokens are drawn on top each frame. Snakes are wavy curves that thin toward the tail, with a head, eyes, and a tongue; tokens follow the same curve when they slide.</li><li>The host's browser (or yours, playing on one device) rolls the dice and runs the turns. Online, guests send "roll" on their turn and get the whole game state back after every change, which they check before using. It uses <a href="../linkplay/">LinkPlay</a> for the connection, with no game server.</li></ul>
+<p class="pg-more">More like this: <a href="../carrom/">Carrom</a>, <a href="../chess/">Chess</a>, <a href="../checkers/">Checkers</a>, <a href="../four-in-a-row/">Four in a Row</a>. Or see <a href="../#online">all online games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/snakes-ladders">snakes-ladders on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

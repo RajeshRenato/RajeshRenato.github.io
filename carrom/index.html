@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%235a2f16'/%3E%3Crect x='3' y='3' width='26' height='26' fill='%23efd9a7'/%3E%3Ccircle cx='5' cy='5' r='3' fill='%23111'/%3E%3Ccircle cx='27' cy='27' r='3' fill='%23111'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23d6322b'/%3E%3Ccircle cx='10' cy='16' r='3' fill='%23fff'/%3E%3Ccircle cx='22' cy='16' r='3' fill='%23222'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<title>Carrom | play carrom online with friends or a bot</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/carrom/">
+<style>
+  :root { --bg: #2a1b12; --panel: #3a271b; --ink: #f6ead6; --muted: #c9b49a; --gold: #e8b04a;
+          --lp-bg: #2a1b12; --lp-panel: #3a271b; --lp-field: #1f140d; --lp-ink: #f6ead6; --lp-muted: #c9b49a; --lp-rule: #5a4030;
+          --lp-veil: rgba(42, 27, 18, .96); --lp-accent: #e8b04a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position: fixed; top: 12px; left: 14px; color: var(--muted); font-size: 13px; text-decoration: none; z-index: 11; }
+  a.back:hover { color: var(--ink); }
+  [hidden] { display: none !important; }
+  #app { display: flex; gap: 22px; justify-content: center; align-items: flex-start; padding: 40px 12px 20px; flex-wrap: wrap; }
+  #boardWrap { position: relative; }
+  canvas { display: block; touch-action: none; border-radius: 10px; box-shadow: 0 12px 34px rgba(0,0,0,.45); }
+  #side { width: 260px; display: flex; flex-direction: column; gap: 12px; }
+  #status { font-size: 19px; font-weight: 700; min-height: 2.6em; }
+  .hint { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  #players { list-style: none; margin: 0; padding: 0; background: var(--panel); border-radius: 12px; }
+  #players li { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-bottom: 1px solid var(--bg); font-size: 15px; }
+  #players li:last-child { border-bottom: 0; }
+  #players li.on { font-weight: 700; }
+  #players i { width: 14px; height: 14px; border-radius: 50%; flex: none; border: 1.5px solid rgba(0,0,0,.4); }
+  #players span { margin-left: auto; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  #log { font-size: 13px; color: var(--muted); line-height: 1.5; min-height: 3em; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button.act { font: inherit; font-weight: 700; font-size: 15px; padding: 9px 15px; border-radius: 9px; border: 0; background: var(--gold); color: #2a1b12; cursor: pointer; }
+  button.quiet { font: inherit; border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px 0; }
+  #setup { position: absolute; inset: 0; background: rgba(42, 27, 18, .94); border-radius: 10px; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; }
+  #setup h2 { margin: 0; font-size: 24px; }
+  #setup p { margin: 0; color: var(--muted); max-width: 36ch; }
+  #setup label { display: inline-flex; gap: 8px; align-items: center; }
+  #setup select { font: inherit; background: var(--panel); color: var(--ink); border: 1px solid #5a4030; border-radius: 7px; padding: 5px 8px; }
+  .seats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seat { font: inherit; font-size: 15px; font-weight: 600; padding: 10px 12px; border-radius: 10px; border: 2px solid #5a4030; background: var(--panel); color: var(--ink); cursor: pointer; min-width: 132px; }
+  .seat small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  @media (max-width: 720px) { #side { width: min(100%, 440px); } #app { padding-top: 38px; gap: 14px; } }
+</style>
+<meta property="og:title" content="Carrom">
+<meta property="og:description" content="Carrom in the browser: flick the striker, pocket your coins, and cover the queen. Play a friend online, pass the device, or take on a bot. Two players or doubles.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/carrom/">
+<meta property="og:image" content="https://rajeshrenato.github.io/carrom/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Carrom in the browser: flick the striker, pocket your coins, and cover the queen. Play a friend online, pass the device, or take on a bot. Two players or doubles.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/#online"}, {"@type": "ListItem", "position": 3, "name": "Carrom", "item": "https://rajeshrenato.github.io/carrom/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Carrom", "url": "https://rajeshrenato.github.io/carrom/", "description": "Carrom in the browser: flick the striker, pocket your coins, and cover the queen. Play a friend online, pass the device, or take on a bot. Two players or doubles.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<div id="app">
+  <div id="boardWrap"><canvas id="c"></canvas><div id="setup" hidden></div></div>
+  <div id="side">
+    <div id="status"></div>
+    <p class="hint" id="hint">Drag the striker along your line to place it. Then pull back anywhere on the board and let go to shoot: the farther you pull, the harder the shot.</p>
+    <ul id="players"></ul>
+    <div id="log"></div>
+    <div class="row" id="actions"></div>
+  </div>
+</div>
+<div id="lobby" class="lp-panel"></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const now = () => performance.now();
+
+// ---- the board, in units: the playing surface is 1000 x 1000
+
+const B = 1000, COIN = 22, STRIKER = 28, POCKET = 34, PC = 40;   // radii, and pocket centers sit PC in from each corner
+const POCKETS = [[PC, PC], [B - PC, PC], [B - PC, B - PC], [PC, B - PC]];
+const BASE_IN = 138, BASE_HALF = 318;   // baseline distance from the edge, half its length
+const MASS = { coin: 1, striker: 2.6 };
+const FRICTION = 230, CUSHION = 0.72, BOUNCE = 0.93, MAX_SPEED = 2600;
+// seats: 0 bottom, 1 right, 2 top, 3 left. Two players are white against black wherever they sit;
+// four play as partners across the board (South and North white, East and West black).
+const NAMES = ['South', 'East', 'North', 'West'];
+function teamOf(seat) { const t = (runsGame() ? G.team : V.team) || []; return t[seat] !== undefined ? t[seat] : seat % 2; }  // 0 white, 1 black
+const colorOf = team => (team === 0 ? 'white' : 'black');
+
+// The striker's spot on a seat's baseline, for a slider value u from -1 to 1.
+function baseSpot(seat, u) {
+  const t = Math.max(-1, Math.min(1, u)) * BASE_HALF, c = B / 2;
+  return [[c + t, B - BASE_IN], [B - BASE_IN, c - t], [c - t, BASE_IN], [BASE_IN, c + t]][seat];
+}
+
+function rack() {
+  const coins = [{ id: 0, kind: 'queen', x: B / 2, y: B / 2, vx: 0, vy: 0, in: false }];
+  let id = 1;
+  const d1 = COIN * 2 + 0.5, d2 = COIN * 4 + 1;
+  for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + Math.PI / 6; coins.push({ id: id++, kind: i % 2 ? 'black' : 'white', x: B / 2 + Math.cos(a) * d1, y: B / 2 + Math.sin(a) * d1, vx: 0, vy: 0, in: false }); }
+  for (let i = 0; i < 12; i++) {
+    const a = i * Math.PI / 6 + Math.PI / 6, dd = i % 2 ? d2 * 0.93 : d2;
+    coins.push({ id: id++, kind: [0, 1, 2, 5, 8, 9].includes(i) ? 'white' : 'black', x: B / 2 + Math.cos(a) * dd, y: B / 2 + Math.sin(a) * dd, vx: 0, vy: 0, in: false });
+  }
+  return coins;
+}
+
+// ---- physics: plain arithmetic and square roots only, so every browser gets the same result
+
+const radius = b => (b.kind === 'striker' ? STRIKER : COIN);
+const mass = b => (b.kind === 'striker' ? MASS.striker : MASS.coin);
+
+// One small step. Returns the bodies that fell in.
+function physStep(bodies, dt) {
+  const fell = [];
+  for (const b of bodies) {
+    if (b.in) continue;
+    const sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+    if (sp > 0) {
+      const ns = Math.max(0, sp - FRICTION * dt);
+      b.vx *= ns / sp; b.vy *= ns / sp;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+    }
+    const r = radius(b);
+    if (b.x < r) { b.x = r; b.vx = -b.vx * CUSHION; }
+    if (b.x > B - r) { b.x = B - r; b.vx = -b.vx * CUSHION; }
+    if (b.y < r) { b.y = r; b.vy = -b.vy * CUSHION; }
+    if (b.y > B - r) { b.y = B - r; b.vy = -b.vy * CUSHION; }
+    for (const [px, py] of POCKETS) {
+      const dx = b.x - px, dy = b.y - py;
+      if (dx * dx + dy * dy < POCKET * POCKET) { b.in = true; b.vx = b.vy = 0; fell.push(b); break; }
+    }
+  }
+  for (let i = 0; i < bodies.length; i++) {
+    const a = bodies[i];
+    if (a.in) continue;
+    for (let j = i + 1; j < bodies.length; j++) {
+      const b = bodies[j];
+      if (b.in) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, rr = radius(a) + radius(b);
+      const d2 = dx * dx + dy * dy;
+      if (d2 >= rr * rr || d2 === 0) continue;
+      const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
+      const ma = mass(a), mb = mass(b), over = rr - d;
+      a.x -= nx * over * mb / (ma + mb); a.y -= ny * over * mb / (ma + mb);
+      b.x += nx * over * ma / (ma + mb); b.y += ny * over * ma / (ma + mb);
+      const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (rel >= 0) continue;
+      const j2 = -(1 + BOUNCE) * rel / (1 / ma + 1 / mb);
+      a.vx -= j2 * nx / ma; a.vy -= j2 * ny / ma;
+      b.vx += j2 * nx / mb; b.vy += j2 * ny / mb;
+    }
+  }
+  return fell;
+}
+const moving = bodies => bodies.some(b => !b.in && (b.vx * b.vx + b.vy * b.vy) > 4);
+const SUB = 1 / 240;
+
+// Plays a shot to the end without drawing it. Returns what fell, in order.
+function simulate(bodies) {
+  const fell = [];
+  for (let k = 0; k < 240 * 12 && moving(bodies); k++) fell.push(...physStep(bodies, SUB));
+  for (const b of bodies) { b.vx = 0; b.vy = 0; }
+  return fell;
+}
+
+// ---- the game
+
+const G = { seats: [], team: [0, 1, 0, 1], coins: [], turn: 0, phase: 'setup', won: [0, 0], pocketed: [[], []], queen: { by: -1, covered: false, pending: -1 },
+            winner: -1, points: [0, 0], log: [], shot: null, seq: 0, aim: null, botAt: 0, level: 2 };
+let room = null, local = false;
+let setupSeats = [{ kind: 'human' }, { kind: 'off' }, { kind: 'bot' }, { kind: 'off' }];
+
+function runsGame() { return local || (room && room.isHost); }
+function myId() { return room ? room.me : 0; }
+const isBot = seat => G.seats[seat] && G.seats[seat].kind === 'bot';
+function note(t) { G.log.push(t); if (G.log.length > 3) G.log.shift(); }
+function seatName(seat) { const s = G.seats[seat]; return !s ? NAMES[seat] : s.kind === 'bot' ? NAMES[seat] + ' bot' : String(s.name || NAMES[seat]).slice(0, 16); }
+const onBoard = kind => G.coins.filter(c => !c.in && c.kind === kind);
+
+function teamsFor(seats) {
+  const sat = seats.map((s, i) => (s ? i : -1)).filter(i => i >= 0);
+  const team = [0, 1, 0, 1];
+  if (sat.length === 2) { team[sat[0]] = 0; team[sat[1]] = 1; }
+  return team;
+}
+
+function startGame(seats, level) {
+  G.seats = seats; G.level = level || 2;
+  G.team = teamsFor(seats);
+  G.coins = rack();
+  G.turn = seats.findIndex(Boolean);
+  G.pocketed = [[], []]; G.queen = { by: -1, covered: false, pending: -1 };
+  G.winner = -1; G.points = [0, 0]; G.log = []; G.phase = 'aim'; G.shot = null; G.seq = 0;
+  G.striker = 0;
+  note(seatName(G.turn) + ' breaks, playing ' + colorOf(teamOf(G.turn)) + '.');
+  G.botAt = now() + 900;
+  publish();
+}
+
+function nextSeat(s) { do s = (s + 1) % 4; while (!G.seats[s]); return s; }
+
+// The striker may sit on the baseline only where it doesn't overlap a coin.
+function strikerFits(seat, u) {
+  const [x, y] = baseSpot(seat, u);
+  return !G.coins.some(c => !c.in && (c.x - x) ** 2 + (c.y - y) ** 2 < (COIN + STRIKER) ** 2);
+}
+
+// A shot: striker at baseline position u, velocity (vx, vy). Checked, then played by everyone.
+function shoot(seat, u, vx, vy) {
+  if (G.phase !== 'aim' || seat !== G.turn) return false;
+  if (![u, vx, vy].every(Number.isFinite) || Math.abs(u) > 1) return false;
+  if (!strikerFits(seat, u)) return false;
+  const sp = Math.sqrt(vx * vx + vy * vy);
+  if (sp < 40) return false;
+  if (sp > MAX_SPEED) { vx *= MAX_SPEED / sp; vy *= MAX_SPEED / sp; }
+  // the striker has to go forward, off the player's own baseline
+  const fwd = [[0, -1], [-1, 0], [0, 1], [1, 0]][seat];
+  if (vx * fwd[0] + vy * fwd[1] < -sp * 0.05) return false;
+  G.seq++;
+  G.shot = { seat, u, vx, vy, seq: G.seq, start: G.coins.map(c => ({ ...c })) };
+  G.phase = 'roll';
+  G.aim = null;
+  publish();
+  startRoll(G.shot);
+  return true;
+}
+
+// After a shot comes to rest: fouls, the queen, extra turns, and the end of the game.
+function settle(fell) {
+  const seat = G.turn, team = teamOf(seat), mine = colorOf(team), theirs = colorOf(1 - team);
+  const got = k => fell.filter(b => b.kind === k).length;
+  const foul = fell.some(b => b.kind === 'striker');
+  const ownIn = got(mine), oppIn = got(theirs), queenIn = got('queen') > 0;
+  for (const b of fell) if (b.kind === 'white' || b.kind === 'black') G.pocketed[b.kind === 'white' ? 0 : 1].push(b.id);
+  let again = false;
+  const back = coin => { coin.in = false; coin.vx = coin.vy = 0; placeCenter(coin); };
+  if (foul) {
+    note(seatName(seat) + ' pocketed the striker. Foul.');
+    // a coin of yours comes back out, and so does the queen if she went in on this shot
+    const mineIds = G.pocketed[team];
+    if (mineIds.length) { const id = mineIds.pop(); back(G.coins.find(c => c.id === id)); }
+    if (queenIn) back(G.coins.find(c => c.kind === 'queen'));
+    if (G.queen.pending === seat) { back(G.coins.find(c => c.kind === 'queen')); G.queen.pending = -1; }
+  } else {
+    if (queenIn) {
+      if (ownIn) { G.queen.covered = true; G.queen.by = team; note(seatName(seat) + ' pocketed and covered the queen!'); }
+      else { G.queen.pending = seat; note(seatName(seat) + ' pocketed the queen. Pocket one of yours next to cover her.'); again = true; }
+    } else if (G.queen.pending === seat) {
+      if (ownIn) { G.queen.covered = true; G.queen.by = team; G.queen.pending = -1; note(seatName(seat) + ' covered the queen!'); }
+      else { G.queen.pending = -1; back(G.coins.find(c => c.kind === 'queen')); note('The queen wasn\'t covered, so she goes back to the middle.'); }
+    }
+    if (ownIn) { again = true; if (!queenIn) note(seatName(seat) + ' pocketed ' + ownIn + (ownIn > 1 ? ' coins' : ' coin') + '.'); }
+    if (oppIn && !ownIn) note(seatName(seat) + ' pocketed ' + (oppIn > 1 ? oppIn + ' of the other side\'s coins.' : 'one of the other side\'s coins.'));
+  }
+  // you can't finish while the queen is still out: the last coin comes back
+  for (const t of [0, 1]) {
+    if (onBoard(colorOf(t)).length === 0 && !G.queen.covered) {
+      const id = G.pocketed[t].pop();
+      if (id !== undefined) { back(G.coins.find(c => c.id === id)); note('The queen has to be covered first, so the last ' + colorOf(t) + ' coin comes back.'); if (t === team) again = false; }
+    }
+  }
+  const done = [0, 1].find(t => onBoard(colorOf(t)).length === 0 && G.queen.covered);
+  if (done !== undefined) {
+    G.phase = 'over'; G.winner = done;
+    G.points = [0, 0];
+    G.points[done] = onBoard(colorOf(1 - done)).length + (G.queen.by === done ? 3 : 0);
+    note((G.seats.filter(Boolean).length > 2 ? 'Team ' + colorOf(done) : seatName(G.seats.findIndex((s, i) => s && teamOf(i) === done))) + ' wins, ' + G.points[done] + ' points.');
+    publish();
+    return;
+  }
+  if (!again) G.turn = nextSeat(seat);
+  G.phase = 'aim';
+  G.striker = 0;
+  G.shot = null;
+  G.botAt = now() + 900;
+  publish();
+}
+
+// Put a returned coin in the middle, or as near it as there's room.
+function placeCenter(coin) {
+  for (let r = 0; r < 300; r += 6) {
+    for (let k = 0; k < Math.max(1, r / 4); k++) {
+      const a = k / Math.max(1, r / 4) * Math.PI * 2, x = B / 2 + Math.cos(a) * r, y = B / 2 + Math.sin(a) * r;
+      if (!G.coins.some(c => c !== coin && !c.in && (c.x - x) ** 2 + (c.y - y) ** 2 < (COIN * 2 + 1) ** 2)) { coin.x = x; coin.y = y; return; }
+    }
+  }
+}
+
+// ---- the bot: tries shots at its coins toward each pocket, plays each out, and keeps the best
+
+function botShot(seat, level, rand = Math.random) {
+  const team = teamOf(seat), mine = colorOf(team), theirs = colorOf(1 - team);
+  const wantQueen = !G.queen.covered && G.queen.pending < 0 && G.pocketed[team].length > 0;
+  const targets = G.coins.filter(c => !c.in && (c.kind === mine || (c.kind === 'queen' && (wantQueen || G.queen.pending === seat))));
+  const cands = [];
+  for (let u = -0.95; u <= 0.95; u += 0.19) {
+    if (!strikerFits(seat, u)) continue;
+    const [sx, sy] = baseSpot(seat, u);
+    for (const c of targets) for (const [px, py] of POCKETS) {
+      const ex = px - c.x, ey = py - c.y, el = Math.sqrt(ex * ex + ey * ey);
+      const gx = c.x - ex / el * (COIN + STRIKER), gy = c.y - ey / el * (COIN + STRIKER);   // where the striker must touch
+      const ax = gx - sx, ay = gy - sy, al = Math.sqrt(ax * ax + ay * ay);
+      if ((ax * ex + ay * ey) / (al * el) < 0.35) continue;   // too thin a cut
+      const fwd = [[0, -1], [-1, 0], [0, 1], [1, 0]][seat];
+      if (ax * fwd[0] + ay * fwd[1] <= 0) continue;
+      const power = Math.min(MAX_SPEED, 420 + (al + el) * 1.15);
+      cands.push({ u, vx: ax / al * power, vy: ay / al * power });
+    }
+  }
+  // nothing lined up: break or nudge something toward the middle
+  if (!cands.length) for (let k = 0; k < 6; k++) {
+    const u = rand() * 1.6 - 0.8; if (!strikerFits(seat, u)) continue;
+    const [sx, sy] = baseSpot(seat, u), tx = B / 2 + (rand() - 0.5) * 300, ty = B / 2 + (rand() - 0.5) * 300, l = Math.hypot(tx - sx, ty - sy);
+    cands.push({ u, vx: (tx - sx) / l * 1700, vy: (ty - sy) / l * 1700 });
+  }
+  let best = null, bestScore = -Infinity;
+  // an easier bot considers fewer shots
+  const pick = cands.sort(() => rand() - 0.5).slice(0, [0, 6, 18, 40][level] || 18);
+  for (const s of pick) {
+    const bodies = G.coins.map(c => ({ ...c })), [x, y] = baseSpot(seat, s.u);
+    bodies.push({ kind: 'striker', x, y, vx: s.vx, vy: s.vy, in: false });
+    const fell = simulate(bodies);
+    let score = 0;
+    for (const b of fell) score += b.kind === mine ? 10 : b.kind === theirs ? -6 : b.kind === 'queen' ? 7 : -15;
+    score += rand() * 0.5;
+    if (score > bestScore) { bestScore = score; best = s; }
+  }
+  if (!best) return null;
+  // a less careful bot misses by a little
+  const err = [0, 0.22, 0.08, 0.012][level] || 0.08, a = (rand() - 0.5) * 2 * err, cs = Math.cos(a), sn = Math.sin(a);
+  const pw = 1 + (rand() - 0.5) * [0, 0.5, 0.2, 0.04][level];
+  return { u: best.u, vx: (best.vx * cs - best.vy * sn) * pw, vy: (best.vx * sn + best.vy * cs) * pw };
+}
+
+function tick() {
+  if (!runsGame() || G.phase !== 'aim' || !isBot(G.turn) || now() < G.botAt) return;
+  G.botAt = Infinity;
+  const s = botShot(G.turn, G.level);
+  if (!s || !shoot(G.turn, s.u, s.vx, s.vy)) { G.botAt = now() + 400; }
+}
+
+// ---- sharing the game
+
+function snapshot() {
+  return { t: 'state', seats: G.seats, team: G.team, coins: G.coins.map(c => [c.id, c.kind, Math.round(c.x * 100) / 100, Math.round(c.y * 100) / 100, c.in ? 1 : 0]),
+    turn: G.turn, phase: G.phase, pocketed: G.pocketed, queen: G.queen, winner: G.winner, points: G.points, log: G.log, striker: G.striker,
+    shot: G.shot ? { seat: G.shot.seat, u: G.shot.u, vx: G.shot.vx, vy: G.shot.vy, seq: G.shot.seq, start: G.shot.start.map(c => [c.id, c.kind, c.x, c.y, c.in ? 1 : 0]) } : null };
+}
+let V = snapshot();
+function publish() { const s = snapshot(); if (room && room.isHost) room.send(s); apply(s); }
+
+const KINDS = ['white', 'black', 'queen'];
+const okCoins = list => Array.isArray(list) && list.length === 19 && list.every(c => Array.isArray(c) && KINDS.includes(c[1]) && Number.isFinite(c[2]) && Number.isFinite(c[3]) && c[2] >= 0 && c[2] <= B && c[3] >= 0 && c[3] <= B);
+function apply(s) {
+  if (!s || !Array.isArray(s.seats) || s.seats.length !== 4 || !okCoins(s.coins) || !Number.isInteger(s.turn) || s.turn < 0 || s.turn > 3) return;
+  if (!['setup', 'aim', 'roll', 'over'].includes(s.phase)) return;
+  const prevSeq = V.shot ? V.shot.seq : 0;
+  V = JSON.parse(JSON.stringify(s));
+  V.log = (Array.isArray(V.log) ? V.log : []).map(x => String(x).slice(0, 160)).slice(-3);
+  // a new shot: everyone plays it out from the same start
+  if (!runsGame() && s.shot && s.shot.seq !== prevSeq && okCoins(s.shot.start) && [s.shot.u, s.shot.vx, s.shot.vy].every(Number.isFinite)) startRoll({ ...s.shot, start: s.shot.start.map(c => ({ id: c[0], kind: c[1], x: c[2], y: c[3], in: !!c[4], vx: 0, vy: 0 })) });
+  if (s.phase !== 'roll' && !runsGame()) roll = null;
+  render();
+}
+
+function act(m) {
+  if (runsGame()) { if (mySeats().includes(G.turn) && m.t === 'shot') shoot(G.turn, m.u, m.vx, m.vy); else if (m.t === 'aim' && mySeats().includes(G.turn)) { G.aim = m; } }
+  else if (room) room.send(m);
+}
+function mySeats() {
+  if (local) return G.seats.map((s, i) => (s && s.kind === 'human' ? i : -1)).filter(i => i >= 0);
+  return (V.seats || []).map((s, i) => (s && s.kind === 'human' && s.id === myId() ? i : -1)).filter(i => i >= 0);
+}
+
+function attach(r) {
+  room = r; local = false;
+  room.on('message', (m, from) => {
+    if (!room.isHost) {
+      if (m.t === 'state') apply(m);
+      else if (m.t === 'aim' && Number.isFinite(m.u) && Number.isFinite(m.ax) && Number.isFinite(m.ay)) remoteAim = { u: m.u, ax: m.ax, ay: m.ay, t: now() };
+      return;
+    }
+    const s = G.seats[G.turn];
+    if (!s || s.kind !== 'human' || s.id !== from) return;
+    if (m.t === 'shot') shoot(G.turn, m.u, m.vx, m.vy);
+    else if (m.t === 'aim' && Number.isFinite(m.u) && Number.isFinite(m.ax) && Number.isFinite(m.ay)) { remoteAim = { u: m.u, ax: m.ax, ay: m.ay, t: now() }; room.send({ t: 'aim', u: m.u, ax: m.ax, ay: m.ay }); }
+  });
+  room.on('roster', () => { if (room.isHost && G.phase === 'setup') renderSetup(); if (room.isHost && G.phase !== 'setup') room.send(snapshot()); render(); });
+  room.on('leave', id => {
+    if (G.phase === 'setup') return;
+    G.seats.forEach((s, i) => { if (s && s.kind === 'human' && s.id === id) { G.seats[i] = { kind: 'bot' }; note(NAMES[i] + ' left. A bot took over.'); } });
+    G.botAt = now() + 800;
+    publish();
+  });
+  room.on('close', () => { room = null; G.phase = 'setup'; V = snapshot(); lobby.start(); render(); });
+  if (room.isHost) { G.phase = 'setup'; renderSetup(); }
+  render();
+}
+
+function startLocalSetup() {
+  if (room) { try { room.close(); } catch (e) { } room = null; }
+  local = true; G.phase = 'setup'; V = snapshot(); renderSetup(); render();
+}
+
+let fillBots = true, level = 2;
+function renderSetup() {
+  const el = $('setup');
+  el.hidden = false;
+  const levelHtml = '<label>Bot <select id="lvl"><option value="1"' + (level === 1 ? ' selected' : '') + '>Easy</option><option value="2"' + (level === 2 ? ' selected' : '') + '>Good</option><option value="3"' + (level === 3 ? ' selected' : '') + '>Sharp</option></select></label>';
+  if (local) {
+    el.innerHTML = '<h2>Who\'s playing?</h2><p>Fill two seats to play head to head, or all four to play as partners: South and North play white, East and West black.</p>' +
+      '<div class="seats">' + setupSeats.map((s, i) => '<button class="seat" data-i="' + i + '">' + NAMES[i] +
+        '<small>' + (s.kind === 'human' ? 'player' : s.kind === 'bot' ? 'bot' : 'empty') + '</small></button>').join('') + '</div>' + levelHtml +
+      '<button class="act" id="goBtn">Start</button>';
+    for (const b of el.querySelectorAll('.seat')) b.onclick = () => { const s = setupSeats[+b.dataset.i]; s.kind = s.kind === 'human' ? 'bot' : s.kind === 'bot' ? 'off' : 'human'; renderSetup(); };
+    const lv = el.querySelector('#lvl'); if (lv) lv.onchange = () => { level = +lv.value; };
+    const go = el.querySelector('#goBtn');
+    if (go) go.onclick = () => {
+      const seats = setupSeats.map((s, i) => (s.kind === 'off' ? null : s.kind === 'bot' ? { kind: 'bot' } : { kind: 'human', name: NAMES[i] }));
+      const n = seats.filter(Boolean).length;
+      if (n !== 2 && n !== 4) { el.querySelector('p').textContent = 'Carrom is for two players, or four as partners. Fill two seats or all four.'; return; }
+      el.hidden = true;
+      startGame(seats, level);
+    };
+    return;
+  }
+  const people = room.players.length;
+  el.innerHTML = '<h2>Ready?</h2><p>' + people + (people === 1 ? ' person is' : ' people are') + ' here. Two play head to head; with three or four, partners sit opposite.</p>' +
+    '<label><input type="checkbox" id="botsBox"' + (fillBots ? ' checked' : '') + '> Fill an empty side with a bot</label>' + levelHtml + '<button class="act" id="goBtn">Start</button>';
+  const box = el.querySelector('#botsBox'), go = el.querySelector('#goBtn'), lv = el.querySelector('#lvl');
+  if (box) box.onchange = () => { fillBots = box.checked; };
+  if (lv) lv.onchange = () => { level = +lv.value; };
+  if (go) go.onclick = () => {
+    const ps = room.players.slice(0, 4), seats = [null, null, null, null];
+    // two face each other; three or four sit all round, with a bot in a spare seat
+    const order = ps.length <= 2 ? [0, 2] : [0, 1, 2, 3];
+    ps.forEach((p, i) => { seats[order[i]] = { kind: 'human', id: p.id, name: p.name }; });
+    if (fillBots) { if (ps.length === 1) seats[2] = { kind: 'bot' }; if (ps.length === 3) seats[3] = { kind: 'bot' }; }
+    const n = seats.filter(Boolean).length;
+    if (n !== 2 && n !== 4) { el.querySelector('p').textContent = 'Carrom is for two players, or four as partners. Tick the box to add a bot.'; return; }
+    el.hidden = true;
+    startGame(seats, level);
+  };
+}
+
+// ---- watching a shot
+
+let roll = null;   // { bodies, seat, acc }
+function startRoll(shot) {
+  const bodies = shot.start.map(c => ({ ...c }));
+  const [x, y] = baseSpot(shot.seat, shot.u);
+  bodies.push({ kind: 'striker', x, y, vx: shot.vx, vy: shot.vy, in: false });
+  roll = { bodies, seat: shot.seat, fell: [], acc: 0, quiet: 0 };
+}
+function stepRoll(dt) {
+  if (!roll) return;
+  roll.acc += Math.min(dt, 0.05);
+  while (roll.acc >= SUB) {
+    roll.acc -= SUB;
+    const f = physStep(roll.bodies, SUB);
+    if (f.length) { roll.fell.push(...f); sfx('pocket'); }
+    if (!moving(roll.bodies)) {
+      for (const b of roll.bodies) { b.vx = b.vy = 0; }
+      if (runsGame()) {
+        // the host's result is final: copy it into the game and settle the turn
+        for (const b of roll.bodies) if (b.kind !== 'striker') { const c = G.coins.find(q => q.id === b.id); c.x = b.x; c.y = b.y; c.in = b.in; }
+        const fell = roll.fell;
+        roll = null;
+        settle(fell);
+      }
+      return;
+    }
+  }
+}
+
+// ---- drawing
+
+const cv = $('c'), ctx = cv.getContext('2d');
+let S = 600, k = 0.6, FRAME = 40;
+function resize() {
+  const avail = Math.min(innerWidth - 24, innerWidth > 760 ? innerHeight - 60 : 640, 720);
+  S = Math.max(300, avail);
+  FRAME = Math.round(S * 0.055);
+  k = (S - FRAME * 2) / B;
+  const d = Math.min(2.5, devicePixelRatio || 1);
+  cv.width = S * d; cv.height = S * d; cv.style.width = S + 'px'; cv.style.height = S + 'px';
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  board = null;
+}
+addEventListener('resize', resize);
+const X = v => FRAME + v * k;
+
+let board = null;
+function bakeBoard() {
+  board = document.createElement('canvas');
+  const d = Math.min(2.5, devicePixelRatio || 1);
+  board.width = S * d; board.height = S * d;
+  const g = board.getContext('2d');
+  g.setTransform(d, 0, 0, d, 0, 0);
+  // the frame
+  const fr = g.createLinearGradient(0, 0, S, S);
+  fr.addColorStop(0, '#6e3a1d'); fr.addColorStop(0.5, '#4a2410'); fr.addColorStop(1, '#6e3a1d');
+  g.fillStyle = fr; g.fillRect(0, 0, S, S);
+  g.strokeStyle = 'rgba(255,220,170,0.25)'; g.lineWidth = 2; g.strokeRect(3, 3, S - 6, S - 6);
+  // the playing surface: pale wood with a little grain
+  const wood = g.createLinearGradient(X(0), X(0), X(B), X(B));
+  wood.addColorStop(0, '#f3dfae'); wood.addColorStop(0.5, '#ebd29a'); wood.addColorStop(1, '#f3dfae');
+  g.fillStyle = wood; g.fillRect(X(0), X(0), B * k, B * k);
+  g.strokeStyle = 'rgba(150,100,40,0.08)'; g.lineWidth = 1;
+  for (let i = 0; i < 70; i++) { const y = X(i * 14.3 + (i % 3) * 3); g.beginPath(); g.moveTo(X(0), y); g.bezierCurveTo(X(300), y + 4, X(700), y - 4, X(B), y + 2); g.stroke(); }
+  // pockets
+  for (const [px, py] of POCKETS) {
+    g.fillStyle = '#1a0f08'; g.beginPath(); g.arc(X(px), X(py), POCKET * k, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 2; g.stroke();
+  }
+  // baselines: two lines with a red circle at each end, on every side
+  const line = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(X(x0), X(y0)); g.lineTo(X(x1), X(y1)); g.stroke(); };
+  g.strokeStyle = '#2b1a10'; g.lineWidth = Math.max(1, 1.6 * k);
+  for (let seat = 0; seat < 4; seat++) {
+    const [ax, ay] = baseSpot(seat, -1), [bx, by] = baseSpot(seat, 1);
+    const off = seat % 2 ? [STRIKER, 0] : [0, STRIKER];
+    line(ax - off[0], ay - off[1], bx - off[0], by - off[1]);
+    line(ax + off[0], ay + off[1], bx + off[0], by + off[1]);
+    for (const [cx, cy] of [[ax, ay], [bx, by]]) {
+      g.fillStyle = '#c0392b'; g.beginPath(); g.arc(X(cx), X(cy), STRIKER * k, 0, 7); g.fill();
+      g.strokeStyle = '#2b1a10'; g.stroke();
+      g.strokeStyle = '#2b1a10';
+    }
+  }
+  // the corner arrows
+  g.strokeStyle = '#2b1a10'; g.lineWidth = Math.max(1, 1.6 * k);
+  for (const [sx, sy] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) {
+    const cx = B / 2 - sx * 0, cy = B / 2;
+    const fx = sx > 0 ? 0 : B, fy = sy > 0 ? 0 : B;
+    const x0 = fx + sx * 120, y0 = fy + sy * 120, x1 = fx + sx * 300, y1 = fy + sy * 300;
+    line(x0, y0, x1, y1);
+    g.beginPath(); g.moveTo(X(x0), X(y0)); g.lineTo(X(x0 + sx * 26), X(y0 + sy * 6)); g.moveTo(X(x0), X(y0)); g.lineTo(X(x0 + sx * 6), X(y0 + sy * 26)); g.stroke();
+    void cx; void cy;
+  }
+  // the middle: two circles and a star
+  g.beginPath(); g.arc(X(B / 2), X(B / 2), 85 * k, 0, 7); g.stroke();
+  g.beginPath(); g.arc(X(B / 2), X(B / 2), 20 * k, 0, 7); g.stroke();
+  g.fillStyle = 'rgba(192,57,43,0.35)';
+  g.beginPath();
+  for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, r = (i % 2 ? 40 : 82) * k; g.lineTo(X(B / 2) + Math.cos(a) * r, X(B / 2) + Math.sin(a) * r); }
+  g.closePath(); g.fill();
+  board.size = S;
+}
+
+function drawCoin(b) {
+  const x = X(b.x), y = X(b.y), r = radius(b) * k;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.arc(x + r * 0.15, y + r * 0.2, r, 0, 7); ctx.fill();
+  const col = b.kind === 'white' ? ['#fffaf0', '#e7d9b8', '#b9a47a'] : b.kind === 'black' ? ['#575757', '#262626', '#0d0d0d'] : b.kind === 'queen' ? ['#ff8a80', '#d6322b', '#8e1b16'] : ['#e8f1ff', '#9fb8dc', '#4d6b95'];
+  const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+  gr.addColorStop(0, col[0]); gr.addColorStop(0.6, col[1]); gr.addColorStop(1, col[2]);
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+  ctx.strokeStyle = b.kind === 'white' ? 'rgba(120,90,40,0.6)' : 'rgba(255,255,255,0.18)'; ctx.lineWidth = Math.max(1, r * 0.08);
+  ctx.beginPath(); ctx.arc(x, y, r * 0.66, 0, 7); ctx.stroke();
+  if (b.kind === 'striker') { ctx.beginPath(); ctx.arc(x, y, r * 0.3, 0, 7); ctx.stroke(); }
+}
+
+// aiming, by the person whose turn it is on this device
+let slide = 0, drag = null, remoteAim = null;
+function myTurnHere() { return V.phase === 'aim' && mySeats().includes(V.turn); }
+
+function draw() {
+  if (!board || board.size !== S) bakeBoard();
+  const d = Math.min(2.5, devicePixelRatio || 1);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(board, 0, 0); ctx.setTransform(d, 0, 0, d, 0, 0);
+  if (!V.seats.length) return;
+  const bodies = roll ? roll.bodies : V.coins.map(c => ({ id: c[0], kind: c[1], x: c[2], y: c[3], in: !!c[4] }));
+  for (const b of bodies) if (!b.in && b.kind !== 'striker') drawCoin(b);
+  if (roll) { const s = roll.bodies.find(b => b.kind === 'striker'); if (s && !s.in) drawCoin(s); return; }
+  if (V.phase !== 'aim') return;
+  // the striker on the shooter's line, with the aim
+  const mine = myTurnHere();
+  const ra = !mine && remoteAim && now() - remoteAim.t < 1500 ? remoteAim : null;
+  const u = mine ? slide : ra ? ra.u : 0;
+  const [sx, sy] = baseSpot(V.turn, u);
+  const fits = runsGame() ? strikerFits(V.turn, u) : true;
+  ctx.globalAlpha = fits ? 1 : 0.5;
+  drawCoin({ kind: 'striker', x: sx, y: sy });
+  ctx.globalAlpha = 1;
+  const aim = mine && drag && drag.aim ? drag : ra ? { ax: ra.ax, ay: ra.ay } : null;
+  if (aim && (aim.ax || aim.ay)) {
+    const len = Math.min(1, Math.hypot(aim.ax, aim.ay) / 380);
+    const dx = -aim.ax, dy = -aim.ay, l = Math.hypot(dx, dy) || 1;
+    ctx.setLineDash([6, 6]); ctx.strokeStyle = 'rgba(30,20,10,0.6)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(sx), X(sy)); ctx.lineTo(X(sx + dx / l * 900), X(sy + dy / l * 900)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(232,176,74,0.95)'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(X(sx), X(sy)); ctx.lineTo(X(sx - dx / l * len * 160), X(sy - dy / l * len * 160)); ctx.stroke();
+  }
+}
+
+// pointer: press on the striker to slide it; press anywhere else to pull back and aim
+function toBoard(e) { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width * S - FRAME) / k, ((e.clientY - r.top) / r.height * S - FRAME) / k]; }
+cv.addEventListener('pointerdown', e => {
+  if (!myTurnHere()) return;
+  const [x, y] = toBoard(e), [sx, sy] = baseSpot(V.turn, slide);
+  try { cv.setPointerCapture(e.pointerId); } catch (x2) { }
+  drag = Math.hypot(x - sx, y - sy) < STRIKER * 1.6 ? { slide: true } : { aim: true, x0: x, y0: y, ax: 0, ay: 0 };
+});
+cv.addEventListener('pointermove', e => {
+  if (!drag || !myTurnHere()) return;
+  const [x, y] = toBoard(e);
+  if (drag.slide) {
+    const [ax, ay] = baseSpot(V.turn, -1), [bx, by] = baseSpot(V.turn, 1);
+    const t = ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2);
+    slide = Math.max(-1, Math.min(1, t * 2 - 1));
+  } else { drag.ax = x - drag.x0; drag.ay = y - drag.y0; }
+  sendAim();
+});
+cv.addEventListener('pointerup', () => {
+  if (!drag || !myTurnHere()) { drag = null; return; }
+  if (drag.aim) {
+    const len = Math.hypot(drag.ax, drag.ay);
+    if (len > 12) {
+      const power = Math.min(1, len / 380) * MAX_SPEED;
+      const vx = -drag.ax / len * power, vy = -drag.ay / len * power;
+      if (runsGame() && !strikerFits(V.turn, slide)) setStatus('The striker can\'t sit on a coin. Slide it along your line.');
+      else act({ t: 'shot', u: slide, vx, vy });
+    }
+  }
+  drag = null;
+});
+let lastAim = 0;
+function sendAim() {
+  if (!room || now() - lastAim < 80) return;
+  lastAim = now();
+  const m = { t: 'aim', u: slide, ax: drag && drag.aim ? drag.ax : 0, ay: drag && drag.aim ? drag.ay : 0 };
+  if (room.isHost) room.send(m); else room.send(m);
+}
+addEventListener('keydown', e => {
+  if (!myTurnHere()) return;
+  if (e.key === 'ArrowLeft' || e.key === 'a') slide = Math.max(-1, slide - 0.04);
+  if (e.key === 'ArrowRight' || e.key === 'd') slide = Math.min(1, slide + 0.04);
+});
+
+// ---- sound
+
+let actx = null;
+function sfx(kind) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime, o = actx.createOscillator(), v = actx.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(kind === 'pocket' ? 300 : 900, t); o.frequency.exponentialRampToValueAtTime(kind === 'pocket' ? 90 : 300, t + 0.15);
+    v.gain.setValueAtTime(0.12, t); v.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(v).connect(actx.destination); o.start(t); o.stop(t + 0.2);
+  } catch (e) { }
+}
+
+// ---- side panel
+
+function seatNameV(i) { const s = V.seats[i]; return !s ? NAMES[i] : s.kind === 'bot' ? NAMES[i] + ' bot' : String(s.name || NAMES[i]).slice(0, 16); }
+let statusOverride = '', overrideT = 0;
+function setStatus(t) { statusOverride = t; overrideT = now(); render(); }
+function render() {
+  const playing = V.seats.length && V.phase !== 'setup';
+  let st = '';
+  if (!playing) st = room || local ? 'Setting up…' : '';
+  else if (V.phase === 'over') { const two = V.seats.filter(Boolean).length === 2; st = (two ? seatNameV(V.seats.findIndex((s, i) => s && teamOf(i) === V.winner)) : 'Team ' + colorOf(V.winner)) + ' wins!'; }
+  else if (V.phase === 'roll') st = (mySeats().includes(V.turn) && !local ? 'Your shot' : seatNameV(V.turn) + '\'s shot') + '…';
+  else if (myTurnHere()) st = (local && V.seats.filter(s => s && s.kind === 'human').length > 1 ? seatNameV(V.turn) + ', your shot' : 'Your shot') + ' (' + colorOf(teamOf(V.turn)) + ')';
+  else st = seatNameV(V.turn) + ' is lining up a shot…';
+  if (statusOverride && now() - overrideT < 2500) st = statusOverride;
+  $('status').textContent = st;
+  $('log').textContent = (V.log || []).join(' ');
+  $('players').innerHTML = playing ? V.seats.map((s, i) => s ? '<li class="' + (i === V.turn && V.phase !== 'over' ? 'on' : '') + '"><i style="background:' + (teamOf(i) ? '#2b2b2b' : '#f4ead2') + '"></i>' + esc(seatNameV(i)) +
+    (mySeats().includes(i) && !local ? ' (you)' : '') + '<span>' + V.pocketed[teamOf(i)].length + ' of 9</span></li>' : '').join('') +
+    '<li><i style="background:#d6322b"></i>Queen<span>' + (V.queen.covered ? 'covered by ' + colorOf(V.queen.by) : V.queen.pending >= 0 ? 'needs covering' : 'on the board') + '</span></li>' : '';
+  let a = '';
+  if (V.phase === 'over' && runsGame()) a += '<button class="act" id="againBtn">Play again</button>';
+  if (room && room.isHost) a += '<button class="quiet" id="inviteBtn">Invite more</button>';
+  if (room || local) a += '<button class="quiet" id="leaveBtn">Leave</button>';
+  if ($('actions').dataset.html !== a) {
+    $('actions').innerHTML = a; $('actions').dataset.html = a;
+    const ag = $('actions').querySelector('#againBtn'), iv = $('actions').querySelector('#inviteBtn'), lv = $('actions').querySelector('#leaveBtn');
+    if (ag) ag.onclick = () => { G.phase = 'setup'; if (local) { V = snapshot(); renderSetup(); render(); } else { publish(); renderSetup(); } };
+    if (iv) iv.onclick = () => lobby.reopen();
+    if (lv) lv.onclick = () => { if (room) { try { room.close(); } catch (e) { } } room = null; local = false; G.phase = 'setup'; G.seats = []; V = snapshot(); $('setup').hidden = true; lobby.start(); render(); };
+  }
+}
+
+let lastT = 0;
+function frame(t) {
+  const dt = Math.min(0.05, (t - lastT) / 1000 || 0);
+  lastT = t;
+  stepRoll(dt);
+  tick();
+  draw();
+  requestAnimationFrame(frame);
+}
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'carrom',
+  title: 'Carrom',
+  blurb: 'Flick the striker, pocket your coins, and cover the queen. Two players head to head, or four as partners.',
+  min: 2, max: 4,
+  extra: [{ label: 'Play on this device', note: 'Against a bot, or pass the device around.', onClick: startLocalSetup }],
+  onStart: attach,
+  onJoin: attach,
+});
+resize();
+render();
+requestAnimationFrame(frame);
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Carrom</h2>
+<p>Carrom on a full board: flick the striker, pocket your coins, and cover the queen. Two players head to head, or four as partners. Play a friend online, pass the device around, or take on a bot at three levels.</p>
+<h3>Play</h3>
+<ul><li>Drag the striker along your baseline to place it (or use the arrow keys). It can't sit on top of a coin.</li><li>Then press anywhere on the board, pull back, and let go. The striker goes the opposite way to your pull, and the farther you pull, the harder the shot. A dotted line shows where it's headed.</li><li>Online, everyone sees the striker move and the aim line while the player lines up a shot.</li></ul>
+<p>"Play on this device" lets you set each of the four seats to a player, a bot, or empty: fill two seats to play head to head, or all four to play as partners (South and North play white, East and West black). Online, two players face each other, and three or four sit all round with a bot in a spare seat.</p>
+<h3>Rules</h3>
+<ul><li>White breaks. Each side has 9 coins, and the red queen sits in the middle.</li><li>Pocket one of your coins and you shoot again. Pocket only the other side's coins, or nothing, and the turn passes.</li><li>Pocketing the striker is a foul: one of your pocketed coins comes back to the middle, and the turn passes.</li><li>The queen has to be covered: pocket her, then pocket one of your own coins on the same shot or the next one. If you don't, she goes back to the middle.</li><li>You can't finish before the queen is covered. If your last coin goes in while she's still out, it comes back.</li><li>The first side to pocket all 9 of its coins wins, scoring a point for each coin the other side has left, and 3 more if they covered the queen.</li></ul>
+<h3>How it works</h3>
+<ul><li>The board is 1000 units square, with coins, a bigger and heavier striker, and pockets in their real proportions. Pieces slow down with friction, bounce off the cushions and each other, and fall when their center is over a pocket. The physics steps 240 times a second.</li><li>The physics uses only adding, multiplying, dividing, and square roots, which give exactly the same answer in every browser. So online, the player's shot (where the striker sat and how fast it went) is sent to everyone, every screen plays it out the same way, and the host then sends the final positions so nothing can drift.</li><li>The bot looks at every coin it could pocket, works out where the striker has to hit it to send it toward each pocket, and plays each shot out in a fast simulation. It takes the one that pockets the most of its own coins without fouling. An easier bot considers fewer shots and aims and judges power less precisely.</li><li>It uses <a href="../linkplay/">LinkPlay</a> for the connection, with no game server.</li></ul>
+<p class="pg-more">More like this: <a href="../chess/">Chess</a>, <a href="../checkers/">Checkers</a>, <a href="../four-in-a-row/">Four in a Row</a>, <a href="../cycle-duel/">Cycle Duel</a>. Or see <a href="../#online">all online games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/carrom">carrom on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>
