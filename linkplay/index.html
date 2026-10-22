@@ -161,11 +161,14 @@ requestAnimationFrame(frame);
 <div class="pg-about" id="pg-about" hidden>
 <h2>LinkPlay</h2>
 <p>A small kit for making a browser game multiplayer with no server of your own. Players connect by sending each other links.</p>
-<p>Cycle Duel, Type Race, Sketch &amp; Guess, Four in a Row, Checkers, Chess, Clue Grid, Ludo, Trivia Night, and Whiteboard are built on it.</p>
+<p>Most of the online projects here are built on it: Chess, Ludo, Mafia, Clue Grid, Sketch &amp; Guess, Trivia Night, Watch Party, Secret Chat, Video Call, and the online modes in Midnight Racing and Miami Nights. Video Call and Watch Party also send camera and microphone over the same connection (see the media options in <code>linkplay.js</code>).</p>
 <h3>How the connection works</h3>
 <p>Browsers can talk directly over WebRTC, but first they have to swap a description of themselves (an "offer" and an "answer"). Normally a signaling server carries those. Here the players carry them:</p>
 <ul><li>The host creates an invite. The offer is compressed into the link: <code>page/#offer=ID.CODE</code>. 2. The friend opens it. Their page makes an answer and shows a reply link: <code>page/#answer=ID.CODE</code>. 3. The friend sends the reply back. The host opens it in the same browser (a <code>BroadcastChannel</code> passes it to the game tab) or pastes it in. 4. The data channel opens.</li></ul>
 <p>Each link is around 800 characters. The ID ties a reply to its invite, so a host can have several invites out at once. A public STUN server (Google or Cloudflare) tells each browser its public address. That is the only outside request. There is no TURN relay, so on networks that block direct connections, players can't connect.</p>
+<h3>Relay</h3>
+<p>On networks that block direct connections (many offices, colleges, and some mobile carriers), browsers need a TURN relay to reach each other. LinkPlay has none configured, so on those networks players can't connect.</p>
+<p>To turn one on, add a provider's credentials to <code>RELAY</code> near the top of <code>linkplay.js</code>. Providers like Metered give credentials meant to be used in a web page. The relay is used only when a direct connection fails, and it can't read anything, because the traffic stays encrypted end to end. <code>LinkPlay.route(pc)</code> tells you whether a connection went direct or through the relay, and <code>host()</code> and <code>join()</code> take <code>relay: false</code> to never use it.</p>
 <h3>Two players, handshake only</h3>
 <p>The name (<code>'my-game'</code>) keeps different games' tabs from picking up each other's replies.</p>
 <h3>A room with the lobby</h3>

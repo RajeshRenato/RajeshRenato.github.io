@@ -274,6 +274,7 @@ function send(m) {
 function onMessage(raw) {
   let m;
   try { m = JSON.parse(raw); } catch (e) { return; }
+  if (!m || typeof m !== 'object') return;
   if (mode === 'host') {
     if (m.t === 'in' && sim && (phase === 'countdown' || phase === 'play')) queueTurn(sim, 1, m.d);
     else if (m.t === 'rematch' && phase === 'matchOver') rematch();

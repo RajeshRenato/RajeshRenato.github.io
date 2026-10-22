@@ -272,6 +272,7 @@ function onMessage(data) {
   if (typeof data !== 'string') { onChunk(data); return; }
   let m;
   try { m = JSON.parse(data); } catch (e) { return; }
+  if (!m || typeof m !== 'object') return;
   if (m.t === 'offer') askToAccept(m);
   else if (m.t === 'accept' || m.t === 'decline') { const job = outgoing.get(m.id); if (job) job.accept(m.t === 'accept'); }
   else if (m.t === 'start' && incoming && incoming.id === m.id) startIncoming(m.i);

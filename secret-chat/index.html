@@ -142,6 +142,7 @@
       <li><b>3</b><span>Send passwords as hidden messages, and set messages to disappear.</span></li>
     </ul>
     <button class="big" id="startBtn">Start a secret chat</button>
+    <label class="small" id="relayOpt" hidden style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="noRelay"> Never use a relay, even if a direct connection fails</label>
     <p class="small" style="margin-top:18px">You both need this page open at the same time. Some strict office or mobile networks block direct connections; if yours does, try another network.</p>
   </div>
 </div>
@@ -272,6 +273,7 @@ async function startHost() {
   show('hostScreen');
   role = 'h';
   net = LinkPlay.host('secret-chat', {
+    relay: !noRelay(),
     onChannel: (ch, id) => { pc = net.invites.get(id).pc; attach(ch); },
     onFail: () => failed('hostStatus'),
   });
@@ -341,6 +343,12 @@ async function opened() {
   if (pc && pc.localDescription && pc.remoteDescription) sas = await safetyCode(pc.localDescription.sdp, pc.remoteDescription.sdp);
   renderSas();
   if (sas) sys('Compare the safety code with your friend before sending anything sensitive.', true);
+  const r = await checkRoute(pc, () => {
+    send({ t: 'bye' });
+    try { pc.close(); } catch (e) { }
+    peerGone('This chat could only connect through a relay, and you chose never to use one, so it was closed.');
+  });
+  if (r === 'relay' && open) { $('peerState').textContent = 'connected through a relay, still end-to-end encrypted'; sys('Your networks blocked a direct connection, so this chat goes through a relay. It still can\'t read anything: messages stay encrypted end to end.'); }
   $('input').focus();
 }
 
@@ -364,6 +372,7 @@ function receive(data) {
   if (typeof data !== 'string') { fileChunk(data); return; }
   let m;
   try { m = JSON.parse(data); } catch (e) { return; }
+  if (!m || typeof m !== 'object') return;
   if (m.t === 'msg') { addMessage({ id: m.id, text: String(m.text || '').slice(0, 20000), mine: false, secret: !!m.secret, ttl: +m.ttl || 0 }); send({ t: 'seen', id: m.id }); showTyping(false); }
   else if (m.t === 'seen') markSeen(m.id);
   else if (m.t === 'typing') showTyping(true);
@@ -608,11 +617,12 @@ async function showDetails() {
     if (pair) {
       const l = byId[pair.localCandidateId], r = byId[pair.remoteCandidateId];
       const kind = t => (t === 'host' ? 'same network' : t === 'srflx' || t === 'prflx' ? 'across the internet' : t === 'relay' ? 'through a relay' : t || '?');
-      rows.push(['Route', 'Direct, ' + kind(r && r.candidateType)]);
+      const relayed = (r && r.candidateType === 'relay') || (l && l.candidateType === 'relay');
+      rows.push(['Route', relayed ? 'Through a relay, still encrypted end to end' : 'Direct, ' + kind(r && r.candidateType)]);
       if (pair.currentRoundTripTime) rows.push(['Round trip', Math.round(pair.currentRoundTripTime * 1000) + ' ms']);
     }
   } catch (e) { }
-  rows.push(['Server', 'None. A public STUN server only told each browser its own address.']);
+  rows.push(['Server', LinkPlay.hasRelay() ? 'No chat server. A STUN server told each browser its own address, and a relay is on standby if a direct connection fails.' : 'None. A public STUN server only told each browser its own address.']);
   rows.push(['Stored', 'Nothing. Closing the tab ends the chat for good.']);
   if (sas) rows.push(['Safety code', sas.words.join(' · ') + ' ' + sas.digits + (verified ? ' (verified)' : ' (not compared yet)')]);
   const dl = $('detailsList');
@@ -679,6 +689,17 @@ $('leaveBtn').onclick = () => { send({ t: 'bye' }); try { pc && pc.close(); } ca
 addEventListener('pagehide', () => { if (open) send({ t: 'bye' }); });
 addEventListener('keydown', e => { if (e.key === 'Escape') { $('sasSheet').hidden = true; $('detailsSheet').hidden = true; } });
 
+// The relay only steps in when a direct connection fails. Say which one this is,
+// and end the conversation if it went through a relay the user turned off.
+async function checkRoute(pc, onRelay) {
+  await new Promise(r => setTimeout(r, 700));
+  const r = pc ? await LinkPlay.route(pc) : 'unknown';
+  if (r === 'relay' && noRelay()) { onRelay(); return r; }
+  return r;
+}
+const noRelay = () => !!(document.getElementById('noRelay') && document.getElementById('noRelay').checked);
+
+if (LinkPlay.hasRelay()) $('relayOpt').hidden = false;
 setInterval(tickTimers, 250);
 
 const fromLink = LinkPlay.fromHash();
@@ -700,6 +721,7 @@ else show('start');
 <p>The safety code is a SHA-256 hash of the two DTLS certificate fingerprints, which the browser checks against the real connection. A public STUN server tells each browser its own address and sees nothing else. There's no relay, so the two browsers see each other's IP address, and networks that block direct connections won't connect.</p>
 <p>The page sets a Content Security Policy so the browser blocks it from loading or sending anything else, even if a script were somehow added to it.</p>
 <p>What it can't protect against: malware or a browser extension on either device, someone reading over your shoulder, or a screenshot.</p>
+<p>If a relay is configured in LinkPlay, it's used only when a direct connection fails, and the chat says so. It can't read anything, because the traffic stays encrypted end to end. "Never use a relay" on the first screen ends the chat instead. The published site has no relay configured.</p>
 <p class="pg-more">More like this: <a href="../video-call/">Video Call</a>, <a href="../qr-studio/">QR Studio</a>, <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/secret-chat">secret-chat on GitHub</a>.</p>
 </div><!-- /about -->

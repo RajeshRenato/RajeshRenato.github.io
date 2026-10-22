@@ -6,6 +6,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c77bff'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3ES%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
 <title>Secret Note | send an encrypted note as a link</title>
 <link rel="stylesheet" href="../common/about.css">
 <link rel="canonical" href="https://rajeshrenato.github.io/playground/secret-note/">
@@ -195,7 +196,7 @@ async function makeLink() {
     $('link').value = link;
     $('result').hidden = false;
     $('linkNote').textContent = (pw ? 'They will also need the password. Send it some other way than the link.'
-                                     : 'Anyone with this link can read the note.') +
+                                     : 'Anyone with this link can read the note, and it never expires. Add a password for anything sensitive, and delete the message once it\'s read.') +
       ' The link is ' + link.length + ' characters' + (link.length > 4000 ? ', long enough that some chat apps may cut it off. A shorter note keeps it safe.' : '.');
     return link;
   } finally {
@@ -222,6 +223,7 @@ async function openNote(code, password) {
 }
 
 function startRead(code) {
+  try { history.replaceState(null, '', location.pathname); } catch (e) { }
   $('write').hidden = true;
   $('read').hidden = false;
   const c = parseCode(code);

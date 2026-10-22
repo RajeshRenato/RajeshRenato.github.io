@@ -3,6 +3,29 @@
 const LinkPlay = (() => {
   const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
 
+  // A TURN relay carries the traffic only when the two browsers can't reach each
+  // other directly. It still can't read anything: the data stays encrypted end to
+  // end. Empty means no relay. To turn one on, add a provider's credentials, e.g.
+  //   { urls: ['turn:example.relay.com:443?transport=tcp'], username: '...', credential: '...' }
+  // See README.md in this folder.
+  const RELAY = [];
+  const servers = relay => (relay === false || !RELAY.length ? ICE : ICE.concat(RELAY));
+
+  // 'direct' or 'relay' once connected, from the browser's own statistics.
+  async function route(pc) {
+    try {
+      const stats = await pc.getStats();
+      const byId = {};
+      let pair = null;
+      stats.forEach(r => { byId[r.id] = r; });
+      stats.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId) pair = byId[r.selectedCandidatePairId]; });
+      if (!pair) stats.forEach(r => { if (r.type === 'candidate-pair' && r.state === 'succeeded' && (r.nominated || r.selected)) pair = r; });
+      if (!pair) return 'unknown';
+      const l = byId[pair.localCandidateId], r = byId[pair.remoteCandidateId];
+      return (l && l.candidateType === 'relay') || (r && r.candidateType === 'relay') ? 'relay' : 'direct';
+    } catch (e) { return 'unknown'; }
+  }
+
   function b64url(bytes) {
     let s = '';
     for (const b of bytes) s += String.fromCharCode(b);
@@ -66,7 +89,8 @@ const LinkPlay = (() => {
   // again for each extra player. onChannel(channel, id) fires once per friend.
   // For audio or video, pass media: true (and stream, if you send any); the
   // friend's tracks arrive through onTrack(event, id).
-  function host(name, { onChannel, onFail, media, stream, onTrack } = {}) {
+  // relay: false keeps this host's side from ever using the relay.
+  function host(name, { onChannel, onFail, media, stream, onTrack, relay } = {}) {
     const invites = new Map();
     let bc = null;
     try {
@@ -82,7 +106,7 @@ const LinkPlay = (() => {
 
     async function invite() {
       const id = newId();
-      const pc = new RTCPeerConnection({ iceServers: ICE });
+      const pc = new RTCPeerConnection({ iceServers: servers(relay) });
       const channel = pc.createDataChannel(name, { ordered: true });
       if (media || stream) {
         for (const kind of ['audio', 'video']) {
@@ -125,8 +149,8 @@ const LinkPlay = (() => {
 
   // The side that opened an invite. Resolves to the reply link to send back.
   // stream (optional) is sent on the audio and video slots the host offered.
-  async function join(name, invite, { onChannel, onFail, stream, onTrack } = {}) {
-    const pc = new RTCPeerConnection({ iceServers: ICE });
+  async function join(name, invite, { onChannel, onFail, stream, onTrack, relay } = {}) {
+    const pc = new RTCPeerConnection({ iceServers: servers(relay) });
     watch(pc, onFail);
     pc.ontrack = e => onTrack && onTrack(e);
     pc.ondatachannel = e => {
@@ -171,5 +195,5 @@ const LinkPlay = (() => {
     try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
   }
 
-  return { host, join, forwardReply, fromHash, parseReply, pageLink, pack, unpack, share, ICE };
+  return { host, join, forwardReply, fromHash, parseReply, pageLink, pack, unpack, share, route, ICE, hasRelay: () => RELAY.length > 0 };
 })();

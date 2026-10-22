@@ -31,6 +31,8 @@ The page sets a Content Security Policy so the browser blocks it from loading or
 
 What it can't protect against: malware or a browser extension on either device, someone reading over your shoulder, or a screenshot.
 
+If a relay is configured in LinkPlay, it's used only when a direct connection fails, and the chat says so. It can't read anything, because the traffic stays encrypted end to end. "Never use a relay" on the first screen ends the chat instead. The published site has no relay configured.
+
 ## Tests
 
 `tests/secret-chat.test.js` checks the safety code (the same on both sides, different when a key changes), messages and seen receipts, that text is never treated as HTML, hidden and disappearing messages, wiping and leaving, and a file arriving byte for byte over in-memory channels.

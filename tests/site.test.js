@@ -56,7 +56,7 @@ test('the README lists every project', () => {
 });
 
 test('relative links in the root docs point at real files', () => {
-  for (const doc of ['README.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md']) {
+  for (const doc of ['README.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'SECURITY.md']) {
     for (const m of read(doc).matchAll(/\]\(([^)#:\s]+)\)/g)) {
       assert.ok(fs.existsSync(path.join(ROOT, m[1])), doc + ' links to missing ' + m[1]);
     }

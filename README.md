@@ -4,7 +4,7 @@
 
 Live at https://rajeshrenato.github.io/playground/
 
-MIT licensed. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
+MIT licensed. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). Security notes and private reporting: [SECURITY.md](SECURITY.md).
 
 New every day: [daily puzzles](daily/), with today's Penta, Sudoku, and Arrow Flux and one streak across all three.
 

@@ -15,6 +15,12 @@ Browsers can talk directly over WebRTC, but first they have to swap a descriptio
 
 Each link is around 800 characters. The ID ties a reply to its invite, so a host can have several invites out at once. A public STUN server (Google or Cloudflare) tells each browser its public address. That is the only outside request. There is no TURN relay, so on networks that block direct connections, players can't connect.
 
+## Relay
+
+On networks that block direct connections (many offices, colleges, and some mobile carriers), browsers need a TURN relay to reach each other. LinkPlay has none configured, so on those networks players can't connect.
+
+To turn one on, add a provider's credentials to `RELAY` near the top of `linkplay.js`. Providers like Metered give credentials meant to be used in a web page. The relay is used only when a direct connection fails, and it can't read anything, because the traffic stays encrypted end to end. `LinkPlay.route(pc)` tells you whether a connection went direct or through the relay, and `host()` and `join()` take `relay: false` to never use it.
+
 ## Files
 
 | File | What it does | Needs |

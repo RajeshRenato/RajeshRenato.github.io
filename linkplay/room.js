@@ -11,7 +11,7 @@
 const Room = (() => {
   const COLORS = ['#28e0ff', '#ff4fa3', '#ffd166', '#7dffc9', '#b28cff', '#ff8a5c', '#9be15d', '#ff6b6b'];
   const cleanName = (s, id) => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 16) || 'Player ' + (id + 1);
-  const parse = raw => { try { return JSON.parse(raw); } catch (e) { return null; } };
+  const parse = raw => { try { const v = JSON.parse(raw); return v && typeof v === 'object' ? v : null; } catch (e) { return null; } };
 
   function emitter(obj) {
     const subs = {};

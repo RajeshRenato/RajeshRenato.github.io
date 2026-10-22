@@ -144,6 +144,7 @@
       <button class="big" id="goBtn" disabled>Start a call</button>
       <button class="plain" id="allowBtn">Allow camera</button>
       <button class="link" id="noCamBtn">Join without camera</button>
+      <label class="small" id="relayOpt" hidden style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="noRelay"> Never use a relay, even if a direct connection fails</label>
     </div>
     <p class="status" id="setupStatus"></p>
     <p class="small">Nothing is recorded or stored. Some strict office or mobile networks block direct connections; if yours does, try another network.</p>
@@ -365,6 +366,7 @@ async function startHost() {
   show('hostScreen');
   S.role = 'h';
   S.net = LinkPlay.host('video-call', {
+    relay: !noRelay(),
     media: true, stream: S.local, onTrack: e => onTrack(e),
     onChannel: (ch, id) => { S.pc = S.net.invites.get(id).pc; attach(ch); },
     onFail: () => failed('hostStatus'),
@@ -439,6 +441,11 @@ async function opened() {
   if (S.pc && S.pc.localDescription && S.pc.remoteDescription) S.sas = await safetyCode(S.pc.localDescription.sdp, S.pc.remoteDescription.sdp);
   renderSas();
   if (S.sas) banner('Say the safety code out loud to check nobody is in the middle.', 6000);
+  const r = await checkRoute(S.pc, () => {
+    send({ t: 'bye' });
+    end('Call ended', 'It could only connect through a relay, and you chose never to use one.');
+  });
+  if (r === 'relay' && S.open) banner('Your networks blocked a direct connection, so this call goes through a relay. It is still encrypted end to end.', 7000);
 }
 
 function send(m) {
@@ -449,6 +456,7 @@ function send(m) {
 function receive(data) {
   let m;
   try { m = JSON.parse(data); } catch (e) { return; }
+  if (!m || typeof m !== 'object') return;
   if (m.t === 'chat') addChat(String(m.text || '').slice(0, 2000), 'them');
   else if (m.t === 'state') { S.peerCam = !!m.cam; remoteCam(!!m.cam); if (!m.mic) banner('They muted their microphone.', 2500); }
   else if (m.t === 'bye') end('Call ended', 'The other person hung up.');
@@ -737,6 +745,17 @@ else {
     $('goBtn').textContent = 'Join the call';
   }
 }
+
+// The relay only steps in when a direct connection fails. Say which one this is,
+// and end the conversation if it went through a relay the user turned off.
+async function checkRoute(pc, onRelay) {
+  await new Promise(r => setTimeout(r, 700));
+  const r = pc ? await LinkPlay.route(pc) : 'unknown';
+  if (r === 'relay' && noRelay()) { onRelay(); return r; }
+  return r;
+}
+const noRelay = () => !!(document.getElementById('noRelay') && document.getElementById('noRelay').checked);
+if (LinkPlay.hasRelay()) document.getElementById('relayOpt').hidden = false;
 </script>
 <div class="pg-about" id="pg-about" hidden>
 <h2>Video Call</h2>
@@ -752,6 +771,7 @@ else {
 <p>It uses <a href="../linkplay/">LinkPlay</a>: the invite carries the caller's connection details with an audio and a video slot, and the reply carries the other side's. WebRTC encrypts the media with SRTP and the chat with DTLS, with fresh keys for every call. Details shows what your browser reports: the DTLS version, the cipher, the route, the round trip time, packet loss, and the incoming resolution.</p>
 <p>Screen sharing swaps the video track in place, so the call doesn't need to reconnect. The page sets a Content Security Policy so the browser blocks it from loading or sending anything else.</p>
 <p>Limits: both people need the page open at the same time. There's no relay server, so some strict office or mobile networks can't connect, and the two browsers see each other's IP address. It's one to one only, and there's no recording.</p>
+<p>If a relay is configured in LinkPlay, it's used only when a direct connection fails, and the call says so. It can't see or hear anything, because the traffic stays encrypted end to end. "Never use a relay" on the setup screen ends the call instead. The published site has no relay configured.</p>
 <p class="pg-more">More like this: <a href="../qr-studio/">QR Studio</a>, <a href="../photo-privacy/">Photo Privacy</a>, <a href="../image-squeeze/">Image Squeeze</a>, <a href="../video-to-gif/">Video to GIF</a>. Or see <a href="../#tools">all tools</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/playground/tree/main/video-call">video-call on GitHub</a>.</p>
 </div><!-- /about -->

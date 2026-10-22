@@ -34,6 +34,8 @@ Screen sharing swaps the video track in place, so the call doesn't need to recon
 
 Limits: both people need the page open at the same time. There's no relay server, so some strict office or mobile networks can't connect, and the two browsers see each other's IP address. It's one to one only, and there's no recording.
 
+If a relay is configured in LinkPlay, it's used only when a direct connection fails, and the call says so. It can't see or hear anything, because the traffic stays encrypted end to end. "Never use a relay" on the setup screen ends the call instead. The published site has no relay configured.
+
 ## Tests
 
 `tests/video-call.test.js` checks the safety code, the quality bars and timer, that mute and camera switch the real tracks and tell the other side, chat messages as plain text, hanging up and dropped connections, and closing the call when the codes don't match.
