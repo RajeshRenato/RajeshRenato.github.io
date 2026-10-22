@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff4fa3'/%3E%3Ctext x='16' y='23' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='20' text-anchor='middle' fill='%2316160f'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Rajesh's Playground | 77 free browser games and tools</title>
+<title>Rajesh's Playground | 85 free browser games and tools</title>
 <link rel="canonical" href="https://rajeshrenato.github.io/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,7 +64,9 @@
     grid-template-columns: repeat(auto-fill, minmax(252px, 1fr));
     gap: 24px 22px;
   }
+  ul.list > li { display: flex; }
   .list a {
+    flex: 1;
     display: block;
     color: inherit;
     text-decoration: none;
@@ -107,6 +109,32 @@
   }
   .find input:focus { outline: 2px solid var(--ink); outline-offset: 2px; }
   .find small { color: var(--muted); font-size: 14px; white-space: nowrap; }
+  .tabs {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none;
+    margin: 30px -20px 0; padding: 14px 20px 14px;
+    background: var(--paper);
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button {
+    flex: none; font: inherit; font-weight: 600; font-size: 16px; color: var(--ink); cursor: pointer;
+    background: var(--card); border: 1.5px solid var(--ink); border-radius: 10px; padding: 8px 15px;
+    box-shadow: 3px 4px 0 color-mix(in srgb, var(--k) 55%, transparent);
+    transition: transform .12s;
+  }
+  .tabs button:hover { transform: translate(-1px, -2px); }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); box-shadow: 3px 4px 0 var(--k); }
+  .tabs button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .tabs button small { font-weight: 400; font-size: 13px; opacity: .65; margin-left: 6px; }
+  .tabs.off button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: 3px 4px 0 color-mix(in srgb, var(--k) 55%, transparent); }
+  @media (max-width: 560px) {
+    .tabs { gap: 6px; padding: 12px 20px; }
+    .tabs button { font-size: 13.5px; padding: 7px 8px; box-shadow: 2px 3px 0 color-mix(in srgb, var(--k) 55%, transparent); }
+    .tabs button[aria-selected="true"] { box-shadow: 2px 3px 0 var(--k); }
+    .tabs button small { display: none; }
+  }
+  .panel > h2:first-child, .panel > .picks:first-child h2 { margin-top: 26px; }
+  .picks h2 { margin-top: 48px; }
   #nothing { margin: 40px 0 0; color: var(--muted); font-size: 17px; }
   .searching h2 small { display: none; }
   footer {
@@ -122,24 +150,24 @@
   }
   footer a { color: var(--ink); }
   @media (prefers-reduced-motion: reduce) {
-    h1 i, .list a { transition: none; }
+    h1 i, .list a, .tabs button { transition: none; }
   }
 </style>
 <meta property="og:title" content="Rajesh's Playground">
-<meta property="og:description" content="77 free browser games and tools: online multiplayer games, puzzles, and private tools like a PDF merger and photo metadata remover. No sign-up, nothing to install.">
+<meta property="og:description" content="85 free browser games and tools: online multiplayer games, puzzles, and private tools like a PDF merger and photo metadata remover. No sign-up, nothing to install.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshrenato.github.io/">
 <meta property="og:image" content="https://rajeshrenato.github.io/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="77 free browser games and tools: online multiplayer games, puzzles, and private tools like a PDF merger and photo metadata remover. No sign-up, nothing to install.">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "Rajesh's Playground", "url": "https://rajeshrenato.github.io/", "description": "77 free browser games and tools: online multiplayer games, puzzles, and private tools like a PDF merger and photo metadata remover. No sign-up, nothing to install.", "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+<meta name="description" content="85 free browser games and tools: online multiplayer games, puzzles, and private tools like a PDF merger and photo metadata remover. No sign-up, nothing to install.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "Rajesh's Playground", "url": "https://rajeshrenato.github.io/", "description": "85 free browser games and tools: online multiplayer games, puzzles, and private tools like a PDF merger and photo metadata remover. No sign-up, nothing to install.", "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
 </head>
 <body>
 <div class="page">
 <header>
   <h1 aria-label="Playground"><i style="--t:#ff4fa3">P</i><i style="--t:#28e0ff">L</i><i style="--t:#ffd166">A</i><i style="--t:#64ffb4">Y</i><i style="--t:#c77bff">G</i><i style="--t:#ff8a5c">R</i><i style="--t:#7f8cff">O</i><i style="--t:#39ff9c">U</i><i style="--t:#ff6fb0">N</i><i style="--t:#45d9e8">D</i></h1>
-  <p class="lede">77 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.</p>
-  <p class="lede">Every thumbnail below is drawn live by the page. Hover one and it moves. The source is <a href="https://github.com/RajeshRenato/RajeshRenato.github.io">on GitHub</a> and pull requests are welcome.</p>
+  <p class="lede">85 games, tools, and toys that run straight in your browser. Merge PDFs, send files, or make a video call without uploading anything, and play games with friends over a link.</p>
+  <p class="lede">Free, no sign-up, nothing to install. It's all plain HTML, CSS, and JavaScript, and every thumbnail is drawn live by the page. The source is <a href="https://github.com/RajeshRenato/RajeshRenato.github.io">on GitHub</a> and pull requests are welcome.</p>
   <div class="find" role="search">
     <input id="find" type="search" placeholder="Search, like &quot;pdf&quot;, &quot;chess&quot;, or &quot;with friends&quot;" aria-label="Search the projects" autocomplete="off">
     <small id="findCount"></small>
@@ -147,48 +175,105 @@
 </header>
 <p id="nothing" hidden></p>
 
+<nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-tab="top" aria-selected="true" style="--k:#ff4fa3">Top picks</button>
+  <button role="tab" data-tab="tools" aria-selected="false" style="--k:#28e0ff">Tools</button>
+  <button role="tab" data-tab="online" aria-selected="false" style="--k:#ffd166">Play online</button>
+  <button role="tab" data-tab="games" aria-selected="false" style="--k:#64ffb4">Games</button>
+  <button role="tab" data-tab="toys" aria-selected="false" style="--k:#c77bff">Toys</button>
+  <button role="tab" data-tab="all" aria-selected="false" style="--k:#ff8a5c">All</button>
+</nav>
+
+<section class="panel" data-tab="top" role="tabpanel">
+<div class="picks" data-title="Most useful" data-note="Tools that keep your files on your device. Nothing to install, nothing uploaded." data-slugs="pdf-toolkit pdf-sign phone-to-laptop file-send video-call secret-chat screen-recorder photo-privacy"></div>
+<div class="picks" data-title="Play with friends" data-note="Send a link and play. No accounts, no app." data-slugs="couch-party worm-arena battle-tanks bomb-arena"></div>
+<div class="picks" data-title="Worth a look" data-note="Play with your webcam, pour some sand, or watch a network learn." data-slugs="pitch-singer fruit-slicer air-drums falling-sand"></div>
+
 <h2 id="today">Today</h2>
 <ul class="list wide">
   <li><a href="daily/" style="--c:#39ff9c" data-t="daily" data-k="free daily word, sudoku, and logic puzzles"><canvas width="304" height="171"></canvas><div class="txt"><strong>Daily puzzles</strong><span>Today's Penta, Sudoku, and Arrow Flux, the same for everyone. Solve all three to keep your streak.</span><span id="todayStatus" class="status"></span></div></a></li>
 </ul>
+</section>
 
-<h2 id="highlights">Highlights</h2>
-<p class="sec">The biggest builds: an open world, a racer, a shooter, and a puzzle with huge boards.</p>
-<ul class="list big">
-  <li><a href="miami-nights/" style="--c:#ff4fa3" data-t="vice" data-k="GTA Vice City-style open world game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Miami Nights</strong><span>A GTA Vice City-style open world. Drive a procedural Miami at night, run deliveries, or play cops and robbers with a friend online.</span></div></a></li>
-  <li><a href="breach/" style="--c:#9f7bff" data-t="breach" data-k="retro first-person shooter in your browser"><canvas width="304" height="171"></canvas><div class="txt"><strong>Breach</strong><span>First-person shooter on a raycasting engine written from scratch. Every wall texture, sprite, and sound is generated in code.</span></div></a></li>
-  <li><a href="midnight-racing/" style="--c:#ffd166" data-t="rash" data-k="Road Rash-style bike racing, race friends online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Midnight Racing</strong><span>Road Rash-style bike combat racing at midnight. Punch rivals off their bikes, dodge traffic, and race up to three friends online.</span></div></a></li>
-  <li><a href="arrow-flux/" style="--c:#28e0ff" data-t="arrow" data-k="arrow puzzle game with huge boards"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arrow Flux</strong><span>Slide tangled arrows off a packed board. The generator builds every board in solution order, so each one is provably solvable.</span></div></a></li>
+<section class="panel" data-tab="tools" role="tabpanel">
+<h2 id="tools">Tools<small>32</small></h2>
+<p class="sec">Everyday tools that keep your files on your device.</p>
+<ul class="list">
+  <li><a href="pdf-toolkit/" style="--c:#e5484d" data-t="pdf" data-k="merge and split PDFs without uploading"><canvas width="304" height="171"></canvas><div class="txt"><strong>PDF Toolkit</strong><span>Merge, split, reorder, rotate, and delete PDF pages. Everything stays on your device.</span></div></a></li>
+  <li><a href="pdf-sign/" style="--c:#1d3fbf" data-t="pdfsign" data-k="sign a PDF online free, no upload"><canvas width="304" height="171"></canvas><div class="txt"><strong>PDF Sign &amp; Fill</strong><span>Sign a PDF and fill it in: text, dates, checkmarks, and your signature. Nothing is uploaded.</span></div></a></li>
+  <li><a href="phone-to-laptop/" style="--c:#0a8f6a" data-t="phone2pc" data-k="send files from phone to PC, no app"><canvas width="304" height="171"></canvas><div class="txt"><strong>Phone to Laptop</strong><span>Send photos, files, and text between your phone and computer by scanning a code. No cable, no app.</span></div></a></li>
+  <li><a href="images-to-pdf/" style="--c:#e5484d" data-t="img2pdf" data-k="convert JPG and PNG to PDF, no upload"><canvas width="304" height="171"></canvas><div class="txt"><strong>Images to PDF</strong><span>Turn photos and scans into one PDF, with JPEGs kept at full quality. Nothing is uploaded.</span></div></a></li>
+  <li><a href="file-send/" style="--c:#39ff9c" data-t="filesend" data-k="send large files browser to browser, no upload"><canvas width="304" height="171"></canvas><div class="txt"><strong>File Send</strong><span>Send files straight to a friend's browser. Nothing is uploaded.</span></div></a></li>
+  <li><a href="video-call/" style="--c:#ff6b4a" data-t="videocall" data-k="free video call with no app, no sign-up, and no server"><canvas width="304" height="171"></canvas><div class="txt"><strong>Video Call</strong><span>A video call through a link, with no app, no sign-up, and no server. Compare a safety code to know nobody is listening.</span></div></a></li>
+  <li><a href="secret-chat/" style="--c:#ffb84d" data-t="secretchat" data-k="end-to-end encrypted chat with no server or sign-up"><canvas width="304" height="171"></canvas><div class="txt"><strong>Secret Chat</strong><span>A private chat for two or a group of up to 8, no server. Hidden and disappearing messages, and a safety code.</span></div></a></li>
+  <li><a href="walkie-talkie/" style="--c:#f2b705" data-t="walkie" data-k="push to talk group voice chat online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Walkie-Talkie</strong><span>Push-to-talk voice for a group, through links. Hold to talk, let go to listen.</span></div></a></li>
+  <li><a href="secret-note/" style="--c:#c77bff" data-t="secret" data-k="send an encrypted note as a link"><canvas width="304" height="171"></canvas><div class="txt"><strong>Secret Note</strong><span>Write a note and get a link with it encrypted inside. Nothing is stored.</span></div></a></li>
+  <li><a href="screen-recorder/" style="--c:#ff5a7a" data-t="rec" data-k="free online screen recorder, no watermark"><canvas width="304" height="171"></canvas><div class="txt"><strong>Screen Recorder</strong><span>Record your screen with your voice and a camera bubble. No install, no watermark.</span></div></a></li>
+  <li><a href="photo-privacy/" style="--c:#ff8a5c" data-t="photo" data-k="remove EXIF and location data from photos"><canvas width="304" height="171"></canvas><div class="txt"><strong>Photo Privacy</strong><span>See and remove the hidden location, date, and device details in photos.</span></div></a></li>
+  <li><a href="image-squeeze/" style="--c:#64ffb4" data-t="squeeze" data-k="compress images, resize, convert to WebP or AVIF"><canvas width="304" height="171"></canvas><div class="txt"><strong>Image Squeeze</strong><span>Compress, resize, and convert images, or fit them under a size limit.</span></div></a></li>
+  <li><a href="video-to-gif/" style="--c:#ffd166" data-t="gif" data-k="convert video to GIF in your browser, no watermark"><canvas width="304" height="171"></canvas><div class="txt"><strong>Video to GIF</strong><span>Trim a clip and turn it into a GIF, made on your device. No watermark.</span></div></a></li>
+  <li><a href="qr-studio/" style="--c:#7f8cff" data-t="qr" data-k="free QR code generator with logo, no watermark"><canvas width="304" height="171"></canvas><div class="txt"><strong>QR Studio</strong><span>QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark.</span></div></a></li>
+  <li><a href="json-studio/" style="--c:#28e0ff" data-t="json" data-k="JSON formatter, validator, and viewer"><canvas width="304" height="171"></canvas><div class="txt"><strong>JSON Studio</strong><span>Format, validate, and explore JSON in a collapsible tree, offline.</span></div></a></li>
+  <li><a href="regex-playground/" style="--c:#39ff9c" data-t="regex" data-k="online regex tester with live highlighting"><canvas width="304" height="171"></canvas><div class="txt"><strong>Regex Playground</strong><span>Regex tester with live highlighting, groups, and replace preview.</span></div></a></li>
+  <li><a href="diff-deck/" style="--c:#28e0ff" data-t="diff" data-k="compare two texts side by side, online diff"><canvas width="304" height="171"></canvas><div class="txt"><strong>Diff Deck</strong><span>Side-by-side text diff with character-level highlighting.</span></div></a></li>
+  <li><a href="csv-viewer/" style="--c:#64ffb4" data-t="csv" data-k="open, sort, and filter CSV files online"><canvas width="304" height="171"></canvas><div class="txt"><strong>CSV Viewer</strong><span>Sort, filter, and export CSV or TSV files, quoted fields included.</span></div></a></li>
+  <li><a href="jwt-peek/" style="--c:#ff5a7a" data-t="jwt" data-k="JWT decoder that keeps tokens on your device"><canvas width="304" height="171"></canvas><div class="txt"><strong>JWT Peek</strong><span>Decode JWTs and check their expiry. Tokens never leave the page.</span></div></a></li>
+  <li><a href="cron-sage/" style="--c:#ffd166" data-t="cron" data-k="cron expression explained in plain English"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cron Sage</strong><span>Cron expressions in plain English, with the next six run times.</span></div></a></li>
+  <li><a href="bit-bench/" style="--c:#7f8cff" data-t="bit" data-k="binary, hex, and decimal converter with bitwise ops"><canvas width="304" height="171"></canvas><div class="txt"><strong>Bit Bench</strong><span>32-bit base converter with clickable bits and live bitwise ops.</span></div></a></li>
+  <li><a href="markdown-pad/" style="--c:#ffd166" data-t="md" data-k="online Markdown editor with live preview"><canvas width="304" height="171"></canvas><div class="txt"><strong>Markdown Pad</strong><span>Markdown editor with a hand-written parser and live preview.</span></div></a></li>
+  <li><a href="unit-converter/" style="--c:#7f8cff" data-t="unit" data-k="convert length, weight, temperature, and more"><canvas width="304" height="171"></canvas><div class="txt"><strong>Unit Converter</strong><span>Two-way conversion across eight categories.</span></div></a></li>
+  <li><a href="key-forge/" style="--c:#ff5a7a" data-t="keyf" data-k="strong password and passphrase generator"><canvas width="304" height="171"></canvas><div class="txt"><strong>Key Forge</strong><span>Password and passphrase generator with an entropy meter.</span></div></a></li>
+  <li><a href="time-overlap/" style="--c:#39ff9c" data-t="tz" data-k="time zone meeting planner"><canvas width="304" height="171"></canvas><div class="txt"><strong>Time Overlap</strong><span>Find the meeting hours that work across time zones.</span></div></a></li>
+  <li><a href="focus-timer/" style="--c:#ff5a7a" data-t="focus" data-k="Pomodoro timer online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Focus Timer</strong><span>Pomodoro timer with auto-cycling breaks and daily stats.</span></div></a></li>
+  <li><a href="palette-lab/" style="--c:#c77bff" data-t="palette" data-k="color palette generator"><canvas width="304" height="171"></canvas><div class="txt"><strong>Palette Lab</strong><span>Color palette generator with locking, export, and shareable URLs.</span></div></a></li>
+  <li><a href="pixel-forge/" style="--c:#ff8a5c" data-t="pixelf" data-k="pixel art editor online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pixel Forge</strong><span>Pixel-art editor with fill, undo, autosave, and PNG export.</span></div></a></li>
+  <li><a href="beat-grid/" style="--c:#28e0ff" data-t="beat" data-k="online drum machine and beat maker"><canvas width="304" height="171"></canvas><div class="txt"><strong>Beat Grid</strong><span>A 16-step drum machine. The whole beat fits in the URL.</span></div></a></li>
+  <li><a href="morse-coder/" style="--c:#8affc9" data-t="morse" data-k="Morse code translator with sound"><canvas width="304" height="171"></canvas><div class="txt"><strong>Morse Coder</strong><span>Morse translator with correctly timed audio and a trainer.</span></div></a></li>
+  <li><a href="profile-banner/" style="--c:#ff4fa3" data-t="banner" data-k="animated GitHub profile README banner generator"><canvas width="304" height="171"></canvas><div class="txt"><strong>Profile Banner</strong><span>Animated SVG banner generator for a GitHub profile.</span></div></a></li>
+  <li><a href="linkplay/" style="--c:#7dffc9" data-t="linkplay" data-k="make a browser game multiplayer with no server"><canvas width="304" height="171"></canvas><div class="txt"><strong>LinkPlay</strong><span>A small kit for making browser games multiplayer with links and no server. All the online games here use it.</span></div></a></li>
 </ul>
+</section>
 
-<h2 id="online">Play online<small>12</small></h2>
+<section class="panel" data-tab="online" role="tabpanel">
+<h2 id="online">Play online<small>17</small></h2>
 <p class="sec">Games for two or more people, connected by links. No server, no accounts.</p>
 <ul class="list">
-  <li><a href="cycle-duel/" style="--c:#28e0ff" data-t="cycle" data-k="Tron light cycle game, play a friend online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cycle Duel</strong><span>Light-cycle duels. Play a friend online with just a link, or on one keyboard.</span></div></a></li>
-  <li><a href="type-race/" style="--c:#ffd166" data-t="typerace" data-k="typing race with friends online, no sign-up"><canvas width="304" height="171"></canvas><div class="txt"><strong>Type Race</strong><span>Typing races with friends over a link, no server. Or race your own best pace.</span></div></a></li>
+  <li><a href="bomb-arena/" style="--c:#ffc93c" data-t="bomb" data-k="Bomberman-style game online with friends"><canvas width="304" height="171"></canvas><div class="txt"><strong>Bomb Arena</strong><span>A Bomberman-style arena for 2 to 4 players online, or against bots.</span></div></a></li>
+  <li><a href="couch-party/" style="--c:#ffcf3f" data-t="couch" data-k="party games on your TV with phones as controllers"><canvas width="304" height="171"></canvas><div class="txt"><strong>Couch Party</strong><span>Party games on a big screen with phones as controllers. Scan a code to join; up to 8 players.</span></div></a></li>
+  <li><a href="worm-arena/" style="--c:#59d98e" data-t="worm" data-k="Slither.io-style game online with friends"><canvas width="304" height="171"></canvas><div class="txt"><strong>Worm Arena</strong><span>A Slither.io-style arena: eat, grow, and cut other worms off. Online with friends, with bots filling the arena.</span></div></a></li>
+  <li><a href="battle-tanks/" style="--c:#e7a210" data-t="tanks" data-k="Battle City (Tank 1990) style game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Battle Tanks</strong><span>Battle City (Tank 1990) style: defend the eagle from 20 tanks a stage. Two players on one keyboard or online.</span></div></a></li>
   <li><a href="sketch-guess/" style="--c:#ff4fa3" data-t="sketch" data-k="drawing and guessing game with friends"><canvas width="304" height="171"></canvas><div class="txt"><strong>Sketch &amp; Guess</strong><span>Take turns drawing a word while friends guess it. Up to 8 players, connected by links.</span></div></a></li>
-  <li><a href="four-in-a-row/" style="--c:#ffc93c" data-t="four" data-k="play Connect Four online with a friend"><canvas width="304" height="171"></canvas><div class="txt"><strong>Four in a Row</strong><span>Connect Four-style. Play a friend online with a link, on one screen, or against a bot.</span></div></a></li>
-  <li><a href="checkers/" style="--c:#e04848" data-t="checkers" data-k="play checkers online with a friend or the computer"><canvas width="304" height="171"></canvas><div class="txt"><strong>Checkers</strong><span>Forced captures, multi-jumps, and kings. Play a friend online, on one screen, or against a bot.</span></div></a></li>
-  <li><a href="chess/" style="--c:#7c8db0" data-t="chess" data-k="play chess online with a friend or the computer"><canvas width="304" height="171"></canvas><div class="txt"><strong>Chess</strong><span>Play chess with a friend online over a link, on one screen, or against a bot with three levels.</span></div></a></li>
-  <li><a href="clue-grid/" style="--c:#3e7bfa" data-t="cluegrid" data-k="Codenames-style word game online with friends"><canvas width="304" height="171"></canvas><div class="txt"><strong>Clue Grid</strong><span>A Codenames-style word game for two teams. Spymasters give one-word clues. 4 to 8 players.</span></div></a></li>
-  <li><a href="ludo/" style="--c:#e5484d" data-t="ludo" data-k="play Ludo online with friends or bots"><canvas width="304" height="171"></canvas><div class="txt"><strong>Ludo</strong><span>Ludo for 2 to 4. Play friends online with a link, pass one phone around, or play bots.</span></div></a></li>
-  <li><a href="mafia/" style="--c:#c8323c" data-t="mafia" data-k="party game online for 5 to 12 players, no app"><canvas width="304" height="171"></canvas><div class="txt"><strong>Mafia</strong><span>A party game for 5 to 12 players on their own phones. Secret roles, night and day, and voting, connected by links.</span></div></a></li>
   <li><a href="watch-party/" style="--c:#ff5d73" data-t="watchparty" data-k="watch videos together in sync with friends, no upload"><canvas width="304" height="171"></canvas><div class="txt"><strong>Watch Party</strong><span>Watch a video with friends in sync. Everyone plays their own copy, so nothing is uploaded.</span></div></a></li>
+  <li><a href="mafia/" style="--c:#c8323c" data-t="mafia" data-k="party game online for 5 to 12 players, no app"><canvas width="304" height="171"></canvas><div class="txt"><strong>Mafia</strong><span>A party game for 5 to 12 players on their own phones. Secret roles, night and day, and voting, connected by links.</span></div></a></li>
   <li><a href="trivia-night/" style="--c:#ffb703" data-t="trivia" data-k="free online trivia quiz to play with friends"><canvas width="304" height="171"></canvas><div class="txt"><strong>Trivia Night</strong><span>A trivia quiz for friends over a link. 320 questions in 8 categories, or play alone.</span></div></a></li>
+  <li><a href="clue-grid/" style="--c:#3e7bfa" data-t="cluegrid" data-k="Codenames-style word game online with friends"><canvas width="304" height="171"></canvas><div class="txt"><strong>Clue Grid</strong><span>A Codenames-style word game for two teams. Spymasters give one-word clues. 4 to 8 players.</span></div></a></li>
+  <li><a href="midnight-racing/" style="--c:#ffd166" data-t="rash" data-k="Road Rash-style bike racing, race friends online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Midnight Racing</strong><span>Road Rash-style bike combat racing at midnight. Punch rivals off their bikes, dodge traffic, and race up to three friends online.</span></div></a></li>
+  <li><a href="type-race/" style="--c:#ffd166" data-t="typerace" data-k="typing race with friends online, no sign-up"><canvas width="304" height="171"></canvas><div class="txt"><strong>Type Race</strong><span>Typing races with friends over a link, no server. Or race your own best pace.</span></div></a></li>
+  <li><a href="ludo/" style="--c:#e5484d" data-t="ludo" data-k="play Ludo online with friends or bots"><canvas width="304" height="171"></canvas><div class="txt"><strong>Ludo</strong><span>Ludo for 2 to 4. Play friends online with a link, pass one phone around, or play bots.</span></div></a></li>
+  <li><a href="chess/" style="--c:#7c8db0" data-t="chess" data-k="play chess online with a friend or the computer"><canvas width="304" height="171"></canvas><div class="txt"><strong>Chess</strong><span>Play chess with a friend online over a link, on one screen, or against a bot with three levels.</span></div></a></li>
+  <li><a href="checkers/" style="--c:#e04848" data-t="checkers" data-k="play checkers online with a friend or the computer"><canvas width="304" height="171"></canvas><div class="txt"><strong>Checkers</strong><span>Forced captures, multi-jumps, and kings. Play a friend online, on one screen, or against a bot.</span></div></a></li>
+  <li><a href="four-in-a-row/" style="--c:#ffc93c" data-t="four" data-k="play Connect Four online with a friend"><canvas width="304" height="171"></canvas><div class="txt"><strong>Four in a Row</strong><span>Connect Four-style. Play a friend online with a link, on one screen, or against a bot.</span></div></a></li>
+  <li><a href="cycle-duel/" style="--c:#28e0ff" data-t="cycle" data-k="Tron light cycle game, play a friend online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cycle Duel</strong><span>Light-cycle duels. Play a friend online with just a link, or on one keyboard.</span></div></a></li>
   <li><a href="whiteboard/" style="--c:#1e88e5" data-t="whiteboard" data-k="free online whiteboard to draw together, no sign-up"><canvas width="304" height="171"></canvas><div class="txt"><strong>Whiteboard</strong><span>Draw, sketch shapes, and write notes together over a link. Save the board as a PNG.</span></div></a></li>
 </ul>
+</section>
 
-<h2 id="games">Games<small>14</small></h2>
+<section class="panel" data-tab="games" role="tabpanel">
+<h2 id="games">Games<small>18</small></h2>
 <p class="sec">Games to play on your own, from puzzles to arcade.</p>
 <ul class="list">
   <li><a href="fruit-slicer/" style="--c:#ff5d6c" data-t="fruitslicer" data-k="Fruit Ninja-style game you play with your webcam"><canvas width="304" height="171"></canvas><div class="txt"><strong>Fruit Slicer</strong><span>A Fruit Ninja-style game you play by waving your hands at the webcam, or by swiping. Watch out for bombs.</span></div></a></li>
+  <li><a href="pitch-singer/" style="--c:#ffb347" data-t="pitchsing" data-k="karaoke singing game and online tuner"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pitch Singer</strong><span>Sing along and see your voice against the melody, scored like karaoke. Also an ear trainer and a tuner.</span></div></a></li>
+  <li><a href="breach/" style="--c:#9f7bff" data-t="breach" data-k="retro first-person shooter in your browser"><canvas width="304" height="171"></canvas><div class="txt"><strong>Breach</strong><span>First-person shooter on a raycasting engine written from scratch. Every wall texture, sprite, and sound is generated in code.</span></div></a></li>
+  <li><a href="arrow-flux/" style="--c:#28e0ff" data-t="arrow" data-k="arrow puzzle game with huge boards"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arrow Flux</strong><span>Slide tangled arrows off a packed board. The generator builds every board in solution order, so each one is provably solvable.</span></div></a></li>
+  <li><a href="miami-nights/" style="--c:#ff4fa3" data-t="vice" data-k="GTA Vice City-style open world game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Miami Nights</strong><span>A GTA Vice City-style open world. Drive a procedural Miami at night, run deliveries, or play cops and robbers with a friend online.</span></div></a></li>
   <li><a href="dune-drift/" style="--c:#ff8a5c" data-t="drift" data-k="one-button dune riding game"><canvas width="304" height="171"></canvas><div class="txt"><strong>Dune Drift</strong><span>One-button endless ride over rolling dunes, with backflips at sunset.</span></div></a></li>
   <li><a href="pixel-logic/" style="--c:#ffd166" data-t="pixlog" data-k="free nonogram puzzles (picross) online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pixel Logic</strong><span>Nonograms, solver-verified so pure deduction always wins.</span></div></a></li>
+  <li><a href="grid-defense/" style="--c:#ff5a7a" data-t="defense" data-k="tower defense game in your browser"><canvas width="304" height="171"></canvas><div class="txt"><strong>Grid Defense</strong><span>Small tower defense against waves that keep scaling.</span></div></a></li>
+  <li><a href="orbit-golf/" style="--c:#64ffb4" data-t="golf" data-k="space golf game with gravity"><canvas width="304" height="171"></canvas><div class="txt"><strong>Orbit Golf</strong><span>Nine holes of golf bent by gravity wells and repulsors.</span></div></a></li>
   <li><a href="glow-out/" style="--c:#39ff9c" data-t="glowout" data-k="Lights Out puzzle game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Glow Out</strong><span>Lights Out with hints computed from a live solution set.</span></div></a></li>
   <li><a href="flood-rush/" style="--c:#ff4fa3" data-t="flood" data-k="Flood-It puzzle game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flood Rush</strong><span>Flood-fill the grid and beat a greedy bot's par.</span></div></a></li>
   <li><a href="labyrinth/" style="--c:#ffd166" data-t="laby" data-k="maze game with fog of war"><canvas width="304" height="171"></canvas><div class="txt"><strong>Labyrinth</strong><span>Escape procedural mazes through fog of war.</span></div></a></li>
-  <li><a href="grid-defense/" style="--c:#ff5a7a" data-t="defense" data-k="tower defense game in your browser"><canvas width="304" height="171"></canvas><div class="txt"><strong>Grid Defense</strong><span>Small tower defense against waves that keep scaling.</span></div></a></li>
-  <li><a href="orbit-golf/" style="--c:#64ffb4" data-t="golf" data-k="space golf game with gravity"><canvas width="304" height="171"></canvas><div class="txt"><strong>Orbit Golf</strong><span>Nine holes of golf bent by gravity wells and repulsors.</span></div></a></li>
   <li><a href="stack-tower/" style="--c:#ff8a5c" data-t="stack" data-k="stack the blocks, one-button game"><canvas width="304" height="171"></canvas><div class="txt"><strong>Stack Tower</strong><span>One-button block stacking with overhang slicing.</span></div></a></li>
   <li><a href="arcade-tycoon/" style="--c:#ff6fb0" data-t="tycoon" data-k="idle arcade tycoon game"><canvas width="304" height="171"></canvas><div class="txt"><strong>Arcade Tycoon</strong><span>Idle arcade empire that keeps earning while the tab is closed.</span></div></a></li>
   <li><a href="echo-grid/" style="--c:#c77bff" data-t="echo" data-k="Simon memory game online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Echo Grid</strong><span>Simon-style audio memory with a strict mode.</span></div></a></li>
@@ -209,55 +294,24 @@
   <li><a href="sudoku/" style="--c:#7f8cff" data-t="sudoku" data-k="free sudoku puzzles online, daily and by difficulty"><canvas width="304" height="171"></canvas><div class="txt"><strong>Sudoku</strong><span>Sudoku from a generator that guarantees exactly one solution.</span></div></a></li>
   <li><a href="penta/" style="--c:#39ff9c" data-t="penta" data-k="five-letter word game, Wordle-style"><canvas width="304" height="171"></canvas><div class="txt"><strong>Penta</strong><span>A five-letter word game with win streaks and emoji sharing.</span></div></a></li>
 </ul>
+</section>
 
-<h2 id="tools">Tools<small>29</small></h2>
-<p class="sec">Everyday tools that keep your files on your device.</p>
-<ul class="list">
-  <li><a href="pdf-toolkit/" style="--c:#e5484d" data-t="pdf" data-k="merge and split PDFs without uploading"><canvas width="304" height="171"></canvas><div class="txt"><strong>PDF Toolkit</strong><span>Merge, split, reorder, rotate, and delete PDF pages. Everything stays on your device.</span></div></a></li>
-  <li><a href="images-to-pdf/" style="--c:#e5484d" data-t="img2pdf" data-k="convert JPG and PNG to PDF, no upload"><canvas width="304" height="171"></canvas><div class="txt"><strong>Images to PDF</strong><span>Turn photos and scans into one PDF, with JPEGs kept at full quality. Nothing is uploaded.</span></div></a></li>
-  <li><a href="linkplay/" style="--c:#7dffc9" data-t="linkplay" data-k="make a browser game multiplayer with no server"><canvas width="304" height="171"></canvas><div class="txt"><strong>LinkPlay</strong><span>A small kit for making browser games multiplayer with links and no server. All the online games here use it.</span></div></a></li>
-  <li><a href="file-send/" style="--c:#39ff9c" data-t="filesend" data-k="send large files browser to browser, no upload"><canvas width="304" height="171"></canvas><div class="txt"><strong>File Send</strong><span>Send files straight to a friend's browser. Nothing is uploaded.</span></div></a></li>
-  <li><a href="secret-note/" style="--c:#c77bff" data-t="secret" data-k="send an encrypted note as a link"><canvas width="304" height="171"></canvas><div class="txt"><strong>Secret Note</strong><span>Write a note and get a link with it encrypted inside. Nothing is stored.</span></div></a></li>
-  <li><a href="secret-chat/" style="--c:#ffb84d" data-t="secretchat" data-k="end-to-end encrypted chat with no server or sign-up"><canvas width="304" height="171"></canvas><div class="txt"><strong>Secret Chat</strong><span>A private chat between two browsers, no server. Hidden and disappearing messages, and a safety code.</span></div></a></li>
-  <li><a href="video-call/" style="--c:#ff6b4a" data-t="videocall" data-k="free video call with no app, no sign-up, and no server"><canvas width="304" height="171"></canvas><div class="txt"><strong>Video Call</strong><span>A video call through a link, with no app, no sign-up, and no server. Compare a safety code to know nobody is listening.</span></div></a></li>
-  <li><a href="qr-studio/" style="--c:#7f8cff" data-t="qr" data-k="free QR code generator with logo, no watermark"><canvas width="304" height="171"></canvas><div class="txt"><strong>QR Studio</strong><span>QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark.</span></div></a></li>
-  <li><a href="photo-privacy/" style="--c:#ff8a5c" data-t="photo" data-k="remove EXIF and location data from photos"><canvas width="304" height="171"></canvas><div class="txt"><strong>Photo Privacy</strong><span>See and remove the hidden location, date, and device details in photos.</span></div></a></li>
-  <li><a href="image-squeeze/" style="--c:#64ffb4" data-t="squeeze" data-k="compress images, resize, convert to WebP or AVIF"><canvas width="304" height="171"></canvas><div class="txt"><strong>Image Squeeze</strong><span>Compress, resize, and convert images, or fit them under a size limit.</span></div></a></li>
-  <li><a href="video-to-gif/" style="--c:#ffd166" data-t="gif" data-k="convert video to GIF in your browser, no watermark"><canvas width="304" height="171"></canvas><div class="txt"><strong>Video to GIF</strong><span>Trim a clip and turn it into a GIF, made on your device. No watermark.</span></div></a></li>
-  <li><a href="screen-recorder/" style="--c:#ff5a7a" data-t="rec" data-k="free online screen recorder, no watermark"><canvas width="304" height="171"></canvas><div class="txt"><strong>Screen Recorder</strong><span>Record your screen with your voice and a camera bubble. No install, no watermark.</span></div></a></li>
-  <li><a href="json-studio/" style="--c:#28e0ff" data-t="json" data-k="JSON formatter, validator, and viewer"><canvas width="304" height="171"></canvas><div class="txt"><strong>JSON Studio</strong><span>Format, validate, and explore JSON in a collapsible tree, offline.</span></div></a></li>
-  <li><a href="regex-playground/" style="--c:#39ff9c" data-t="regex" data-k="online regex tester with live highlighting"><canvas width="304" height="171"></canvas><div class="txt"><strong>Regex Playground</strong><span>Regex tester with live highlighting, groups, and replace preview.</span></div></a></li>
-  <li><a href="diff-deck/" style="--c:#28e0ff" data-t="diff" data-k="compare two texts side by side, online diff"><canvas width="304" height="171"></canvas><div class="txt"><strong>Diff Deck</strong><span>Side-by-side text diff with character-level highlighting.</span></div></a></li>
-  <li><a href="csv-viewer/" style="--c:#64ffb4" data-t="csv" data-k="open, sort, and filter CSV files online"><canvas width="304" height="171"></canvas><div class="txt"><strong>CSV Viewer</strong><span>Sort, filter, and export CSV or TSV files, quoted fields included.</span></div></a></li>
-  <li><a href="jwt-peek/" style="--c:#ff5a7a" data-t="jwt" data-k="JWT decoder that keeps tokens on your device"><canvas width="304" height="171"></canvas><div class="txt"><strong>JWT Peek</strong><span>Decode JWTs and check their expiry. Tokens never leave the page.</span></div></a></li>
-  <li><a href="cron-sage/" style="--c:#ffd166" data-t="cron" data-k="cron expression explained in plain English"><canvas width="304" height="171"></canvas><div class="txt"><strong>Cron Sage</strong><span>Cron expressions in plain English, with the next six run times.</span></div></a></li>
-  <li><a href="bit-bench/" style="--c:#7f8cff" data-t="bit" data-k="binary, hex, and decimal converter with bitwise ops"><canvas width="304" height="171"></canvas><div class="txt"><strong>Bit Bench</strong><span>32-bit base converter with clickable bits and live bitwise ops.</span></div></a></li>
-  <li><a href="markdown-pad/" style="--c:#ffd166" data-t="md" data-k="online Markdown editor with live preview"><canvas width="304" height="171"></canvas><div class="txt"><strong>Markdown Pad</strong><span>Markdown editor with a hand-written parser and live preview.</span></div></a></li>
-  <li><a href="unit-converter/" style="--c:#7f8cff" data-t="unit" data-k="convert length, weight, temperature, and more"><canvas width="304" height="171"></canvas><div class="txt"><strong>Unit Converter</strong><span>Two-way conversion across eight categories.</span></div></a></li>
-  <li><a href="key-forge/" style="--c:#ff5a7a" data-t="keyf" data-k="strong password and passphrase generator"><canvas width="304" height="171"></canvas><div class="txt"><strong>Key Forge</strong><span>Password and passphrase generator with an entropy meter.</span></div></a></li>
-  <li><a href="time-overlap/" style="--c:#39ff9c" data-t="tz" data-k="time zone meeting planner"><canvas width="304" height="171"></canvas><div class="txt"><strong>Time Overlap</strong><span>Find the meeting hours that work across time zones.</span></div></a></li>
-  <li><a href="focus-timer/" style="--c:#ff5a7a" data-t="focus" data-k="Pomodoro timer online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Focus Timer</strong><span>Pomodoro timer with auto-cycling breaks and daily stats.</span></div></a></li>
-  <li><a href="palette-lab/" style="--c:#c77bff" data-t="palette" data-k="color palette generator"><canvas width="304" height="171"></canvas><div class="txt"><strong>Palette Lab</strong><span>Color palette generator with locking, export, and shareable URLs.</span></div></a></li>
-  <li><a href="pixel-forge/" style="--c:#ff8a5c" data-t="pixelf" data-k="pixel art editor online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pixel Forge</strong><span>Pixel-art editor with fill, undo, autosave, and PNG export.</span></div></a></li>
-  <li><a href="beat-grid/" style="--c:#28e0ff" data-t="beat" data-k="online drum machine and beat maker"><canvas width="304" height="171"></canvas><div class="txt"><strong>Beat Grid</strong><span>A 16-step drum machine. The whole beat fits in the URL.</span></div></a></li>
-  <li><a href="morse-coder/" style="--c:#8affc9" data-t="morse" data-k="Morse code translator with sound"><canvas width="304" height="171"></canvas><div class="txt"><strong>Morse Coder</strong><span>Morse translator with correctly timed audio and a trainer.</span></div></a></li>
-  <li><a href="profile-banner/" style="--c:#ff4fa3" data-t="banner" data-k="animated GitHub profile README banner generator"><canvas width="304" height="171"></canvas><div class="txt"><strong>Profile Banner</strong><span>Animated SVG banner generator for a GitHub profile.</span></div></a></li>
-</ul>
-
+<section class="panel" data-tab="toys" role="tabpanel">
 <h2 id="toys">Toys &amp; simulations<small>10</small></h2>
 <p class="sec">Things to play with: physics, generative art, and algorithms.</p>
 <ul class="list">
   <li><a href="air-drums/" style="--c:#ff7a45" data-t="airdrums" data-k="play drums in the air with your webcam"><canvas width="304" height="171"></canvas><div class="txt"><strong>Air Drums</strong><span>Play drums in the air: wave your hands in front of the webcam to hit the pads. The camera stays on your device.</span></div></a></li>
-  <li><a href="flowfield/" style="--c:#ff8a5c" data-t="flow" data-k="generative art flow field"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flow Field</strong><span>Particles tracing a procedural vector field. Save the result as a PNG.</span></div></a></li>
+  <li><a href="falling-sand/" style="--c:#e8c35a" data-t="sand" data-k="falling sand game in your browser"><canvas width="304" height="171"></canvas><div class="txt"><strong>Falling Sand</strong><span>Pour sand, water, oil, fire, lava, acid, and plants, and watch them react.</span></div></a></li>
+  <li><a href="neuro-pilot/" style="--c:#39ff9c" data-t="neuro" data-k="watch a neural network learn to fly"><canvas width="304" height="171"></canvas><div class="txt"><strong>Neuro Pilot</strong><span>120 small neural networks learning to fly by evolution.</span></div></a></li>
+  <li><a href="boid-swarm/" style="--c:#64ffb4" data-t="boid" data-k="flocking simulation (boids)"><canvas width="304" height="171"></canvas><div class="txt"><strong>Boid Swarm</strong><span>A flocking simulation with tunable instincts. Your cursor is the predator.</span></div></a></li>
   <li><a href="orbit-sandbox/" style="--c:#9f7bff" data-t="orbit" data-k="gravity simulator, planets and orbits"><canvas width="304" height="171"></canvas><div class="txt"><strong>Orbit Sandbox</strong><span>An n-body gravity sandbox. Sling planets around a star.</span></div></a></li>
   <li><a href="pendulum-chaos/" style="--c:#8affc9" data-t="pend" data-k="double pendulum chaos simulation"><canvas width="304" height="171"></canvas><div class="txt"><strong>Pendulum Chaos</strong><span>Twelve double pendulums diverging from near-identical starts.</span></div></a></li>
-  <li><a href="boid-swarm/" style="--c:#64ffb4" data-t="boid" data-k="flocking simulation (boids)"><canvas width="304" height="171"></canvas><div class="txt"><strong>Boid Swarm</strong><span>A flocking simulation with tunable instincts. Your cursor is the predator.</span></div></a></li>
+  <li><a href="flowfield/" style="--c:#ff8a5c" data-t="flow" data-k="generative art flow field"><canvas width="304" height="171"></canvas><div class="txt"><strong>Flow Field</strong><span>Particles tracing a procedural vector field. Save the result as a PNG.</span></div></a></li>
   <li><a href="life-grid/" style="--c:#8affc9" data-t="life" data-k="Conway&#x27;s Game of Life online"><canvas width="304" height="171"></canvas><div class="txt"><strong>Life Grid</strong><span>Conway's Game of Life with drawing and presets.</span></div></a></li>
   <li><a href="fractal-viewer/" style="--c:#c77bff" data-t="fractal" data-k="Mandelbrot and Julia set explorer"><canvas width="304" height="171"></canvas><div class="txt"><strong>Fractal Viewer</strong><span>Mandelbrot and Julia explorer with click-to-zoom.</span></div></a></li>
-  <li><a href="neuro-pilot/" style="--c:#39ff9c" data-t="neuro" data-k="watch a neural network learn to fly"><canvas width="304" height="171"></canvas><div class="txt"><strong>Neuro Pilot</strong><span>120 small neural networks learning to fly by evolution.</span></div></a></li>
-  <li><a href="falling-sand/" style="--c:#e8c35a" data-t="sand" data-k="falling sand game in your browser"><canvas width="304" height="171"></canvas><div class="txt"><strong>Falling Sand</strong><span>Pour sand, water, oil, fire, lava, acid, and plants, and watch them react.</span></div></a></li>
   <li><a href="sort-arena/" style="--c:#c77bff" data-t="sort" data-k="sorting algorithm visualizer and race"><canvas width="304" height="171"></canvas><div class="txt"><strong>Sort Arena</strong><span>Sorting algorithms racing on identical data, with op counters.</span></div></a></li>
 </ul>
+</section>
 
 <footer>
   <p>Run it locally with <code>python3 -m http.server 8742</code> and open localhost:8742. Works from any static host.</p>
@@ -265,6 +319,100 @@
 </footer>
 </div>
 
+<script>
+// Tabs. Every project's card lives in exactly one tab; "Top picks" shows copies.
+// Without JavaScript all sections simply show one after another.
+(() => {
+  const nav = document.getElementById('tabs');
+  const panels = [...document.querySelectorAll('.panel')];
+  if (!nav || !panels.length) return;
+  const buttons = [...nav.querySelectorAll('button')];
+  const cardFor = {};
+  document.querySelectorAll('.panel ul.list > li').forEach(li => { cardFor[li.querySelector('a').getAttribute('href')] = li; });
+  for (const box of document.querySelectorAll('.picks')) {
+    const h = document.createElement('h2');
+    h.textContent = box.dataset.title;
+    const p = document.createElement('p');
+    p.className = 'sec';
+    p.textContent = box.dataset.note;
+    const ul = document.createElement('ul');
+    ul.className = 'list';
+    for (const slug of box.dataset.slugs.split(/\s+/)) {
+      const li = cardFor[slug + '/'];
+      if (!li) continue;
+      const copy = li.cloneNode(true);
+      copy.dataset.copy = '1';
+      ul.appendChild(copy);
+    }
+    box.append(h, p, ul);
+  }
+  for (const b of buttons) {
+    const panel = panels.find(p => p.dataset.tab === b.dataset.tab);
+    const n = b.dataset.tab === 'all'
+      ? document.querySelectorAll('.panel:not([data-tab="top"]) ul.list > li').length
+      : panel ? panel.querySelectorAll('ul.list > li:not([data-copy])').length : 0;
+    if (b.dataset.tab !== 'top' && n) b.insertAdjacentHTML('beforeend', '<small>' + n + '</small>');
+    b.id = 'tab-' + b.dataset.tab;
+    if (panel) panel.setAttribute('aria-labelledby', b.id);
+  }
+
+  let current = 'top';
+  function show(tab, keepUrl) {
+    if (tab !== 'all' && !panels.some(p => p.dataset.tab === tab)) tab = 'top';
+    current = tab;
+    nav.classList.remove('off');
+    for (const b of buttons) {
+      const on = b.dataset.tab === tab;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    }
+    // All: every tab after the other, without the Top picks copies
+    for (const p of panels) p.hidden = tab === 'all' ? p.dataset.tab === 'top' : p.dataset.tab !== tab;
+    const sel = buttons.find(b => b.dataset.tab === tab);
+    if (sel && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = Math.max(0, sel.offsetLeft - nav.offsetLeft - 20);
+    if (!keepUrl) try { history.replaceState(null, '', location.pathname + (tab === 'top' ? '' : '#' + tab)); } catch (e) { }
+    if (window.paintThumbs) window.paintThumbs();
+  }
+  // a link to any heading (like #classics) opens the tab it is in
+  function fromHash() {
+    const id = decodeURIComponent(location.hash.slice(1));
+    const el = id && document.getElementById(id);
+    if (id === 'all') return show('all', true);
+    const panel = el && el.closest('.panel');
+    show(panel ? panel.dataset.tab : 'top', true);
+    if (panel && panel.firstElementChild !== el) el.scrollIntoView();
+  }
+  nav.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    show(b.dataset.tab);
+    // already scrolled down: start the new tab at its top, right under the tab bar
+    const header = document.querySelector('header');
+    const start = header ? header.offsetTop + header.offsetHeight : 0;
+    if (scrollY > start) scrollTo(0, start);
+  });
+  nav.addEventListener('keydown', e => {
+    const i = buttons.findIndex(b => b.dataset.tab === current);
+    const j = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : -9;
+    if (j === -9) return;
+    e.preventDefault();
+    const b = buttons[(j + buttons.length) % buttons.length];
+    show(b.dataset.tab);
+    b.focus();
+  });
+  addEventListener('hashchange', fromHash);
+  fromHash();
+  // search looks through every tab at once
+  window.Tabs = {
+    searching(on) {
+      if (!on) return show(current);
+      nav.classList.add('off');
+      for (const p of panels) p.hidden = p.dataset.tab === 'top';
+      if (window.paintThumbs) window.paintThumbs();
+    },
+  };
+})();
+</script>
 <script>
 'use strict';
 // live thumbnails: each entry draws its project's scene on a small canvas.
@@ -1061,6 +1209,239 @@ watchparty(g, w, h, c, t) {
   g.globalAlpha = 1;
   g.fillStyle = '#a197ad'; g.font = '600 10px system-ui, sans-serif';
   g.fillText('2 watching · in sync', w / 2, h - 8);
+},
+
+bomb(g, w, h, c, t) {
+  const T = 19, cols = 15, rows = 9, ox = (w - cols * T) / 2, oy = (h - rows * T) / 2;
+  bgFill(g, w, h, '#1b211c');
+  const crates = ['3,1', '4,1', '5,1', '9,1', '10,1', '1,3', '5,3', '7,3', '11,3', '12,3', '3,5', '9,5', '13,5', '1,7', '6,7', '7,7', '11,7'];
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const px = ox + x * T, py = oy + y * T;
+    if (x === 0 || y === 0 || x === cols - 1 || y === rows - 1 || (x % 2 === 0 && y % 2 === 0)) {
+      g.fillStyle = '#4b5059'; g.fillRect(px, py, T, T);
+      g.fillStyle = '#5f6570'; g.fillRect(px, py, T, 4);
+      continue;
+    }
+    g.fillStyle = (x + y) % 2 ? '#2f4033' : '#2b3a2f'; g.fillRect(px, py, T, T);
+    if (crates.includes(x + ',' + y)) {
+      g.fillStyle = '#b07a3f'; g.fillRect(px + 1, py + 1, T - 2, T - 2);
+      g.fillStyle = '#8a5a2b'; g.fillRect(px + 1, py + 6, T - 2, 2); g.fillRect(px + 1, py + 12, T - 2, 2);
+    }
+  }
+  const ph = t ? (t * 0.6) % 1 : 0.85;
+  const cx = ox + 7.5 * T, cy = oy + 5.5 * T;
+  if (ph < 0.7) {
+    g.fillStyle = '#15171c'; g.beginPath(); g.arc(cx, cy, 6 + Math.sin(ph * 40), 0, 7); g.fill();
+    g.fillStyle = '#ffd166'; g.beginPath(); g.arc(cx + 5, cy - 7, 2, 0, 7); g.fill();
+  } else {
+    for (const [col, a] of [['#ff5a1f', 2], ['#ffb02e', 5], ['#fff3c4', 7]]) {
+      g.fillStyle = col;
+      g.fillRect(ox + 5 * T, oy + 5 * T + a, 5 * T, T - 2 * a);
+      g.fillRect(ox + 7 * T + a, oy + 3 * T, T - 2 * a, 5 * T);
+    }
+  }
+  const people = [[1, 1, '#3fa7ff'], [13, 7, '#ff5d73'], [13, 1, '#ffc93c'], [5, 5, '#5fd68a']];
+  for (const [x, y, col] of people) {
+    const px = ox + (x + 0.5) * T, py = oy + (y + 0.5) * T;
+    g.fillStyle = col; g.beginPath(); g.arc(px, py, 7, 0, 7); g.fill();
+    g.fillStyle = '#fff'; g.fillRect(px - 4, py - 2, 3, 3); g.fillRect(px + 1, py - 2, 3, 3);
+  }
+},
+
+walkie(g, w, h, c, t) {
+  bgFill(g, w, h, '#cdd3cf');
+  const radio = (x, y, live) => {
+    g.fillStyle = '#1d2124'; g.beginPath(); g.roundRect(x + 10, y - 26, 8, 34, 4); g.fill();
+    g.fillStyle = '#c99600'; g.beginPath(); g.roundRect(x, y, 62, 104, 14); g.fill();
+    g.fillStyle = '#f2b705'; g.beginPath(); g.roundRect(x, y, 62, 98, 14); g.fill();
+    g.fillStyle = '#2a2f2a'; g.beginPath(); g.roundRect(x + 8, y + 10, 46, 26, 4); g.fill();
+    g.fillStyle = '#b9c49a'; g.fillRect(x + 10, y + 12, 42, 22);
+    g.fillStyle = '#26301a'; g.fillRect(x + 14, y + 18, live ? 18 : 26, 3); g.fillRect(x + 14, y + 25, 14, 2);
+    g.fillStyle = '#1d2124';
+    for (let r = 0; r < 3; r++) for (let k = 0; k < 6; k++) { g.beginPath(); g.arc(x + 12 + k * 7.6, y + 46 + r * 6, 1.4, 0, 7); g.fill(); }
+    g.fillStyle = live ? '#e5452b' : '#1d2124'; g.beginPath(); g.arc(x + 31, y + 78, 13, 0, 7); g.fill();
+    g.fillStyle = live ? '#e5452b' : '#2f9e44'; g.beginPath(); g.arc(x + 52, y + 6, 2.5, 0, 7); g.fill();
+  };
+  const ph = t ? (t * 0.9) % 1 : 0.5;
+  radio(46, 52, true);
+  radio(w - 108, 52, false);
+  g.strokeStyle = '#1d2124'; g.lineCap = 'round';
+  for (let k = 0; k < 3; k++) {
+    const p = (ph + k / 3) % 1;
+    g.globalAlpha = 1 - p;
+    g.lineWidth = 3;
+    g.beginPath(); g.arc(w / 2 - 34 + p * 60, 100, 16 + p * 10, -0.7, 0.7); g.stroke();
+  }
+  g.globalAlpha = 1;
+},
+
+pdfsign(g, w, h, c, t) {
+  bgFill(g, w, h, '#e6e9ec');
+  g.fillStyle = '#fff'; g.fillRect(70, 14, 164, 150);
+  g.fillStyle = '#c9ced4';
+  for (let i = 0; i < 6; i++) g.fillRect(86, 30 + i * 11, i % 3 === 2 ? 84 : 128, 4);
+  g.strokeStyle = '#1d3fbf'; g.lineWidth = 2.4; g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(90, 108); g.lineTo(95, 114); g.lineTo(104, 101); g.stroke();
+  g.fillStyle = '#1d3fbf'; g.font = '600 10px Helvetica, Arial, sans-serif'; g.fillText('22 Oct 2026', 162, 112);
+  g.strokeStyle = '#d9dde2'; g.lineWidth = 1; g.beginPath(); g.moveTo(86, 150); g.lineTo(218, 150); g.stroke();
+  // the signature writes itself on hover
+  const p = t ? Math.min(1, (t * 0.7) % 1.4) : 1;
+  g.strokeStyle = '#15171a'; g.lineWidth = 2;
+  g.beginPath();
+  const n = Math.floor(70 * p);
+  for (let i = 0; i <= n; i++) {
+    const u = i / 70, x = 92 + u * 118, y = 140 - Math.sin(u * 14) * 9 * (1 - u * 0.5) - Math.sin(u * 5) * 4;
+    if (i) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+  g.stroke();
+},
+
+phone2pc(g, w, h, c, t) {
+  bgFill(g, w, h, '#eef3f1');
+  // laptop
+  g.fillStyle = '#0f1f1c'; g.beginPath(); g.roundRect(34, 34, 150, 96, 6); g.fill();
+  g.fillStyle = '#fff'; g.fillRect(40, 40, 138, 84);
+  g.fillStyle = '#0f1f1c'; g.beginPath(); g.roundRect(22, 130, 174, 8, 3); g.fill();
+  // a QR code on the laptop screen
+  let s = 7;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let y = 0; y < 13; y++) for (let x = 0; x < 13; x++) {
+    const finder = (x < 4 && y < 4) || (x > 8 && y < 4) || (x < 4 && y > 8);
+    if (finder ? (x % 12 === 0 || y % 12 === 0 || x === 3 || y === 3 || x === 9 || y === 9 || (x % 12 > 0 && x % 12 < 3 && y % 12 > 0 && y % 12 < 3) || (x > 9 && x < 12 && y > 0 && y < 3) || (x > 0 && x < 3 && y > 9 && y < 12)) : rnd() < 0.45) {
+      g.fillRect(54 + x * 4.6, 52 + y * 4.6, 4.6, 4.6);
+    }
+  }
+  g.fillStyle = '#0a8f6a';
+  g.fillRect(126, 58, 40, 6); g.fillRect(126, 70, 30, 4); g.fillRect(126, 80, 34, 4);
+  // phone
+  g.fillStyle = '#0a8f6a'; g.beginPath(); g.roundRect(222, 26, 58, 112, 10); g.fill();
+  g.fillStyle = '#fff'; g.beginPath(); g.roundRect(227, 34, 48, 94, 5); g.fill();
+  // a photo travelling from the phone to the laptop
+  const p = t ? (t * 0.55) % 1 : 0.45;
+  const x = 240 - p * 120, y = 70 + Math.sin(p * Math.PI) * -26;
+  g.fillStyle = '#5fa8d3'; g.fillRect(x, y, 26, 20);
+  g.fillStyle = '#f2c14e'; g.beginPath(); g.arc(x + 19, y + 6, 3, 0, 7); g.fill();
+  g.fillStyle = '#2f7d5b'; g.beginPath(); g.moveTo(x, y + 20); g.lineTo(x + 10, y + 9); g.lineTo(x + 18, y + 20); g.fill();
+  g.fillStyle = '#536460'; g.font = '11px system-ui, sans-serif'; g.fillText('no cable, no upload', 34, 158);
+},
+
+couch(g, w, h, c, t) {
+  bgFill(g, w, h, '#1d1640');
+  // the big screen with the sumo ring
+  g.fillStyle = '#0d0a24'; g.beginPath(); g.roundRect(70, 12, 164, 100, 8); g.fill();
+  g.fillStyle = '#e9d8a6'; g.beginPath(); g.arc(152, 62, 40, 0, 7); g.fill();
+  g.strokeStyle = '#b5543a'; g.lineWidth = 3; g.beginPath(); g.arc(152, 62, 38, 0, 7); g.stroke();
+  const a = t ? t * 1.6 : 0.6;
+  const balls = [['#ff4fa3', 152 + Math.cos(a) * 18, 62 + Math.sin(a) * 14], ['#ffd166', 152 - Math.cos(a) * 16, 62 - Math.sin(a * 1.3) * 16], ['#28e0ff', 152 + Math.sin(a * 0.7) * 22, 62 + Math.cos(a * 0.9) * 8]];
+  for (const [col, x, y] of balls) { g.fillStyle = col; g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill(); }
+  g.fillStyle = '#0d0a24'; g.fillRect(142, 112, 20, 8); g.fillRect(128, 120, 48, 4);
+  // three phones as controllers
+  [['#ff4fa3', 38], ['#ffd166', 132], ['#28e0ff', 226]].forEach(([col, x], i) => {
+    const y = 130 + (t ? Math.sin(t * 3 + i) * 2 : 0);
+    g.fillStyle = '#352a78'; g.beginPath(); g.roundRect(x, y, 40, 40, 7); g.fill();
+    g.fillStyle = '#2a2160'; g.beginPath(); g.arc(x + 20, y + 20, 13, 0, 7); g.fill();
+    g.fillStyle = col; g.beginPath(); g.arc(x + 20 + Math.cos(a + i) * 6, y + 20 + Math.sin(a + i) * 6, 6, 0, 7); g.fill();
+  });
+},
+
+pitchsing(g, w, h, c, t) {
+  bgFill(g, w, h, '#170f1d');
+  const rows = 9, rh = h / rows;
+  for (let r = 0; r < rows; r++) { g.fillStyle = r % 2 ? 'rgba(255,255,255,.02)' : 'rgba(255,255,255,.045)'; g.fillRect(0, r * rh, w, rh - 1); }
+  // Twinkle, Twinkle: C C G G A A G
+  const tune = [0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0];
+  const shift = t ? (t * 40) % 60 : 0, bw = 40, x0 = 30 - shift, head = 110;
+  const y = k => h - (k + 1.5) * rh;
+  tune.forEach((k, i) => {
+    const x = x0 + i * bw;
+    if (x > w) return;
+    g.fillStyle = x + bw < head ? 'rgba(126,224,161,.75)' : 'rgba(255,179,71,.3)';
+    g.beginPath(); g.roundRect(x + 1, y(k) - rh * 0.36, bw - 4, rh * 0.72, 5); g.fill();
+  });
+  g.fillStyle = 'rgba(251,239,227,.5)'; g.fillRect(head - 1, 0, 2, h);
+  // the singer's line, wobbling onto each note
+  g.strokeStyle = '#ffd27a'; g.lineWidth = 3.5; g.lineCap = 'round';
+  g.beginPath();
+  for (let x = Math.max(0, x0); x <= head; x += 2) {
+    const i = Math.floor((x - x0) / bw), k = tune[Math.max(0, i)];
+    const yy = y(k) + Math.sin(x * 0.3) * 1.2 + (((x - x0) % bw) < 6 ? 5 : 0);
+    if (x === Math.max(0, x0)) g.moveTo(x, yy); else g.lineTo(x, yy);
+  }
+  g.stroke();
+  g.fillStyle = '#7ee0a1'; g.font = '800 15px system-ui, sans-serif'; g.fillText('On it', w - 58, 22);
+},
+
+worm(g, w, h, c, t) {
+  bgFill(g, w, h, '#121833');
+  g.strokeStyle = 'rgba(120,140,220,0.08)'; g.lineWidth = 1.5;
+  for (let i = 0; i < 9; i++) for (let j = 0; j < 5; j++) {
+    const cx = i * 39, cy = j * 45 + (i & 1 ? 22 : 0);
+    g.beginPath();
+    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; const x = cx + Math.cos(a) * 26, y = cy + Math.sin(a) * 26; k ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.closePath(); g.stroke();
+  }
+  const cols = ['#ff6b8b', '#5cc8ff', '#ffc94d', '#b48cff', '#7ff0e3'];
+  for (let i = 0; i < 26; i++) {
+    const x = (i * 97) % w, y = (i * 53 + 17) % h, col = cols[i % cols.length];
+    g.fillStyle = col + '33'; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill();
+    g.fillStyle = col; g.beginPath(); g.arc(x, y, 2.6, 0, 7); g.fill();
+  }
+  const T = t || 0;
+  const wormAt = (pts, a, r, c1, c2) => {
+    const path = () => { g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); };
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    path(); g.strokeStyle = c1; g.lineWidth = r * 2; g.stroke();
+    path(); g.setLineDash([r * 0.9, r * 1.5]); g.strokeStyle = c2; g.lineWidth = r * 1.7; g.stroke(); g.setLineDash([]);
+    const [hx, hy] = pts[pts.length - 1];
+    for (const s of [-1, 1]) {
+      const ex = hx + Math.cos(a) * r * 0.35 + Math.cos(a + s * Math.PI / 2) * r * 0.48, ey = hy + Math.sin(a) * r * 0.35 + Math.sin(a + s * Math.PI / 2) * r * 0.48;
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(ex, ey, r * 0.36, 0, 7); g.fill();
+      g.fillStyle = '#111'; g.beginPath(); g.arc(ex + Math.cos(a) * r * 0.14, ey + Math.sin(a) * r * 0.14, r * 0.18, 0, 7); g.fill();
+    }
+  };
+  // a green worm curling around, and an orange one sliding past
+  const big = [];
+  for (let i = 0; i <= 40; i++) { const a = i / 40 * 4.2 + T * 1.4; big.push([150 + Math.cos(a) * (30 + i * 1.2), 88 + Math.sin(a) * (24 + i * 0.9)]); }
+  big.reverse();
+  const last = big[big.length - 1], prev = big[big.length - 2];
+  wormAt(big, Math.atan2(last[1] - prev[1], last[0] - prev[0]), 9, '#59d98e', '#2f9e63');
+  const small = [];
+  for (let i = 0; i <= 18; i++) small.push([((30 + i * 6 + T * 70) % (w + 140)) - 40, 140 + Math.sin(i * 0.4 + T * 3) * 6]);
+  const s1 = small[small.length - 1], s0 = small[small.length - 2];
+  wormAt(small, Math.atan2(s1[1] - s0[1], s1[0] - s0[0]), 6, '#ff8f52', '#cc5a22');
+},
+
+tanks(g, w, h, c, t) {
+  bgFill(g, w, h, '#636363');
+  const ox = 40, oy = 6, s = 6;   // a 26-cell field at 6 px per cell, cropped
+  g.fillStyle = '#000'; g.fillRect(ox, oy, 26 * s, 26 * s);
+  const brick = (cx, cy) => { g.fillStyle = '#9c4a00'; g.fillRect(ox + cx * s, oy + cy * s, s, s); g.fillStyle = '#3a1c00'; g.fillRect(ox + cx * s, oy + cy * s + 2, s, 1); g.fillRect(ox + cx * s + (cy & 1 ? 1 : 4), oy + cy * s, 1, 2); };
+  const steel = (cx, cy) => { g.fillStyle = '#bcbcbc'; g.fillRect(ox + cx * s, oy + cy * s, s, s); g.fillStyle = '#fff'; g.fillRect(ox + cx * s + 2, oy + cy * s + 2, 2, 2); };
+  for (const col of [2, 6, 18, 22]) for (let y = 2; y < 10; y++) for (const dx of [0, 1]) brick(col + dx, y);
+  for (const col of [2, 6, 18, 22]) for (let y = 15; y < 22; y++) for (const dx of [0, 1]) brick(col + dx, y);
+  for (const [x, y] of [[10, 8], [11, 8], [14, 8], [15, 8], [10, 9], [11, 9], [14, 9], [15, 9]]) steel(x, y);
+  for (let x = 11; x <= 14; x++) brick(x, 23);
+  for (const y of [24, 25]) { brick(11, y); brick(14, y); }
+  g.fillStyle = '#9c9c9c'; g.fillRect(ox + 12 * s + 1, oy + 24 * s + 1, 2 * s - 2, 2 * s - 2);
+  g.fillStyle = '#e6e6e6'; g.fillRect(ox + 12 * s + 4, oy + 24 * s + 2, 4, 8);
+  const tank = (x, y, dir, body, light, dark) => {
+    g.save(); g.translate(ox + x + s, oy + y + s); g.rotate({ u: 0, d: Math.PI, l: -Math.PI / 2, r: Math.PI / 2 }[dir]);
+    g.fillStyle = dark; g.fillRect(-6, -5, 3, 11); g.fillRect(3, -5, 3, 11);
+    g.fillStyle = body; g.fillRect(-3, -4, 6, 9);
+    g.fillStyle = light; g.fillRect(-1, -7, 2, 7);
+    g.restore();
+  };
+  const T = t || 0;
+  // the player rolls up toward an enemy coming down, and fires
+  const py = 21 * s - (T * 22) % (8 * s);
+  tank(9 * s, py, 'u', '#f3d65c', '#fff3a8', '#8c5a00');
+  tank(9 * s, 3 * s + (T * 14) % (4 * s), 'd', '#b5b5b5', '#e6e6e6', '#4a4a4a');
+  tank(20 * s, 11 * s, 'l', '#c8282a', '#ff7b6b', '#6a0d0d');
+  const by = py - 6 - (T * 120) % 60;
+  g.fillStyle = '#fff'; g.fillRect(ox + 9 * s + 5, oy + by, 2, 2);
+  // the side panel
+  for (let i = 0; i < 10; i++) { g.fillStyle = '#000'; g.fillRect(210 + (i % 2) * 8, 14 + Math.floor(i / 2) * 8, 6, 6); }
+  g.fillStyle = '#e84a3a'; g.fillRect(212, 130, 9, 6); g.fillStyle = '#000'; g.fillRect(211, 130, 1, 14);
 },
 
 snake(g, w, h, c, t) {
@@ -1925,11 +2306,18 @@ sort(g, w, h, c, t) {
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let hovered = null, rafId = 0;
 
-document.querySelectorAll('.list a[data-t]').forEach(a => {
+// Cards in hidden tabs are drawn when their tab first opens, at the size they show.
+const painted = new WeakSet();
+function paintThumbs() { document.querySelectorAll('.list a[data-t]').forEach(paintCard); }
+window.paintThumbs = paintThumbs;
+function paintCard(a) {
+  if (painted.has(a)) return;
   const key = a.dataset.t;
   const fn = TH[key];
   if (!fn) return;
   const cv = a.querySelector('canvas');
+  if (!cv.getBoundingClientRect().width && a.closest('[hidden]')) return;
+  painted.add(a);
   const g = cv.getContext('2d');
   const c = getComputedStyle(a).getPropertyValue('--c').trim() || '#28e0ff';
   // drawers work in a 304x171 space; scale the backing store to the shown size
@@ -1944,7 +2332,8 @@ document.querySelectorAll('.list a[data-t]').forEach(a => {
     if (hovered === state) hovered = null;
     try { fn.call(state, g, state.w, state.h, c, 0); } catch (e) { }
   });
-});
+}
+paintThumbs();
 
 let t0 = performance.now();
 function tick(now) {
@@ -1960,7 +2349,7 @@ function tick(now) {
   const input = document.getElementById('find');
   const count = document.getElementById('findCount');
   const nothing = document.getElementById('nothing');
-  const cards = [...document.querySelectorAll('ul.list > li')].map(li => {
+  const cards = [...document.querySelectorAll('ul.list > li:not([data-copy])')].map(li => {
     const a = li.querySelector('a');
     const text = (a.textContent + ' ' + (a.dataset.k || '') + ' ' + a.getAttribute('href')).toLowerCase().replace(/-/g, ' ');
     return { li, text, section: li.parentElement };
@@ -1985,10 +2374,10 @@ function tick(now) {
     for (const ul of sections) {
       const any = [...ul.children].some(li => !li.hidden);
       ul.hidden = !any;
-      const h = ul.previousElementSibling;
-      if (h && h.tagName === 'H2') h.hidden = !any;
+      for (let h = ul.previousElementSibling; h && (h.tagName === 'H2' || h.matches('p.sec')); h = h.previousElementSibling) h.hidden = !any;
     }
     document.body.classList.toggle('searching', words.length > 0);
+    if (window.Tabs) window.Tabs.searching(words.length > 0);
     count.textContent = words.length ? (loose && shown ? 'close matches: ' + shown : shown + (shown === 1 ? ' match' : ' matches')) : '';
     nothing.hidden = !(words.length && !shown);
     nothing.textContent = 'Nothing matches "' + q.trim() + '". Try a shorter word, or something like "puzzle", "online", or "image".';
@@ -1996,7 +2385,7 @@ function tick(now) {
 
   input.addEventListener('input', () => {
     apply(input.value);
-    try { history.replaceState(null, '', input.value.trim() ? '?q=' + encodeURIComponent(input.value.trim()) : location.pathname); } catch (e) { }
+    try { history.replaceState(null, '', input.value.trim() ? '?q=' + encodeURIComponent(input.value.trim()) : location.pathname + location.hash); } catch (e) { }
   });
   input.addEventListener('keydown', e => { if (e.key === 'Escape') { input.value = ''; input.dispatchEvent(new Event('input')); } });
   addEventListener('keydown', e => {

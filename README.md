@@ -1,6 +1,6 @@
 # Playground
 
-77 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+85 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/
 
@@ -53,6 +53,10 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | Project | What it is |
 | --- | --- |
 | [cycle-duel](cycle-duel/) | Light-cycle duels. Play a friend online with just a link, on one keyboard, or against a bot |
+| [bomb-arena](bomb-arena/) | A Bomberman-style arena for 2 to 4 players online, or against bots |
+| [couch-party](couch-party/) | Party games on a big screen with phones as controllers. Scan a code to join; up to 8 players |
+| [worm-arena](worm-arena/) | A Slither.io-style arena: eat, grow, and cut other worms off. Online with friends, with bots filling the arena |
+| [battle-tanks](battle-tanks/) | Battle City (Tank 1990) style: defend the eagle from 20 tanks a stage. Two players on one keyboard or online |
 | [type-race](type-race/) | Typing races with friends over a link, no server. Or race your own best pace |
 | [sketch-guess](sketch-guess/) | Take turns drawing a word while friends guess it. Up to 8 players, connected by links |
 | [four-in-a-row](four-in-a-row/) | Connect Four-style. Play a friend online with a link, on one screen, or against a bot |
@@ -70,6 +74,7 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | Project | What it is |
 | --- | --- |
 | [fruit-slicer](fruit-slicer/) | A Fruit Ninja-style game you play by waving your hands at the webcam, or by swiping. Watch out for bombs |
+| [pitch-singer](pitch-singer/) | Sing along and see your voice against the melody, scored like karaoke. Also an ear trainer and a tuner |
 | [dune-drift](dune-drift/) | One-button endless ride over rolling dunes. Share a link and friends ride against your ghost |
 | [pixel-logic](pixel-logic/) | Nonograms, solver-verified so pure deduction always wins |
 | [glow-out](glow-out/) | Lights Out with hints computed from a live solution set |
@@ -102,12 +107,15 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | Project | What it is |
 | --- | --- |
 | [pdf-toolkit](pdf-toolkit/) | Merge, split, reorder, rotate, and delete PDF pages. Everything stays on your device |
+| [pdf-sign](pdf-sign/) | Sign a PDF and fill it in: text, dates, checkmarks, and your signature. Nothing is uploaded |
+| [phone-to-laptop](phone-to-laptop/) | Send photos, files, and text between your phone and computer by scanning a code. No cable, no app |
 | [images-to-pdf](images-to-pdf/) | Turn photos and scans into one PDF, with JPEGs kept at full quality. Nothing is uploaded |
 | [linkplay](linkplay/) | A small kit for making browser games multiplayer with links and no server. All the online games here use it |
 | [file-send](file-send/) | Send files straight to a friend's browser. Nothing is uploaded |
 | [secret-note](secret-note/) | Write a note and get a link with it encrypted inside. Nothing is stored |
-| [secret-chat](secret-chat/) | A private chat between two browsers, no server. Hidden and disappearing messages, and a safety code |
+| [secret-chat](secret-chat/) | A private chat for two or a group of up to 8, no server. Hidden and disappearing messages, and a safety code |
 | [video-call](video-call/) | A video call through a link, with no app, no sign-up, and no server. Compare a safety code to know nobody is listening |
+| [walkie-talkie](walkie-talkie/) | Push-to-talk voice for a group, through links. Hold to talk, let go to listen |
 | [qr-studio](qr-studio/) | QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark |
 | [photo-privacy](photo-privacy/) | See and remove the hidden location, date, and device details in photos |
 | [image-squeeze](image-squeeze/) | Compress, resize, and convert images, or fit them under a size limit |

@@ -158,7 +158,7 @@ requestAnimationFrame(frame);
 <table><tr><td>Input</td><td>Action</td></tr><tr><td>pendulums slider</td><td>how many pendulums, 1 to 12 (restarts the run)</td></tr><tr><td>gravity slider</td><td>strength of gravity, 200 to 1600</td></tr><tr><td>trails</td><td>turn fading trails on or off</td></tr><tr><td>new random start</td><td>pick new starting angles and restart</td></tr></table>
 <h3>How it works</h3>
 <ul><li>Each pendulum has two arms of equal length and two equal masses. Its state is the two angles and their angular velocities, stepped with the standard double pendulum equations of motion.</li><li>Integration uses fourth-order Runge-Kutta (RK4), six steps per frame.</li><li>A new start picks both angles at random within about 45 degrees of horizontal, then offsets only the first angle of each pendulum by 0.0005 radians times its index.</li></ul>
-<p class="pg-more">More like this: <a href="../boid-swarm/">Boid Swarm</a>, <a href="../life-grid/">Life Grid</a>, <a href="../fractal-viewer/">Fractal Viewer</a>, <a href="../neuro-pilot/">Neuro Pilot</a>. Or see <a href="../#toys">all toys and simulations</a>.</p>
+<p class="pg-more">More like this: <a href="../flowfield/">Flow Field</a>, <a href="../life-grid/">Life Grid</a>, <a href="../fractal-viewer/">Fractal Viewer</a>, <a href="../sort-arena/">Sort Arena</a>. Or see <a href="../#toys">all toys and simulations</a>.</p>
 <p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/pendulum-chaos">pendulum-chaos on GitHub</a>.</p>
 </div><!-- /about -->
 <script src="../common/about.js"></script>

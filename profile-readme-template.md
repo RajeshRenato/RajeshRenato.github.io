@@ -5,7 +5,7 @@ I build games and tools that run straight in the browser, in plain HTML, CSS, an
 <!-- Make an animated banner at https://rajeshrenato.github.io/profile-banner/ and put it here: -->
 <!-- ![banner](https://raw.githubusercontent.com/RajeshRenato/RajeshRenato/main/banner.svg) -->
 
-## Playground: 77 games, tools, and toys
+## Playground: 85 games, tools, and toys
 
 [Play everything here](https://rajeshrenato.github.io/). No sign-up, nothing to install.
 
