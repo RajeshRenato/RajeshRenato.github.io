@@ -1,6 +1,6 @@
 # Playground
 
-85 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+89 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/
 
@@ -57,6 +57,8 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | [couch-party](couch-party/) | Party games on a big screen with phones as controllers. Scan a code to join; up to 8 players |
 | [worm-arena](worm-arena/) | A Slither.io-style arena: eat, grow, and cut other worms off. Online with friends, with bots filling the arena |
 | [battle-tanks](battle-tanks/) | Battle City (Tank 1990) style: defend the eagle from 20 tanks a stage. Two players on one keyboard or online |
+| [dojo-duel](dojo-duel/) | A Street Fighter-style fighting game: three fighters, special moves, best of three. CPU, one keyboard, or online |
+| [cricket-clash](cricket-clash/) | EA Cricket-style 3D cricket: eight teams, timed shots, running between the wickets, pace and spin. Against the CPU or a friend online |
 | [type-race](type-race/) | Typing races with friends over a link, no server. Or race your own best pace |
 | [sketch-guess](sketch-guess/) | Take turns drawing a word while friends guess it. Up to 8 players, connected by links |
 | [four-in-a-row](four-in-a-row/) | Connect Four-style. Play a friend online with a link, on one screen, or against a bot |
@@ -64,6 +66,8 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | [chess](chess/) | Play chess with a friend online over a link, on one screen, or against a bot with three levels |
 | [clue-grid](clue-grid/) | A Codenames-style word game for two teams. Spymasters give one-word clues. 4 to 8 players |
 | [ludo](ludo/) | Ludo for 2 to 4. Play friends online with a link, pass one phone around, or play bots |
+| [snakes-ladders](snakes-ladders/) | Snakes and ladders for 2 to 4: online with friends, on one phone, or against bots |
+| [carrom](carrom/) | Carrom: flick the striker, pocket your coins, cover the queen. Online, on one device, or against a bot |
 | [mafia](mafia/) | A party game for 5 to 12 players on their own phones. Secret roles, night and day, and voting, connected by links |
 | [watch-party](watch-party/) | Watch a video with friends in sync. Everyone plays their own copy, so nothing is uploaded |
 | [trivia-night](trivia-night/) | A trivia quiz for friends over a link. 320 questions in 8 categories, or play alone |
