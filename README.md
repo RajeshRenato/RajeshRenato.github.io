@@ -1,6 +1,6 @@
 # Playground
 
-89 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+93 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/
 
@@ -117,6 +117,10 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | [linkplay](linkplay/) | A small kit for making browser games multiplayer with links and no server. All the online games here use it |
 | [file-send](file-send/) | Send files straight to a friend's browser. Nothing is uploaded |
 | [secret-note](secret-note/) | Write a note and get a link with it encrypted inside. Nothing is stored |
+| [split-bill](split-bill/) | Split trip and flat expenses with friends, settle up in the fewest payments with UPI, and share the group as a link |
+| [file-lock](file-lock/) | Password-protect any file with AES-256 encryption in your browser. Nothing is uploaded |
+| [passport-photo](passport-photo/) | Passport and visa photos for India, the US, UK and more, with guides, a clean background, and print sheets |
+| [invoice-maker](invoice-maker/) | GST invoices, receipts and quotes as PDF, with the amount in words, a UPI QR, and saved clients |
 | [secret-chat](secret-chat/) | A private chat for two or a group of up to 8, no server. Hidden and disappearing messages, and a safety code |
 | [video-call](video-call/) | A video call through a link, with no app, no sign-up, and no server. Compare a safety code to know nobody is listening |
 | [walkie-talkie](walkie-talkie/) | Push-to-talk voice for a group, through links. Hold to talk, let go to listen |
