@@ -115,3 +115,11 @@ test('search basics: canonical URL, structured data, an about section, and the s
   assert.ok(hub.includes(`<title>Rajesh's Playground | ${count} free browser games and tools</title>`), 'hub title count is stale');
   assert.ok(new RegExp('<meta name="description" content="' + count + ' free').test(hub), 'hub description count is stale');
 });
+
+test('hub search can hide cards: no card style overrides the hidden attribute', () => {
+  // cards are display: flex for equal heights, which would beat the browser's [hidden] rule
+  assert.match(hub, /\[hidden\]\s*\{\s*display:\s*none\s*!important;?\s*\}/);
+  // search matches word starts, and covers the Today card but not the Top picks copies
+  assert.match(hub, /const has = \(c, w\) => new RegExp\('\(\^\|\[\^a-z0-9\]\)'/);
+  assert.match(hub, /querySelectorAll\('ul\.list > li:not\(\[data-copy\]\)'\)/);
+});

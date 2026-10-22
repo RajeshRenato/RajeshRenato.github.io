@@ -62,6 +62,8 @@ test('online: a guest sees the host\'s worms rebuilt from their head trails, and
   const host = createPage('worm-arena/index.html'), guest = createPage('worm-arena/index.html');
   const c = channelPair();
   host.sandbox.ch = c.a; guest.sandbox.ch = c.b;
+  // the same arena and the same bot moves every run
+  host.run(`(() => { let seed = 11; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647; })()`);
   host.run(`globalThis.r = Room.create('worm-arena', 'Ana'); r.addChannel(ch);`);
   guest.run(`startGuest(Room.joinChannel(ch, 'Bo'))`);
   c.pump();
