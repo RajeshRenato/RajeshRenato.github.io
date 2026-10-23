@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e7490'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%23ffffff' stroke-width='4' stroke-dasharray='30 20'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; worker-src 'self' blob:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<title>Bank Statement Insights | where your money goes, UPI spending analysis</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/bank-insights/">
+<style>
+  :root { --paper:#f2f6f7; --ink:#14191b; --muted:#647177; --rule:#d9e2e5; --card:#ffffff; --accent:#0e7490; --accent-soft:#dff0f4; --good:#1f8a4c; --bad:#c2410c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#0f1416; --ink:#e6eef0; --muted:#8fa0a6; --rule:#243035; --card:#162024; --accent:#38bdd8; --accent-soft:#12303a; --good:#5fd38a; --bad:#fb923c; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 72px; }
+  main { max-width:1000px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { font-size:17px; margin:0 0 10px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; max-width:700px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--rule); border-radius:14px; padding:16px; margin-top:16px; }
+  .drop { border:2px dashed var(--rule); border-radius:14px; padding:36px 16px; text-align:center; cursor:pointer; }
+  .drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); }
+  .drop b { display:block; font-size:18px; }
+  button { font:inherit; font-weight:600; font-size:14px; padding:8px 13px; border-radius:9px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover { border-color:var(--ink); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  input, select { font:inherit; font-size:14px; padding:7px 9px; border-radius:8px; border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .grow { flex:1; min-width:0; }
+  .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+  @media (max-width:640px) { .stats { grid-template-columns:1fr 1fr; } }
+  .stats div { background:var(--paper); border-radius:10px; padding:10px 12px; }
+  .stats b { display:block; font-size:22px; font-variant-numeric:tabular-nums; }
+  .stats span { font-size:13px; color:var(--muted); }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px) { .two { grid-template-columns:1fr; } }
+  .two .card { margin-top:0; }
+  .donut { display:grid; grid-template-columns:200px 1fr; gap:14px; align-items:center; }
+  @media (max-width:480px) { .donut { grid-template-columns:1fr; } }
+  .legend { display:grid; gap:4px; font-size:14px; }
+  .legend button { display:flex; gap:8px; align-items:center; border:0; padding:3px 4px; background:none; font-weight:500; text-align:left; width:100%; }
+  .legend button.on { background:var(--accent-soft); }
+  .legend i { width:12px; height:12px; border-radius:3px; flex:none; }
+  .legend span.v { margin-left:auto; font-variant-numeric:tabular-nums; color:var(--muted); }
+  canvas { width:100%; display:block; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { text-align:left; font-size:12px; color:var(--muted); font-weight:600; padding:6px; border-bottom:1.5px solid var(--rule); }
+  td { padding:7px 6px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  td.r, th.r { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  td .d { font-size:12px; color:var(--muted); word-break:break-all; }
+  .in { color:var(--good); } .out { color:var(--ink); }
+  .tablewrap { max-height:560px; overflow:auto; }
+  .tablewrap select { font-size:12px; padding:3px 5px; }
+  .note { font-size:14px; padding:10px 12px; border-radius:10px; background:var(--accent-soft); }
+  .veil { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:5; }
+  .veil .card { width:min(420px, 100%); margin:0; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Bank Statement Insights">
+<meta property="og:description" content="Drop in your bank statement and see where the money goes: spending by category, UPI merchants, food delivery, subscriptions and monthly trends. Works on your device; the statement is never uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/bank-insights/">
+<meta property="og:image" content="https://rajeshrenato.github.io/bank-insights/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Drop in your bank statement and see where the money goes: spending by category, UPI merchants, food delivery, subscriptions and monthly trends. Works on your device; the statement is never uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Bank Statement Insights", "item": "https://rajeshrenato.github.io/bank-insights/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Bank Statement Insights", "url": "https://rajeshrenato.github.io/bank-insights/", "description": "Drop in your bank statement and see where the money goes: spending by category, UPI merchants, food delivery, subscriptions and monthly trends. Works on your device; the statement is never uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Bank Statement Insights</h1>
+  <p class="lede">Drop in your bank statement and see where the money really goes: spending by category, your top UPI merchants, food delivery, subscriptions, and how each month compares.</p>
+  <p class="muted small">Your statement is read in this browser. This page is blocked from sending anything over the network, so your transactions never leave your device.</p>
+
+  <section id="start" class="card">
+    <div class="drop" id="drop" tabindex="0" role="button"><b>Drop your statements here</b><span class="muted small">PDF, CSV or Excel (.xlsx) from your bank's app or net banking. A few months, or a few accounts, at once is fine.</span></div>
+    <input type="file" id="pick" multiple accept=".pdf,.csv,.xlsx,.txt,application/pdf,text/csv" hidden>
+    <p class="small" id="status" style="margin-top:10px" hidden></p>
+    <p class="small muted" style="margin-top:10px">Tip: CSV or Excel downloads give the most accurate results. Most bank apps offer them next to the PDF.</p>
+  </section>
+
+  <section id="result" hidden>
+    <div class="row" style="margin-top:16px"><select id="period" aria-label="Period"></select><span class="grow"></span><button id="csvBtn">Download categorised CSV</button><button id="addBtn">Add more statements</button></div>
+    <div class="card"><div class="stats" id="stats"></div></div>
+    <div class="two" style="margin-top:16px">
+      <div class="card"><h2>Where the money went</h2><div class="donut"><canvas id="donut" width="400" height="400" style="max-width:200px"></canvas><div class="legend" id="legend"></div></div></div>
+      <div class="card"><h2>Month by month</h2><canvas id="months" height="230"></canvas><p class="small muted" style="margin-top:6px"><span style="color:var(--good)">&#9632;</span> in &nbsp; <span style="color:var(--accent)">&#9632;</span> out</p></div>
+    </div>
+    <div class="two" style="margin-top:16px">
+      <div class="card"><h2>Top places and people you paid</h2><table id="top"></table></div>
+      <div class="card"><h2>Repeats every month</h2><p class="small muted">Subscriptions, EMIs, SIPs and rent: the same amount to the same place, month after month.</p><table id="recurring"></table></div>
+    </div>
+    <div class="card">
+      <div class="row"><h2 class="grow" style="margin:0">Transactions</h2><input type="search" id="q" placeholder="Search" aria-label="Search transactions"><select id="catFilter" aria-label="Category"></select></div>
+      <p class="small muted" style="margin-top:6px">Change a category and every transaction with the same merchant follows, now and next time.</p>
+      <div class="tablewrap"><table id="tx"></table></div>
+    </div>
+  </section>
+</main>
+<div class="veil" id="pwVeil" hidden><div class="card"><h2>This statement is locked</h2><p class="small muted" id="pwFor"></p><input type="password" id="pwIn" style="width:100%" autocomplete="off"><p class="small" id="pwErr" style="color:var(--bad)" hidden>Wrong password, try again.</p><div class="row" style="margin-top:12px"><button class="primary" id="pwOk">Open</button><button id="pwSkip">Skip this file</button></div><p class="small muted" style="margin-top:10px">Often your date of birth (DDMMYYYY) or customer ID. The email with the statement usually says.</p></div></div>
+
+<script src="../common/zip.js"></script>
+<script src="../common/pdf-text.js"></script>
+<script>
+'use strict';
+
+// ======================================================================
+// Turning any statement into rows of cells
+// ======================================================================
+
+function parseCsv(text) {
+  const first = text.split(/\r?\n/).slice(0, 20).join('\n');
+  const delim = [',', ';', '\t', '|'].map(d => [d, (first.match(new RegExp('\\' + d, 'g')) || []).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = [];
+  let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === delim) { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.map(r => r.map(x => x.trim()));
+}
+// the first sheet of an .xlsx, using its shared strings
+async function parseXlsx(file) {
+  const z = await Zip.open(file), get = n => z.entries.find(e => e.name === n);
+  const decode = s => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n)).replace(/&amp;/g, '&');
+  const shared = [];
+  const ss = get('xl/sharedStrings.xml');
+  if (ss) for (const m of (await z.text(ss)).matchAll(/<si>([\s\S]*?)<\/si>/g)) shared.push(decode([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(x => x[1]).join('')));
+  const sheet = get('xl/worksheets/sheet1.xml') || z.entries.find(e => /^xl\/worksheets\/sheet\d+\.xml$/.test(e.name));
+  if (!sheet) throw new Error('No sheet in this Excel file.');
+  const xml = await z.text(sheet), rows = [];
+  const col = ref => { let n = 0; for (const ch of ref.replace(/\d/g, '')) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
+  for (const r of xml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)) {
+    const row = [];
+    for (const c of r[1].matchAll(/<c r="([A-Z]+\d+)"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+      const t = /t="(\w+)"/.exec(c[2]), v = /<v>([\s\S]*?)<\/v>/.exec(c[3] || ''), is = /<is>[\s\S]*?<t[^>]*>([\s\S]*?)<\/t>/.exec(c[3] || '');
+      let val = '';
+      if (t && t[1] === 's' && v) val = shared[+v[1]] || '';
+      else if (is) val = decode(is[1]);
+      else if (v) val = decode(v[1]);
+      row[col(c[1])] = val;
+    }
+    rows.push(Array.from(row, x => (x == null ? '' : String(x).trim())));
+  }
+  return rows;
+}
+// A PDF statement: each line becomes cells, split where the gap between words is wide.
+function pdfRows(pages) {
+  const rows = [];
+  for (const pg of pages) for (const L of pg.lines) {
+    const cells = [];
+    let cur = null;
+    for (const it of L.items) {
+      if (cur && it.x - (cur.x + cur.w) < 6) { cur.str += (it.x - (cur.x + cur.w) > 1.2 ? ' ' : '') + it.str; cur.w = it.x + it.w - cur.x; }
+      else { cur = { x: it.x, w: it.w, str: it.str }; cells.push(cur); }
+    }
+    rows.push(cells.map(c => ({ ...c, str: c.str.trim() })).filter(c => c.str));
+  }
+  return rows;
+}
+
+// ======================================================================
+// Rows of cells into transactions
+// ======================================================================
+
+const MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
+let dayFirst = true;
+function parseDate(s) {
+  s = String(s).trim();
+  let m;
+  if ((m = /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/.exec(s))) return mk(+m[1], +m[2], +m[3]);
+  if ((m = /^(\d{1,2})[-\/. ]([A-Za-z]{3,4})[a-z]*[-\/., ]+(\d{2,4})/.exec(s)) && MON[m[2].toLowerCase()]) return mk(yr(+m[3]), MON[m[2].toLowerCase()], +m[1]);
+  if ((m = /^([A-Za-z]{3,4})[a-z]*[-\/. ](\d{1,2}),?[-\/. ]+(\d{2,4})/.exec(s)) && MON[m[1].toLowerCase()]) return mk(yr(+m[3]), MON[m[1].toLowerCase()], +m[2]);
+  if ((m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})(?!\d)/.exec(s))) return dayFirst ? mk(yr(+m[3]), +m[2], +m[1]) : mk(yr(+m[3]), +m[1], +m[2]);
+  if (/^\d{5}(\.\d+)?$/.test(s) && +s > 30000 && +s < 70000) { const d = new Date(Date.UTC(1899, 11, 30) + Math.floor(+s) * 864e5); return mk(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()); }
+  return null;
+}
+const yr = y => (y < 100 ? 2000 + y : y);
+function mk(y, mo, d) { if (mo < 1 || mo > 12 || d < 1 || d > 31 || y < 1990 || y > 2100) return null; const t = new Date(y, mo - 1, d); return t.getMonth() === mo - 1 ? t : null; }
+// "1,23,456.78", "₹ 450.00", "(450.00)", "450.00 Dr", "-450"
+function parseAmount(s) {
+  s = String(s).trim();
+  if (!s || !/\d/.test(s)) return null;
+  const neg = /^\(.*\)$/.test(s) || /^-/.test(s) || /\bdr\.?$/i.test(s), cr = /\bcr\.?$/i.test(s);
+  const clean = s.replace(/[₹$,\s()]|INR|Rs\.?|Dr\.?|Cr\.?/gi, '').replace(/^-/, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(clean)) return null;
+  const v = parseFloat(clean);
+  return { v, neg, cr };
+}
+const isMoney = s => { const a = parseAmount(s); return !!a && /\.\d{2}\b|,\d{3}/.test(String(s)); };
+
+const HEAD = {
+  date: /^(txn |transaction |tran |value |posting )?date$|^date$|^txn dt|^tran dt|^value dt/i,
+  desc: /narration|description|particulars|remarks|details|transaction details|beneficiary/i,
+  debit: /withdrawal|debit|\bdr\b|paid out|money out|amount out/i,
+  credit: /deposit|credit|\bcr\b|paid in|money in|amount in/i,
+  amount: /^(transaction )?amount( \(inr\))?$|^amt$|^amount/i,
+  type: /^(dr ?\/ ?cr|cr ?\/ ?dr|type|txn type|d\/c)$/i,
+  balance: /balance/i,
+};
+function findHeader(rows) {
+  let best = -1, score = 0;
+  rows.slice(0, 60).forEach((r, i) => {
+    const cells = r.map(c => (typeof c === 'string' ? c : c.str));
+    let s = 0;
+    for (const re of Object.values(HEAD)) if (cells.some(c => re.test(c))) s++;
+    if (s > score) { score = s; best = i; }
+  });
+  return score >= 3 ? best : -1;
+}
+// For spreadsheets: columns come from the header row.
+function fromTable(rows) {
+  const h = findHeader(rows);
+  if (h < 0) throw new Error('Couldn\'t find the column headings (date, narration, amounts) in this file.');
+  const head = rows[h].map(c => String(c || ''));
+  const idx = key => head.findIndex(c => HEAD[key].test(c));
+  const cols = { date: idx('date'), desc: idx('desc'), debit: idx('debit'), credit: idx('credit'), amount: idx('amount'), type: idx('type'), balance: idx('balance') };
+  if (cols.credit === cols.debit) cols.credit = -1;
+  // decide day-first or month-first from the dates themselves
+  const raw = rows.slice(h + 1).map(r => String(r[cols.date] || ''));
+  dayFirst = !raw.some(s => { const m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.]/.exec(s); return m && +m[2] > 12; });
+  const out = [];
+  let last = null;
+  for (const r of rows.slice(h + 1)) {
+    const date = parseDate(r[cols.date] || '');
+    if (!date) {
+      // a narration that wrapped onto the next row
+      if (last && cols.desc >= 0 && r[cols.desc] && r.filter(Boolean).length <= 2) last.desc += ' ' + r[cols.desc];
+      continue;
+    }
+    let amt = null, dir = null;
+    const dv = cols.debit >= 0 ? parseAmount(r[cols.debit]) : null, cv = cols.credit >= 0 ? parseAmount(r[cols.credit]) : null;
+    if (dv && dv.v) { amt = dv.v; dir = 'out'; }
+    else if (cv && cv.v) { amt = cv.v; dir = 'in'; }
+    else if (cols.amount >= 0) {
+      const a = parseAmount(r[cols.amount]);
+      if (a && a.v) {
+        amt = a.v;
+        const t = cols.type >= 0 ? String(r[cols.type] || '') : '';
+        dir = /^c/i.test(t) || a.cr ? 'in' : /^d/i.test(t) || a.neg ? 'out' : (a.neg ? 'out' : 'in');
+        if (!t && !a.neg && !a.cr) dir = 'unknown';
+      }
+    }
+    if (!amt) continue;
+    const bal = cols.balance >= 0 ? parseAmount(r[cols.balance]) : null;
+    last = { date, desc: String(r[cols.desc] || '').replace(/\s+/g, ' ').trim(), amt, dir, bal: bal ? (bal.neg && !bal.cr ? -bal.v : bal.v) : null };
+    out.push(last);
+  }
+  fixDirections(out);
+  return out;
+}
+// For PDFs: rows start with a date; money columns are found by where the header words sit.
+function fromPdf(rows) {
+  const h = findHeader(rows);
+  const head = h >= 0 ? rows[h] : [];
+  const xOf = key => { const c = head.find(c => HEAD[key].test(c.str)); return c ? c.x + c.w / 2 : null; };
+  const xs = { debit: xOf('debit'), credit: xOf('credit'), balance: xOf('balance'), amount: xOf('amount') };
+  const dates = rows.map(r => r[0] ? r[0].str : '');
+  dayFirst = !dates.some(s => { const m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.]/.exec(s); return m && +m[2] > 12; });
+  const out = [];
+  let last = null;
+  for (let i = Math.max(0, h + 1); i < rows.length; i++) {
+    const r = rows[i];
+    if (!r.length) continue;
+    const date = parseDate(r[0].str) || (r[1] && /^\d{1,2}$/.test(r[0].str) ? null : null);
+    const money = r.filter((c, k) => k > 0 && isMoney(c.str));
+    if (!date || !money.length) {
+      // narrations often wrap onto the line below
+      if (last && !date && !money.length && r.length <= 3) {
+        const words = r.map(c => c.str).join(' ');
+        if (!/page \d|statement|opening balance|closing balance|total/i.test(words)) last.desc += ' ' + words;
+      }
+      continue;
+    }
+    const descCells = r.filter((c, k) => k > 0 && !isMoney(c.str) && !parseDate(c.str) && !/^(\d{6,})$/.test(c.str));
+    let amt = null, dir = 'unknown', bal = null;
+    const near = (c, x) => x !== null && Math.abs(c.x + c.w / 2 - x) < 45;
+    for (const c of money) {
+      const a = parseAmount(c.str);
+      if (near(c, xs.balance)) bal = a.neg && !a.cr ? -a.v : a.v;
+      else if (near(c, xs.debit)) { amt = a.v; dir = 'out'; }
+      else if (near(c, xs.credit)) { amt = a.v; dir = 'in'; }
+      else if (near(c, xs.amount)) { amt = a.v; dir = a.cr ? 'in' : a.neg ? 'out' : 'unknown'; }
+    }
+    // no usable header: the last number is the balance and the one before it the amount
+    if (amt === null) {
+      const vals = money.map(c => parseAmount(c.str));
+      if (vals.length >= 2) { amt = vals[vals.length - 2].v; bal = vals[vals.length - 1].v; dir = vals[vals.length - 2].cr ? 'in' : vals[vals.length - 2].neg ? 'out' : 'unknown'; }
+      else { amt = vals[0].v; dir = vals[0].cr ? 'in' : vals[0].neg ? 'out' : 'unknown'; }
+    }
+    if (!amt) continue;
+    last = { date, desc: descCells.map(c => c.str).join(' ').replace(/\s+/g, ' ').trim(), amt, dir, bal };
+    out.push(last);
+  }
+  fixDirections(out);
+  return out;
+}
+// Where the direction is unclear, the running balance tells: it goes down for money out.
+// Statements listed newest first are put in date order first, so "the row before" is the one before in time.
+function fixDirections(list) {
+  if (list.length > 1 && list[0].date > list[list.length - 1].date) list.reverse();
+  for (let i = 0; i < list.length; i++) {
+    const t = list[i];
+    if (t.dir !== 'unknown') continue;
+    const prev = list[i - 1];
+    if (prev && prev.bal !== null && t.bal !== null && Math.abs(prev.bal + t.amt - t.bal) < 0.02) t.dir = 'in';
+    else t.dir = 'out';
+  }
+}
+
+// ======================================================================
+// Who was paid, and what for
+// ======================================================================
+
+// Words in narrations that are payment codes, not names.
+const NOISE = /^(upi|dr|cr|p2a|p2m|p2p|pay|payment|paid|to|from|by|via|transfer|trf|txn|ref|neft|imps|rtgs|ach|nach|ecs|d|c|si|inb|mob|mb|ib|ft|bil|onl|pos|vps|vin|ecom|debit|credit|card|purchase|sent|received|collect|request|mandate|na|null|india|ltd|limited|pvt|private|bank|ifsc|ybl|okaxis|okhdfcbank|oksbi|okicici|paytm|apl|ibl|axl|wdl|atw|nwd|com|www|in|emi|sal|cms|int|tpt|self|other|others|chq|cheque|no|dt|date|upi intent)$/i;
+function cleanWords(tok) {
+  return tok.split(/[\s.,_#()]+/).map(w => w.replace(/\.(com|in|co)$/i, '')).filter(w => w.length >= 2 && /[a-z]/i.test(w) && !/\d/.test(w) && !/x{3,}/i.test(w) && !NOISE.test(w) && !/^[a-z]{4}0[a-z0-9]{6}$/i.test(w));
+}
+function payee(desc) {
+  const d = desc.replace(/\s+/g, ' ').trim();
+  // a UPI ID; hyphens are left out because many banks use them to separate the narration's parts
+  const vpa = (/([a-z0-9._]{2,})@([a-z]{2,})/i.exec(d) || [])[0] || '';
+  if (/^(atm|nwd|cash ?w)/i.test(d)) return { name: 'ATM cash', vpa: '' };
+  let name = '';
+  for (const tok of d.split(/[\/\-:|*]+/)) {
+    if (/@/.test(tok)) continue;
+    const words = cleanWords(tok);
+    if (words.some(w => w.length >= 3)) { name = words.slice(0, 3).join(' '); break; }
+  }
+  if (!name && vpa) name = vpa.split('@')[0].replace(/[\d._-]+/g, ' ').trim();
+  if (!name && vpa) return { name: vpa.toLowerCase(), vpa: vpa.toLowerCase() };   // paid to a phone number's UPI ID
+  name = name.replace(/\b(technologies|technology|tech|services|retail|payments?|online|llp|inc|solutions|enterprises)\b/gi, '').replace(/\s+/g, ' ').trim();
+  return { name: name ? name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).slice(0, 40) : 'Unknown', vpa: vpa.toLowerCase() };
+}
+const CATS = [
+  ['Salary', 'in', /salary|\bsal\b|payroll|wages|stipend/i],
+  ['Interest', 'in', /\bint\.? ?(pd|cr|credit)|interest|\bint\b.*(sb|fd)/i],
+  ['Refunds and cashback', 'in', /refund|cashback|reversal|rev\b|chargeback/i],
+  ['Food delivery', 'out', /swiggy|zomato|eatsure|dominos|domino's|pizza ?hut|kfc|mcdonald|burger king|faasos|box8|eatclub|starbucks|chai point|haldiram/i],
+  ['Groceries', 'out', /bigbasket|big basket|blinkit|grofers|zepto|instamart|dmart|d mart|jiomart|more retail|reliance fresh|reliance smart|spencer|nature.?s basket|milkbasket|country delight|dunzo|ratnadeep|star bazaar/i],
+  ['Shopping', 'out', /amazon(?! ?prime)|flipkart|myntra|ajio|meesho|nykaa|tata ?cliq|croma|reliance digital|decathlon|ikea|lenskart|shoppers stop|lifestyle|westside|pantaloons|max fashion|firstcry|pepperfry|urban ladder/i],
+  ['Travel', 'out', /\buber\b|\bola\b|olacabs|rapido|irctc|makemytrip|goibibo|cleartrip|easemytrip|indigo|air ?india|vistara|akasa|spicejet|redbus|abhibus|yatra|ixigo|\bmetro\b|fastag|parking|blablacar|zoomcar/i],
+  ['Fuel', 'out', /petrol|diesel|\bfuel\b|hpcl|bpcl|iocl|indian ?oil|bharat ?petro|\bshell\b|nayara|hp ?pay|jio-bp/i],
+  ['Bills and recharges', 'out', /electricity|bescom|tneb|tangedco|msedcl|mahadiscom|tata ?power|adani|bses|cesc|torrent power|water bill|bwssb|\bgas\b|indane|bharat ?gas|hp ?gas|airtel|\bjio\b|vodafone|\bvi\b|bsnl|act fibernet|hathway|broadband|recharge|\bdth\b|tata ?(sky|play)|dish ?tv|sun direct|postpaid|prepaid/i],
+  ['Subscriptions and entertainment', 'out', /netflix|spotify|prime ?video|amazon ?prime|hotstar|disney|youtube|google ?play|apple\.com|itunes|icloud|sonyliv|zee5|jiocinema|bookmyshow|\bpvr\b|inox|audible|kindle|linkedin|chatgpt|openai/i],
+  ['Health', 'out', /pharma|chemist|apollo|1mg|pharmeasy|netmeds|hospital|clinic|medplus|practo|diagnostic|\blabs?\b|healthians|dental|cult\.?fit|gym/i],
+  ['Education', 'out', /school|college|university|udemy|coursera|byju|unacademy|vedantu|tuition|\bfees?\b|exam/i],
+  ['Rent and home', 'out', /\brent\b|nobroker|nestaway|maintenance|society|housing|urban ?company|urbanclap/i],
+  ['Investments', 'out', /zerodha|groww|upstox|kuvera|paytm money|\bcoin\b|mutual ?fund|\bmf\b|\bsip\b|\bnps\b|\bppf\b|indian clearing|iccl|\bnse\b|\bbse\b|\bcams\b|kfin|smallcase|angel ?one|sharekhan|\bicici ?direct|\bfd\b.*(open|book)|recurring deposit/i],
+  ['Insurance', 'out', /insurance|\blic\b|policy|premium|hdfc ?life|icici ?pru|max ?life|sbi ?life|star ?health|care ?health|niva ?bupa|acko|go ?digit|policybazaar/i],
+  ['Loans and EMIs', 'out', /\bemi\b|\bloan\b|bajaj ?fin|home ?loan|\bnach\b|\bach\b|\becs\b|mandate|lending|kreditbee|moneyview|navi/i],
+  ['Credit card bills', 'out', /credit ?card|cc ?(payment|bill)|card ?payment|\bcred\b|billdesk.*card|autopay.*card/i],
+  ['Cash', 'out', /\batm\b|cash ?w(d|i)|cash withdrawal|\bnwd\b|cwdr|atw\b/i],
+  ['Fees and charges', 'out', /charges?|\bfee\b|gst ?on|sms ?chg|annual ?fee|penalty|min(imum)? ?bal|non ?maint|debit card fee/i],
+];
+const PERSON_LIKE = /^[a-z]+( [a-z]+){0,3}$/i;
+function categorise(t, learned) {
+  const p = payee(t.desc);
+  t.payee = p.name; t.vpa = p.vpa;
+  const key = (p.vpa || p.name).toLowerCase();
+  if (learned[key]) { t.cat = learned[key]; return; }
+  for (const [name, dir, re] of CATS) if ((dir === t.dir || dir === 'both') && re.test(t.desc)) { t.cat = name; return; }
+  const upi = /upi/i.test(t.desc);
+  if (t.dir === 'in') t.cat = /neft|imps|rtgs|upi/i.test(t.desc) ? 'Money received' : 'Other income';
+  else t.cat = upi && PERSON_LIKE.test(p.name) && !/@(ybl|paytm|axl|ibl|apl)$/.test(p.vpa) || /neft|imps|rtgs/i.test(t.desc) ? 'Sent to people' : upi ? 'Other UPI payments' : 'Other';
+}
+
+// ======================================================================
+// The page
+// ======================================================================
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const inr = v => '₹' + Math.round(v).toLocaleString('en-IN');
+const PALETTE = ['#0e7490', '#f97316', '#8b5cf6', '#22c55e', '#e11d48', '#eab308', '#06b6d4', '#ec4899', '#84cc16', '#6366f1', '#14b8a6', '#f43f5e', '#a855f7', '#0ea5e9', '#d97706', '#64748b', '#10b981', '#be185d', '#7c3aed', '#94a3b8', '#475569', '#9ca3af'];
+const KEY = 'bank-insights-v1';
+let learned = {};
+try { learned = JSON.parse(localStorage.getItem(KEY) || '{}').learned || {}; } catch (e) { }
+const saveLearned = () => { try { localStorage.setItem(KEY, JSON.stringify({ learned })); } catch (e) { } };
+let TX = [], view = [], catFilter = '';
+
+async function readFile(file) {
+  if (/\.xlsx$/i.test(file.name)) return fromTable(await parseXlsx(file));
+  if (/\.(csv|txt)$/i.test(file.name) || /csv|text/.test(file.type)) return fromTable(parseCsv(await file.text()));
+  if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+    const doc = await PdfText.open(new Uint8Array(await file.arrayBuffer()), wrong => askPassword(file.name, wrong));
+    return fromPdf(pdfRows(await PdfText.pages(doc)));
+  }
+  if (/\.xls$/i.test(file.name)) throw new Error('Old .xls files can\'t be read here. Open it and save as .xlsx or CSV.');
+  throw new Error('Not a PDF, CSV or Excel file.');
+}
+function askPassword(name, wrong) {
+  return new Promise(res => {
+    $('pwFor').textContent = name; $('pwErr').hidden = !wrong; $('pwIn').value = ''; $('pwVeil').hidden = false; $('pwIn').focus();
+    const done = v => { $('pwVeil').hidden = true; $('pwOk').onclick = $('pwSkip').onclick = null; $('pwIn').onkeydown = null; res(v); };
+    $('pwOk').onclick = () => done($('pwIn').value);
+    $('pwIn').onkeydown = e => { if (e.key === 'Enter') done($('pwIn').value); };
+    $('pwSkip').onclick = () => done(null);
+  });
+}
+async function load(files) {
+  const st = $('status'), msgs = [];
+  st.hidden = false; st.textContent = 'Reading...';
+  for (const f of files) {
+    try {
+      const list = await readFile(f);
+      if (!list.length) { msgs.push(f.name + ': no transactions found.'); continue; }
+      // the same transaction from overlapping statements only counts once
+      const seen = new Set(TX.map(t => +t.date + '|' + t.amt + '|' + t.desc.slice(0, 30) + '|' + t.bal));
+      for (const t of list) { const k = +t.date + '|' + t.amt + '|' + t.desc.slice(0, 30) + '|' + t.bal; if (!seen.has(k)) { seen.add(k); TX.push(t); } }
+      msgs.push(f.name + ': ' + list.length + ' transactions.');
+    } catch (e) { msgs.push(f.name + ': ' + (e.message || 'couldn\'t be read.')); }
+  }
+  st.textContent = msgs.join(' ');
+  if (!TX.length) return;
+  TX.sort((a, b) => a.date - b.date);
+  for (const t of TX) categorise(t, learned);
+  const months = [...new Set(TX.map(t => t.date.getFullYear() + '-' + String(t.date.getMonth() + 1).padStart(2, '0')))].sort();
+  $('period').innerHTML = '<option value="all">Everything (' + months.length + (months.length === 1 ? ' month' : ' months') + ')</option>' + months.slice().reverse().map(m => '<option value="' + m + '">' + new Date(m + '-01T00:00').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) + '</option>').join('');
+  $('start').hidden = true; $('result').hidden = false;
+  render();
+}
+
+function render() {
+  const p = $('period').value;
+  view = TX.filter(t => p === 'all' || (t.date.getFullYear() + '-' + String(t.date.getMonth() + 1).padStart(2, '0')) === p);
+  const out = view.filter(t => t.dir === 'out'), inn = view.filter(t => t.dir === 'in');
+  const sOut = out.reduce((a, t) => a + t.amt, 0), sIn = inn.reduce((a, t) => a + t.amt, 0);
+  const months = new Set(view.map(t => t.date.getFullYear() * 12 + t.date.getMonth())).size || 1;
+  const first = view[0], last = view[view.length - 1];
+  $('stats').innerHTML = [[inr(sIn), 'money in'], [inr(sOut), 'money out'], [(sIn - sOut >= 0 ? '+' : '−') + inr(Math.abs(sIn - sOut)).slice(0), 'saved' + (sIn - sOut < 0 ? ' (spent more than came in)' : '')], [inr(sOut / months), 'spent in a typical month']]
+    .map(([b, s]) => '<div><b>' + b + '</b><span>' + s + '</span></div>').join('') +
+    '<div style="grid-column:1/-1;background:none;padding:2px 0 0"><span>' + view.length + ' transactions from ' + first.date.toLocaleDateString('en-GB') + ' to ' + last.date.toLocaleDateString('en-GB') + '</span></div>';
+  // categories
+  const byCat = new Map();
+  for (const t of out) byCat.set(t.cat, (byCat.get(t.cat) || 0) + t.amt);
+  const cats = [...byCat].sort((a, b) => b[1] - a[1]);
+  const colorOf = c => PALETTE[[...CATS.map(x => x[0]), 'Sent to people', 'Other UPI payments', 'Other', 'Money received', 'Other income'].indexOf(c) % PALETTE.length] || '#888';
+  $('legend').innerHTML = cats.map(([c, v]) => '<button data-c="' + esc(c) + '" class="' + (c === catFilter ? 'on' : '') + '"><i style="background:' + colorOf(c) + '"></i>' + esc(c) + '<span class="v">' + inr(v) + ' &nbsp;' + Math.round(v / sOut * 100) + '%</span></button>').join('');
+  for (const b of $('legend').querySelectorAll('button')) b.onclick = () => { catFilter = catFilter === b.dataset.c ? '' : b.dataset.c; $('catFilter').value = catFilter; render(); };
+  const dc = $('donut'), x = dc.getContext('2d');
+  x.clearRect(0, 0, 400, 400);
+  let a0 = -Math.PI / 2;
+  for (const [c, v] of cats) {
+    const a1 = a0 + v / sOut * Math.PI * 2;
+    x.beginPath(); x.moveTo(200, 200); x.arc(200, 200, catFilter && catFilter !== c ? 170 : 190, a0, a1); x.closePath();
+    x.fillStyle = colorOf(c); x.globalAlpha = catFilter && catFilter !== c ? 0.35 : 1; x.fill(); a0 = a1;
+  }
+  x.globalAlpha = 1; x.fillStyle = getComputedStyle(document.body).backgroundColor || '#fff';
+  x.beginPath(); x.arc(200, 200, 105, 0, 7); x.fillStyle = document.body ? getComputedStyle(document.querySelector('.card')).backgroundColor : '#fff'; x.fill();
+  x.fillStyle = getComputedStyle(document.body).color; x.textAlign = 'center'; x.font = '700 34px system-ui'; x.fillText(inr(catFilter ? byCat.get(catFilter) || 0 : sOut), 200, 205);
+  x.font = '22px system-ui'; x.fillStyle = '#8fa0a6'; x.fillText(catFilter || 'spent', 200, 240);
+  drawMonths();
+  // top payees
+  const byPayee = new Map();
+  for (const t of out.filter(t => !catFilter || t.cat === catFilter)) { const k = t.payee; const o = byPayee.get(k) || { n: 0, v: 0, cat: t.cat }; o.n++; o.v += t.amt; byPayee.set(k, o); }
+  $('top').innerHTML = '<tr><th>Paid to</th><th class="r">Times</th><th class="r">Total</th></tr>' + [...byPayee].sort((a, b) => b[1].v - a[1].v).slice(0, 12).map(([k, o]) => '<tr><td>' + esc(k) + '<div class="d">' + esc(o.cat) + '</div></td><td class="r">' + o.n + '</td><td class="r">' + inr(o.v) + '</td></tr>').join('');
+  // repeats every month
+  const rec = recurring(TX.filter(t => t.dir === 'out'));
+  $('recurring').innerHTML = rec.length ? '<tr><th>What</th><th class="r">Usually</th><th class="r">Months</th></tr>' + rec.slice(0, 12).map(r => '<tr><td>' + esc(r.payee) + '<div class="d">' + esc(r.cat) + '</div></td><td class="r">' + inr(r.amt) + '</td><td class="r">' + r.months + '</td></tr>').join('') + '<tr><td><b>Together</b></td><td class="r"><b>' + inr(rec.reduce((a, r) => a + r.amt, 0)) + '</b></td><td class="r">a month</td></tr>' : '<tr><td class="muted">Nothing repeats yet. Add a few months of statements to see subscriptions and EMIs.</td></tr>';
+  drawTable();
+}
+function recurring(out) {
+  const g = new Map();
+  for (const t of out) { const k = (t.vpa || t.payee).toLowerCase(); if (!g.has(k)) g.set(k, []); g.get(k).push(t); }
+  const res = [];
+  for (const list of g.values()) {
+    const months = new Map();
+    for (const t of list) months.set(t.date.getFullYear() * 12 + t.date.getMonth(), t.amt);
+    if (months.size < 3) continue;
+    const amts = [...months.values()].sort((a, b) => a - b), med = amts[amts.length >> 1];
+    if (amts.filter(a => Math.abs(a - med) <= med * 0.1).length < 3) continue;
+    res.push({ payee: list[0].payee, cat: list[0].cat, amt: med, months: months.size });
+  }
+  return res.sort((a, b) => b.amt - a.amt);
+}
+function drawMonths() {
+  const cv = $('months'), r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+  cv.width = Math.round(r.width * d); cv.height = Math.round(230 * d);
+  const x = cv.getContext('2d'); x.scale(d, d);
+  const W = r.width, H = 230, m = new Map();
+  for (const t of TX) { const k = t.date.getFullYear() + '-' + String(t.date.getMonth() + 1).padStart(2, '0'); const o = m.get(k) || { in: 0, out: 0 }; o[t.dir === 'in' ? 'in' : 'out'] += catFilter && t.cat !== catFilter ? 0 : t.amt; m.set(k, o); }
+  const keys = [...m.keys()].sort().slice(-12), max = Math.max(1, ...keys.map(k => Math.max(catFilter ? 0 : m.get(k).in, m.get(k).out)));
+  const bw = W / Math.max(1, keys.length), css = getComputedStyle(document.body);
+  keys.forEach((k, i) => {
+    const o = m.get(k), hin = catFilter ? 0 : o.in / max * (H - 40), hout = o.out / max * (H - 40), w = Math.max(4, bw / 2 - 4);
+    x.fillStyle = '#1f8a4c'; x.fillRect(i * bw + 2, H - 22 - hin, w, hin);
+    x.fillStyle = '#0e7490'; x.fillRect(i * bw + 2 + w + 2, H - 22 - hout, w, hout);
+    x.fillStyle = css.color; x.globalAlpha = 0.65; x.font = '11px system-ui'; x.fillText(new Date(k + '-01T00:00').toLocaleDateString('en-GB', { month: 'short' }), i * bw + 2, H - 6); x.globalAlpha = 1;
+  });
+}
+function drawTable() {
+  const q = $('q').value.trim().toLowerCase();
+  const all = [...new Set([...CATS.map(c => c[0]), 'Sent to people', 'Other UPI payments', 'Other', 'Money received', 'Other income'])];
+  if ($('catFilter').options.length !== all.length + 1) $('catFilter').innerHTML = '<option value="">All categories</option>' + all.map(c => '<option>' + esc(c) + '</option>').join('');
+  $('catFilter').value = catFilter;
+  const rows = view.filter(t => (!catFilter || t.cat === catFilter) && (!q || (t.desc + ' ' + t.payee + ' ' + t.cat).toLowerCase().includes(q))).slice().reverse();
+  $('tx').innerHTML = '<tr><th>Date</th><th>Details</th><th>Category</th><th class="r">Amount</th></tr>' + rows.slice(0, 1500).map((t, i) => '<tr><td>' + t.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + '</td><td>' + esc(t.payee) + '<div class="d">' + esc(t.desc.slice(0, 120)) + '</div></td>' +
+    '<td><select data-k="' + TX.indexOf(t) + '">' + all.map(c => '<option' + (c === t.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select></td><td class="r ' + t.dir + '">' + (t.dir === 'in' ? '+' : '') + inr(t.amt) + '</td></tr>').join('');
+  for (const s of $('tx').querySelectorAll('select[data-k]')) s.onchange = () => {
+    const t = TX[+s.dataset.k], key = (t.vpa || t.payee).toLowerCase();
+    learned[key] = s.value; saveLearned();
+    for (const u of TX) if ((u.vpa || u.payee).toLowerCase() === key) u.cat = s.value;
+    render();
+  };
+}
+
+$('drop').onclick = () => $('pick').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pick').click(); } };
+$('pick').onchange = () => { load([...$('pick').files]); $('pick').value = ''; };
+for (const ev of ['dragenter', 'dragover']) $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); });
+for (const ev of ['dragleave', 'drop']) $('drop').addEventListener(ev, () => $('drop').classList.remove('over'));
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); const f = (e.dataTransfer || {}).files; if (f && f.length) load([...f]); });
+$('period').onchange = render;
+$('q').oninput = drawTable;
+$('catFilter').onchange = () => { catFilter = $('catFilter').value; render(); };
+$('addBtn').onclick = () => $('pick').click();
+$('csvBtn').onclick = () => {
+  const q = v => /[",\n]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : v;
+  const csv = 'Date,Details,Paid to,Category,Money in,Money out,Balance\r\n' + TX.map(t => [t.date.toISOString().slice(0, 10), t.desc, t.payee, t.cat, t.dir === 'in' ? t.amt.toFixed(2) : '', t.dir === 'out' ? t.amt.toFixed(2) : '', t.bal === null ? '' : t.bal.toFixed(2)].map(q).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'statement-categorised.csv'; document.body.appendChild(a); a.click(); a.remove();
+};
+addEventListener('resize', () => { if (TX.length && !$('result').hidden) drawMonths(); });
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Bank Statement Insights</h2>
+<p>Drop in your bank statement and see where the money really goes: spending by category, the places and people you pay most, food delivery and shopping, subscriptions and EMIs that repeat every month, and how each month compares. Your statement is read in your browser and never uploaded.</p>
+<h3>Use</h3>
+<ul><li>Download a statement from your bank's app or net banking as PDF, CSV or Excel (.xlsx). CSV and Excel give the most accurate results. Drop in several months, or several accounts, at once; the same transaction in two overlapping statements is only counted once.</li><li>Locked PDF? Type the password when asked (often your date of birth or customer ID).</li><li>Pick a month or see everything. Click a category to see only that.</li><li>Change any transaction's category and every payment to that merchant follows, now and next time.</li><li>Download the categorised CSV to keep or open in a spreadsheet.</li></ul>
+<h3>How it works</h3>
+<ul><li>Spreadsheets and CSV files are read by finding the heading row (date, narration, debit, credit, balance and their many bank-specific names). PDFs are read with Mozilla's pdf.js; each line becomes cells, and amounts are matched to columns by where the headings sit on the page.</li><li>Where a statement has one amount column with no Dr or Cr, the running balance decides whether money went in or out. Statements listed newest first are put in date order.</li><li>The payee comes from the narration: the name in a UPI, NEFT or IMPS entry, or the merchant on a card payment, with bank codes, reference numbers and IFSC codes left out.</li><li>Categories come from a list of common Indian merchants and words (Swiggy, Zomato, Blinkit, Uber, IRCTC, electricity boards, SIPs, EMIs and so on). UPI payments to a person's name are counted as money sent to people.</li><li>Repeats every month: the same payee in three or more months, for nearly the same amount each time.</li><li>Your category changes are saved in this browser by merchant. The page is blocked from sending anything over the network.</li></ul>
+<p class="pg-more">More like this: <a href="../chat-wrapped/">Chat Wrapped</a>, <a href="../insta-unfollowers/">Instagram Unfollowers</a>, <a href="../live-location/">Live Location</a>, <a href="../location-map/">Location Map</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/bank-insights">bank-insights on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

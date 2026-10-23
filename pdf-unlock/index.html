@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e5484d'/%3E%3Crect x='8' y='14' width='16' height='12' rx='2' fill='%23ffffff'/%3E%3Cpath d='M12 14v-3a4 4 0 0 1 7.6-1.7' fill='none' stroke='%23ffffff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>PDF Unlock | remove password from PDF, bank statements and e-Aadhaar</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/pdf-unlock/">
+<style>
+  :root { --paper:#f6f3f2; --ink:#1d1a19; --muted:#706a68; --rule:#e0dad8; --card:#ffffff; --accent:#d23d43; --accent-soft:#fbe5e5; --good:#2c8a4b; --bad:#c4303a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#131111; --ink:#ece8e6; --muted:#9d9693; --rule:#2e2a29; --card:#1c1918; --accent:#ff6b70; --accent-soft:#36191a; --good:#5fd38a; --bad:#ff6b70; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 72px; }
+  main { max-width:700px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { font-size:17px; margin:0 0 8px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--rule); border-radius:14px; padding:18px; margin-top:16px; }
+  .drop { border:2px dashed var(--rule); border-radius:14px; padding:34px 16px; text-align:center; cursor:pointer; }
+  .drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); }
+  .drop b { display:block; font-size:18px; }
+  label { display:block; font-weight:600; margin:14px 0 6px; font-size:14px; }
+  textarea, input { width:100%; font:inherit; font-size:16px; padding:10px 12px; border-radius:9px; border:1.5px solid var(--rule); background:var(--paper); color:var(--ink); }
+  textarea { min-height:46px; resize:vertical; font-family:ui-monospace, Menlo, monospace; font-size:15px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  button { font:inherit; font-weight:600; font-size:15px; padding:9px 15px; border-radius:9px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { border-color:var(--ink); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.link { border:0; background:none; padding:4px 6px; color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .files { list-style:none; margin:14px 0 0; padding:0; }
+  .files li { display:flex; gap:10px; align-items:center; padding:10px 2px; border-bottom:1px solid var(--rule); }
+  .files li:last-child { border-bottom:0; }
+  .files .n { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .files .st { font-size:13px; text-align:right; }
+  .ok { color:var(--good); } .bad { color:var(--bad); }
+  details { margin-top:16px; }
+  summary { cursor:pointer; font-weight:600; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin-top:8px; }
+  td { padding:7px 4px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  td:first-child { font-weight:600; width:38%; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="PDF Unlock">
+<meta property="og:description" content="Remove the password from a PDF you can already open: bank statements, e-Aadhaar, salary slips. Also removes printing and copying restrictions. Works in your browser; the file is never uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/pdf-unlock/">
+<meta property="og:image" content="https://rajeshrenato.github.io/pdf-unlock/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Remove the password from a PDF you can already open: bank statements, e-Aadhaar, salary slips. Also removes printing and copying restrictions. Works in your browser; the file is never uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "PDF Unlock", "item": "https://rajeshrenato.github.io/pdf-unlock/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "PDF Unlock", "url": "https://rajeshrenato.github.io/pdf-unlock/", "description": "Remove the password from a PDF you can already open: bank statements, e-Aadhaar, salary slips. Also removes printing and copying restrictions. Works in your browser; the file is never uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>PDF Unlock</h1>
+  <p class="lede">Remove the password from a PDF you already know the password for: bank statements, e-Aadhaar, salary slips, tax forms. Type it once here and never again.</p>
+  <p class="muted small">Your PDFs are unlocked in this browser. This page is blocked from sending anything over the network, so the files and passwords stay on your device.</p>
+
+  <section class="card">
+    <div class="drop" id="drop" tabindex="0" role="button"><b>Drop locked PDFs here</b><span class="muted small">or click to choose. Several at once is fine.</span></div>
+    <input type="file" id="pick" accept="application/pdf,.pdf" multiple hidden>
+    <ul class="files" id="files"></ul>
+    <div id="pwBox" hidden>
+      <label for="pw">Password</label>
+      <textarea id="pw" rows="1" placeholder="Type the password" autocomplete="off" spellcheck="false" autocapitalize="off"></textarea>
+      <p class="small muted" style="margin-top:6px">Not sure which one? Put a few guesses on separate lines and each file gets tried with all of them.</p>
+      <div class="row"><button class="primary" id="go">Unlock</button><button id="clear">Clear</button></div>
+    </div>
+  </section>
+
+  <details class="card">
+    <summary>Common passwords for Indian documents</summary>
+    <table>
+      <tr><td>e-Aadhaar</td><td>The first four letters of your name in capitals, then your year of birth. For example, RAJE1990.</td></tr>
+      <tr><td>Bank statements</td><td>Often your date of birth as DDMMYYYY, or your customer ID, or part of your name and date of birth. The email the statement came with usually says.</td></tr>
+      <tr><td>Mutual fund statements (CAS)</td><td>Usually your PAN in capitals.</td></tr>
+      <tr><td>Credit card statements</td><td>Often the first four letters of your name and the date and month of birth (for example, RAJE0105), or the last digits of the card. Check the email.</td></tr>
+      <tr><td>Salary slips and Form 16</td><td>Your employer or payroll provider decides; often your PAN or date of birth.</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:10px">These are the usual patterns, not guarantees. This page only unlocks files you have the password for; it doesn't guess or break passwords.</p>
+  </details>
+</main>
+
+<script src="../common/pdf-core.js"></script>
+<script src="../common/pdf-unlock.js"></script>
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+let list = [];
+
+function draw() {
+  $('files').innerHTML = list.map((f, i) => '<li><span class="n" title="' + esc(f.file.name) + '">' + esc(f.file.name) + '</span><span class="st ' + (f.done ? 'ok' : f.err ? 'bad' : 'muted') + '">' + esc(f.status) + '</span>' +
+    (f.out ? '<button class="link" data-dl="' + i + '">Download</button>' : '<button class="link" data-rm="' + i + '" aria-label="Remove">&times;</button>') + '</li>').join('');
+  for (const b of $('files').querySelectorAll('[data-rm]')) b.onclick = () => { list.splice(+b.dataset.rm, 1); draw(); };
+  for (const b of $('files').querySelectorAll('[data-dl]')) b.onclick = () => save(list[+b.dataset.dl]);
+  $('pwBox').hidden = !list.some(f => f.state === 'password' && !f.done);
+}
+function outName(name) { return name.replace(/\.pdf$/i, '') + '-unlocked.pdf'; }
+function save(f) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([f.out], { type: 'application/pdf' })); a.download = outName(f.file.name);
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+
+async function addFiles(files) {
+  for (const file of files) {
+    if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') continue;
+    const f = { file, status: 'Checking...', state: null };
+    list.push(f); draw();
+    try {
+      f.bytes = new Uint8Array(await file.arrayBuffer());
+      f.state = await PdfUnlock.inspect(f.bytes);
+      if (f.state === 'none') { f.status = 'Not locked'; }
+      else if (f.state === 'restrictions') {
+        // opens without a password, but printing or copying was turned off: just remove that
+        const r = await PdfUnlock.unlock(f.bytes, '');
+        f.out = r.bytes; f.done = true; f.status = 'Restrictions removed';
+        save(f);
+      } else f.status = 'Needs the password';
+    } catch (e) { f.err = true; f.status = e.message && e.message.length < 90 ? e.message : 'This file couldn\'t be read as a PDF.'; }
+    draw();
+  }
+  if (list.some(f => f.state === 'password' && !f.done)) $('pw').focus();
+}
+
+async function go() {
+  const guesses = [...new Set($('pw').value.split('\n').map(s => s.replace(/\r/g, '')).filter(s => s.length))];
+  if (!guesses.length) return;
+  $('go').disabled = true;
+  for (const f of list.filter(x => x.state === 'password' && !x.done)) {
+    f.status = 'Unlocking...'; f.err = false; draw();
+    let ok = false;
+    for (const pw of guesses) {
+      try {
+        const r = await PdfUnlock.unlock(f.bytes, pw);
+        f.out = r.bytes; f.done = true; f.status = 'Unlocked (' + r.cipher + ')'; ok = true;
+        save(f);
+        break;
+      } catch (e) {
+        if (!(e instanceof PdfUnlock.PasswordError)) { f.err = true; f.status = e.message.length < 90 ? e.message : 'This PDF couldn\'t be unlocked.'; ok = true; break; }
+      }
+    }
+    if (!ok) { f.err = true; f.status = guesses.length > 1 ? 'None of those passwords worked' : 'Wrong password'; }
+    draw();
+  }
+  $('go').disabled = false;
+}
+
+$('drop').onclick = () => $('pick').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pick').click(); } };
+$('pick').onchange = () => { addFiles([...$('pick').files]); $('pick').value = ''; };
+for (const ev of ['dragenter', 'dragover']) $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); });
+for (const ev of ['dragleave', 'drop']) $('drop').addEventListener(ev, () => $('drop').classList.remove('over'));
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); addFiles([...(e.dataTransfer || {}).files || []]); });
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !$('pw').value.includes('\n')) { e.preventDefault(); go(); } });
+$('go').onclick = go;
+$('clear').onclick = () => { list = []; $('pw').value = ''; draw(); };
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>PDF Unlock</h2>
+<p>Remove the password from PDFs you already know the password for: bank statements, e-Aadhaar, salary slips, Form 16, credit card bills. Type the password once here and the saved copy opens without it from then on. Files and passwords never leave your browser.</p>
+<h3>Use</h3>
+<ul><li>Drop one or more PDFs. Files that only have restrictions (no printing or copying) and open without a password are unlocked straight away.</li><li>For files that need a password, type it and press Unlock. Not sure which one it is? Put a few guesses on separate lines, and each file is tried with all of them.</li><li>Download each unlocked copy. It's saved as the original name with "-unlocked" added.</li><li>"Common passwords for Indian documents" lists the usual patterns, such as the first four letters of your name in capitals plus your year of birth for e-Aadhaar.</li></ul>
+<p>This removes a password you know. It does not guess or crack unknown passwords.</p>
+<h3>How it works</h3>
+<ul><li>PDF encryption keeps each string and stream in the file encrypted with a key worked out from the password. The page reads the file's security settings, works out the key the way the PDF standard describes, and checks it against the file's own check values.</li><li>All the standard kinds are handled: 40-bit and 128-bit RC4 (MD5 and RC4 written here in plain JavaScript), 128-bit AES, and 256-bit AES from both the older Acrobat 9 scheme and the current PDF 2.0 one. AES uses the browser's built-in Web Crypto.</li><li>Passwords are tried as UTF-8 and as Latin-1, since PDF makers differ on how they turn non-English letters into bytes.</li><li>Once the key is right, every object is decrypted and the whole file is written out again without its encryption settings. Text, images, fonts, bookmarks and the document title are kept.</li><li>The page is blocked from making any network requests, so neither the files nor the passwords can be sent anywhere.</li></ul>
+<p class="pg-more">More like this: <a href="../phone-to-laptop/">Phone to Laptop</a>, <a href="../images-to-pdf/">Images to PDF</a>, <a href="../file-send/">File Send</a>, <a href="../video-call/">Video Call</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/pdf-unlock">pdf-unlock on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

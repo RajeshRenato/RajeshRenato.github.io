@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2322c55e'/%3E%3Cpath d='M7 9h18v11H13l-5 4v-4H7z' fill='%23ffffff'/%3E%3Cpath d='M11 17v-3M15 17v-5M19 17v-2' stroke='%2322c55e' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<title>Chat Wrapped | WhatsApp chat analyzer and stats</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/chat-wrapped/">
+<style>
+  :root { --bg:#0c0f14; --card:#151a22; --ink:#f1f3f6; --muted:#98a2b3; --rule:#252d3a; --g1:#22c55e; --g2:#a855f7; --g3:#f59e0b; --g4:#ec4899; --g5:#38bdf8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 80px; }
+  main { max-width:880px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; z-index:20; }
+  h1 { margin:0 0 6px; font-size:36px; font-weight:900; }
+  h2 { font-size:19px; margin:0 0 12px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; max-width:640px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1px solid var(--rule); border-radius:16px; padding:18px; margin-top:16px; }
+  .drop { border:2px dashed #2f3a4b; border-radius:16px; padding:40px 16px; text-align:center; cursor:pointer; }
+  .drop:hover, .drop.over { border-color:var(--g1); background:rgba(34,197,94,.07); }
+  .drop b { display:block; font-size:19px; }
+  .how { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:640px) { .how { grid-template-columns:1fr; } }
+  .how ol { margin:6px 0 0; padding-left:20px; font-size:14px; color:var(--muted); }
+  button { font:inherit; font-weight:700; font-size:15px; padding:10px 16px; border-radius:11px; cursor:pointer; border:1px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover { border-color:var(--muted); }
+  button.primary { background:var(--g1); border-color:var(--g1); color:#06210f; }
+  select { font:inherit; font-size:15px; padding:8px 10px; border-radius:10px; background:var(--card); color:var(--ink); border:1px solid var(--rule); }
+  :focus-visible { outline:2px solid var(--g1); outline-offset:2px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:12px; }
+  .stat { background:#10141b; border-radius:12px; padding:12px 14px; }
+  .stat b { display:block; font-size:26px; font-variant-numeric:tabular-nums; }
+  .stat span { font-size:13px; color:var(--muted); }
+  .people { display:grid; gap:10px; }
+  .person { display:grid; grid-template-columns:150px 1fr auto; gap:10px; align-items:center; font-size:14px; }
+  @media (max-width:560px) { .person { grid-template-columns:100px 1fr auto; } }
+  .bar { height:12px; border-radius:6px; background:#10141b; overflow:hidden; }
+  .bar i { display:block; height:100%; border-radius:6px; }
+  canvas.chart { width:100%; display:block; }
+  .facts { display:grid; gap:10px; }
+  .fact { display:flex; gap:12px; align-items:flex-start; background:#10141b; border-radius:12px; padding:12px 14px; }
+  .fact .e { font-size:26px; line-height:1; }
+  .fact b { color:#fff; }
+  .emo { font-size:28px; letter-spacing:4px; }
+  .words { display:flex; flex-wrap:wrap; gap:6px; }
+  .words span { background:#10141b; border-radius:20px; padding:4px 11px; font-size:14px; }
+  /* the story */
+  #story { position:fixed; inset:0; z-index:30; background:#000; display:flex; align-items:center; justify-content:center; }
+  #slide { position:relative; width:min(100vw, calc(100vh * 9 / 16)); height:min(100vh, calc(100vw * 16 / 9)); overflow:hidden; border-radius:0; display:flex; flex-direction:column; justify-content:center; padding:56px 28px; text-align:center; user-select:none; }
+  @media (min-width:700px) { #slide { border-radius:18px; height:min(92vh, calc(100vw * 16 / 9)); width:min(100vw, calc(92vh * 9 / 16)); } }
+  #slide .bars { position:absolute; top:14px; left:12px; right:12px; display:flex; gap:4px; }
+  #slide .bars i { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.3); overflow:hidden; }
+  #slide .bars i b { display:block; height:100%; background:#fff; width:0; }
+  #slide .kicker { font-size:15px; font-weight:700; opacity:.85; margin-bottom:10px; }
+  #slide .big { font-size:clamp(44px, 13vw, 86px); font-weight:900; line-height:1; margin:6px 0 12px; font-variant-numeric:tabular-nums; }
+  #slide .mid { font-size:clamp(22px, 6vw, 34px); font-weight:800; line-height:1.15; margin:6px 0 12px; }
+  #slide .sub { font-size:17px; opacity:.9; }
+  #slide .list { text-align:left; margin:14px auto 0; font-size:18px; display:grid; gap:8px; width:100%; max-width:330px; }
+  #slide .list div { display:flex; justify-content:space-between; gap:10px; background:rgba(0,0,0,.18); padding:8px 12px; border-radius:10px; }
+  #slide .close { position:absolute; top:26px; right:14px; background:none; border:0; color:#fff; font-size:26px; padding:4px 10px; }
+  #slide .tapL, #slide .tapR { position:absolute; top:40px; bottom:0; width:35%; }
+  #slide .tapL { left:0; } #slide .tapR { right:0; width:65%; }
+  #slide .hint { position:absolute; bottom:18px; left:0; right:0; font-size:13px; opacity:.7; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Chat Wrapped">
+<meta property="og:description" content="Your WhatsApp chat, wrapped: who texts more, who replies faster, busiest hours, top emojis, longest streak and more, as a story you can share. The chat never leaves your phone.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/chat-wrapped/">
+<meta property="og:image" content="https://rajeshrenato.github.io/chat-wrapped/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Your WhatsApp chat, wrapped: who texts more, who replies faster, busiest hours, top emojis, longest streak and more, as a story you can share. The chat never leaves your phone.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Chat Wrapped", "item": "https://rajeshrenato.github.io/chat-wrapped/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Chat Wrapped", "url": "https://rajeshrenato.github.io/chat-wrapped/", "description": "Your WhatsApp chat, wrapped: who texts more, who replies faster, busiest hours, top emojis, longest streak and more, as a story you can share. The chat never leaves your phone.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Chat Wrapped</h1>
+  <p class="lede">Your WhatsApp chat, wrapped. Who texts more, who replies faster, your busiest hours, top emojis, longest streak, and the late-night chats, as a story to share.</p>
+  <p class="muted small">The chat is read in this browser and never uploaded anywhere.</p>
+
+  <section id="start">
+    <div class="card">
+      <div class="drop" id="drop" tabindex="0" role="button"><b>Drop your exported chat here</b><span class="muted small">The .txt file, or the .zip if you exported with media.</span></div>
+      <input type="file" id="pick" accept=".txt,.zip,text/plain,application/zip" hidden>
+      <p class="small" id="err" style="color:#ff7a7a;margin-top:10px" hidden></p>
+    </div>
+    <div class="card how">
+      <div><h2>On Android</h2><ol><li>Open the chat and tap the three dots.</li><li>More, then Export chat.</li><li>Choose Without media, then save or send the file to yourself.</li></ol></div>
+      <div><h2>On iPhone</h2><ol><li>Open the chat and tap the name at the top.</li><li>Scroll down to Export Chat.</li><li>Choose Without Media and save it to Files.</li></ol></div>
+    </div>
+  </section>
+
+  <section id="result" hidden>
+    <div class="row" style="margin-top:18px"><button class="primary" id="playBtn">Play the story</button><button id="shareBtn">Save a summary image</button><select id="yearSel" aria-label="Period"></select><button id="againBtn">Another chat</button></div>
+    <div class="card"><div class="grid" id="stats"></div></div>
+    <div class="card"><h2>Who talks more</h2><div class="people" id="people"></div></div>
+    <div class="card"><h2>When you chat</h2><canvas class="chart" id="heat" height="220"></canvas><p class="small muted" style="margin-top:8px">Darker squares are quieter; brighter ones are when the messages fly.</p></div>
+    <div class="card"><h2>Messages over time</h2><canvas class="chart" id="timeline" height="160"></canvas></div>
+    <div class="card"><h2>Fun facts</h2><div class="facts" id="facts"></div></div>
+    <div class="card"><h2>Top emojis</h2><div class="emo" id="emojis"></div><h2 style="margin-top:16px">Words you use most</h2><div class="words" id="words"></div></div>
+  </section>
+</main>
+
+<div id="story" hidden><div id="slide"></div></div>
+
+<script src="../common/zip.js"></script>
+<script>
+'use strict';
+
+// ======================================================================
+// Reading the export. A message starts with a date and time; anything else
+// continues the message above. Android writes "12/10/23, 9:41 pm - Name: text",
+// iPhone writes "[12/10/23, 9:41:05 PM] Name: text".
+// ======================================================================
+
+const HEAD = /^[‎‏﻿]*\[?(\d{1,4})[\/.\-](\d{1,2})[\/.\-](\d{1,4}),?\s+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?[\s  ]*([aApP]\.?[\s  ]?[mM]\.?)?\]?\s*(?:[-–]\s)?(.*)$/;
+const MEDIA = /^[‎]*(<media omitted>|<[^>]*omitted>|(image|video|audio|sticker|gif|document|contact card|photo) omitted|<attached: .*>|.*\(file attached\))$/i;
+const DELETED = /^[‎]*(this message was deleted|you deleted this message|message deleted)\.?$/i;
+
+function parseChat(text) {
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  const raw = [];
+  for (const line of lines) {
+    const m = HEAD.exec(line);
+    if (m) raw.push({ m, rest: m[8] });
+    else if (raw.length) raw[raw.length - 1].rest += '\n' + line;
+  }
+  if (!raw.length) throw new Error('This doesn\'t look like an exported WhatsApp chat.');
+  // which part of the date is the day: if a first number is over 12, it's day-first; if a second is, month-first
+  let dayFirst = true, yearFirst = false;
+  if (raw.some(r => +r.m[1] > 31)) yearFirst = true;
+  else if (raw.some(r => +r.m[2] > 12)) dayFirst = false;
+  else if (!raw.some(r => +r.m[1] > 12) && /^‎?\[/.test(lines.find(l => HEAD.test(l)) || '') && (typeof navigator === 'undefined' || /US/.test(navigator.language || ''))) dayFirst = false;
+  const msgs = [];
+  for (const { m, rest } of raw) {
+    let y, mo, d;
+    if (yearFirst) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+    else { y = +m[3]; d = dayFirst ? +m[1] : +m[2]; mo = dayFirst ? +m[2] : +m[1]; }
+    if (y < 100) y += 2000;
+    let h = +m[4];
+    const ap = m[7] ? m[7].toLowerCase().replace(/[^ap]/g, '') : '';
+    if (ap === 'p' && h < 12) h += 12;
+    if (ap === 'a' && h === 12) h = 0;
+    const t = new Date(y, mo - 1, d, h, +m[5], +(m[6] || 0));
+    if (isNaN(t)) continue;
+    const c = rest.indexOf(': ');
+    if (c <= 0 || c > 60) continue;   // "Messages are end-to-end encrypted", "X added Y" and other notices
+    const name = rest.slice(0, c).replace(/^[‎~\s]+|[‎\s]+$/g, '');
+    const body = rest.slice(c + 2).trim();
+    msgs.push({ t, name, body, media: MEDIA.test(body), deleted: DELETED.test(body) });
+  }
+  if (!msgs.length) throw new Error('No messages found in this file.');
+  return msgs;
+}
+
+// ======================================================================
+// The numbers
+// ======================================================================
+
+const STOP = new Set(('the and you that was for are with this have not but what all were when your can said there use each which she how their will other about out many then them these some her would make like him into has two more very after our just than also its did get got been from they one dont didnt cant wont its im ive youre thats okay yeah yes yup haha hahaha lol omitted media message deleted ' +
+  'hai hain toh nahi kya bhi aur mein main mai tha thi kar kya ko se ki ka ke na hi ho hu ha haa han kuch abhi bas yaar acha accha ok okk okay theek thik wala wali woh vo kab kaise kyun kyu kaha jo').split(' '));
+const EMOJI = /\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*/gu;
+const dayKey = t => t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+
+function analyse(msgs) {
+  const people = new Map(), days = new Map(), heat = Array.from({ length: 7 }, () => new Array(24).fill(0)), emojis = new Map(), words = new Map();
+  const P = n => { if (!people.has(n)) people.set(n, { name: n, msgs: 0, words: 0, media: 0, deleted: 0, emojis: new Map(), replies: [], starts: 0, night: 0, laughs: 0, sorry: 0, love: 0, longest: '' }); return people.get(n); };
+  let prev = null;
+  for (const m of msgs) {
+    const p = P(m.name);
+    p.msgs++;
+    const day = dayKey(m.t);
+    days.set(day, (days.get(day) || 0) + 1);
+    heat[(m.t.getDay() + 6) % 7][m.t.getHours()]++;
+    if (m.media) p.media++;
+    else if (m.deleted) p.deleted++;
+    else {
+      const w = m.body.split(/\s+/).filter(Boolean);
+      p.words += w.length;
+      if (m.body.length > p.longest.length) p.longest = m.body;
+      for (const e of m.body.match(EMOJI) || []) { emojis.set(e, (emojis.get(e) || 0) + 1); p.emojis.set(e, (p.emojis.get(e) || 0) + 1); }
+      for (const raw of m.body.toLowerCase().match(/[\p{L}']{3,}/gu) || []) { const x = raw.replace(/'/g, ''); if (!STOP.has(x) && !/^(ha)+h?$/.test(x)) words.set(x, (words.get(x) || 0) + 1); }
+      if (/\b(ha){2,}|\blol\b|😂|🤣/i.test(m.body)) p.laughs++;
+      if (/\bsorry\b|\bsry\b/i.test(m.body)) p.sorry++;
+      if (/\blove (you|u)\b|\bmiss (you|u)\b|❤️|😘|🥰/i.test(m.body)) p.love++;
+    }
+    const h = m.t.getHours();
+    if (h < 4) p.night++;
+    if (prev) {
+      const gap = (m.t - prev.t) / 60000;
+      if (gap >= 360) p.starts++;
+      else if (prev.name !== m.name && gap >= 0 && gap < 720) p.replies.push(gap);
+    } else p.starts++;
+    prev = m;
+  }
+  const list = [...people.values()].sort((a, b) => b.msgs - a.msgs);
+  for (const p of list) { const r = p.replies.slice().sort((a, b) => a - b); p.medianReply = r.length ? r[r.length >> 1] : null; }
+  // days in a row, and the longest quiet spell
+  const dayList = [...days.keys()].sort();
+  let streak = 0, best = 0, bestEnd = null, quiet = 0, quietFrom = null;
+  for (let i = 0; i < dayList.length; i++) {
+    const d = new Date(dayList[i] + 'T00:00'), prevD = i ? new Date(dayList[i - 1] + 'T00:00') : null;
+    const diff = prevD ? Math.round((d - prevD) / 864e5) : 1;
+    streak = diff === 1 ? streak + 1 : 1;
+    if (streak > best) { best = streak; bestEnd = dayList[i]; }
+    if (diff - 1 > quiet) { quiet = diff - 1; quietFrom = dayList[i - 1]; }
+  }
+  const busiest = [...days.entries()].sort((a, b) => b[1] - a[1])[0];
+  let peakH = 0, hours = new Array(24).fill(0);
+  for (const row of heat) row.forEach((v, h) => { hours[h] += v; });
+  peakH = hours.indexOf(Math.max(...hours));
+  const wk = heat.map(r => r.reduce((a, b) => a + b, 0)), peakD = wk.indexOf(Math.max(...wk));
+  return {
+    total: msgs.length, first: msgs[0], last: msgs[msgs.length - 1], people: list, days, dayList, activeDays: days.size,
+    spanDays: Math.max(1, Math.round((msgs[msgs.length - 1].t - msgs[0].t) / 864e5) + 1),
+    streak: best, streakEnd: bestEnd, quiet, quietFrom, busiest, heat, peakH, peakD,
+    words: list.reduce((a, p) => a + p.words, 0), media: list.reduce((a, p) => a + p.media, 0),
+    emojis: [...emojis.entries()].sort((a, b) => b[1] - a[1]), topWords: [...words.entries()].sort((a, b) => b[1] - a[1]).slice(0, 24),
+  };
+}
+
+// ======================================================================
+// Showing it
+// ======================================================================
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const COLORS = ['#22c55e', '#a855f7', '#f59e0b', '#ec4899', '#38bdf8', '#f97316', '#14b8a6', '#eab308'];
+const DAYS = ['Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays', 'Sundays'];
+const n0 = v => Math.round(v).toLocaleString('en-IN');
+const hourName = h => (h % 12 || 12) + (h < 12 ? ' am' : ' pm');
+const mins = v => v == null ? 'n/a' : v < 1 ? 'under a minute' : v < 60 ? Math.round(v) + (Math.round(v) === 1 ? ' minute' : ' minutes') : (v / 60).toFixed(1) + ' hours';
+const fmtDay = s => new Date(s + 'T00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+let ALL = null, A = null;
+
+function show() {
+  const a = A, ppl = a.people.slice(0, 8);
+  $('stats').innerHTML = [
+    [n0(a.total), 'messages'], [n0(a.words), 'words'], [n0(a.activeDays), 'days you talked'], [n0(a.total / a.activeDays), 'messages on a typical day'],
+    [a.streak + (a.streak === 1 ? ' day' : ' days'), 'longest streak'], [n0(a.media), 'photos, videos and files'],
+  ].map(([b, s]) => '<div class="stat"><b>' + esc(b) + '</b><span>' + s + '</span></div>').join('');
+  const max = Math.max(...ppl.map(p => p.msgs));
+  $('people').innerHTML = ppl.map((p, i) => '<div class="person"><span>' + esc(p.name) + '</span><div class="bar"><i style="width:' + (p.msgs / max * 100) + '%;background:' + COLORS[i % 8] + '"></i></div><span class="muted">' + n0(p.msgs) + ' (' + Math.round(p.msgs / a.total * 100) + '%)</span></div>').join('');
+  drawHeat(); drawTimeline();
+  $('facts').innerHTML = facts().map(([e, t]) => '<div class="fact"><span class="e">' + e + '</span><span>' + t + '</span></div>').join('');
+  $('emojis').textContent = a.emojis.slice(0, 12).map(e => e[0]).join(' ') || 'No emojis at all. Impressive restraint.';
+  $('words').innerHTML = a.topWords.map(([w, n]) => '<span>' + esc(w) + ' <b class="muted">' + n + '</b></span>').join('');
+}
+function who(fn, pick = 'max', min = 1) {
+  const ppl = A.people.slice(0, 8).filter(p => p.msgs >= 20);
+  const vals = ppl.map(p => [p, fn(p)]).filter(([, v]) => v != null && v >= (pick === 'max' ? min : 0));
+  if (!vals.length) return null;
+  vals.sort((x, y) => pick === 'max' ? y[1] - x[1] : x[1] - y[1]);
+  return vals[0];
+}
+function facts() {
+  const a = A, out = [], b = s => '<b>' + esc(s) + '</b>';
+  const fast = who(p => p.medianReply, 'min');
+  if (fast) out.push(['⚡', b(fast[0].name) + ' replies fastest, usually within ' + mins(fast[1]) + '.']);
+  const slow = who(p => p.medianReply, 'max');
+  if (slow && fast && slow[0] !== fast[0]) out.push(['🐢', b(slow[0].name) + ' takes their time: about ' + mins(slow[1]) + ' to reply.']);
+  const starter = who(p => p.starts);
+  if (starter) out.push(['👋', b(starter[0].name) + ' starts the conversation most often, ' + n0(starter[1]) + ' times.']);
+  const owl = who(p => p.night, 'max', 3);
+  if (owl) out.push(['🦉', b(owl[0].name) + ' is the night owl, with ' + n0(owl[1]) + ' messages between midnight and 4 am.']);
+  const laugh = who(p => p.laughs, 'max', 3);
+  if (laugh) out.push(['😂', b(laugh[0].name) + ' laughs the most: ' + n0(laugh[1]) + ' hahas, lols and 😂.']);
+  const sorry = who(p => p.sorry, 'max', 2);
+  if (sorry) out.push(['🙏', b(sorry[0].name) + ' says sorry the most (' + n0(sorry[1]) + ' times).']);
+  const love = who(p => p.love, 'max', 2);
+  if (love) out.push(['❤️', b(love[0].name) + ' sends the most love, ' + n0(love[1]) + ' times.']);
+  const essay = who(p => p.msgs ? p.words / Math.max(1, p.msgs - p.media) : null);
+  if (essay) out.push(['📝', b(essay[0].name) + ' writes the longest messages, ' + essay[1].toFixed(1) + ' words on average.']);
+  if (a.busiest) out.push(['🔥', 'Your busiest day was ' + b(fmtDay(a.busiest[0])) + ', with ' + n0(a.busiest[1]) + ' messages.']);
+  out.push(['🕘', 'You talk most on ' + b(DAYS[a.peakD]) + ', and the busiest hour is ' + b(hourName(a.peakH)) + '.']);
+  if (a.quiet >= 3) out.push(['🤐', 'The longest silence lasted ' + b(a.quiet + ' days') + ', after ' + fmtDay(a.quietFrom) + '.']);
+  out.push(['🎬', 'It started on ' + b(a.first.t.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })) + ', when ' + b(a.first.name) + ' said "' + esc(a.first.media ? 'a photo' : a.first.body.slice(0, 60)) + '".']);
+  return out;
+}
+function canvasFor(id, h) {
+  const cv = $(id), r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+  cv.width = Math.round(r.width * d); cv.height = Math.round(h * d);
+  const x = cv.getContext('2d'); x.scale(d, d);
+  return [x, r.width, h];
+}
+function drawHeat() {
+  const [x, W, H] = canvasFor('heat', 220), left = 40, top = 6, cw = (W - left) / 24, ch = (H - top - 22) / 7;
+  const max = Math.max(1, ...A.heat.flat());
+  x.font = '12px system-ui, sans-serif'; x.fillStyle = '#98a2b3';
+  ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach((d, i) => x.fillText(d, 0, top + i * ch + ch * 0.66));
+  for (let d = 0; d < 7; d++) for (let h = 0; h < 24; h++) {
+    const v = A.heat[d][h] / max;
+    x.fillStyle = 'rgba(34,197,94,' + (0.06 + v * 0.94) + ')';
+    x.beginPath(); x.roundRect ? x.roundRect(left + h * cw + 1, top + d * ch + 1, cw - 2, ch - 2, 3) : x.rect(left + h * cw + 1, top + d * ch + 1, cw - 2, ch - 2); x.fill();
+  }
+  x.fillStyle = '#98a2b3';
+  for (const h of [0, 6, 12, 18]) x.fillText(hourName(h), left + h * cw, H - 4);
+}
+function drawTimeline() {
+  const [x, W, H] = canvasFor('timeline', 160), months = new Map();
+  for (const [d, n] of A.days) { const k = d.slice(0, 7); months.set(k, (months.get(k) || 0) + n); }
+  const keys = [...months.keys()].sort();
+  if (!keys.length) return;
+  // fill in quiet months too
+  const all = [];
+  for (let [y, m] = keys[0].split('-').map(Number); ; ) { const k = y + '-' + String(m).padStart(2, '0'); all.push(k); if (k >= keys[keys.length - 1]) break; m++; if (m > 12) { m = 1; y++; } }
+  const max = Math.max(...months.values()), bw = W / all.length;
+  all.forEach((k, i) => {
+    const v = months.get(k) || 0, h = v / max * (H - 26);
+    x.fillStyle = '#a855f7'; x.fillRect(i * bw + 1, H - 20 - h, Math.max(1, bw - 2), h);
+  });
+  x.fillStyle = '#98a2b3'; x.font = '12px system-ui, sans-serif';
+  const step = Math.max(1, Math.ceil(all.length / 8));
+  all.forEach((k, i) => { if (i % step === 0) { const [y, m] = k.split('-'); x.fillText(new Date(+y, +m - 1).toLocaleDateString('en-GB', { month: 'short' }) + ' ' + y.slice(2), i * bw, H - 4); } });
+}
+
+// ---- the story: one slide at a time, like the stories in your apps
+
+const BGS = ['linear-gradient(160deg,#16a34a,#065f46)', 'linear-gradient(160deg,#7c3aed,#312e81)', 'linear-gradient(160deg,#f59e0b,#b45309)', 'linear-gradient(160deg,#ec4899,#9d174d)', 'linear-gradient(160deg,#0ea5e9,#1e3a8a)', 'linear-gradient(160deg,#14b8a6,#134e4a)', 'linear-gradient(160deg,#f97316,#7c2d12)', 'linear-gradient(160deg,#22c55e,#7c3aed)'];
+function slides() {
+  const a = A, top = a.people[0], second = a.people[1], f = facts();
+  const s = [
+    { k: 'Your chat, wrapped', big: '', mid: a.people.length === 2 ? esc(a.people[0].name) + ' &amp; ' + esc(a.people[1].name) : esc(a.people.length + ' people in this group'), sub: a.first.t.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) + ' to ' + a.last.t.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) },
+    { k: 'Together you sent', big: n0(a.total), sub: 'messages, ' + n0(a.words) + ' words, over ' + n0(a.activeDays) + ' days' },
+    { k: 'Who talks more', mid: esc(top.name), sub: 'sent ' + Math.round(top.msgs / a.total * 100) + '% of all messages', list: a.people.slice(0, 5).map(p => [p.name, n0(p.msgs)]) },
+    { k: 'Longest streak', big: a.streak + '', sub: 'days in a row without missing a day' + (a.streakEnd ? ', ending ' + fmtDay(a.streakEnd) : '') },
+    { k: 'Prime time', mid: hourName(a.peakH) + ' on ' + DAYS[a.peakD], sub: 'is when this chat comes alive' },
+    { k: 'Your busiest day', mid: a.busiest ? fmtDay(a.busiest[0]) : '', sub: a.busiest ? n0(a.busiest[1]) + ' messages in one day. What happened?' : '' },
+    { k: 'Top emojis', big: a.emojis.slice(0, 3).map(e => e[0]).join(' ') || '🙂', sub: a.emojis.length ? a.emojis[0][0] + ' was used ' + n0(a.emojis[0][1]) + ' times' : 'not a single emoji' },
+  ];
+  for (const [e, t] of f.slice(0, 4)) s.push({ k: 'Did you know', big: e, mid: t });
+  s.push({ k: 'That\'s a wrap', mid: 'Same time next year?', sub: 'Save the summary image to share it' });
+  return s;
+}
+let sIdx = 0, sTimer = 0, sStart = 0, SL = [];
+const SLIDE_MS = 5200;
+function playStory() { SL = slides(); sIdx = 0; $('story').hidden = false; renderSlide(); }
+function renderSlide() {
+  const s = SL[sIdx], el = $('slide');
+  el.style.background = BGS[sIdx % BGS.length];
+  el.innerHTML = '<div class="bars">' + SL.map((_, i) => '<i><b style="width:' + (i < sIdx ? 100 : 0) + '%"></b></i>').join('') + '</div><button class="close" aria-label="Close">&times;</button>' +
+    '<div class="kicker">' + s.k + '</div>' + (s.big ? '<div class="big">' + s.big + '</div>' : '') + (s.mid ? '<div class="mid">' + s.mid + '</div>' : '') + (s.sub ? '<div class="sub">' + s.sub + '</div>' : '') +
+    (s.list ? '<div class="list">' + s.list.map(([n, v]) => '<div><span>' + esc(n) + '</span><b>' + v + '</b></div>').join('') + '</div>' : '') +
+    '<div class="tapL"></div><div class="tapR"></div><div class="hint">Tap to continue</div>';
+  el.querySelector('.close').onclick = closeStory;
+  el.querySelector('.tapL').onclick = () => step(-1);
+  el.querySelector('.tapR').onclick = () => step(1);
+  sStart = performance.now(); cancelAnimationFrame(sTimer); tick();
+}
+function tick() {
+  const k = (performance.now() - sStart) / SLIDE_MS, bar = $('slide').querySelectorAll('.bars b')[sIdx];
+  if (bar) bar.style.width = Math.min(100, k * 100) + '%';
+  if (k >= 1) { step(1); return; }
+  sTimer = requestAnimationFrame(tick);
+}
+function step(d) { const n = sIdx + d; if (n < 0) return; if (n >= SL.length) { closeStory(); return; } sIdx = n; renderSlide(); }
+function closeStory() { cancelAnimationFrame(sTimer); $('story').hidden = true; }
+addEventListener('keydown', e => { if ($('story').hidden) return; if (e.key === 'ArrowRight' || e.key === ' ') step(1); else if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'Escape') closeStory(); });
+
+// ---- a summary image to share, 1080 × 1920
+
+function summaryImage() {
+  const a = A, cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1920;
+  const x = cv.getContext('2d'), g = x.createLinearGradient(0, 0, 1080, 1920);
+  g.addColorStop(0, '#16a34a'); g.addColorStop(0.55, '#4c1d95'); g.addColorStop(1, '#0c0f14');
+  x.fillStyle = g; x.fillRect(0, 0, 1080, 1920);
+  const T = (s, y, size, weight = 800, color = '#fff') => { x.fillStyle = color; x.font = weight + ' ' + size + 'px system-ui, -apple-system, sans-serif'; x.textAlign = 'center'; x.fillText(s, 540, y); };
+  T('CHAT WRAPPED', 150, 44, 900, 'rgba(255,255,255,.85)');
+  T(a.people.length === 2 ? a.people[0].name + ' & ' + a.people[1].name : a.people.length + ' people', 250, 64, 900);
+  T(a.first.t.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) + ' to ' + a.last.t.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }), 320, 36, 600, 'rgba(255,255,255,.8)');
+  const boxes = [[n0(a.total), 'messages'], [a.streak + ' days', 'longest streak'], [hourName(a.peakH), 'busiest hour'], [n0(a.activeDays), 'days talking']];
+  boxes.forEach(([v, l], i) => {
+    const bx = 90 + (i % 2) * 460, by = 420 + Math.floor(i / 2) * 250;
+    x.fillStyle = 'rgba(0,0,0,.22)'; x.beginPath(); x.roundRect ? x.roundRect(bx, by, 440, 220, 28) : x.rect(bx, by, 440, 220); x.fill();
+    x.textAlign = 'left'; x.fillStyle = '#fff'; x.font = '900 84px system-ui, sans-serif'; x.fillText(v, bx + 36, by + 120);
+    x.font = '600 34px system-ui, sans-serif'; x.fillStyle = 'rgba(255,255,255,.8)'; x.fillText(l, bx + 36, by + 180);
+  });
+  let y = 1000;
+  T('Who talks more', y, 40, 800); y += 30;
+  const max = a.people[0].msgs;
+  a.people.slice(0, 4).forEach((p, i) => {
+    y += 80;
+    x.textAlign = 'left'; x.fillStyle = '#fff'; x.font = '700 36px system-ui, sans-serif'; x.fillText(p.name.slice(0, 18), 90, y);
+    x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(450, y - 30, 540, 34);
+    x.fillStyle = COLORS[i]; x.fillRect(450, y - 30, 540 * p.msgs / max, 34);
+  });
+  y += 140;
+  T((a.emojis.slice(0, 5).map(e => e[0]).join('  ')) || '', y, 96, 400);
+  T('rajeshrenato.github.io/chat-wrapped', 1840, 30, 600, 'rgba(255,255,255,.65)');
+  return cv;
+}
+async function share() {
+  const cv = summaryImage(), blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+  const file = new File([blob], 'chat-wrapped.png', { type: 'image/png' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Chat Wrapped' }); return; } catch (e) { } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'chat-wrapped.png'; document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ---- loading
+
+async function loadFile(file) {
+  $('err').hidden = true;
+  try {
+    let text;
+    if (/\.zip$/i.test(file.name) || file.type === 'application/zip') {
+      const z = await Zip.open(file), ent = z.entries.find(e => /\.txt$/i.test(e.name) && !e.dir);
+      if (!ent) throw new Error('There\'s no chat text file inside this ZIP.');
+      text = await z.text(ent);
+    } else text = await file.text();
+    ALL = parseChat(text);
+    const years = [...new Set(ALL.map(m => m.t.getFullYear()))].sort();
+    $('yearSel').innerHTML = '<option value="all">All time</option>' + years.reverse().map(y => '<option>' + y + '</option>').join('');
+    // show the results first, so the charts can measure their width
+    $('start').hidden = true; $('result').hidden = false;
+    setPeriod('all');
+    playStory();
+  } catch (e) { $('err').textContent = e.message || 'That file couldn\'t be read.'; $('err').hidden = false; }
+}
+function setPeriod(v) {
+  const msgs = v === 'all' ? ALL : ALL.filter(m => m.t.getFullYear() === +v);
+  A = analyse(msgs.length ? msgs : ALL);
+  show();
+}
+
+$('drop').onclick = () => $('pick').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pick').click(); } };
+$('pick').onchange = () => { if ($('pick').files[0]) loadFile($('pick').files[0]); $('pick').value = ''; };
+for (const ev of ['dragenter', 'dragover']) $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); });
+for (const ev of ['dragleave', 'drop']) $('drop').addEventListener(ev, () => $('drop').classList.remove('over'));
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); const f = (e.dataTransfer || {}).files; if (f && f[0]) loadFile(f[0]); });
+$('playBtn').onclick = playStory;
+$('shareBtn').onclick = share;
+$('againBtn').onclick = () => { $('result').hidden = true; $('start').hidden = false; };
+$('yearSel').onchange = () => setPeriod($('yearSel').value);
+addEventListener('resize', () => { if (A && !$('result').hidden) { drawHeat(); drawTimeline(); } });
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Chat Wrapped</h2>
+<p>Your WhatsApp chat, wrapped. Export any chat and see who texts more, who replies faster, who starts the conversations, your longest streak, your favourite emojis, the words you both use most, and when you're busiest. Then play it as a story, or share one picture of the highlights.</p>
+<h3>Use</h3>
+<ul><li>In WhatsApp, open the chat, tap the name at the top (or the menu), then Export chat, and choose Without media.</li><li>Drop the .zip or .txt here. Group chats work too.</li><li>Scroll the dashboard, or press Play story for the slides. Pick a year to see just that year.</li><li>Share or save the summary picture: a 1080 by 1920 image sized for stories.</li></ul>
+<h3>How it works</h3>
+<ul><li>Each line of the export starts with a date, time and name. The page recognises both the Android and the iPhone layouts, 12 and 24 hour times, and whether dates are day-first or month-first by looking for a first number over 12 across the whole chat. Lines without a date belong to the message above.</li><li>System notices (encryption, someone was added) are skipped. Media, deleted messages, emojis and laughs ("haha", "lol", 😂) are counted on their own.</li><li>Reply time is the gap when the chat switches from one person to the other within six hours; the median is used so one long silence doesn't skew it. A new conversation starts after a gap of six hours or more.</li><li>The most used words leave out common English and Hinglish filler words.</li><li>Everything is read in your browser. The page is blocked from making network requests, so the chat can't be sent anywhere.</li></ul>
+<p class="pg-more">More like this: <a href="../insta-unfollowers/">Instagram Unfollowers</a>, <a href="../live-location/">Live Location</a>, <a href="../location-map/">Location Map</a>, <a href="../file-lock/">File Lock</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/chat-wrapped">chat-wrapped on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

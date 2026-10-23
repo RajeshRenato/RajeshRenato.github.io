@@ -6,6 +6,7 @@
 //     onStart(room) {},   // host pressed Start
 //     onJoin(room) {},    // guest connected
 //   });
+//   Optional wording for pages that aren't games: hostLabel, hostNote, startLabel, more, noun.
 //   lobby.start()        back to the first screen, leaving any room
 //   lobby.reopen()       host only: show the invite screen again between games
 //
@@ -40,7 +41,7 @@ const Lobby = (() => {
   }
 
   function mount(el, opts) {
-    const min = opts.min || 2, max = opts.max || 8;
+    const min = opts.min || 2, max = opts.max || 8, noun = opts.noun || 'game';
     let room = null, joining = null;
 
     const panel = html => { el.hidden = false; el.innerHTML = '<div class="lp-box">' + html + '</div>'; };
@@ -60,10 +61,10 @@ const Lobby = (() => {
       panel(
         '<h1>' + esc(opts.title) + '</h1>' +
         '<p>' + esc(opts.blurb) + '</p>' + nameField() +
-        '<div class="lp-modes"><button id="lpCreate">' + (max === 2 ? 'Play a friend online<span>Send a link, they send one back, and you\'re connected.</span>' : 'Play with friends<span>Up to ' + max + ' players. Send each friend their own link.</span>') + '</button>' +
+        '<div class="lp-modes"><button id="lpCreate">' + (opts.hostLabel ? esc(opts.hostLabel) + '<span>' + esc(opts.hostNote || '') + '</span>' : max === 2 ? 'Play a friend online<span>Send a link, they send one back, and you\'re connected.</span>' : 'Play with friends<span>Up to ' + max + ' players. Send each friend their own link.</span>') + '</button>' +
         (opts.extra || []).map((x, i) => '<button data-extra="' + i + '">' + esc(x.label) + (x.note ? '<span>' + esc(x.note) + '</span>' : '') + '</button>').join('') +
         '</div>' +
-        '<p class="lp-small">Players connect browser to browser, with no game server. A public STUN service helps the browsers find each other. Some strict office or mobile networks block direct connections; if a friend can\'t connect, try another network.</p>'
+        '<p class="lp-small">' + (noun === 'game' ? 'Players' : 'People') + ' connect browser to browser, with no ' + esc(noun) + ' server. A public STUN service helps the browsers find each other. Some strict office or mobile networks block direct connections; if a friend can\'t connect, try another network.</p>'
       );
       $('#lpCreate').onclick = () => host(readName());
       for (const b of el.querySelectorAll('[data-extra]')) b.onclick = () => { readName(); el.hidden = true; opts.extra[+b.dataset.extra].onClick(); };
@@ -75,13 +76,13 @@ const Lobby = (() => {
       room.on('fail', () => setStatus("A friend couldn't connect. One of your networks may block direct connections; send them a new invite or try another network."));
       panel(
         '<h2>Invite friends</h2>' +
-        '<p>' + (max === 2 ? 'Send your friend this invite.' : 'Send each friend their own invite.') + ' They\'ll get a reply link to send back: open it in this browser, or paste it below.' + (max === 2 ? ' The game starts as soon as they\'re in.' : '') + '</p>' +
+        '<p>' + (max === 2 ? 'Send your friend this invite.' : 'Send each friend their own invite.') + ' They\'ll get a reply link to send back: open it in this browser, or paste it below.' + (max === 2 ? ' The ' + esc(noun) + ' starts as soon as they\'re in.' : '') + '</p>' +
         '<div id="lpInvites"></div>' +
-        '<button id="lpMore" class="lp-link">Invite another player</button>' +
+        '<button id="lpMore" class="lp-link">' + esc(opts.more || 'Invite another player') + '</button>' +
         '<div class="lp-code"><input id="lpReply" placeholder="Paste a reply link"><button id="lpConnect">Connect</button></div>' +
         '<p id="lpStatus" class="lp-status"></p>' +
         '<ul id="lpRoster" class="lp-roster"></ul>' +
-        '<div class="lp-row"><button id="lpStart" disabled>Start</button><button class="lp-link" id="lpCancel">Cancel</button></div>'
+        '<div class="lp-row"><button id="lpStart" disabled>' + esc(opts.startLabel || 'Start') + '</button><button class="lp-link" id="lpCancel">Cancel</button></div>'
       );
       $('#lpMore').onclick = () => addInvite();
       $('#lpConnect').onclick = () => accept($('#lpReply').value);
@@ -127,7 +128,7 @@ const Lobby = (() => {
       const ok = room.players.length >= min;
       $('#lpStart').disabled = !ok;
       if (max === 2 && ok && !el.hidden) { el.hidden = true; opts.onStart(room); return; }
-      if (room.players.length > 1) setStatus(ok ? 'Start when everyone is in.' : '');
+      if (room.players.length > 1) setStatus(ok ? (opts.startLabel || 'Start') + ' when everyone is in.' : '');
     }
 
     function guest(invite) {
@@ -160,11 +161,11 @@ const Lobby = (() => {
       panel('<h2 id="lpTitle">Connecting…</h2><p id="lpStatus" class="lp-status"></p><div id="lpBack"></div>');
       if (await LinkPlay.forwardReply(opts.game, r)) {
         $('#lpTitle').textContent = 'Connected';
-        setStatus('Go back to the game tab. You can close this one.');
+        setStatus('Go back to the ' + noun + ' tab. You can close this one.');
         return;
       }
-      $('#lpTitle').textContent = 'Paste this into the game';
-      setStatus("The game isn't open in this browser. Copy this reply and paste it into the tab where you sent the invite.");
+      $('#lpTitle').textContent = 'Paste this into the ' + noun;
+      setStatus("The " + noun + " isn't open in this browser. Copy this reply and paste it into the tab where you sent the invite.");
       $('#lpBack').appendChild(codeRow(LinkPlay.pageLink('answer=' + r.id + '.' + r.code)).row);
     }
 
