@@ -1,6 +1,6 @@
 # Playground
 
-93 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+103 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/
 
@@ -112,12 +112,18 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | --- | --- |
 | [pdf-toolkit](pdf-toolkit/) | Merge, split, reorder, rotate, and delete PDF pages. Everything stays on your device |
 | [pdf-sign](pdf-sign/) | Sign a PDF and fill it in: text, dates, checkmarks, and your signature. Nothing is uploaded |
+| [pdf-unlock](pdf-unlock/) | Remove the password from bank statements, e-Aadhaar and salary slips you can already open |
 | [phone-to-laptop](phone-to-laptop/) | Send photos, files, and text between your phone and computer by scanning a code. No cable, no app |
 | [images-to-pdf](images-to-pdf/) | Turn photos and scans into one PDF, with JPEGs kept at full quality. Nothing is uploaded |
 | [linkplay](linkplay/) | A small kit for making browser games multiplayer with links and no server. All the online games here use it |
 | [file-send](file-send/) | Send files straight to a friend's browser. Nothing is uploaded |
 | [secret-note](secret-note/) | Write a note and get a link with it encrypted inside. Nothing is stored |
 | [split-bill](split-bill/) | Split trip and flat expenses with friends, settle up in the fewest payments with UPI, and share the group as a link |
+| [bank-insights](bank-insights/) | Drop in a bank statement and see where the money goes: categories, UPI merchants, subscriptions |
+| [chat-wrapped](chat-wrapped/) | Your WhatsApp chat, wrapped: who texts more, replies faster, streaks, emojis and busy hours |
+| [insta-unfollowers](insta-unfollowers/) | See who doesn't follow you back and who unfollowed you, from your own Instagram download |
+| [live-location](live-location/) | Share your live location with family over a link, and see theirs on one map. No app |
+| [location-map](location-map/) | Everywhere you've been, as a heatmap, from your Google Maps Timeline export |
 | [file-lock](file-lock/) | Password-protect any file with AES-256 encryption in your browser. Nothing is uploaded |
 | [passport-photo](passport-photo/) | Passport and visa photos for India, the US, UK and more, with guides, a clean background, and print sheets |
 | [invoice-maker](invoice-maker/) | GST invoices, receipts and quotes as PDF, with the amount in words, a UPI QR, and saved clients |
@@ -126,6 +132,10 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 | [walkie-talkie](walkie-talkie/) | Push-to-talk voice for a group, through links. Hold to talk, let go to listen |
 | [qr-studio](qr-studio/) | QR codes for links, Wi-Fi, and contacts, with your colors and logo. No watermark |
 | [photo-privacy](photo-privacy/) | See and remove the hidden location, date, and device details in photos |
+| [duplicate-photos](duplicate-photos/) | Find duplicate and look-alike photos in a folder, keep the best, and free up space |
+| [storage-map](storage-map/) | See what's eating your disk space: every file and folder as a block sized by space |
+| [carousel-splitter](carousel-splitter/) | Split a panorama into a seamless Instagram carousel, ready to post |
+| [speed-reader](speed-reader/) | Read two to three times faster, one word at a time. Paste text or open a PDF or EPUB |
 | [image-squeeze](image-squeeze/) | Compress, resize, and convert images, or fit them under a size limit |
 | [video-to-gif](video-to-gif/) | Trim a clip and turn it into a GIF, made on your device. No watermark |
 | [screen-recorder](screen-recorder/) | Record your screen with your voice and a camera bubble. No install, no watermark |
