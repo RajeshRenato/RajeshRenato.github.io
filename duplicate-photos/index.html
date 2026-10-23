@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237c3aed'/%3E%3Crect x='6' y='9' width='13' height='13' rx='2' fill='%23ffffff' opacity='.6'/%3E%3Crect x='12' y='12' width='14' height='14' rx='2' fill='%23ffffff'/%3E%3Cpath d='M15 21l3-3 2 2 3-4' stroke='%237c3aed' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Duplicate Photos | find duplicate and similar photos, free up space</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/duplicate-photos/">
+<style>
+  :root { --paper:#f6f4fb; --ink:#1b1823; --muted:#6c6779; --rule:#e2ddee; --card:#ffffff; --accent:#7c3aed; --accent-soft:#ede5fd; --good:#2c8a4b; --bad:#c2410c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#110f16; --ink:#ece9f3; --muted:#9b95a9; --rule:#2a2635; --card:#1a1721; --accent:#a78bfa; --accent-soft:#261d3b; --good:#5fd38a; --bad:#fb923c; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 72px; }
+  main { max-width:1100px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; z-index:3; }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { font-size:17px; margin:0 0 10px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; max-width:720px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--rule); border-radius:14px; padding:16px; margin-top:16px; }
+  .pickers { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:640px) { .pickers { grid-template-columns:1fr; } }
+  .pickers button { padding:22px 16px; text-align:left; border-radius:14px; }
+  .pickers button b { display:block; font-size:17px; margin-bottom:4px; }
+  .pickers button span { font-weight:400; font-size:14px; color:var(--muted); }
+  button { font:inherit; font-weight:600; font-size:14px; padding:8px 13px; border-radius:9px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover:not(:disabled) { border-color:var(--ink); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  input[type=range] { accent-color:var(--accent); }
+  input[type=checkbox] { width:18px; height:18px; accent-color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .grow { flex:1; }
+  .bar { height:8px; border-radius:4px; background:var(--rule); overflow:hidden; margin-top:8px; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); }
+  .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+  @media (max-width:640px) { .stats { grid-template-columns:1fr 1fr; } }
+  .stats div { background:var(--paper); border-radius:10px; padding:10px 12px; }
+  .stats b { display:block; font-size:22px; font-variant-numeric:tabular-nums; }
+  .stats span { font-size:13px; color:var(--muted); }
+  .sticky { position:sticky; top:8px; z-index:2; background:var(--card); }
+  .group { border-top:1px solid var(--rule); padding:14px 0; }
+  .group:first-child { border-top:0; }
+  .group h3 { font-size:14px; margin:0 0 8px; color:var(--muted); font-weight:600; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
+  .tile { border:2px solid var(--rule); border-radius:12px; overflow:hidden; background:var(--paper); position:relative; }
+  .tile.keep { border-color:var(--good); }
+  .tile.drop { border-color:var(--bad); opacity:.8; }
+  .tile img { display:block; width:100%; aspect-ratio:1; object-fit:cover; background:#ccc; cursor:zoom-in; }
+  .tile .info { padding:6px 8px; font-size:12px; line-height:1.35; word-break:break-all; }
+  .tile label { position:absolute; top:6px; left:6px; background:rgba(0,0,0,.6); color:#fff; border-radius:8px; padding:3px 7px; font-size:12px; display:flex; gap:5px; align-items:center; cursor:pointer; }
+  .tile .badge { position:absolute; top:6px; right:6px; background:var(--good); color:#fff; border-radius:8px; padding:2px 7px; font-size:11px; font-weight:700; }
+  .viewer { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:10; display:flex; align-items:center; justify-content:center; padding:20px; cursor:zoom-out; }
+  .viewer img { max-width:100%; max-height:100%; }
+  .note { font-size:14px; padding:10px 12px; border-radius:10px; background:var(--accent-soft); }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Duplicate Photos">
+<meta property="og:description" content="Find duplicate and look-alike photos in a folder, side by side, and see how much space you'd free. Moves the extras aside for you to check. Runs in your browser; nothing is uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/duplicate-photos/">
+<meta property="og:image" content="https://rajeshrenato.github.io/duplicate-photos/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Find duplicate and look-alike photos in a folder, side by side, and see how much space you'd free. Moves the extras aside for you to check. Runs in your browser; nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Duplicate Photos", "item": "https://rajeshrenato.github.io/duplicate-photos/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Duplicate Photos", "url": "https://rajeshrenato.github.io/duplicate-photos/", "description": "Find duplicate and look-alike photos in a folder, side by side, and see how much space you'd free. Moves the extras aside for you to check. Runs in your browser; nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Duplicate Photos</h1>
+  <p class="lede">Find duplicate and look-alike photos in a folder: exact copies, re-saved WhatsApp versions, resized ones and burst shots. See them side by side, keep the best, and free up the space.</p>
+  <p class="muted small">Your photos are looked at in this browser. This page is blocked from sending anything over the network.</p>
+
+  <section id="start" class="card">
+    <div class="pickers">
+      <button id="pickDir"><b>Choose a folder</b><span id="dirNote">Chrome and Edge can also move the duplicates aside for you.</span></button>
+      <button id="pickFiles"><b>Choose photos</b><span>Select a folder's photos, or many files at once, in any browser.</span></button>
+    </div>
+    <input type="file" id="dirInput" webkitdirectory multiple hidden>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <div id="prog" hidden><p class="small" id="progText" style="margin:12px 0 0"></p><div class="bar"><i id="progBar"></i></div></div>
+  </section>
+
+  <section id="result" hidden>
+    <div class="card sticky">
+      <div class="stats" id="stats"></div>
+      <div class="row" style="margin-top:12px">
+        <label class="small">Look-alike strictness <input type="range" id="thr" min="0" max="14" value="6"></label><span class="small muted" id="thrLabel"></span>
+        <span class="grow"></span>
+        <button class="primary" id="moveBtn" hidden>Move selected to a Duplicates folder</button><button id="csvBtn">Download the list (CSV)</button><button id="againBtn">Another folder</button>
+      </div>
+      <p class="note small" id="actNote" style="margin:10px 0 0" hidden></p>
+    </div>
+    <div class="card" id="groups"></div>
+  </section>
+</main>
+<div class="viewer" id="viewer" hidden><img id="viewImg" alt=""></div>
+
+<script>
+'use strict';
+
+// ======================================================================
+// Fingerprints. Exact copies share a SHA-256 of their bytes. Look-alikes share
+// most of a "difference hash": the photo shrunk to 9×8 grey pixels, one bit
+// for whether each pixel is brighter than the one to its right.
+// ======================================================================
+
+const IMG = /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif|tiff?)$/i;
+async function sha256(file) { return [...new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()))].map(b => b.toString(16).padStart(2, '0')).join(''); }
+const cv = document.createElement('canvas'); cv.width = 9; cv.height = 8;
+const cx = cv.getContext('2d', { willReadFrequently: true });
+// dHash from 9×8 grey values: [hi, lo] as two 32-bit numbers
+function dhashOf(grey) {
+  let hi = 0, lo = 0, bit = 0;
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+    const on = grey[y * 9 + x] > grey[y * 9 + x + 1] ? 1 : 0;
+    if (bit < 32) hi = (hi << 1) | on; else lo = (lo << 1) | on;
+    bit++;
+  }
+  return [hi >>> 0, lo >>> 0];
+}
+async function fingerprint(file) {
+  let bmp;
+  try { bmp = await createImageBitmap(file, { resizeWidth: 9, resizeHeight: 8, resizeQuality: 'medium' }); }
+  catch (e) { return null; }
+  const full = await createImageBitmap(file).then(b => { const r = [b.width, b.height]; b.close(); return r; }).catch(() => [0, 0]);
+  cx.drawImage(bmp, 0, 0, 9, 8); bmp.close();
+  const d = cx.getImageData(0, 0, 9, 8).data, grey = new Float32Array(72);
+  for (let i = 0; i < 72; i++) grey[i] = d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114;
+  return { hash: dhashOf(grey), w: full[0], h: full[1] };
+}
+const pop = v => { v -= (v >>> 1) & 0x55555555; v = (v & 0x33333333) + ((v >>> 2) & 0x33333333); return (((v + (v >>> 4)) & 0x0f0f0f0f) * 0x01010101) >>> 24; };
+const dist = (a, b) => pop(a[0] ^ b[0]) + pop(a[1] ^ b[1]);
+
+// Groups: exact copies first, then photos within `thr` bits of each other (and of a similar shape).
+function groupPhotos(items, thr) {
+  const parent = items.map((_, i) => i), find = i => (parent[i] === i ? i : (parent[i] = find(parent[i]))), join = (a, b) => { parent[find(a)] = find(b); };
+  const bySha = new Map();
+  items.forEach((it, i) => { if (it.sha) { if (bySha.has(it.sha)) join(i, bySha.get(it.sha)); else bySha.set(it.sha, i); } });
+  if (thr > 0) {
+    const ok = items.map((it, i) => (it.hash ? i : -1)).filter(i => i >= 0);
+    for (let a = 0; a < ok.length; a++) for (let b = a + 1; b < ok.length; b++) {
+      const A = items[ok[a]], B = items[ok[b]];
+      if (dist(A.hash, B.hash) > thr) continue;
+      if (A.w && B.w && Math.abs(A.w / A.h - B.w / B.h) > 0.08) continue;
+      join(ok[a], ok[b]);
+    }
+  }
+  const groups = new Map();
+  items.forEach((it, i) => { const r = find(i); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(it); });
+  return [...groups.values()].filter(g => g.length > 1).map(g => {
+    // the one to keep: most pixels, then the biggest file, then the oldest
+    g.sort((a, b) => (b.w * b.h) - (a.w * a.h) || b.file.size - a.file.size || a.file.lastModified - b.file.lastModified);
+    return { items: g, exact: g.every(x => x.sha && x.sha === g[0].sha) };
+  }).sort((a, b) => b.items.reduce((t, x, i) => t + (i ? x.file.size : 0), 0) - a.items.reduce((t, x, i) => t + (i ? x.file.size : 0), 0));
+}
+
+// ======================================================================
+// The page
+// ======================================================================
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const size = n => n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : n < 1073741824 ? (n / 1048576).toFixed(1) + ' MB' : (n / 1073741824).toFixed(2) + ' GB';
+let items = [], groups = [], root = null, picked = new Set(), urls = [];
+const canMove = !!window.showDirectoryPicker;
+if (!canMove) $('dirNote').textContent = 'In this browser, choose the folder and get the list; delete them yourself.';
+
+async function walk(dir, path = '') {
+  const out = [];
+  for await (const [name, h] of dir.entries()) {
+    if (name.startsWith('.') || name === 'Duplicates') continue;
+    if (h.kind === 'directory') out.push(...await walk(h, path + name + '/'));
+    else if (IMG.test(name)) out.push({ handle: h, parent: dir, path: path + name });
+  }
+  return out;
+}
+function progress(done, total, text) { $('prog').hidden = false; $('progText').textContent = text; $('progBar').style.width = (total ? done / total * 100 : 0) + '%'; }
+
+async function scan(entries) {
+  items = [];
+  let i = 0;
+  // the same size is the first clue for exact copies, so only those get a full fingerprint
+  const files = [];
+  for (const e of entries) { files.push({ ...e, file: e.file || await e.handle.getFile() }); if (files.length % 50 === 0) progress(files.length, entries.length, 'Listing ' + files.length + ' photos...'); }
+  const bySize = new Map();
+  for (const f of files) bySize.set(f.file.size, (bySize.get(f.file.size) || 0) + 1);
+  for (const f of files) {
+    i++;
+    if (i % 5 === 0 || i === files.length) progress(i, files.length, 'Looking at photo ' + i + ' of ' + files.length + '...');
+    const it = { ...f, sha: null, hash: null, w: 0, h: 0 };
+    if (bySize.get(f.file.size) > 1) { try { it.sha = await sha256(f.file); } catch (e) { } }
+    const fp = await fingerprint(f.file);
+    if (fp) Object.assign(it, fp);
+    items.push(it);
+  }
+  $('prog').hidden = true;
+  regroup();
+  $('start').hidden = true; $('result').hidden = false;
+}
+function regroup() {
+  const thr = +$('thr').value;
+  $('thrLabel').textContent = thr === 0 ? 'exact copies only' : thr <= 4 ? 'near-identical' : thr <= 8 ? 'look-alikes' : 'loose (check carefully)';
+  groups = groupPhotos(items, thr);
+  picked = new Set();
+  for (const g of groups) g.items.slice(1).forEach(x => picked.add(x));
+  draw();
+}
+function draw() {
+  for (const u of urls) URL.revokeObjectURL(u);
+  urls = [];
+  const dupes = groups.reduce((t, g) => t + g.items.length - 1, 0), free = [...picked].reduce((t, x) => t + x.file.size, 0);
+  $('stats').innerHTML = [[items.length.toLocaleString(), 'photos looked at'], [groups.length.toLocaleString(), 'groups of duplicates'], [dupes.toLocaleString(), 'extra copies'], [size(free), 'to free by removing the ticked ones']]
+    .map(([b, s]) => '<div><b>' + b + '</b><span>' + s + '</span></div>').join('');
+  $('moveBtn').hidden = !(root && canMove);
+  $('moveBtn').disabled = !picked.size;
+  if (!groups.length) { $('groups').innerHTML = '<p class="muted" style="text-align:center;padding:20px">No duplicates found. ' + (+$('thr').value < 10 ? 'Try making the strictness looser.' : '') + '</p>'; return; }
+  $('groups').innerHTML = groups.slice(0, 400).map((g, gi) => '<div class="group"><h3>' + (g.exact ? 'Exact copies' : 'Look-alikes') + ', ' + g.items.length + ' photos</h3><div class="tiles">' + g.items.map((x, k) => {
+    const u = URL.createObjectURL(x.file); urls.push(u);
+    return '<div class="tile ' + (picked.has(x) ? 'drop' : 'keep') + '">' + (k === 0 ? '<span class="badge">Best</span>' : '') +
+      '<label><input type="checkbox" data-g="' + gi + '" data-k="' + k + '"' + (picked.has(x) ? ' checked' : '') + '> remove</label>' +
+      '<img loading="lazy" src="' + u + '" alt="' + esc(x.path) + '" data-u="' + u + '"><div class="info">' + esc(x.path) + '<br><span class="muted">' + (x.w ? x.w + '×' + x.h + ', ' : '') + size(x.file.size) + (k && !g.exact && x.sha && x.sha === g.items[0].sha ? ', exact copy' : '') + '</span></div></div>';
+  }).join('') + '</div></div>').join('') + (groups.length > 400 ? '<p class="muted small">Showing the 400 groups that free the most space.</p>' : '');
+  for (const c of $('groups').querySelectorAll('input[data-g]')) c.onchange = () => {
+    const x = groups[+c.dataset.g].items[+c.dataset.k];
+    if (c.checked) picked.add(x); else picked.delete(x);
+    c.closest('.tile').className = 'tile ' + (c.checked ? 'drop' : 'keep');
+    const free = [...picked].reduce((t, y) => t + y.file.size, 0);
+    $('stats').lastElementChild.querySelector('b').textContent = size(free);
+    $('moveBtn').disabled = !picked.size;
+  };
+  for (const im of $('groups').querySelectorAll('img[data-u]')) im.onclick = () => { $('viewImg').src = im.dataset.u; $('viewer').hidden = false; };
+}
+
+// Moving rather than deleting: everything ticked goes into a "Duplicates" folder to look over and delete.
+async function moveSelected() {
+  const list = [...picked].filter(x => x.handle);
+  if (!list.length || !confirm('Move ' + list.length + ' photos (' + size(list.reduce((t, x) => t + x.file.size, 0)) + ') into a folder called "Duplicates" inside the folder you chose? You can look them over there and delete them.')) return;
+  $('moveBtn').disabled = true;
+  try {
+    if ((await root.requestPermission({ mode: 'readwrite' })) !== 'granted') throw new Error('Permission to change the folder was not given.');
+    const dest = await root.getDirectoryHandle('Duplicates', { create: true });
+    let done = 0, failed = 0;
+    for (const x of list) {
+      try {
+        let name = x.path.replace(/\//g, '_');
+        if (x.handle.move) await x.handle.move(dest, name);
+        else {
+          const out = await dest.getFileHandle(name, { create: true }), w = await out.createWritable();
+          await w.write(x.file); await w.close();
+          await x.parent.removeEntry(x.handle.name);
+        }
+        done++;
+      } catch (e) { failed++; }
+      progress(done + failed, list.length, 'Moving ' + (done + failed) + ' of ' + list.length + '...');
+    }
+    $('prog').hidden = true;
+    items = items.filter(x => !picked.has(x) || failed);
+    $('actNote').textContent = 'Moved ' + done + ' photos into the Duplicates folder.' + (failed ? ' ' + failed + ' couldn\'t be moved.' : '') + ' Check them, then delete the folder to free the space.';
+    $('actNote').hidden = false;
+    regroup();
+  } catch (e) { $('actNote').textContent = e.message; $('actNote').hidden = false; }
+}
+
+$('pickDir').onclick = async () => {
+  if (canMove) {
+    try {
+      root = await window.showDirectoryPicker({ id: 'dupes', mode: 'read' });
+      progress(0, 0, 'Listing the folder...');
+      scan(await walk(root));
+    } catch (e) { if (e.name !== 'AbortError') alert(e.message); }
+  } else $('dirInput').click();
+};
+$('pickFiles').onclick = () => $('fileInput').click();
+$('dirInput').onchange = () => { root = null; scan([...$('dirInput').files].filter(f => IMG.test(f.name)).map(f => ({ file: f, path: f.webkitRelativePath || f.name }))); };
+$('fileInput').onchange = () => { root = null; scan([...$('fileInput').files].filter(f => IMG.test(f.name) || /^image\//.test(f.type)).map(f => ({ file: f, path: f.name }))); };
+$('thr').oninput = regroup;
+$('moveBtn').onclick = moveSelected;
+$('againBtn').onclick = () => { $('result').hidden = true; $('start').hidden = false; $('actNote').hidden = true; };
+$('viewer').onclick = () => { $('viewer').hidden = true; };
+$('csvBtn').onclick = () => {
+  const rows = ['group,kind,keep,path,width,height,bytes'];
+  groups.forEach((g, i) => g.items.forEach(x => rows.push([i + 1, g.exact ? 'exact' : 'look-alike', picked.has(x) ? 'remove' : 'keep', '"' + x.path.replace(/"/g, '""') + '"', x.w, x.h, x.file.size].join(','))));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.join('\r\n')], { type: 'text/csv' })); a.download = 'duplicate-photos.csv'; document.body.appendChild(a); a.click(); a.remove();
+};
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Duplicate Photos</h2>
+<p>Find duplicate and look-alike photos in a folder: exact copies, re-saved WhatsApp versions, resized ones and burst shots. See them side by side, keep the best, and free up the space. Nothing is uploaded.</p>
+<h3>Use</h3>
+<ul><li>Choose a folder (your camera roll copied to a computer, Downloads, WhatsApp Images) or select many photos at once.</li><li>Each group shows the best copy first, marked Best, with the others ticked for removal. Change the ticks as you like, and click a photo to see it larger.</li><li>Strictness: further left finds only exact copies; further right also groups photos that look alike, such as burst shots.</li><li>In Chrome and Edge, "Move selected to a Duplicates folder" moves the ticked photos into a new folder inside the one you chose, so you can look them over and delete it. In other browsers, download the list as CSV and delete them yourself.</li></ul>
+<p>Nothing is ever deleted by the page.</p>
+<h3>How it works</h3>
+<ul><li>Exact copies have identical bytes, found with a SHA-256 fingerprint. Only files that share a size with another file get one, which keeps big folders quick.</li><li>Look-alikes use a difference hash: the photo is shrunk to 9 by 8 grey pixels and each pixel is compared with its right-hand neighbour, giving 64 bits that barely change when a photo is resized, recompressed or brightened. Two photos are look-alikes when their hashes differ in only a few bits and their shapes match.</li><li>The best of a group has the most pixels, then the biggest file, then is the oldest.</li><li>The page is blocked from making network requests.</li></ul>
+<p class="pg-more">More like this: <a href="../storage-map/">Storage Map</a>, <a href="../carousel-splitter/">Carousel Splitter</a>, <a href="../speed-reader/">Speed Reader</a>, <a href="../image-squeeze/">Image Squeeze</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/duplicate-photos">duplicate-photos on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

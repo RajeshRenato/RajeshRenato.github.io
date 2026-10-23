@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23db2777'/%3E%3Crect x='4' y='10' width='24' height='12' rx='2' fill='%23fff'/%3E%3Cpath d='M12 10v12M20 10v12' stroke='%23db2777' stroke-width='1.6' stroke-dasharray='2 1.5'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Carousel Splitter | split a panorama into seamless Instagram carousel posts</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/carousel-splitter/">
+<style>
+  :root { --paper:#fbf5f8; --ink:#22161c; --muted:#76626c; --rule:#ecdbe3; --card:#ffffff; --accent:#db2777; --accent-soft:#fce4ef; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#140e11; --ink:#f3e8ed; --muted:#a8939d; --rule:#33232b; --card:#1d1418; --accent:#f472b6; --accent-soft:#3a1c2a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 72px; }
+  main { max-width:1100px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; max-width:700px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1.5px solid var(--rule); border-radius:14px; padding:16px; margin-top:16px; }
+  .drop { border:2px dashed var(--rule); border-radius:14px; padding:40px 16px; text-align:center; cursor:pointer; }
+  .drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); }
+  .drop b { display:block; font-size:18px; }
+  button { font:inherit; font-weight:600; font-size:14px; padding:8px 13px; border-radius:9px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover { border-color:var(--ink); }
+  button.on { border-color:var(--accent); background:var(--accent-soft); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  input[type=range] { accent-color:var(--accent); width:140px; }
+  input[type=color] { width:38px; height:32px; border:1.5px solid var(--rule); border-radius:8px; padding:2px; background:var(--card); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .grow { flex:1; }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:14px 20px; }
+  .controls label { display:block; font-size:13px; color:var(--muted); margin-bottom:5px; font-weight:600; }
+  .stage { margin-top:16px; overflow:auto; border-radius:12px; background:repeating-conic-gradient(var(--rule) 0 25%, transparent 0 50%) 0 0/16px 16px; }
+  #view { display:block; max-width:100%; margin:0 auto; touch-action:none; cursor:grab; }
+  .slides { display:flex; gap:10px; overflow-x:auto; padding:4px 2px 10px; }
+  .slides figure { margin:0; flex:none; text-align:center; font-size:12px; color:var(--muted); }
+  .slides img { display:block; height:150px; border-radius:6px; border:1px solid var(--rule); }
+  .phone { width:280px; margin:0 auto; border-radius:22px; border:8px solid #111; background:#fff; color:#111; overflow:hidden; }
+  .phone header { display:flex; gap:8px; align-items:center; padding:8px 10px; font-size:13px; font-weight:600; }
+  .phone header i { width:26px; height:26px; border-radius:50%; background:linear-gradient(45deg, #f59e0b, #db2777, #7c3aed); }
+  .phone .win { overflow:hidden; position:relative; touch-action:pan-y; }
+  .phone .strip { display:flex; transition:transform .3s; }
+  .phone .strip img { flex:none; width:100%; display:block; }
+  .phone .dots { display:flex; justify-content:center; gap:4px; padding:8px; }
+  .phone .dots b { width:6px; height:6px; border-radius:50%; background:#c7c7c7; }
+  .phone .dots b.on { background:#3b82f6; }
+  .two { display:grid; grid-template-columns:1fr 320px; gap:16px; align-items:start; }
+  @media (max-width:820px) { .two { grid-template-columns:1fr; } }
+  .two .card { margin-top:0; min-width:0; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Carousel Splitter">
+<meta property="og:description" content="Split a wide photo or panorama into a seamless Instagram carousel. Pick how many slides, drag to frame it, and save every slide at full quality. Runs in your browser; nothing is uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/carousel-splitter/">
+<meta property="og:image" content="https://rajeshrenato.github.io/carousel-splitter/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Split a wide photo or panorama into a seamless Instagram carousel. Pick how many slides, drag to frame it, and save every slide at full quality. Runs in your browser; nothing is uploaded.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Carousel Splitter", "item": "https://rajeshrenato.github.io/carousel-splitter/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Carousel Splitter", "url": "https://rajeshrenato.github.io/carousel-splitter/", "description": "Split a wide photo or panorama into a seamless Instagram carousel. Pick how many slides, drag to frame it, and save every slide at full quality. Runs in your browser; nothing is uploaded.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Carousel Splitter</h1>
+  <p class="lede">Turn a wide photo or panorama into a seamless Instagram carousel. When people swipe, the picture carries on from one slide to the next.</p>
+  <p class="muted small">Your photo stays in this browser. This page can't send anything over the network.</p>
+
+  <section id="start" class="card">
+    <div class="drop" id="drop" tabindex="0" role="button"><b>Drop a photo here</b><span class="muted small">or click to choose one. Panoramas and wide group photos work best.</span></div>
+    <input type="file" id="pick" accept="image/*" hidden>
+  </section>
+
+  <section id="result" hidden>
+    <div class="card controls">
+      <div><label>Slides</label><div class="row" id="counts"></div></div>
+      <div><label>Shape</label><div class="row" id="shapes"></div></div>
+      <div><label for="zoom">Zoom <span id="zoomVal"></span></label><div class="row"><input type="range" id="zoom" min="0" max="100" value="0"><button id="fitBtn">Fit whole photo</button></div></div>
+      <div><label>Background, where the photo doesn't reach</label><div class="row"><input type="color" id="bg" value="#ffffff"><button id="blurBtn">Blurred photo</button></div></div>
+    </div>
+    <div class="stage"><canvas id="view"></canvas></div>
+    <p class="small muted" style="margin-top:6px">Drag the photo to move it. The dashed lines are where one slide ends and the next begins.</p>
+    <div class="two" style="margin-top:16px">
+      <div class="card">
+        <div class="row"><b class="grow">Your slides</b><button id="newBtn">Another photo</button><button id="zipBtn">Save all (ZIP)</button><button class="primary" id="shareBtn">Share to Instagram</button></div>
+        <div class="slides" id="slides" style="margin-top:12px"></div>
+        <p class="small muted" id="hint"></p>
+      </div>
+      <div class="card"><div class="phone"><header><i></i>your.name</header><div class="win" id="win"><div class="strip" id="strip"></div></div><div class="dots" id="dots"></div></div><p class="small muted" style="text-align:center;margin:8px 0 0">Swipe or click to try it.</p></div>
+    </div>
+  </section>
+</main>
+
+<script src="../common/zip.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+// Instagram shows carousel posts 1080 pixels wide; the shape sets the height.
+const SHAPES = [['Square', 1, 1], ['Portrait 4:5', 4, 5], ['Landscape', 1.91, 1]];
+const W1 = 1080;
+const slideSize = (shape) => [W1, Math.round(W1 * shape[2] / shape[1])];
+// How the photo sits on the whole strip: zoom 0 is "just fills the height" or "just fills the width",
+// whichever covers the strip; pan is the photo's offset in strip pixels.
+function coverScale(iw, ih, sw, sh) { return Math.max(sw / iw, sh / ih); }
+function containScale(iw, ih, sw, sh) { return Math.min(sw / iw, sh / ih); }
+function clampPan(p, scale, iw, ih, sw, sh) {
+  const w = iw * scale, h = ih * scale;
+  const fx = w >= sw ? [sw - w, 0] : [0, sw - w], fy = h >= sh ? [sh - h, 0] : [0, sh - h];
+  return { x: Math.min(fx[1], Math.max(fx[0], p.x)), y: Math.min(fy[1], Math.max(fy[0], p.y)) };
+}
+// the best count for this photo: as many slides as it needs to fill them at the chosen shape
+function suggestCount(iw, ih, shape) { const [sw, sh] = slideSize(shape); return Math.max(2, Math.min(10, Math.round((iw / ih) / (sw / sh)))); }
+
+let img = null, name = 'carousel', count = 3, shape = SHAPES[0], fit = false, zoom = 0, pan = { x: 0, y: 0 }, bgBlur = false, slides = [], cur = 0;
+const strip = () => { const [w, h] = slideSize(shape); return [w * count, h]; };
+function scaleNow() {
+  const [sw, sh] = strip(), lo = (fit ? containScale : coverScale)(img.naturalWidth, img.naturalHeight, sw, sh);
+  return lo * Math.pow(4, zoom / 100);
+}
+function centre() { const [sw, sh] = strip(), s = scaleNow(); pan = { x: (sw - img.naturalWidth * s) / 2, y: (sh - img.naturalHeight * s) / 2 }; }
+
+function paint(x, sw, sh) {
+  const s = scaleNow();
+  if (bgBlur) {
+    const c = coverScale(img.naturalWidth, img.naturalHeight, sw, sh);
+    x.save(); x.filter = 'blur(' + Math.round(sh / 25) + 'px) brightness(0.9)';
+    x.drawImage(img, (sw - img.naturalWidth * c) / 2, (sh - img.naturalHeight * c) / 2, img.naturalWidth * c, img.naturalHeight * c);
+    x.restore();
+  } else { x.fillStyle = $('bg').value; x.fillRect(0, 0, sw, sh); }
+  x.imageSmoothingQuality = 'high';
+  x.drawImage(img, pan.x, pan.y, img.naturalWidth * s, img.naturalHeight * s);
+}
+function render() {
+  const [sw, sh] = strip(), v = $('view');
+  const k = Math.min(1, 2400 / sw);
+  v.width = Math.round(sw * k); v.height = Math.round(sh * k);
+  const x = v.getContext('2d');
+  x.save(); x.scale(k, k); paint(x, sw, sh); x.restore();
+  x.strokeStyle = 'rgba(255,255,255,.95)'; x.lineWidth = 2; x.setLineDash([8, 6]);
+  for (let i = 1; i < count; i++) { const px = Math.round(i * W1 * k) + 0.5; x.beginPath(); x.moveTo(px, 0); x.lineTo(px, v.height); x.stroke(); }
+  x.setLineDash([]);
+  x.fillStyle = 'rgba(0,0,0,.55)'; x.font = '600 ' + Math.max(12, Math.round(30 * k)) + 'px system-ui';
+  for (let i = 0; i < count; i++) { const t = String(i + 1), tx = i * W1 * k + 10; x.fillRect(tx - 4, 8, x.measureText(t).width + 12, 30 * k + 10); x.fillStyle = '#fff'; x.fillText(t, tx + 2, 8 + 30 * k); x.fillStyle = 'rgba(0,0,0,.55)'; }
+  $('zoomVal').textContent = Math.round(Math.pow(4, zoom / 100) * 100) + '%';
+  clearTimeout(render.t); render.t = setTimeout(makeSlides, 250);
+}
+async function makeSlides() {
+  const [sw, sh] = strip(), [w, h] = slideSize(shape);
+  const big = document.createElement('canvas'); big.width = sw; big.height = sh;
+  paint(big.getContext('2d'), sw, sh);
+  for (const s of slides) URL.revokeObjectURL(s.url);
+  slides = [];
+  for (let i = 0; i < count; i++) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(big, i * w, 0, w, h, 0, 0, w, h);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.95));
+    slides.push({ blob, url: URL.createObjectURL(blob), name: name + '-' + String(i + 1).padStart(2, '0') + '.jpg' });
+  }
+  $('slides').innerHTML = slides.map((s, i) => '<figure><a href="' + s.url + '" download="' + s.name + '"><img src="' + s.url + '" alt="Slide ' + (i + 1) + '"></a>' + (i + 1) + ' of ' + count + '</figure>').join('');
+  $('strip').innerHTML = slides.map(s => '<img src="' + s.url + '" alt="">').join('');
+  cur = Math.min(cur, count - 1); phone();
+  $('hint').textContent = 'Each slide is ' + w + ' by ' + h + ' pixels. Click one to save it on its own. Post them in order, 1 first.' + (scaleNow() > 1.15 ? ' This photo is being enlarged, so it may look a little soft; fewer slides keeps it sharper.' : '');
+}
+function phone() {
+  $('strip').style.transform = 'translateX(' + (-cur * 100) + '%)';
+  $('dots').innerHTML = slides.map((_, i) => '<b class="' + (i === cur ? 'on' : '') + '"></b>').join('');
+}
+
+function buttons() {
+  $('counts').innerHTML = [2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => '<button data-n="' + n + '" class="' + (n === count ? 'on' : '') + '">' + n + '</button>').join('');
+  for (const b of $('counts').querySelectorAll('button')) b.onclick = () => { count = +b.dataset.n; buttons(); centre(); render(); };
+  $('shapes').innerHTML = SHAPES.map((s, i) => '<button data-i="' + i + '" class="' + (s === shape ? 'on' : '') + '">' + s[0] + '</button>').join('');
+  for (const b of $('shapes').querySelectorAll('button')) b.onclick = () => { shape = SHAPES[+b.dataset.i]; count = suggestCount(img.naturalWidth, img.naturalHeight, shape); buttons(); centre(); render(); };
+  $('fitBtn').classList.toggle('on', fit); $('blurBtn').classList.toggle('on', bgBlur);
+}
+function open(file) {
+  if (!file || !/^image\//.test(file.type)) return;
+  const im = new Image();
+  im.onload = () => {
+    img = im; name = (file.name.replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '-').slice(0, 40) || 'carousel');
+    shape = SHAPES[0]; count = suggestCount(im.naturalWidth, im.naturalHeight, shape); zoom = 0; fit = false; $('zoom').value = 0; cur = 0;
+    $('start').hidden = true; $('result').hidden = false;
+    buttons(); centre(); render();
+  };
+  im.onerror = () => alert('This photo couldn\'t be opened. Try a JPG or PNG.');
+  im.src = URL.createObjectURL(file);
+}
+
+// dragging the photo on the strip
+let drag = null;
+$('view').addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, p: { ...pan } }; $('view').setPointerCapture(e.pointerId); $('view').style.cursor = 'grabbing'; });
+$('view').addEventListener('pointermove', e => {
+  if (!drag) return;
+  const [sw, sh] = strip(), k = sw / $('view').getBoundingClientRect().width;
+  pan = clampPan({ x: drag.p.x + (e.clientX - drag.x) * k, y: drag.p.y + (e.clientY - drag.y) * k }, scaleNow(), img.naturalWidth, img.naturalHeight, sw, sh);
+  render();
+});
+const end = () => { drag = null; $('view').style.cursor = ''; };
+$('view').addEventListener('pointerup', end); $('view').addEventListener('pointercancel', end);
+$('zoom').oninput = () => {
+  const [sw, sh] = strip(), before = scaleNow(), cx = (sw / 2 - pan.x) / before, cy = (sh / 2 - pan.y) / before;
+  zoom = +$('zoom').value;
+  const s = scaleNow();
+  pan = clampPan({ x: sw / 2 - cx * s, y: sh / 2 - cy * s }, s, img.naturalWidth, img.naturalHeight, sw, sh);
+  render();
+};
+$('fitBtn').onclick = () => { fit = !fit; zoom = 0; $('zoom').value = 0; buttons(); centre(); render(); };
+$('blurBtn').onclick = () => { bgBlur = !bgBlur; buttons(); render(); };
+$('bg').oninput = () => { bgBlur = false; buttons(); render(); };
+$('win').onclick = e => { const r = $('win').getBoundingClientRect(); cur = Math.max(0, Math.min(count - 1, cur + (e.clientX - r.left > r.width / 2 ? 1 : -1))); phone(); };
+let sx = null;
+$('win').addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+$('win').addEventListener('touchend', e => { if (sx === null) return; const d = e.changedTouches[0].clientX - sx; if (Math.abs(d) > 30) { cur = Math.max(0, Math.min(count - 1, cur + (d < 0 ? 1 : -1))); phone(); } sx = null; });
+$('zipBtn').onclick = async () => {
+  const files = await Promise.all(slides.map(async s => ({ name: s.name, data: new Uint8Array(await s.blob.arrayBuffer()) })));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(Zip.build(files)); a.download = name + '-carousel.zip'; document.body.appendChild(a); a.click(); a.remove();
+};
+const files = () => slides.map(s => new File([s.blob], s.name, { type: 'image/jpeg' }));
+if (!(navigator.canShare && (() => { try { return navigator.canShare({ files: [new File([''], 'a.jpg', { type: 'image/jpeg' })] }); } catch (e) { return false; } })())) $('shareBtn').hidden = true;
+$('shareBtn').onclick = async () => { try { await navigator.share({ files: files() }); } catch (e) { if (e.name !== 'AbortError') $('zipBtn').click(); } };
+$('newBtn').onclick = () => $('pick').click();
+$('drop').onclick = () => $('pick').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pick').click(); } };
+$('pick').onchange = () => { open($('pick').files[0]); $('pick').value = ''; };
+for (const ev of ['dragenter', 'dragover']) $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); });
+for (const ev of ['dragleave', 'drop']) $('drop').addEventListener(ev, () => $('drop').classList.remove('over'));
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); const f = (e.dataTransfer || {}).files; if (f && f.length) open(f[0]); });
+addEventListener('paste', e => { const f = [...(e.clipboardData || {}).files || []][0]; if (f) open(f); });
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Carousel Splitter</h2>
+<p>Turn a wide photo or panorama into a seamless Instagram carousel. When people swipe, the picture carries on from one slide to the next.</p>
+<h3>Use</h3>
+<ul><li>Drop a photo, or paste one.</li><li>Pick how many slides (2 to 10) and the shape: square, portrait 4:5, or landscape. The page suggests a count that fits the photo.</li><li>Drag the photo to frame it, and zoom in if you like. The dashed lines show where each slide ends. "Fit whole photo" shows all of it, with a plain colour or a blurred copy of the photo behind.</li><li>Try it on the phone preview, then save all the slides as a ZIP, save them one by one, or on a phone share them straight to Instagram. Post them in order.</li></ul>
+<h3>How it works</h3>
+<ul><li>Instagram shows carousel posts 1080 pixels wide, so the page lays the photo across a strip that many slides wide and cuts it into 1080-pixel slices, each saved as a high quality JPEG.</li><li>The photo can be moved but never pulled off the strip, so no slide has an empty edge unless you choose to fit the whole photo.</li><li>Everything happens in your browser. The page is blocked from making network requests.</li></ul>
+<p class="pg-more">More like this: <a href="../speed-reader/">Speed Reader</a>, <a href="../image-squeeze/">Image Squeeze</a>, <a href="../video-to-gif/">Video to GIF</a>, <a href="../qr-studio/">QR Studio</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/carousel-splitter">carousel-splitter on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

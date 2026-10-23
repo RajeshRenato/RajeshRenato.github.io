@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23131a2b'/%3E%3Ccircle cx='12' cy='13' r='6' fill='%23f97316' opacity='.8'/%3E%3Ccircle cx='21' cy='19' r='5' fill='%23facc15' opacity='.8'/%3E%3Ccircle cx='15' cy='22' r='3' fill='%23fb7185'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://server.arcgisonline.com https://services.arcgisonline.com; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<title>Location Map | Google Timeline location history heatmap</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/location-map/">
+<style>
+  :root { --bg:#0b0f17; --card:#131a26; --ink:#eef1f6; --muted:#97a2b5; --rule:#222c3c; --accent:#f97316; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; line-height:1.5; padding:48px 16px 72px; }
+  main { max-width:1100px; margin:0 auto; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; z-index:5; }
+  h1 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  h2 { font-size:17px; margin:0 0 10px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; max-width:720px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+  .card { background:var(--card); border:1px solid var(--rule); border-radius:14px; padding:16px; margin-top:16px; }
+  .drop { border:2px dashed #2c3850; border-radius:14px; padding:36px 16px; text-align:center; cursor:pointer; }
+  .drop:hover, .drop.over { border-color:var(--accent); background:rgba(249,115,22,.07); }
+  .drop b { display:block; font-size:18px; }
+  .how { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:700px) { .how { grid-template-columns:1fr; } }
+  .how ol { margin:6px 0 0; padding-left:20px; font-size:14px; color:var(--muted); }
+  button { font:inherit; font-weight:600; font-size:14px; padding:8px 13px; border-radius:9px; cursor:pointer; border:1px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover { border-color:var(--muted); }
+  button.on { background:var(--accent); border-color:var(--accent); color:#1b0d03; }
+  select { font:inherit; font-size:14px; padding:7px 9px; border-radius:9px; background:var(--card); color:var(--ink); border:1px solid var(--rule); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .grow { flex:1; }
+  .mapwrap { position:relative; margin-top:16px; border-radius:14px; overflow:hidden; border:1px solid var(--rule); }
+  #map { display:block; width:100%; height:min(70vh, 640px); touch-action:none; cursor:grab; }
+  .zoom { position:absolute; right:10px; top:10px; display:grid; gap:4px; }
+  .zoom button { width:36px; height:36px; padding:0; font-size:18px; background:rgba(19,26,38,.9); }
+  .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+  @media (max-width:640px) { .stats { grid-template-columns:1fr 1fr; } }
+  .stats div { background:#0e141f; border-radius:10px; padding:10px 12px; }
+  .stats b { display:block; font-size:22px; font-variant-numeric:tabular-nums; }
+  .stats span { font-size:13px; color:var(--muted); }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px) { .two { grid-template-columns:1fr; } }
+  .two .card { margin-top:0; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  td { padding:7px 4px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  td.r { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--muted); }
+  tr.go { cursor:pointer; } tr.go:hover td { background:#18212f; }
+  .bars { display:grid; gap:6px; font-size:14px; }
+  .bars div { display:grid; grid-template-columns:110px 1fr 90px; gap:8px; align-items:center; }
+  .bars i { display:block; height:10px; border-radius:5px; background:var(--accent); }
+  .bars span:last-child { text-align:right; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .note { font-size:13px; color:var(--muted); margin-top:8px; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Location Map">
+<meta property="og:description" content="See everywhere you've been. Load your Google Maps Timeline export for a heatmap of your travels, your top places, and how far you went each year. Your location history stays on your device.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/location-map/">
+<meta property="og:image" content="https://rajeshrenato.github.io/location-map/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="See everywhere you've been. Load your Google Maps Timeline export for a heatmap of your travels, your top places, and how far you went each year. Your location history stays on your device.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Location Map", "item": "https://rajeshrenato.github.io/location-map/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Location Map", "url": "https://rajeshrenato.github.io/location-map/", "description": "See everywhere you've been. Load your Google Maps Timeline export for a heatmap of your travels, your top places, and how far you went each year. Your location history stays on your device.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<main>
+  <h1>Location Map</h1>
+  <p class="lede">See everywhere you've been. Load your Google Maps Timeline export and get a heatmap of your travels, your most visited places, and how far you went each year.</p>
+  <p class="muted small">Your location history is read in this browser and never sent anywhere. The map background is drawn from map images (Esri, OpenStreetMap), which only learn which part of the world you're looking at; turn them off with "Map images".</p>
+
+  <section id="start">
+    <div class="card">
+      <div class="drop" id="drop" tabindex="0" role="button"><b>Drop your Timeline export here</b><span class="muted small">Timeline.json from your phone, or the Google Takeout ZIP or its Location History files.</span></div>
+      <input type="file" id="pick" multiple accept=".json,.zip,application/json,application/zip" hidden>
+      <p class="small" id="status" style="margin-top:10px" hidden></p>
+    </div>
+    <div class="card how">
+      <div><h2>Android (Timeline on your phone)</h2><ol><li>Open phone Settings, then Location.</li><li>Location services, then Timeline.</li><li>Tap <b>Export Timeline data</b> and save the file.</li></ol></div>
+      <div><h2>iPhone, or older history in Takeout</h2><ol><li>iPhone: Google Maps, your profile, Your Timeline, the menu, Location and privacy settings, <b>Export Timeline data</b>.</li><li>Older history: takeout.google.com, choose <b>Location History</b>, and download the ZIP.</li></ol></div>
+    </div>
+  </section>
+
+  <section id="result" hidden>
+    <div class="row" style="margin-top:16px"><select id="year" aria-label="Year"></select><button id="tilesBtn" class="on">Map images</button><button id="placesBtn" class="on">Top places</button><span class="grow"></span><button id="fitBtn">Show everything</button><button id="againBtn">Load another</button></div>
+    <div class="mapwrap"><canvas id="map"></canvas><div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">&minus;</button></div></div>
+    <div class="card"><div class="stats" id="stats"></div></div>
+    <div class="two" style="margin-top:16px">
+      <div class="card"><h2>Most visited places</h2><table id="places"></table><p class="note">Click a place to fly to it.</p></div>
+      <div class="card"><h2>How you got around</h2><div class="bars" id="modes"></div><h2 style="margin-top:18px">Distance by year</h2><div class="bars" id="years"></div></div>
+    </div>
+  </section>
+</main>
+
+<script src="../common/zip.js"></script>
+<script src="../common/map.js"></script>
+<script>
+'use strict';
+
+// ======================================================================
+// Reading the export, in any of Google's formats, into one shape:
+// points [lat, lng, time] for the heatmap, visits to places, and trips.
+// ======================================================================
+
+const D = { lat: [], lng: [], t: [], visits: [], trips: [] };
+const R = Math.PI / 180;
+const km = (a, b, c, d) => { const x = Math.sin((c - a) * R / 2) ** 2 + Math.cos(a * R) * Math.cos(c * R) * Math.sin((d - b) * R / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
+const tsec = v => { if (v == null) return 0; if (typeof v === 'number') return v > 1e11 ? Math.round(v / 1000) : v; const n = Date.parse(v); return isNaN(n) ? (/^\d+$/.test(v) ? Math.round(+v / 1000) : 0) : Math.round(n / 1000); };
+// "12.9716°, 77.5946°", "geo:12.97,77.59", or E7 integers
+function latLng(v) {
+  if (!v) return null;
+  if (typeof v === 'object') {
+    if ('latitudeE7' in v) return [v.latitudeE7 / 1e7, v.longitudeE7 / 1e7];
+    if ('latE7' in v) return [v.latE7 / 1e7, v.lngE7 / 1e7];
+    if (v.latLng) return latLng(v.latLng);
+    if (v.LatLng) return latLng(v.LatLng);
+    return null;
+  }
+  const m = /(-?\d+(?:\.\d+)?)°?\s*,\s*(-?\d+(?:\.\d+)?)/.exec(String(v));
+  if (!m) return null;
+  const lat = +m[1], lng = +m[2];
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && (lat || lng) ? [lat, lng] : null;
+}
+function addPoint(ll, t) { if (!ll) return; D.lat.push(ll[0]); D.lng.push(ll[1]); D.t.push(t || 0); }
+const MODE = { WALKING: 'Walking', ON_FOOT: 'Walking', RUNNING: 'Walking', IN_PASSENGER_VEHICLE: 'Car', IN_VEHICLE: 'Car', DRIVING: 'Car', IN_TAXI: 'Car', MOTORCYCLING: 'Motorbike', CYCLING: 'Cycling', IN_BUS: 'Bus', IN_TRAIN: 'Train', IN_SUBWAY: 'Train', IN_TRAM: 'Train', FLYING: 'Flying', IN_FERRY: 'Boat', SAILING: 'Boat' };
+const modeOf = s => MODE[String(s || '').toUpperCase().replace(/^IN_(?=PASSENGER)/, 'IN_')] || (s ? String(s).toLowerCase().replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()) : 'Unknown');
+
+function readJson(data, name) {
+  // old raw history: { locations: [...] }
+  if (data && Array.isArray(data.locations)) { for (const p of data.locations) addPoint(latLng(p), tsec(p.timestamp || p.timestampMs)); return; }
+  // monthly semantic history: { timelineObjects: [...] }
+  if (data && Array.isArray(data.timelineObjects)) {
+    for (const o of data.timelineObjects) {
+      if (o.placeVisit) {
+        const v = o.placeVisit, ll = latLng(v.location), s = tsec(v.duration && v.duration.startTimestamp), e = tsec(v.duration && v.duration.endTimestamp);
+        if (ll) { D.visits.push({ lat: ll[0], lng: ll[1], id: v.location.placeId || '', name: v.location.name || '', address: v.location.address || '', s, e }); addPoint(ll, s); }
+      } else if (o.activitySegment) {
+        const a = o.activitySegment, from = latLng(a.startLocation), to = latLng(a.endLocation), s = tsec(a.duration && a.duration.startTimestamp);
+        const path = (a.waypointPath && a.waypointPath.waypoints) || (a.simplifiedRawPath && a.simplifiedRawPath.points) || [];
+        for (const p of path) addPoint(latLng(p), s);
+        addPoint(from, s); addPoint(to, s);
+        D.trips.push({ mode: modeOf(a.activityType), km: (a.distance || a.waypointPath && a.waypointPath.distanceMeters || (from && to ? km(from[0], from[1], to[0], to[1]) * 1000 : 0)) / 1000, s });
+      }
+    }
+    return;
+  }
+  // the newer exports: Android's { semanticSegments, rawSignals } or iPhone's plain array of segments
+  const segs = Array.isArray(data) ? data : data && Array.isArray(data.semanticSegments) ? data.semanticSegments : null;
+  if (segs) {
+    for (const g of segs) {
+      const s = tsec(g.startTime), e = tsec(g.endTime);
+      if (g.visit) {
+        const c = g.visit.topCandidate || {}, ll = latLng(c.placeLocation);
+        if (ll) { D.visits.push({ lat: ll[0], lng: ll[1], id: c.placeId || c.placeID || '', name: '', type: c.semanticType || '', s, e }); addPoint(ll, s); }
+      }
+      if (g.activity) {
+        const a = g.activity, from = latLng(a.start), to = latLng(a.end);
+        addPoint(from, s); addPoint(to, e);
+        const t = (a.topCandidate && a.topCandidate.type) || '';
+        D.trips.push({ mode: modeOf(t), km: (+a.distanceMeters || (from && to ? km(from[0], from[1], to[0], to[1]) * 1000 : 0)) / 1000, s });
+      }
+      if (Array.isArray(g.timelinePath)) for (const p of g.timelinePath) addPoint(latLng(p.point), tsec(p.time) || s);
+    }
+    if (data && Array.isArray(data.rawSignals)) for (const r of data.rawSignals) if (r.position) addPoint(latLng(r.position.LatLng || r.position.latLng), tsec(r.position.timestamp));
+    return;
+  }
+  throw new Error(name + ' isn\'t a location history file.');
+}
+// Huge Records.json files are scanned in chunks instead of parsed whole.
+async function scanRecords(blob, onProgress) {
+  const CH = 8 << 20, dec = new TextDecoder();
+  let carry = '';
+  const re = /"latitudeE7"\s*:\s*(-?\d+)\s*,\s*"longitudeE7"\s*:\s*(-?\d+)[^{}]*?"timestamp(?:Ms)?"\s*:\s*"?([^",}]+)/g;
+  for (let pos = 0; pos < blob.size; pos += CH) {
+    const text = carry + dec.decode(new Uint8Array(await blob.slice(pos, pos + CH).arrayBuffer()), { stream: pos + CH < blob.size });
+    let m, lastEnd = 0;
+    re.lastIndex = 0;
+    while ((m = re.exec(text))) { addPoint([+m[1] / 1e7, +m[2] / 1e7], tsec(m[3])); lastEnd = re.lastIndex; }
+    carry = text.slice(Math.max(lastEnd, text.length - 4000));
+    onProgress(Math.min(1, (pos + CH) / blob.size));
+  }
+}
+async function readBlob(blob, name, onProgress) {
+  if (blob.size > 150 << 20 && /records/i.test(name)) return scanRecords(blob, onProgress);
+  let text = await blob.text();
+  try { readJson(JSON.parse(text), name); }
+  catch (e) { if (e instanceof SyntaxError && /records/i.test(name)) return scanRecords(blob, onProgress); throw e; }
+}
+
+// ======================================================================
+// What it all adds up to
+// ======================================================================
+
+// What to call a place: its name if the export has one, Home or Work if Google guessed so, else where it is.
+function placeName(p, home) {
+  if (p.name) return p.name;
+  const t = String(p.type || '').toUpperCase();
+  if (/HOME/.test(t)) return 'Home';
+  if (/WORK/.test(t)) return 'Work';
+  if (p === home) return 'Home, probably';
+  return p.lat.toFixed(4) + ', ' + p.lng.toFixed(4);
+}
+// Places: visits grouped by place ID, or by being within about 120 m of each other.
+function topPlaces(visits) {
+  const groups = new Map();
+  for (const v of visits) {
+    const key = v.id || (Math.round(v.lat * 900) + ',' + Math.round(v.lng * 900));
+    const g = groups.get(key) || { lat: v.lat, lng: v.lng, name: v.name, address: v.address, type: v.type, n: 0, secs: 0, nights: 0 };
+    g.n++; g.secs += Math.max(0, Math.min(86400 * 3, (v.e || v.s) - v.s));
+    const h = new Date(v.s * 1000).getHours();
+    if (h >= 20 || h < 6) g.nights++;
+    if (!g.name && v.name) g.name = v.name;
+    groups.set(key, g);
+  }
+  return [...groups.values()].sort((a, b) => b.secs - a.secs || b.n - a.n);
+}
+
+// ======================================================================
+// The page
+// ======================================================================
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+let map = null, year = 'all', places = [], showPlaces = true;
+const n0 = v => Math.round(v).toLocaleString('en-IN');
+const inYear = t => year === 'all' || new Date(t * 1000).getFullYear() === +year;
+
+async function load(files) {
+  const st = $('status');
+  st.hidden = false;
+  for (const k of ['lat', 'lng', 't', 'visits', 'trips']) D[k] = [];
+  const msgs = [];
+  for (const f of files) {
+    try {
+      if (/\.zip$/i.test(f.name) || f.type === 'application/zip') {
+        const z = await Zip.open(f);
+        const want = z.entries.filter(e => !e.dir && /\.json$/i.test(e.name) && /(location history|timeline|semantic|records|location-history)/i.test(e.name));
+        if (!want.length) throw new Error('no Location History files inside.');
+        for (const e of want) { st.textContent = 'Reading ' + e.name.split('/').pop() + '...'; await readBlob(new Blob([await z.read(e)]), e.name, p => { st.textContent = 'Reading ' + e.name.split('/').pop() + ' ' + Math.round(p * 100) + '%'; }); }
+      } else { st.textContent = 'Reading ' + f.name + '...'; await readBlob(f, f.name, p => { st.textContent = 'Reading ' + f.name + ' ' + Math.round(p * 100) + '%'; }); }
+    } catch (e) { msgs.push(f.name + ': ' + (e.message || 'couldn\'t be read.')); }
+  }
+  if (!D.lat.length) { st.textContent = msgs.join(' ') || 'No locations found.'; return; }
+  st.textContent = msgs.join(' ');
+  const years = [...new Set(D.t.filter(Boolean).map(t => new Date(t * 1000).getFullYear()))].sort();
+  $('year').innerHTML = '<option value="all">All years</option>' + years.slice().reverse().map(y => '<option>' + y + '</option>').join('');
+  $('start').hidden = true; $('result').hidden = false;
+  if (!map) map = MiniMap.create($('map'), { style: 'dark' });
+  map.resize();
+  year = 'all';
+  render(true);
+}
+let heat = null;
+function render(fit) {
+  const idx = [];
+  for (let i = 0; i < D.lat.length; i++) if (inYear(D.t[i])) idx.push(i);
+  const pts = new Float32Array(idx.length * 2);
+  idx.forEach((i, k) => { pts[k * 2] = MiniMap.mx(D.lng[i]); pts[k * 2 + 1] = MiniMap.my(D.lat[i]); });
+  const visits = D.visits.filter(v => inYear(v.s)), trips = D.trips.filter(t => inYear(t.s));
+  places = topPlaces(visits);
+  map.clearLayers();
+  map.addLayer(MiniMap.heatLayer(pts, null, { radius: 9 }));
+  map.addLayer((ctx, m) => {
+    if (!showPlaces) return;
+    places.slice(0, 10).forEach((p, i) => {
+      const [x, y] = m.toScreen(p.lat, p.lng);
+      ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#0b0f17'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 11, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#0b0f17'; ctx.font = '700 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText(String(i + 1), x, y + 4); ctx.textAlign = 'left';
+    });
+  });
+  if (fit) fitView(idx);
+  // numbers
+  let dist = trips.reduce((a, t) => a + t.km, 0);
+  if (!trips.length) for (let k = 1; k < idx.length; k++) { const a = idx[k - 1], b = idx[k]; const d = km(D.lat[a], D.lng[a], D.lat[b], D.lng[b]); if (d < 900) dist += d; }
+  const days = new Set(idx.map(i => Math.floor((D.t[i] + 19800) / 86400))).size;
+  const home = places.slice().sort((a, b) => b.nights - a.nights)[0];
+  let far = 0;
+  if (home) for (const i of idx) far = Math.max(far, km(home.lat, home.lng, D.lat[i], D.lng[i]));
+  $('stats').innerHTML = [[n0(dist) + ' km', 'travelled'], [n0(days), 'days recorded'], [n0(places.length), 'different places'], [home ? n0(far) + ' km' : 'n/a', 'farthest from home']]
+    .map(([b, s]) => '<div><b>' + b + '</b><span>' + s + '</span></div>').join('');
+  $('places').innerHTML = places.slice(0, 10).map((p, i) => '<tr class="go" data-i="' + i + '"><td><b>' + (i + 1) + '.</b> ' + esc(placeName(p, home)) +
+    (p.address ? '<div class="small muted">' + esc(p.address.slice(0, 70)) + '</div>' : '') + '</td><td class="r">' + p.n + (p.n === 1 ? ' visit' : ' visits') + '<br>' + Math.round(p.secs / 3600).toLocaleString() + ' h</td></tr>').join('') || '<tr><td class="muted">This file has raw points but no visits, so there are no named places.</td></tr>';
+  for (const tr of $('places').querySelectorAll('tr.go')) tr.onclick = () => { const p = places[+tr.dataset.i]; map.setView(p.lat, p.lng, 15); scrollTo({ top: $('map').getBoundingClientRect().top + scrollY - 70, behavior: 'smooth' }); };
+  const modes = new Map();
+  for (const t of trips) modes.set(t.mode, (modes.get(t.mode) || 0) + t.km);
+  const mm = [...modes].sort((a, b) => b[1] - a[1]), mmax = Math.max(1, ...mm.map(x => x[1]));
+  $('modes').innerHTML = mm.length ? mm.map(([k, v]) => '<div><span>' + esc(k) + '</span><i style="width:' + (v / mmax * 100) + '%"></i><span>' + n0(v) + ' km</span></div>').join('') : '<p class="muted small">This file has no trips with a way of travelling.</p>';
+  const byYear = new Map();
+  for (const t of D.trips) { const y = new Date(t.s * 1000).getFullYear(); byYear.set(y, (byYear.get(y) || 0) + t.km); }
+  if (!D.trips.length) for (let i = 1; i < D.lat.length; i++) { const d = km(D.lat[i - 1], D.lng[i - 1], D.lat[i], D.lng[i]); if (d < 900 && D.t[i]) { const y = new Date(D.t[i] * 1000).getFullYear(); byYear.set(y, (byYear.get(y) || 0) + d); } }
+  const yy = [...byYear].sort((a, b) => a[0] - b[0]), ymax = Math.max(1, ...yy.map(x => x[1]));
+  $('years').innerHTML = yy.map(([k, v]) => '<div><span>' + k + '</span><i style="width:' + (v / ymax * 100) + '%;background:#facc15"></i><span>' + n0(v) + ' km</span></div>').join('');
+}
+// frame where most of the points are, ignoring a few far-flung ones
+function fitView(idx) {
+  if (!idx.length) return;
+  const la = idx.map(i => D.lat[i]).sort((a, b) => a - b), lo = idx.map(i => D.lng[i]).sort((a, b) => a - b);
+  const q = (a, f) => a[Math.min(a.length - 1, Math.max(0, Math.floor(a.length * f)))];
+  map.fit([[q(la, 0.02), q(lo, 0.02)], [q(la, 0.98), q(lo, 0.98)]], 50, 13);
+}
+
+$('drop').onclick = () => $('pick').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pick').click(); } };
+$('pick').onchange = () => { load([...$('pick').files]); $('pick').value = ''; };
+for (const ev of ['dragenter', 'dragover']) $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); });
+for (const ev of ['dragleave', 'drop']) $('drop').addEventListener(ev, () => $('drop').classList.remove('over'));
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); const f = (e.dataTransfer || {}).files; if (f && f.length) load([...f]); });
+$('year').onchange = () => { year = $('year').value; render(true); };
+$('tilesBtn').onclick = () => { map.tiles = !map.tiles; $('tilesBtn').classList.toggle('on', map.tiles); };
+$('placesBtn').onclick = () => { showPlaces = !showPlaces; $('placesBtn').classList.toggle('on', showPlaces); map.redraw(); };
+$('fitBtn').onclick = () => { const idx = []; for (let i = 0; i < D.lat.length; i++) if (inYear(D.t[i])) idx.push(i); fitView(idx); };
+$('zin').onclick = () => map.zoomBy(1);
+$('zout').onclick = () => map.zoomBy(-1);
+$('againBtn').onclick = () => { $('result').hidden = true; $('start').hidden = false; $('status').hidden = true; };
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Location Map</h2>
+<p>See everywhere you've been. Load your Google Maps Timeline export and get a heatmap of your travels, your most visited places, how you got around, and how far you went each year.</p>
+<h3>Use</h3>
+<ul><li>Android: phone Settings, Location, Location services, Timeline, Export Timeline data.</li><li>iPhone: Google Maps, your profile picture, Your Timeline, the menu, Location and privacy settings, Export Timeline data.</li><li>Older history: takeout.google.com, choose Location History, and download the ZIP.</li><li>Drop the file here. Pick a year, drag and zoom the map, and click a place in the list to fly to it. "Map images" turns the background map off.</li></ul>
+<h3>How it works</h3>
+<ul><li>Google has used several formats over the years, and all are read: the new Timeline.json from Android (semantic segments and raw signals), the iPhone export (a list of segments with "geo:" positions), the monthly Semantic Location History files, and the old Records.json. Very large Records.json files are scanned in pieces instead of being parsed whole.</li><li>The heatmap counts points into a grid the size of the screen, spreads each into a soft round spot, and colours them on a log scale, so a place you passed once still shows next to home.</li><li>Places are visits grouped by place ID, or by being within about a hundred metres when there is no ID. "Home" and "Work" are Google's own guesses where the export has them; otherwise the place you spend most nights at is taken as home.</li><li>The map is drawn on a canvas from Esri's basemap images. Those requests only say which part of the world is on screen; your location history never leaves your browser.</li></ul>
+<p class="pg-more">More like this: <a href="../file-lock/">File Lock</a>, <a href="../passport-photo/">Passport Photo</a>, <a href="../invoice-maker/">Invoice Maker</a>, <a href="../screen-recorder/">Screen Recorder</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/location-map">location-map on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>

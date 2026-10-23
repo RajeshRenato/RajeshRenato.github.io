@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e8f0ea'/%3E%3Cpath d='M16 4c-5 0-9 4-9 9 0 7 9 15 9 15s9-8 9-15c0-5-4-9-9-9z' fill='%2316a34a'/%3E%3Ccircle cx='16' cy='13' r='3.6' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://server.arcgisonline.com https://services.arcgisonline.com; connect-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<title>Live Location | share your live location with family, no app or account</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/live-location/">
+<style>
+  :root { --bg:#eef2ef; --card:#ffffff; --ink:#18201b; --muted:#5f6b63; --rule:#d3ddd6; --accent:#16a34a;
+          --lp-bg:#eef2ef; --lp-panel:#ffffff; --lp-field:#ffffff; --lp-ink:#18201b; --lp-muted:#5f6b63; --lp-rule:#d3ddd6; --lp-veil:rgba(238,242,239,.97); --lp-accent:#16a34a; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; }
+  body { background:var(--bg); color:var(--ink); font-family:system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  a.back { position:fixed; top:12px; left:14px; color:var(--muted); font-size:13px; text-decoration:none; z-index:11; background:rgba(255,255,255,.85); padding:3px 8px; border-radius:8px; }
+  #map { position:fixed; inset:0; width:100%; height:100%; touch-action:none; display:block; }
+  .tools { position:fixed; top:12px; right:12px; display:flex; flex-direction:column; gap:6px; z-index:3; }
+  .tools button { width:42px; height:42px; padding:0; font-size:18px; }
+  button { font:inherit; font-weight:600; font-size:14px; padding:9px 14px; border-radius:10px; cursor:pointer; border:1.5px solid var(--rule); background:var(--card); color:var(--ink); }
+  button:hover { border-color:var(--ink); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.stop { background:#b91c1c; border-color:#b91c1c; color:#fff; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .sheet { position:fixed; left:0; right:0; bottom:0; z-index:4; background:var(--card); border-radius:18px 18px 0 0; box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:12px 16px calc(14px + env(safe-area-inset-bottom)); max-height:46vh; overflow:auto; }
+  @media (min-width:800px) { .sheet { left:auto; right:16px; bottom:16px; width:360px; border-radius:16px; max-height:calc(100vh - 100px); } }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .grow { flex:1; }
+  .status { font-size:14px; color:var(--muted); margin:2px 0 10px; }
+  .status.live::before { content:''; display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--accent); margin-right:7px; animation:pulse 1.6s infinite; }
+  @keyframes pulse { 50% { opacity:.3; } }
+  @media (prefers-reduced-motion: reduce) { .status.live::before { animation:none; } }
+  ul.people { list-style:none; margin:10px 0 0; padding:0; }
+  ul.people li { display:grid; grid-template-columns:34px 1fr auto; gap:10px; align-items:center; padding:9px 0; border-top:1px solid var(--rule); cursor:pointer; }
+  ul.people .dot { width:34px; height:34px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  ul.people b { display:block; }
+  ul.people small { color:var(--muted); font-size:13px; }
+  ul.people a { font-size:13px; color:var(--accent); font-weight:600; text-decoration:none; }
+  .note { font-size:12.5px; color:var(--muted); margin:10px 0 0; }
+  [hidden] { display:none !important; }
+</style>
+<meta property="og:title" content="Live Location">
+<meta property="og:description" content="Share your live location with family or friends over a link, and see theirs on one map. No app, no account, and no server: locations go straight from phone to phone.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/live-location/">
+<meta property="og:image" content="https://rajeshrenato.github.io/live-location/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Share your live location with family or friends over a link, and see theirs on one map. No app, no account, and no server: locations go straight from phone to phone.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://rajeshrenato.github.io/#tools"}, {"@type": "ListItem", "position": 3, "name": "Live Location", "item": "https://rajeshrenato.github.io/live-location/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Live Location", "url": "https://rajeshrenato.github.io/live-location/", "description": "Share your live location with family or friends over a link, and see theirs on one map. No app, no account, and no server: locations go straight from phone to phone.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="map"></canvas>
+<div class="tools"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">&minus;</button><button id="fitBtn" aria-label="Show everyone" title="Show everyone">&#9673;</button></div>
+<div class="sheet" id="sheet" hidden>
+  <div class="row"><b class="grow" id="title">Live Location</b><button id="inviteBtn">Invite</button><button id="shareBtn" class="primary">Share my location</button></div>
+  <p class="status" id="status"></p>
+  <ul class="people" id="people"></ul>
+  <p class="note">Keep this page open. Phones pause location when the screen goes off or you switch apps; it picks up again when you come back. Locations go straight between your browsers and are gone when you close the page.</p>
+</div>
+<div id="lobby" class="lp-panel"></div>
+
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script src="../common/map.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const R = Math.PI / 180;
+const km = (a, b, c, d) => { const x = Math.sin((c - a) * R / 2) ** 2 + Math.cos(a * R) * Math.cos(c * R) * Math.sin((d - b) * R / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
+const far = d => d < 1 ? Math.round(d * 1000 / 10) * 10 + ' m' : d < 20 ? d.toFixed(1) + ' km' : Math.round(d) + ' km';
+function ago(ts) { const s = Math.max(0, Math.round((Date.now() - ts) / 1000)); return s < 10 ? 'just now' : s < 60 ? s + ' s ago' : s < 3600 ? Math.round(s / 60) + ' min ago' : Math.round(s / 3600) + ' h ago'; }
+
+// A location as it travels: rounded to about a metre, with what's useful to the others.
+function packFix(p, battery) {
+  const c = p.coords;
+  return { t: 'pos', lat: +c.latitude.toFixed(6), lng: +c.longitude.toFixed(6), acc: Math.round(c.accuracy || 0), spd: c.speed == null ? null : +c.speed.toFixed(1), hd: c.heading == null || isNaN(c.heading) ? null : Math.round(c.heading), bat: battery, ts: p.timestamp || Date.now() };
+}
+function validFix(m) { return m && typeof m.lat === 'number' && typeof m.lng === 'number' && Math.abs(m.lat) <= 90 && Math.abs(m.lng) <= 180 && typeof m.ts === 'number'; }
+// Send a new fix only when it's moved, or every so often, so a still phone doesn't chatter.
+function worthSending(last, fix, now) { if (!last) return true; return km(last.lat, last.lng, fix.lat, fix.lng) * 1000 > Math.max(8, fix.acc / 3) || now - last.sent > 15000; }
+
+// no map images until there's a location to show, so the first ones fetched are the ones needed
+const map = MiniMap.create($('map'), { style: 'light', tiles: false });
+map.setView(20.6, 78.9, 4);
+let room = null, watch = null, wake = null, battery = null, lastSent = null, solo = false, followed = false;
+const people = new Map();   // id -> { name, color, fix, trail: [[lat,lng]], stopped }
+const myId = () => (room ? room.me : 0);
+
+function person(id) {
+  if (!people.has(id)) { const p = room && room.players.find(p => p.id === id); people.set(id, { name: p ? p.name : 'You', color: p ? p.color : '#16a34a', fix: null, trail: [], stopped: false }); }
+  return people.get(id);
+}
+function gotFix(id, fix) {
+  if (!validFix(fix)) return;
+  const p = person(id);
+  p.fix = fix; p.stopped = false;
+  const t = p.trail, l = t[t.length - 1];
+  if (!l || km(l[0], l[1], fix.lat, fix.lng) > 0.005) { t.push([fix.lat, fix.lng]); if (t.length > 400) t.shift(); }
+  if (!followed) { followed = true; map.setView(fix.lat, fix.lng, 15); map.tiles = true; }
+  draw();
+}
+
+// ---------- my own location ----------
+async function startSharing() {
+  if (!navigator.geolocation) { status('This browser can\'t share a location.'); return; }
+  status('Asking for your location...');
+  watch = navigator.geolocation.watchPosition(pos => {
+    const fix = packFix(pos, battery), now = Date.now();
+    gotFix(myId(), fix);
+    if (room && worthSending(lastSent, fix, now)) { send(fix); lastSent = { ...fix, sent: now }; }
+    status('Sharing your location' + (room && room.players.length > 1 ? ' with ' + (room.players.length - 1) + (room.players.length === 2 ? ' person' : ' people') : '') + '. Accurate to about ' + far(fix.acc / 1000) + '.', true);
+  }, err => {
+    status(err.code === 1 ? 'Location is blocked for this page. Allow it in the browser\'s site settings, then press Share again.' : 'Couldn\'t get your location yet. Going outside or turning on Wi-Fi helps.');
+    if (err.code === 1) stopSharing(true);
+  }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
+  $('shareBtn').textContent = 'Stop sharing'; $('shareBtn').className = 'stop';
+  try { wake = await navigator.wakeLock.request('screen'); } catch (e) { }
+  try { const b = await navigator.getBattery(); const upd = () => { battery = Math.round(b.level * 100); }; upd(); b.onlevelchange = upd; } catch (e) { }
+}
+function stopSharing(quiet) {
+  if (watch !== null) navigator.geolocation.clearWatch(watch);
+  watch = null; lastSent = null;
+  if (wake) { wake.release().catch(() => { }); wake = null; }
+  if (room) send({ t: 'stop' });
+  const me = people.get(myId()); if (me) me.stopped = true;
+  $('shareBtn').textContent = 'Share my location'; $('shareBtn').className = 'primary';
+  if (!quiet) status('You\'ve stopped sharing. Others can still see where you were last.');
+  draw();
+}
+document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible' && watch !== null && !wake) { try { wake = await navigator.wakeLock.request('screen'); } catch (e) { } } else if (document.visibilityState === 'hidden') wake = null; });
+
+// ---------- the room ----------
+// The host passes every guest's fix on to everyone, tagged with who it's from.
+function send(m) { if (!room) return; if (room.isHost) room.send({ ...m, id: 0 }); else room.send(m); }
+function attach(r) {
+  room = r; solo = false;
+  people.clear();
+  room.on('roster', players => {
+    for (const p of players) { const q = person(p.id); q.name = p.id === room.me ? 'You' : p.name; q.color = p.color; }
+    for (const id of [...people.keys()]) if (!players.some(p => p.id === id)) people.delete(id);
+    // newcomers get everyone's latest straight away
+    if (room.isHost) for (const [id, p] of people) if (p.fix) room.send({ ...p.fix, id, stopped: p.stopped });
+    draw();
+  });
+  room.on('message', (m, from) => {
+    if (room.isHost) {
+      if (m.t === 'pos' && validFix(m)) { gotFix(from, m); room.send({ ...m, id: from }); }
+      else if (m.t === 'stop') { const p = people.get(from); if (p) p.stopped = true; room.send({ t: 'stop', id: from }); draw(); }
+    } else if (typeof m.id === 'number' && m.id !== room.me) {
+      if (m.t === 'pos') { gotFix(m.id, m); if (m.stopped) person(m.id).stopped = true; }
+      else if (m.t === 'stop') { const p = people.get(m.id); if (p) { p.stopped = true; draw(); } }
+    }
+  });
+  room.on('leave', () => draw());
+  room.on('close', () => { status('The person who started this map has closed it.'); room = null; draw(); });
+  person(room.me).name = 'You';
+  $('inviteBtn').hidden = !room.isHost;
+  $('sheet').hidden = false;
+  if (watch === null) startSharing(); else lastSent = null;
+  draw();
+}
+
+// ---------- drawing ----------
+map.addLayer((ctx, m) => {
+  for (const [id, p] of people) {
+    if (p.trail.length > 1) {
+      ctx.strokeStyle = p.color; ctx.globalAlpha = 0.5; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath();
+      p.trail.forEach(([a, b], i) => { const [x, y] = m.toScreen(a, b); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      ctx.stroke(); ctx.globalAlpha = 1;
+    }
+  }
+  for (const [id, p] of people) {
+    if (!p.fix) continue;
+    const [x, y] = m.toScreen(p.fix.lat, p.fix.lng);
+    const [x2] = m.toScreen(p.fix.lat, p.fix.lng + p.fix.acc / (111320 * Math.cos(p.fix.lat * R)));
+    const rad = Math.abs(x2 - x);
+    if (rad > 14) { ctx.fillStyle = p.color; ctx.globalAlpha = 0.13; ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+    const stale = p.stopped || Date.now() - p.fix.ts > 120000;
+    if (p.fix.hd !== null && p.fix.spd > 0.6 && !stale) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(p.fix.hd * R); ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.moveTo(0, -25); ctx.lineTo(8, -12); ctx.lineTo(-8, -12); ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 15, 0, 7); ctx.fill();
+    ctx.fillStyle = stale ? '#9ca3af' : p.color; ctx.beginPath(); ctx.arc(x, y, 12, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '700 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText((p.name[0] || '?').toUpperCase(), x, y + 4);
+    ctx.font = '600 12px system-ui'; const w = ctx.measureText(p.name).width + 12;
+    ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillRect(x - w / 2, y + 18, w, 18);
+    ctx.fillStyle = '#18201b'; ctx.fillText(p.name, x, y + 31); ctx.textAlign = 'left';
+  }
+});
+function draw() {
+  map.redraw();
+  const me = people.get(myId());
+  const rows = [...people.entries()].sort((a, b) => (a[0] === myId() ? -1 : b[0] === myId() ? 1 : a[0] - b[0]));
+  $('people').innerHTML = rows.map(([id, p]) => {
+    let line = p.fix ? (p.stopped ? 'Stopped sharing, last seen ' : 'Updated ') + ago(p.fix.ts) : 'Waiting for their location...';
+    if (p.fix && me && me.fix && id !== myId()) line = far(km(me.fix.lat, me.fix.lng, p.fix.lat, p.fix.lng)) + ' away, ' + line.replace(/^U/, 'u').replace(/^S/, 's');
+    if (p.fix && p.fix.spd > 1.5 && !p.stopped) line += ', ' + Math.round(p.fix.spd * 3.6) + ' km/h';
+    if (p.fix && p.fix.bat != null) line += ', battery ' + p.fix.bat + '%';
+    const dir = p.fix && id !== myId() ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + p.fix.lat + ',' + p.fix.lng + '" target="_blank" rel="noopener noreferrer">Directions</a>' : '';
+    return '<li data-id="' + id + '"><span class="dot" style="background:' + (p.stopped ? '#9ca3af' : p.color) + '">' + esc((p.name[0] || '?').toUpperCase()) + '</span><span><b>' + esc(p.name) + '</b><small>' + line + '</small></span>' + dir + '</li>';
+  }).join('');
+  for (const li of $('people').querySelectorAll('li')) li.onclick = e => { if (e.target.tagName === 'A') return; const p = people.get(+li.dataset.id); if (p && p.fix) map.setView(p.fix.lat, p.fix.lng, Math.max(map.zoom, 15)); };
+  $('title').textContent = room ? 'Live Location, ' + people.size + (people.size === 1 ? ' person' : ' people') : 'Live Location';
+}
+function status(t, live) { $('status').textContent = t; $('status').className = 'status' + (live ? ' live' : ''); }
+function fitAll() {
+  const pts = [...people.values()].filter(p => p.fix).map(p => [p.fix.lat, p.fix.lng]);
+  if (!pts.length) return;
+  if (pts.length === 1) return map.setView(pts[0][0], pts[0][1], 15);
+  const la = pts.map(p => p[0]), lo = pts.map(p => p[1]);
+  // the list covers the bottom of the map on a phone, and its right side on a wider screen:
+  // fit everyone into the part that's left
+  const r = $('sheet').getBoundingClientRect(), open = !$('sheet').hidden, phone = r.width >= innerWidth - 1;
+  const down = open && phone ? r.height : 0, left = open && !phone ? innerWidth - r.left : 0;
+  map.fit([[Math.min(...la), Math.min(...lo)], [Math.max(...la), Math.max(...lo)]], 70 + Math.max(down, left) / 2, 16);
+  if (down || left) { const [lat, lng] = map.toLatLng(map.width / 2 + left / 2, map.height / 2 + down / 2); map.setView(lat, lng); }
+}
+setInterval(draw, 10000);
+
+$('shareBtn').onclick = () => (watch === null ? startSharing() : stopSharing());
+$('inviteBtn').onclick = () => (room ? lobby.reopen() : lobby.start());
+$('fitBtn').onclick = fitAll;
+$('zin').onclick = () => map.zoomBy(1);
+$('zout').onclick = () => map.zoomBy(-1);
+
+const lobby = Lobby.mount($('lobby'), {
+  game: 'live-location',
+  noun: 'map',
+  title: 'Live Location',
+  blurb: 'Share where you are with family or friends, and see where they are, on one map. No app or account. Locations go straight from phone to phone.',
+  hostLabel: 'Share with family or friends',
+  hostNote: 'Send each person their own link. Everyone on the map sees each other.',
+  startLabel: 'Open the map',
+  more: 'Invite another person',
+  min: 1,
+  extra: [{ label: 'Just show where I am', note: 'You can invite people later.', onClick: () => { solo = true; $('sheet').hidden = false; startSharing(); } }],
+  onStart: attach,
+  onJoin: attach,
+});
+</script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Live Location</h2>
+<p>Share your live location with family or friends over a link, and see where they are, on one map. No app, no account, and no server: locations go straight from phone to phone, and are gone when you close the page.</p>
+<h3>Use</h3>
+<ul><li>Press "Share with family or friends" and send each person their own invite. They open it, press Join, and send back the reply link it gives them. Open their reply (or paste it in) and they're on the map.</li><li>Everyone sees everyone: names, how far away, when each was last updated, speed when moving, and battery. Tap a person to centre the map on them, or "Directions" to open directions in Google Maps.</li><li>"Stop sharing" stops your location. "Just show where I am" shows your own location without inviting anyone, and you can invite people later.</li><li>Keep the page open. Phones pause location when the screen goes off or you switch apps; the page keeps the screen on while sharing where it can, and picks up again when you come back.</li></ul>
+<h3>How it works</h3>
+<ul><li>Location comes from the browser's geolocation, with high accuracy. A new position is sent only when you've moved, or every 15 seconds, so a phone sitting still doesn't keep sending.</li><li>It uses LinkPlay for the connection, the same as the games on this site. Every guest connects to the host, and the host passes each person's position on to everyone else, tagged with who it's from. Someone who joins late gets everyone's last position straight away. The connection is encrypted browser to browser.</li><li>The map is drawn on a canvas from Esri's street map images, which only learn which part of the world is on screen.</li></ul>
+<p class="pg-more">More like this: <a href="../location-map/">Location Map</a>, <a href="../file-lock/">File Lock</a>, <a href="../passport-photo/">Passport Photo</a>, <a href="../invoice-maker/">Invoice Maker</a>. Or see <a href="../#tools">all tools</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/live-location">live-location on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>
