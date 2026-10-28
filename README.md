@@ -1,6 +1,6 @@
 # Playground
 
-103 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
+104 games, tools, and toys that run straight in the browser. Plain HTML, CSS, and JavaScript: no frameworks, no build step, nothing to install.
 
 Live at https://rajeshrenato.github.io/
 
@@ -8,7 +8,7 @@ MIT licensed. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRI
 
 New every day: [daily puzzles](daily/), with today's Penta, Sudoku, and Arrow Flux and one streak across all three.
 
-Play with friends online and no server: [Chess](chess/), [Ludo](ludo/), [Mafia](mafia/), [Clue Grid](clue-grid/), [Sketch & Guess](sketch-guess/), [Trivia Night](trivia-night/), and more, plus online modes in [Midnight Racing](midnight-racing/) and [Miami Nights](miami-nights/). Watch videos together with [Watch Party](watch-party/), and talk privately with [Secret Chat](secret-chat/) and [Video Call](video-call/). Browsers connect directly through links, using a small kit you can reuse: [LinkPlay](linkplay/).
+Play with friends online and no server: [Chess](chess/), [Ludo](ludo/), [Mafia](mafia/), [Clue Grid](clue-grid/), [Sketch & Guess](sketch-guess/), [Trivia Night](trivia-night/), and more, plus online modes in [Highway Brawl](highway-brawl/), [Midnight Racing](midnight-racing/) and [Miami Nights](miami-nights/). Watch videos together with [Watch Party](watch-party/), and talk privately with [Secret Chat](secret-chat/) and [Video Call](video-call/). Browsers connect directly through links, using a small kit you can reuse: [LinkPlay](linkplay/).
 
 ## Highlights
 
@@ -52,6 +52,7 @@ No server: browsers connect directly through links (see [LinkPlay](linkplay/)).
 
 | Project | What it is |
 | --- | --- |
+| [highway-brawl](highway-brawl/) | Road Rash-style motorbike racing: fight fifteen rivals across five roads, dodge the police, buy faster bikes, race up to three friends online |
 | [cycle-duel](cycle-duel/) | Light-cycle duels. Play a friend online with just a link, on one keyboard, or against a bot |
 | [bomb-arena](bomb-arena/) | A Bomberman-style arena for 2 to 4 players online, or against bots |
 | [couch-party](couch-party/) | Party games on a big screen with phones as controllers. Scan a code to join; up to 8 players |

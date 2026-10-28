@@ -22,7 +22,10 @@ function initPointer(canvas) {
   canvas.addEventListener('click', () => {
     AudioMan.init();
     Input.pressed.Mouse0 = true;
-    if (!Input.locked && canvas.requestPointerLock) canvas.requestPointerLock();
+    // the browser can refuse the lock (tab not focused, too soon after leaving it); just try again next click
+    if (!Input.locked && canvas.requestPointerLock) {
+      try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { }
+    }
   });
   canvas.addEventListener('mousedown', () => { Input.fired = true; AudioMan.init(); });
   document.addEventListener('pointerlockchange', () => {

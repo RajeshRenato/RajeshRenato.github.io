@@ -6,7 +6,7 @@ A Flood-It puzzle. You start owning the top-left cell. Each move, pick a color f
 
 Open `index.html` in a browser, or run `python3 -m http.server` from the repo root and open this folder.
 
-Click a color in the palette below the board to make a move. "New puzzle" gives you a different board, and "share seed" copies a link to the current one.
+Click a color in the palette below the board to make a move, or press 1 to 6 for the colors from left to right (Tab to a color and press Enter works too). "New puzzle" gives you a different board, and "share seed" copies a link to the current one.
 
 ## How it works
 

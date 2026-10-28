@@ -26,7 +26,7 @@
   .cap { display: flex; align-items: center; gap: 1px; min-height: 24px; font-size: 18px; color: var(--muted); width: var(--bw); }
   .cap b { font-size: 13px; margin-left: 6px; font-weight: 600; }
   #wrap { position: relative; }
-  #board { display: grid; grid-template-columns: repeat(8, 1fr); width: var(--bw); height: var(--bw); border-radius: 6px; overflow: hidden;
+  #board { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(0, 1fr)); width: var(--bw); height: var(--bw); border-radius: 6px; overflow: hidden;
            touch-action: none; user-select: none; -webkit-user-select: none; }
   .sq { position: relative; display: flex; align-items: center; justify-content: center; }
   .sq.l { background: var(--light); } .sq.d { background: var(--dark); }

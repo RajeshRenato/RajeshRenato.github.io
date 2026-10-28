@@ -32,6 +32,7 @@
   .tvhead h1 span { color: var(--sun); }
   .tvhead p { margin: 0; color: var(--muted); font-size: 18px; }
   .lobby { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: clamp(20px, 4vw, 48px); align-items: start; flex: 1; }
+  @media (max-width: 720px) { .lobby { grid-template-columns: 1fr; } }
   .join { background: var(--panel); border-radius: 22px; padding: 22px; }
   .join .qr { background: #fff; border-radius: 14px; padding: 10px; width: max-content; margin: 0 auto 14px; }
   .join .qr canvas { display: block; width: min(250px, 60vw); height: min(250px, 60vw); image-rendering: pixelated; }

@@ -712,7 +712,7 @@ let last = 0, acc = 0, lastSnap = 0, sentIn = '';
 const DT = 1 / 60;
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.1, (now - last) / 1000 || 0);
+  const dt = Math.max(0, Math.min(0.1, (now - last) / 1000 || 0));
   last = now;
   if (!mode) return;
   if (mode === 'guest') {
