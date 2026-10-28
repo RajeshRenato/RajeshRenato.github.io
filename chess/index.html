@@ -511,7 +511,10 @@ function myColor() {
   return G.pos.side;
 }
 function myTurn() { return mode !== 'idle' && !G.end && (mode === 'local' || G.pos.side === myColor()); }
-function flipped() { return mode !== 'local' && mode !== 'idle' && myColor() === 1; }
+// Two players on one screen can have the board turn round each move, so the side to move is
+// always at the bottom. The choice is remembered.
+let turnEach = (() => { try { return localStorage.getItem('board-turn-each') === '1'; } catch (e) { return false; } })();
+function flipped() { return mode === 'local' ? turnEach && G.pos.side === 1 : mode !== 'idle' && myColor() === 1; }
 
 function commit(u) {
   if (mode === 'online' && !room.isHost) { room.send({ t: 'move', uci: u }); sel = -1; render(); return; }
@@ -661,6 +664,7 @@ function render() {
   if (G.end && mode !== 'idle') a += '<button id="again">' + (mode === 'online' && !room.isHost ? 'Ask for a rematch' : 'Play again') + '</button>';
   if (!G.end && (mode === 'bot' || mode === 'online')) a += '<button class="quiet" id="resign">Resign</button>';
   if (mode === 'bot') a += '<button class="quiet" id="lvl">Bot: ' + level + '</button>';
+  if (mode === 'local') a += '<button class="quiet" id="turnEach">Turn board each move: ' + (turnEach ? 'on' : 'off') + '</button>';
   if (mode !== 'idle') a += '<button class="quiet" id="leave">Leave</button>';
   if ($('actions').dataset.html !== a) {
     $('actions').innerHTML = a;
@@ -670,6 +674,7 @@ function render() {
     on('resign', resign);
     on('lvl', () => { level = level === 'easy' ? 'normal' : level === 'normal' ? 'hard' : 'easy'; G.score = [0, 0, 0]; newGame(0); afterMove(); });
     on('leave', leave);
+    on('turnEach', () => { turnEach = !turnEach; try { localStorage.setItem('board-turn-each', turnEach ? '1' : '0'); } catch (e) { } render(); });
   }
 }
 
@@ -832,6 +837,7 @@ render();
 <p>Chess with the full rules. Play a friend online with a link, two players on one screen, or a bot with three levels.</p>
 <h3>Play</h3>
 <p>To play online: click "Play a friend online" and send the invite. Your friend sends back a reply link; open it in your browser or paste it in. The game starts as soon as they're in. The host plays white first, and colors swap on every rematch. Each player sees their own pieces at the bottom.</p>
+<p>With two players on one screen, "Turn board each move" turns the board round after every move, so the side to move is always at the bottom. The choice is remembered (and shared with Checkers).</p>
 <h3>Controls</h3>
 <table><tr><td>Input</td><td>Action</td></tr><tr><td>Tap a piece, then a square</td><td>move. Dots show where it can go, rings show captures.</td></tr><tr><td>Drag a piece (mouse)</td><td>move</td></tr><tr><td>Escape</td><td>cancel a selection</td></tr><tr><td>Enter</td><td>pick a queen when promoting</td></tr></table>
 <p>The moves are listed in standard notation under the board, with the pieces each side has captured and who is ahead in material. The last move and a king in check are highlighted.</p>

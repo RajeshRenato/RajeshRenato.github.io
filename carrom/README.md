@@ -12,6 +12,8 @@ Open `index.html` in a browser, or run `python3 -m http.server` from the repo ro
 
 "Play on this device" lets you set each of the four seats to a player, a bot, or empty: fill two seats to play head to head, or all four to play as partners (South and North play white, East and West black). Online, two players face each other, and three or four sit all round with a bot in a spare seat.
 
+The board turns so whoever is shooting has their line at the bottom, so aiming works the same way from every seat. On one screen it turns to each player in turn (a bot's turn keeps the last person's view), and you can switch that off before the game. Online, your own side is always at the bottom.
+
 ## Rules
 
 - White breaks. Each side has 9 coins, and the red queen sits in the middle.
@@ -19,6 +21,7 @@ Open `index.html` in a browser, or run `python3 -m http.server` from the repo ro
 - Pocketing the striker is a foul: one of your pocketed coins comes back to the middle, and the turn passes.
 - The queen has to be covered: pocket her, then pocket one of your own coins on the same shot or the next one. If you don't, she goes back to the middle.
 - You can't finish before the queen is covered. If your last coin goes in while she's still out, it comes back.
+- Back shots, at coins behind your own line, are allowed, as in most home games. Untick "Allow back shots" before the game to play the tournament rule, where the striker has to go forward.
 - The first side to pocket all 9 of its coins wins, scoring a point for each coin the other side has left, and 3 more if they covered the queen.
 
 ## How it works

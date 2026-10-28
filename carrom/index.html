@@ -191,7 +191,7 @@ function teamsFor(seats) {
 }
 
 function startGame(seats, level) {
-  G.seats = seats; G.level = level || 2;
+  G.seats = seats; G.level = level || 2; G.backShots = backShots;
   G.team = teamsFor(seats);
   G.coins = rack();
   G.turn = seats.findIndex(Boolean);
@@ -219,9 +219,10 @@ function shoot(seat, u, vx, vy) {
   const sp = Math.sqrt(vx * vx + vy * vy);
   if (sp < 40) return false;
   if (sp > MAX_SPEED) { vx *= MAX_SPEED / sp; vy *= MAX_SPEED / sp; }
-  // the striker has to go forward, off the player's own baseline
+  // tournament rules say the striker has to go forward, off the player's own baseline; most
+  // home games allow back shots, so that's a choice made before the game
   const fwd = [[0, -1], [-1, 0], [0, 1], [1, 0]][seat];
-  if (vx * fwd[0] + vy * fwd[1] < -sp * 0.05) return false;
+  if (!G.backShots && vx * fwd[0] + vy * fwd[1] < -sp * 0.05) return false;
   G.seq++;
   G.shot = { seat, u, vx, vy, seq: G.seq, start: G.coins.map(c => ({ ...c })) };
   G.phase = 'roll';
@@ -408,18 +409,26 @@ function startLocalSetup() {
   local = true; G.phase = 'setup'; V = snapshot(); renderSetup(); render();
 }
 
-let fillBots = true, level = 2;
+let fillBots = true, level = 2, backShots = true, spin = true;
+function bindRules(el) {
+  const bb = el.querySelector('#backBox'), sb = el.querySelector('#spinBox');
+  if (bb) bb.onchange = () => { backShots = bb.checked; };
+  if (sb) sb.onchange = () => { spin = sb.checked; };
+}
 function renderSetup() {
   const el = $('setup');
   el.hidden = false;
+  const rulesHtml = '<label><input type="checkbox" id="backBox"' + (backShots ? ' checked' : '') + '> Allow back shots, at coins behind your line</label>' +
+    (local ? '<label><input type="checkbox" id="spinBox"' + (spin ? ' checked' : '') + '> Turn the board to whoever is shooting</label>' : '');
   const levelHtml = '<label>Bot <select id="lvl"><option value="1"' + (level === 1 ? ' selected' : '') + '>Easy</option><option value="2"' + (level === 2 ? ' selected' : '') + '>Good</option><option value="3"' + (level === 3 ? ' selected' : '') + '>Sharp</option></select></label>';
   if (local) {
     el.innerHTML = '<h2>Who\'s playing?</h2><p>Fill two seats to play head to head, or all four to play as partners: South and North play white, East and West black.</p>' +
       '<div class="seats">' + setupSeats.map((s, i) => '<button class="seat" data-i="' + i + '">' + NAMES[i] +
-        '<small>' + (s.kind === 'human' ? 'player' : s.kind === 'bot' ? 'bot' : 'empty') + '</small></button>').join('') + '</div>' + levelHtml +
+        '<small>' + (s.kind === 'human' ? 'player' : s.kind === 'bot' ? 'bot' : 'empty') + '</small></button>').join('') + '</div>' + levelHtml + rulesHtml +
       '<button class="act" id="goBtn">Start</button>';
     for (const b of el.querySelectorAll('.seat')) b.onclick = () => { const s = setupSeats[+b.dataset.i]; s.kind = s.kind === 'human' ? 'bot' : s.kind === 'bot' ? 'off' : 'human'; renderSetup(); };
     const lv = el.querySelector('#lvl'); if (lv) lv.onchange = () => { level = +lv.value; };
+    bindRules(el);
     const go = el.querySelector('#goBtn');
     if (go) go.onclick = () => {
       const seats = setupSeats.map((s, i) => (s.kind === 'off' ? null : s.kind === 'bot' ? { kind: 'bot' } : { kind: 'human', name: NAMES[i] }));
@@ -432,10 +441,11 @@ function renderSetup() {
   }
   const people = room.players.length;
   el.innerHTML = '<h2>Ready?</h2><p>' + people + (people === 1 ? ' person is' : ' people are') + ' here. Two play head to head; with three or four, partners sit opposite.</p>' +
-    '<label><input type="checkbox" id="botsBox"' + (fillBots ? ' checked' : '') + '> Fill an empty side with a bot</label>' + levelHtml + '<button class="act" id="goBtn">Start</button>';
+    '<label><input type="checkbox" id="botsBox"' + (fillBots ? ' checked' : '') + '> Fill an empty side with a bot</label>' + levelHtml + rulesHtml + '<button class="act" id="goBtn">Start</button>';
   const box = el.querySelector('#botsBox'), go = el.querySelector('#goBtn'), lv = el.querySelector('#lvl');
   if (box) box.onchange = () => { fillBots = box.checked; };
   if (lv) lv.onchange = () => { level = +lv.value; };
+  bindRules(el);
   if (go) go.onclick = () => {
     const ps = room.players.slice(0, 4), seats = [null, null, null, null];
     // two face each other; three or four sit all round, with a bot in a spare seat
@@ -569,10 +579,30 @@ function drawCoin(b) {
 let slide = 0, drag = null, remoteAim = null;
 function myTurnHere() { return V.phase === 'aim' && mySeats().includes(V.turn); }
 
+// The board turns so the person shooting has their line at the bottom: online that's always
+// your own seat; on a shared screen it's whoever's turn it is (a bot's turn keeps the last
+// person's view), unless that's switched off.
+let viewAng = 0, lastHuman = 0;
+function viewSeat() {
+  if (!V.seats.length) return 0;
+  if (!local) { const m = mySeats(); return m.length ? m[0] : 0; }
+  if (!spin) return 0;
+  const s = V.seats[V.turn];
+  if (s && s.kind === 'human') lastHuman = V.turn;
+  return lastHuman;
+}
+function turnView(dt) {
+  let diff = viewSeat() * Math.PI / 2 - viewAng;
+  diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+  viewAng = Math.abs(diff) < 0.002 ? viewAng + diff : viewAng + diff * (1 - Math.exp(-7 * dt));
+}
 function draw() {
   if (!board || board.size !== S) bakeBoard();
-  const d = Math.min(2.5, devicePixelRatio || 1);
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(board, 0, 0); ctx.setTransform(d, 0, 0, d, 0, 0);
+  const d = Math.min(2.5, devicePixelRatio || 1), c = S * d / 2;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, S * d, S * d);
+  ctx.translate(c, c); ctx.rotate(viewAng); ctx.translate(-c, -c);
+  ctx.drawImage(board, 0, 0);
+  ctx.setTransform(d, 0, 0, d, 0, 0); ctx.translate(S / 2, S / 2); ctx.rotate(viewAng); ctx.translate(-S / 2, -S / 2);
   if (!V.seats.length) return;
   const bodies = roll ? roll.bodies : V.coins.map(c => ({ id: c[0], kind: c[1], x: c[2], y: c[3], in: !!c[4] }));
   for (const b of bodies) if (!b.in && b.kind !== 'striker') drawCoin(b);
@@ -599,7 +629,13 @@ function draw() {
 }
 
 // pointer: press on the striker to slide it; press anywhere else to pull back and aim
-function toBoard(e) { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width * S - FRAME) / k, ((e.clientY - r.top) / r.height * S - FRAME) / k]; }
+function toBoard(e) {
+  const r = cv.getBoundingClientRect();
+  // undo the board's turn
+  const px = (e.clientX - r.left) / r.width * S - S / 2, py = (e.clientY - r.top) / r.height * S - S / 2;
+  const cs = Math.cos(-viewAng), sn = Math.sin(-viewAng);
+  return [(px * cs - py * sn + S / 2 - FRAME) / k, (px * sn + py * cs + S / 2 - FRAME) / k];
+}
 cv.addEventListener('pointerdown', e => {
   if (!myTurnHere()) return;
   const [x, y] = toBoard(e), [sx, sy] = baseSpot(V.turn, slide);
@@ -693,6 +729,7 @@ function frame(t) {
   lastT = t;
   stepRoll(dt);
   tick();
+  turnView(dt);
   draw();
   requestAnimationFrame(frame);
 }
@@ -716,8 +753,9 @@ requestAnimationFrame(frame);
 <h3>Play</h3>
 <ul><li>Drag the striker along your baseline to place it (or use the arrow keys). It can't sit on top of a coin.</li><li>Then press anywhere on the board, pull back, and let go. The striker goes the opposite way to your pull, and the farther you pull, the harder the shot. A dotted line shows where it's headed.</li><li>Online, everyone sees the striker move and the aim line while the player lines up a shot.</li></ul>
 <p>"Play on this device" lets you set each of the four seats to a player, a bot, or empty: fill two seats to play head to head, or all four to play as partners (South and North play white, East and West black). Online, two players face each other, and three or four sit all round with a bot in a spare seat.</p>
+<p>The board turns so whoever is shooting has their line at the bottom, so aiming works the same way from every seat. On one screen it turns to each player in turn (a bot's turn keeps the last person's view), and you can switch that off before the game. Online, your own side is always at the bottom.</p>
 <h3>Rules</h3>
-<ul><li>White breaks. Each side has 9 coins, and the red queen sits in the middle.</li><li>Pocket one of your coins and you shoot again. Pocket only the other side's coins, or nothing, and the turn passes.</li><li>Pocketing the striker is a foul: one of your pocketed coins comes back to the middle, and the turn passes.</li><li>The queen has to be covered: pocket her, then pocket one of your own coins on the same shot or the next one. If you don't, she goes back to the middle.</li><li>You can't finish before the queen is covered. If your last coin goes in while she's still out, it comes back.</li><li>The first side to pocket all 9 of its coins wins, scoring a point for each coin the other side has left, and 3 more if they covered the queen.</li></ul>
+<ul><li>White breaks. Each side has 9 coins, and the red queen sits in the middle.</li><li>Pocket one of your coins and you shoot again. Pocket only the other side's coins, or nothing, and the turn passes.</li><li>Pocketing the striker is a foul: one of your pocketed coins comes back to the middle, and the turn passes.</li><li>The queen has to be covered: pocket her, then pocket one of your own coins on the same shot or the next one. If you don't, she goes back to the middle.</li><li>You can't finish before the queen is covered. If your last coin goes in while she's still out, it comes back.</li><li>Back shots, at coins behind your own line, are allowed, as in most home games. Untick "Allow back shots" before the game to play the tournament rule, where the striker has to go forward.</li><li>The first side to pocket all 9 of its coins wins, scoring a point for each coin the other side has left, and 3 more if they covered the queen.</li></ul>
 <h3>How it works</h3>
 <ul><li>The board is 1000 units square, with coins, a bigger and heavier striker, and pockets in their real proportions. Pieces slow down with friction, bounce off the cushions and each other, and fall when their center is over a pocket. The physics steps 240 times a second.</li><li>The physics uses only adding, multiplying, dividing, and square roots, which give exactly the same answer in every browser. So online, the player's shot (where the striker sat and how fast it went) is sent to everyone, every screen plays it out the same way, and the host then sends the final positions so nothing can drift.</li><li>The bot looks at every coin it could pocket, works out where the striker has to hit it to send it toward each pocket, and plays each shot out in a fast simulation. It takes the one that pockets the most of its own coins without fouling. An easier bot considers fewer shots and aims and judges power less precisely.</li><li>It uses <a href="../linkplay/">LinkPlay</a> for the connection, with no game server.</li></ul>
 <p class="pg-more">More like this: <a href="../chess/">Chess</a>, <a href="../checkers/">Checkers</a>, <a href="../four-in-a-row/">Four in a Row</a>, <a href="../cycle-duel/">Cycle Duel</a>. Or see <a href="../#online">all online games</a>.</p>

@@ -8,6 +8,8 @@ Open `index.html` in a browser, or run `python3 -m http.server` from the repo ro
 
 To play online: click "Play a friend online" and send the invite. Your friend sends back a reply link; open it in your browser or paste it in. The game starts as soon as they're in. The host plays white first, and colors swap on every rematch. Each player sees their own pieces at the bottom.
 
+With two players on one screen, "Turn board each move" turns the board round after every move, so the side to move is always at the bottom. The choice is remembered (and shared with Checkers).
+
 ## Controls
 
 | Input | Action |

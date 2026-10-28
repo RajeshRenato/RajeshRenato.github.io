@@ -127,3 +127,34 @@ test('online: the guest shoots on its turn, and its replay of the shot ends exac
   c.pump();
   assert.strictEqual(guest.run('V.coins.length'), 19);
 });
+
+test('back shots are allowed unless switched off before the game', () => {
+  const page = createPage('carrom/index.html');
+  game(page);
+  // South's line is at the bottom: a shot downwards goes back behind it
+  assert.strictEqual(page.run('shoot(0, 0, 0, 400)'), true, 'a back shot is played by default');
+  page.run(`backShots = false; G.phase = 'setup'; startGame([{ kind: 'human', name: 'A' }, null, { kind: 'human', name: 'B' }, null], 2);`);
+  assert.strictEqual(page.run('shoot(0, 0, 0, 400)'), false, 'refused under tournament rules');
+  assert.strictEqual(page.run('shoot(0, 0, 50, -400)'), true, 'forward is always fine');
+});
+
+test('on a shared screen the board turns to whoever is shooting, and a tap lands where it looks', () => {
+  const page = createPage('carrom/index.html');
+  page.run(`local = true; startGame([{ kind: 'human', name: 'A' }, { kind: 'human', name: 'B' }, { kind: 'human', name: 'C' }, { kind: 'bot' }], 2); V = snapshot();`);
+  const settle = () => page.run('for (let i = 0; i < 200; i++) turnView(1 / 60); viewAng');
+  for (const seat of [1, 2, 0]) {
+    page.run(`G.turn = ${seat}; V = snapshot();`);
+    const a = settle();
+    assert.ok(Math.abs(Math.atan2(Math.sin(a - seat * Math.PI / 2), Math.cos(a - seat * Math.PI / 2))) < 0.01, 'seat ' + seat + ' at the bottom');
+  }
+  page.run(`G.turn = 1; V = snapshot();`); settle();
+  page.run(`G.turn = 3; V = snapshot();`);
+  const a = settle();
+  assert.ok(Math.abs(Math.atan2(Math.sin(a - Math.PI / 2), Math.cos(a - Math.PI / 2))) < 0.01, 'a bot\'s turn keeps the last person\'s view');
+  page.run('spin = false; G.turn = 2; V = snapshot();');
+  assert.ok(Math.abs(Math.atan2(Math.sin(settle()), Math.cos(settle()))) < 0.01, 'switched off, the board stays put');
+  // East's view: the screen's bottom middle is East's own line, the right-hand edge of the board
+  page.run('spin = true; G.turn = 1; V = snapshot();'); settle();
+  const [x, y] = JSON.parse(page.run(`JSON.stringify((() => { const r = cv.getBoundingClientRect(); return toBoard({ clientX: r.left + r.width / 2, clientY: r.top + (S - FRAME - 138 * k) / S * r.height }); })())`));
+  assert.ok(Math.abs(x - (1000 - 138)) < 2 && Math.abs(y - 500) < 2, 'got ' + x + ',' + y);
+});

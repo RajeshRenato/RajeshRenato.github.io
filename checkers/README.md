@@ -8,7 +8,7 @@ Open `index.html` in a browser, or run `python3 -m http.server` from the repo ro
 
 Tap one of your pieces, then the square to move to. The pieces that can move are outlined, and dots show where the selected piece can go. For a multi-jump, tap each landing square in turn. Escape cancels a selection, and Enter starts a new game when one ends.
 
-When playing online, the guest plays white and sees the board turned around, so your own pieces are always at the bottom.
+When playing online, the guest plays white and sees the board turned around, so your own pieces are always at the bottom. With two players on one screen, "Turn board each move" does the same for whoever's turn it is. The choice is remembered (and shared with Chess).
 
 ## Rules
 
