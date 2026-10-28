@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
+<style>body { margin: 0; background: #6d7076; } canvas { display: block; }</style>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { materials, sportBike, policeBike } from './model.js';
+
+// Frames are FW x FH pixels at PX pixels per metre; the bike's contact point is at
+// (FW / 2, FH - FOOT) in each frame.
+const FW = 256, FH = 256, PX = 120, FOOT = 10;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(FW * 2, FH * 2);
+renderer.setClearColor(0x000000, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+const sun = new THREE.DirectionalLight(0xfff4e0, 2.6);
+sun.position.set(-2.2, 8, 2.2); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 0.5, far: 20 }); sun.shadow.bias = -0.0005;
+scene.add(sun, new THREE.HemisphereLight(0xcfe3ff, 0x55504a, 0.9));
+
+// seen from behind and a little above, with a long lens like a chase camera far back
+const cam = new THREE.OrthographicCamera(-FW / 2 / PX, FW / 2 / PX, FH / PX, 0, 0.1, 50);
+const tilt = 0.2;                                    // radians looking down
+cam.position.set(0, 0, 0); cam.rotation.x = -tilt;
+const pivot = new THREE.Group(); pivot.add(cam); scene.add(pivot);
+// place the camera so the ground contact point lands FOOT pixels above the bottom
+cam.position.set(0, Math.sin(tilt) * 10 - FOOT / PX * Math.cos(tilt) * 0, Math.cos(tilt) * 10);
+cam.position.y += -FOOT / PX / Math.cos(tilt) * 0;
+cam.lookAt(0, 0, 0);
+// re-frame: shift the view window so the origin sits FOOT px above the bottom edge
+cam.top = FH / PX - FOOT / PX; cam.bottom = -FOOT / PX; cam.updateProjectionMatrix();
+
+const M = materials();
+const out = document.createElement('canvas'), ox = out.getContext('2d');
+
+function render(model, layer) {
+  // layer: 'color' renders everything; 'mask' renders paint red, suit green, trim blue, others hidden but occluding
+  const saved = [];
+  if (layer === 'mask') {
+    model.traverse(o => {
+      if (!o.isMesh) return;
+      saved.push([o, o.material]);
+      const t = o.userData.tag;
+      o.material = t === 'paint' ? new THREE.MeshBasicMaterial({ color: 0xff0000 }) : t === 'suit' ? new THREE.MeshBasicMaterial({ color: 0x00ff00 }) : t === 'trim' ? new THREE.MeshBasicMaterial({ color: 0x0000ff })
+        : o.material.transparent ? new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }) : new THREE.MeshBasicMaterial({ colorWrite: false });
+    });
+    renderer.toneMapping = THREE.NoToneMapping; renderer.shadowMap.enabled = false;
+  }
+  scene.add(model);
+  renderer.render(scene, cam);
+  scene.remove(model);
+  for (const [o, m] of saved) o.material = m;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.shadowMap.enabled = true;
+  return renderer.domElement;
+}
+
+// a ground plane that only catches shadows, for the colour pass
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.ShadowMaterial({ opacity: 0.35 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+
+window.bake = function (kind, poses) {
+  const cols = 8, rows = Math.ceil(poses.length / cols);
+  const atlas = { color: document.createElement('canvas'), mask: document.createElement('canvas') };
+  for (const c of Object.values(atlas)) { c.width = cols * FW; c.height = rows * FH; }
+  poses.forEach((p, i) => {
+    const make = () => (kind === 'cop' ? policeBike : sportBike)(M, p);
+    for (const layer of ['color', 'mask']) {
+      const g = new THREE.Group(); g.add(make()); if (layer === 'color') g.add(ground);
+      const src = render(g, layer);
+      atlas[layer].getContext('2d').drawImage(src, (i % cols) * FW, Math.floor(i / cols) * FH, FW, FH);
+      if (layer === 'color') g.remove(ground);
+    }
+  });
+  return { color: atlas.color.toDataURL('image/png'), mask: atlas.mask.toDataURL('image/png'), cols, FW, FH, PX, FOOT };
+};
+window.preview = function (kind, pose, scale) {
+  const g = new THREE.Group(); g.add((kind === 'cop' ? policeBike : sportBike)(M, pose)); g.add(ground);
+  render(g, 'color');
+  return 'ok';
+};
+window.ready = true;
+</script>
+</body></html>

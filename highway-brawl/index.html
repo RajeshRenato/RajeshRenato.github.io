@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c8322a'/%3E%3Ccircle cx='10' cy='22' r='5' fill='none' stroke='%23ffd84a' stroke-width='2.5'/%3E%3Ccircle cx='23' cy='22' r='5' fill='none' stroke='%23ffd84a' stroke-width='2.5'/%3E%3Cpath d='M10 22l5-9h6l2 9M13 13h5' stroke='%23ffd84a' stroke-width='2.5' fill='none'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Highway Brawl | Road Rash-style motorbike racing and fighting</title>
+<link rel="stylesheet" href="../common/about.css">
+<link rel="canonical" href="https://rajeshrenato.github.io/highway-brawl/">
+<link rel="stylesheet" href="../linkplay/lobby.css">
+<style>
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#1b1d22; }
+  canvas { display:block; width:100vw; height:100vh; touch-action:none; }
+  a.back { position:fixed; top:12px; left:14px; color:#fff; font:13px system-ui, sans-serif; text-decoration:none; opacity:.8; z-index:5; text-shadow:0 1px 2px #000; }
+  #ui { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:16px; z-index:4; background:rgba(12,10,8,.45); overflow:auto; }
+  #ui[hidden] { display:none; }
+  :root { --lp-bg:#1b1d22; --lp-panel:#1d1a17; --lp-field:#0f0e0d; --lp-ink:#ece6d8; --lp-muted:#a99f8b; --lp-rule:#3a332c; --lp-veil:rgba(12,10,8,.9); --lp-accent:#ffd84a; }
+  .panel { width:min(720px, 100%); max-height:100%; overflow:auto; background:#1d1a17 linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.2)); border:3px solid #0c0b0a;
+    outline:2px solid #c8322a; outline-offset:-8px; border-radius:6px; padding:28px 28px 22px; color:#ece6d8; font:16px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; box-shadow:0 18px 50px rgba(0,0,0,.6); }
+  .panel.wide { width:min(920px, 100%); }
+  .panel.small { width:min(380px, 100%); }
+  h1, h2 { font-family:Impact, 'Arial Black', 'Arial Narrow', sans-serif; font-weight:400; letter-spacing:.02em; color:#ffd84a; margin:0 0 8px; text-shadow:3px 3px 0 #000; }
+  h1 { font-size:clamp(46px, 9vw, 84px); line-height:.95; transform:rotate(-2deg); color:#ffd84a; -webkit-text-stroke:2px #000; }
+  h2 { font-size:clamp(30px, 5vw, 44px); }
+  .sub { color:#c9c0ae; margin:6px 0 14px; }
+  .note { color:#ffd84a; margin:14px 0 0; }
+  .stats { display:flex; gap:10px 22px; flex-wrap:wrap; margin:14px 0 6px; color:#c9c0ae; }
+  .stats b { color:#fff; }
+  .menu { display:grid; gap:10px; margin-top:18px; }
+  .menu.row { display:flex; flex-wrap:wrap; }
+  button { font:inherit; font-weight:700; cursor:pointer; border:2px solid #0c0b0a; border-radius:4px; padding:10px 18px; background:#3a332c; color:#f4ead5; box-shadow:0 3px 0 #0c0b0a; }
+  button:hover:not(:disabled) { background:#4a4137; }
+  button:active:not(:disabled) { transform:translateY(2px); box-shadow:0 1px 0 #0c0b0a; }
+  button:disabled { opacity:.45; cursor:default; }
+  button.go { background:#c8322a; color:#fff; font-family:Impact, 'Arial Black', sans-serif; font-weight:400; font-size:22px; letter-spacing:.03em; }
+  button.go:hover { background:#dc3d33; }
+  button:focus-visible { outline:3px solid #ffd84a; outline-offset:2px; }
+  .menu:not(.row) button { text-align:left; font-size:20px; }
+  .tracks { display:grid; gap:8px; }
+  .track { text-align:left; display:grid; gap:2px; font-weight:400; padding:12px 14px; }
+  .track b { font-family:Impact, 'Arial Black', sans-serif; font-weight:400; font-size:22px; color:#ffd84a; letter-spacing:.02em; }
+  .track span { color:#e3dac6; }
+  .track i { font-style:normal; font-size:13px; color:#a99f8b; }
+  .track.done { border-color:#2f8f4e; }
+  .track.done i { color:#7dd892; }
+  .bikes { display:grid; gap:8px; }
+  .bike { display:grid; grid-template-columns:18px minmax(120px, 1fr) minmax(180px, 1.6fr) auto; gap:12px; align-items:center; background:rgba(0,0,0,.25); border:2px solid #0c0b0a; border-radius:4px; padding:8px 12px; }
+  .bike.cur { border-color:#ffd84a; }
+  .bike .sw { width:18px; height:34px; border-radius:3px; border:2px solid #0c0b0a; }
+  .bike b { display:block; color:#fff; }
+  .bike small { color:#a99f8b; }
+  .bike em { font-style:normal; color:#ffd84a; font-weight:700; padding:0 8px; }
+  .bike .bars { display:grid; grid-template-columns:1fr 1fr; gap:2px 12px; font-size:12px; color:#a99f8b; }
+  .bike label { display:flex; align-items:center; gap:6px; }
+  .sb { flex:1; height:6px; background:#0c0b0a; border-radius:3px; overflow:hidden; }
+  .sb i { display:block; height:100%; background:#e0a21c; }
+  @media (max-width:640px) { .bike { grid-template-columns:14px 1fr auto; } .bike .bars { grid-column:1 / -1; } .panel { padding:22px 16px 16px; } }
+  table { border-collapse:collapse; width:100%; }
+  table.keys td { padding:5px 4px; border-bottom:1px solid #3a332c; }
+  table.keys td:last-child { color:#ffd84a; text-align:right; font-weight:700; }
+  table.field { font-size:14px; }
+  table.field td { padding:3px 6px; border-bottom:1px solid #2c2722; }
+  table.field td:first-child { width:28px; color:#a99f8b; }
+  table.field td:last-child { text-align:right; font-variant-numeric:tabular-nums; }
+  table.field i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:8px; }
+  table.field tr.you td { color:#ffd84a; font-weight:700; }
+  table.field tr.gap td { color:#6f6656; text-align:left; border:0; }
+</style>
+<meta property="og:title" content="Highway Brawl">
+<meta property="og:description" content="A Road Rash-style motorbike racer: fifteen rivals, five roads from downtown to the desert, punches, kicks, a chain, police chases and a bike shop. Race up to three friends online.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rajeshrenato.github.io/highway-brawl/">
+<meta property="og:image" content="https://rajeshrenato.github.io/highway-brawl/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="A Road Rash-style motorbike racer: fifteen rivals, five roads from downtown to the desert, punches, kicks, a chain, police chases and a bike shop. Race up to three friends online.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Rajesh's Playground", "item": "https://rajeshrenato.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Play online", "item": "https://rajeshrenato.github.io/#online"}, {"@type": "ListItem", "position": 3, "name": "Highway Brawl", "item": "https://rajeshrenato.github.io/highway-brawl/"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Highway Brawl", "url": "https://rajeshrenato.github.io/highway-brawl/", "description": "A Road Rash-style motorbike racer: fifteen rivals, five roads from downtown to the desert, punches, kicks, a chain, police chases and a bike shop. Race up to three friends online.", "applicationCategory": "GameApplication", "operatingSystem": "Any (runs in a web browser)", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Rajesh Renato", "url": "https://github.com/RajeshRenato"}}</script>
+</head>
+<body>
+<a class="back" href="../">&larr; all projects</a>
+<canvas id="game"></canvas>
+<div id="ui" hidden></div>
+<div id="lobby" class="lp-panel" hidden></div>
+<script src="../linkplay/linkplay.js"></script>
+<script src="../linkplay/room.js"></script>
+<script src="../linkplay/lobby.js"></script>
+<script src="art.js"></script>
+<script src="game.js"></script>
+<div class="pg-about" id="pg-about" hidden>
+<h2>Highway Brawl</h2>
+<p>A Road Rash-style motorbike racer in plain HTML/CSS/JS. Race fifteen riders across five roads, from downtown streets to the desert. Punch, kick and swing your chain to get ahead, grab clubs off your rivals, keep clear of the police, and spend your prize money on faster bikes. Original code and art; not affiliated with Electronic Arts.</p>
+<h3>Controls</h3>
+<table><tr><td>Input</td><td>Action</td></tr><tr><td>W / up</td><td>throttle</td></tr><tr><td>S / down</td><td>brake</td></tr><tr><td>A D / left right</td><td>steer</td></tr><tr><td>Space or J</td><td>punch</td></tr><tr><td>E or K</td><td>kick, a shove that can put a rider off the road</td></tr><tr><td>F, L or Shift</td><td>swing your chain, or a club if you have one</td></tr><tr><td>Q or G</td><td>backhand a rider beside or just behind you</td></tr><tr><td>N</td><td>nitro, on super bikes</td></tr><tr><td>C</td><td>switch between the first-person view (the default) and the chase view behind your bike</td></tr><tr><td>Esc or P</td><td>pause</td></tr><tr><td>R</td><td>restart the race</td></tr><tr><td>M</td><td>sound on or off</td></tr></table>
+<p>A gamepad works too: right trigger to go, left trigger to brake, the stick to steer, A punch, B kick, X chain, Y backhand, RB nitro, Start to pause. On a phone, throttle is automatic, the buttons on the left steer, and the buttons on the right brake and fight.</p>
+<h3>Online</h3>
+<p>Two to four friends can race together. On the title screen, click "Race friends online", then "Play with friends", and send each friend their own invite link. Each of them sends back a reply link: open it in your browser or paste it in, then press Start and pick the road.</p>
+<ul><li>Everyone races the host's road at the host's level, so the road, the pack of rivals, the police and the traffic start out the same for all.</li><li>Each browser runs its own bike and sends where it is about 13 times a second. Other players ride the same bikes as everyone else, in their own colour, with their name over them.</li><li>The host runs the pack of fifteen riders and the police for everyone and sends where they all are ten times a second, so every rider is in the same place on every screen. Riders pace themselves against the nearest player and fight whichever player is beside them; the police go after the nearest player. When you hit a rider while someone else is hosting, the hit shows at once and the host applies it, then tells you if you put them down or took their club.</li><li>Traffic moves on a shared race clock instead of at random, so the cars are in the same places for everyone too.</li><li>Every message says when it was sent on the host's clock. Each player keeps their clock in step with the host's by timing quick pings, so a message's age is known, network delay and all, and riders are drawn where they are now: where they were when it was sent, plus how far they've gone since. Between messages everyone keeps moving at their last speed, so nobody trails behind.</li><li>The pack is sent six times a second, seven bytes a rider, and a message isn't sent on top of one still waiting to go out, so slow connections don't build up a backlog.</li><li>The game runs in fixed steps and catches up after a slow frame, so every screen keeps the same pace. Online, a tab in the background keeps racing from a timer, so switching tabs doesn't freeze the race for everyone.</li><li>Punches, kicks, backhands and chain swings land on other players too. The rider who gets hit takes it on their own screen.</li><li>Online there's no ending a race early: a wrecked bike limps on, and getting caught by the police holds you up for a few seconds instead of a fine.</li><li>The host collects everyone's times and shows the results, then picks the next road. Online races never change anyone's saved cash, bikes or level.</li><li>It uses <a href="../linkplay/">LinkPlay</a> for the connection: browser to browser, with no game server.</li></ul>
+<h3>The career</h3>
+<ul><li>Five roads: Downtown (office blocks, cross streets and heavy traffic), Coast Road (the sea on one side, cliffs on the other), Pine Pass (steep climbs and rock walls), Vineyard Valley (a narrow farm road with switchbacks) and Desert Run (long straights and police).</li><li>Finish in the top three on a road to qualify. Qualify on all five to move up a level. There are five levels; each one has faster riders, longer races, more traffic and bigger prizes.</li><li>Twelve bikes in three classes. Rat bikes are cheap, sport bikes are quick, and super bikes carry nitro. Tougher bikes survive more crashes.</li><li>Prize money depends on your place and the level, plus a bonus for each rider you knock down.</li></ul>
+<h3>Fighting, crashing and the police</h3>
+<ul><li>Everyone starts with a chain. Some rivals carry a club or a chain of their own. Knock an armed rider down, or punch them while they wind up a swing, and the club is yours for eight swings.</li><li>Only one rival can land a hit at a time, so a pack can't flatten you in a second, but riders do hit back.</li><li>Crashing into traffic, walls, the guard rail or a fallen bike throws you off and damages the bike. When the bike is wrecked, the race is over and you pay for repairs.</li><li>The police cruise until you blast past them or hit one. Then they chase you, and if you crash anywhere near them you're busted and fined. Knock the officer down, or get far enough ahead, to lose them.</li></ul>
+<h3>How it works</h3>
+<ul><li>The road is a list of 200-unit segments, each with a curve and a height. Every frame, about 240 segments are projected from the camera outwards, adding up the curves into a bend on screen and clipping anything hidden behind a hill crest. Each road and level is built from a seeded random generator, so it's the same every time you race it.</li><li>The artwork is painted in code, once, when it's first needed (<code>art.js</code>): brick, stone, concrete and glass building facades with framed windows, blinds and reflections; shop fronts with awnings; sandstone and granite rock faces; trees made of hundreds of leaves lit from the upper left; pines, palms, cacti, rocks, lamps, traffic lights, fences, guard rails, barns and billboards; shaded clouds; skyline, mountain, hill and mesa backdrops; and cars, vans and trucks from behind and in front. A fine grain over each texture keeps the colours from looking flat.</li><li>Buildings and rock faces are drawn as one strip per segment, with the facade texture mapped onto it, so they follow every bend and hill. Where a block starts, its end wall is drawn too, so the blocks look solid. The sea, sand, sidewalks, cross streets, tyre wear, patches and manholes are drawn into the road and the ground alongside it.</li><li>The bikes and riders are 3D models: a sport bike with a tucked-in rider, and a police tourer with fairing, screen, panniers and top box (<code>tools/model.js</code>, built from shapes with <a href="https://threejs.org/">Three.js</a>). <code>tools/bake.html</code> lights them and renders them from behind in every pose (five lean angles, punches, backhands and kicks to each side, and chain, club and baton swings) into <code>sprites/riders.png</code> and <code>sprites/police.png</code>. A second image marks the bodywork, leathers and helmet, so each of the sixteen riders is recoloured from the same frames. The game itself only draws these images, so it stays as fast as before; until they load, riders are drawn with shapes.</li><li>Scenery, riders and cars are drawn from far to near, scaled for their distance. Distant things fade into the haze colour of each road.</li><li>The first-person view moves the camera to the rider's eye height and draws the top of the fairing with a speedometer, a rev counter and a gear display; your fist, boot or chain swings in from the side when you fight. In the chase view your own bike goes through the same projection as everyone else, so riders level with you are exactly your size.</li><li>The race map is made by walking the road, turning by each segment's curve.</li><li>Rivals each have their own pace, slow down for bends, steer around traffic, and speed up a little when far behind. Police switch between patrolling and chasing.</li><li>Engine, siren, punches and chain sounds are made with Web Audio. Your cash, bikes, level and best times are saved in <code>localStorage</code>.</li></ul>
+<p class="pg-more">More like this: <a href="../bomb-arena/">Bomb Arena</a>, <a href="../couch-party/">Couch Party</a>, <a href="../worm-arena/">Worm Arena</a>, <a href="../battle-tanks/">Battle Tanks</a>. Or see <a href="../#online">all online games</a>.</p>
+<p class="pg-src">Free, no sign-up, and it runs entirely in your browser. Part of <a href="../">Rajesh's Playground</a>. Source code: <a href="https://github.com/RajeshRenato/RajeshRenato.github.io/tree/main/highway-brawl">highway-brawl on GitHub</a>.</p>
+</div><!-- /about -->
+<script src="../common/about.js"></script>
+</body>
+</html>
