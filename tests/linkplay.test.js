@@ -81,3 +81,35 @@ test('the demo shows each other\'s cursors and does not echo your own taps', () 
   c.pump();
   assert.deepStrictEqual(json(guest, 'cursors.get(0)'), { x: 0.75, y: 0.1 });
 });
+
+test('data-channel offers and answers travel as short codes; audio and video fall back to long ones', async () => {
+  const { run } = createPage('linkplay/index.html');
+  const fp = Array.from({ length: 32 }, (_, i) => (i * 13 % 256).toString(16).padStart(2, '0').toUpperCase()).join(':');
+  const sdp = (cands, extra = '') => 'v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE 0\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\nc=IN IP4 0.0.0.0\r\n' + cands +
+    'a=ice-ufrag:Xy9/\r\na=ice-pwd:aB3+dE5fG7hI9jK1lM2nO4pQ\r\na=fingerprint:sha-256 ' + fp + '\r\na=setup:active\r\na=mid:0\r\na=sctp-port:5000\r\n' + extra;
+  const cands = 'a=candidate:1 1 udp 2113937151 1f3a5c7e-9b0d-4e2f-8a6c-1d3e5f7a9b0c.local 61234 typ host generation 0\r\n' +
+    'a=candidate:2 1 udp 2113939711 2001:db8::1:2 61235 typ host generation 0\r\n' +
+    'a=candidate:3 1 tcp 1518280447 192.168.0.5 9 typ host tcptype active generation 0\r\n' +
+    'a=candidate:4 1 udp 1677729535 198.51.100.24 40000 typ srflx raddr 0.0.0.0 rport 0 generation 0\r\n';
+  const code = await run(`LinkPlay.pack({ type: 'answer', sdp: ${JSON.stringify(sdp(cands))} })`);
+  assert.match(code, /^k[A-Za-z0-9_-]+$/);
+  assert.ok(code.length <= 110, 'short: ' + code.length);
+  const back = await run(`LinkPlay.unpack(${JSON.stringify(code)})`);
+  assert.strictEqual(back.type, 'answer');
+  for (const part of ['a=ice-ufrag:Xy9/', 'a=ice-pwd:aB3+dE5fG7hI9jK1lM2nO4pQ', 'a=fingerprint:sha-256 ' + fp, 'a=setup:active',
+    ' 198.51.100.24 40000 typ srflx', ' 1f3a5c7e-9b0d-4e2f-8a6c-1d3e5f7a9b0c.local 61234 typ host'])
+    assert.ok(back.sdp.includes(part), 'keeps ' + part);
+  assert.ok(!back.sdp.includes('2001:db8'), 'IPv6 is left out when there is an IPv4 public address');
+  // with only IPv6 on offer, it goes
+  const v6 = await run(`LinkPlay.pack({ type: 'offer', sdp: ${JSON.stringify(sdp('a=candidate:2 1 udp 2113939711 2001:db8::1:2 61235 typ host generation 0\r\n'))} })`);
+  assert.ok((await run(`LinkPlay.unpack(${JSON.stringify(v6)})`)).sdp.includes(' 2001:db8:0:0:0:0:1:2 61235 typ host'));
+  assert.ok(!back.sdp.includes('tcp'), 'TCP candidates are left out');
+  // the public address comes first in priority after local ones, and it all parses as a reply
+  assert.deepStrictEqual(json({ run }, `LinkPlay.parseReply('https://x.io/g/#answer=ab12cd.${code}')`), { id: 'ab12cd', code });
+  // audio or video, or nothing to connect to: the long form
+  const media = await run(`LinkPlay.pack({ type: 'offer', sdp: ${JSON.stringify(sdp(cands, 'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n'))} })`);
+  assert.match(media, /^[zr]/);
+  const none = await run(`LinkPlay.pack({ type: 'offer', sdp: ${JSON.stringify(sdp(''))} })`);
+  assert.match(none, /^[zr]/);
+  await assert.rejects(run(`LinkPlay.unpack('kAAAA')`));
+});

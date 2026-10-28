@@ -64,9 +64,19 @@ const Lobby = (() => {
         '<div class="lp-modes"><button id="lpCreate">' + (opts.hostLabel ? esc(opts.hostLabel) + '<span>' + esc(opts.hostNote || '') + '</span>' : max === 2 ? 'Play a friend online<span>Send a link, they send one back, and you\'re connected.</span>' : 'Play with friends<span>Up to ' + max + ' players. Send each friend their own link.</span>') + '</button>' +
         (opts.extra || []).map((x, i) => '<button data-extra="' + i + '">' + esc(x.label) + (x.note ? '<span>' + esc(x.note) + '</span>' : '') + '</button>').join('') +
         '</div>' +
+        // a friend's invite can be pasted here as well as opened: the whole link, or just the key after the #
+        '<div class="lp-code"><input id="lpPaste" placeholder="Got an invite? Paste the link or key"><button id="lpPasteGo">Join</button></div>' +
+        '<p id="lpStatus" class="lp-status"></p>' +
         '<p class="lp-small">' + (noun === 'game' ? 'Players' : 'People') + ' connect browser to browser, with no ' + esc(noun) + ' server. A public STUN service helps the browsers find each other. Some strict office or mobile networks block direct connections; if a friend can\'t connect, try another network.</p>'
       );
       $('#lpCreate').onclick = () => host(readName());
+      const pasted = () => {
+        const m = /(?:offer=)?([a-z0-9]{6})\.([zrk][A-Za-z0-9_-]+)/.exec($('#lpPaste').value.trim());
+        if (!m || /answer=/.test($('#lpPaste').value)) { setStatus("That isn't an invite. Paste the invite link or key your friend sent."); return; }
+        readName(); guest({ kind: 'offer', id: m[1], code: m[2] });
+      };
+      $('#lpPasteGo').onclick = pasted;
+      $('#lpPaste').onkeydown = e => { if (e.key === 'Enter') pasted(); };
       for (const b of el.querySelectorAll('[data-extra]')) b.onclick = () => { readName(); el.hidden = true; opts.extra[+b.dataset.extra].onClick(); };
     }
 

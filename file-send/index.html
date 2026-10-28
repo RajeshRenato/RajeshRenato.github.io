@@ -135,6 +135,7 @@
   <p class="muted small" style="margin-top:22px">The connection is direct between your two browsers (WebRTC). A public STUN service helps them find each other; your files never touch it. Received files stay in the browser's memory until you save them, so very large files may not fit on a phone. Some strict office or mobile networks block direct connections; if it won't connect, try another network.</p>
 </main>
 <input type="file" id="filePick" multiple hidden>
+<script src="../linkplay/linkplay.js"></script>
 <script>
 'use strict';
 // Peer-to-peer file transfer. Links carry the WebRTC handshake; files go over a data channel in chunks.
@@ -362,12 +363,16 @@ async function streamBytes(bytes, Stream) {
   const res = new Response(new Blob([bytes]).stream().pipeThrough(new Stream('deflate')));
   return new Uint8Array(await res.arrayBuffer());
 }
+// short 'k' codes for the data channel, from LinkPlay (loaded above), with deflate as the fallback
 async function pack(desc) {
+  const short = LinkPlay.packShort(desc);
+  if (short) return short;
   const raw = new TextEncoder().encode(JSON.stringify({ type: desc.type, sdp: desc.sdp }));
   if (typeof CompressionStream === 'function') return 'z' + b64url(await streamBytes(raw, CompressionStream));
   return 'r' + b64url(raw);
 }
 async function unpack(code) {
+  if (code[0] === 'k') return LinkPlay.unpackShort(code);
   const body = unb64url(code.slice(1));
   const raw = code[0] === 'z' ? await streamBytes(body, DecompressionStream) : body;
   return JSON.parse(new TextDecoder().decode(raw));
@@ -436,7 +441,7 @@ async function hostCreate() {
 }
 
 async function hostAccept(text) {
-  const m = /answer=([A-Za-z0-9_-]+)/.exec(text) || /^\s*([zr][A-Za-z0-9_-]+)\s*$/.exec(text);
+  const m = /answer=([A-Za-z0-9_-]+)/.exec(text) || /^\s*([zrk][A-Za-z0-9_-]+)\s*$/.exec(text);
   if (!m || !pc) { $('hostStatus').textContent = "That doesn't look like a reply link. Paste the whole link they sent."; return false; }
   try {
     if (pc.signalingState !== 'have-local-offer') return true;

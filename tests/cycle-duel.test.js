@@ -136,10 +136,11 @@ test('invite and reply codes survive the round trip and stay URL-safe', async ()
     'a=fingerprint:sha-256 ' + Array.from({ length: 32 }, (_, i) => (i * 7 % 256).toString(16).padStart(2, '0').toUpperCase()).join(':') +
     '\r\na=setup:actpass\r\na=mid:0\r\na=sctp-port:5000\r\na=max-message-size:262144\r\n';
   const code = await run(`LinkPlay.pack({ type: 'offer', sdp: ${JSON.stringify(sdp)} })`);
-  assert.match(code, /^z[A-Za-z0-9_-]+$/);
-  assert.ok(code.length < sdp.length, 'compression should shorten the code');
+  assert.match(code, /^k[A-Za-z0-9_-]+$/);
+  assert.ok(code.length < 120, 'a short code: ' + code.length);
   const back = await run(`LinkPlay.unpack(${JSON.stringify(code)})`);
   assert.strictEqual(back.type, 'offer');
-  assert.strictEqual(back.sdp, sdp);
+  for (const part of ['a=ice-ufrag:abcd', 'a=ice-pwd:0123456789abcdefghijklmn', 'a=setup:actpass', 'a=mid:0', ' 192.168.1.20 54321 typ host', ' 203.0.113.7 54321 typ srflx', sdp.match(/a=fingerprint:.*/)[0]])
+    assert.ok(back.sdp.includes(part), 'keeps ' + part);
   assert.strictEqual(await run(`hostAccept('nonsense')`), false);
 });

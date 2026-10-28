@@ -40,14 +40,128 @@ const LinkPlay = (() => {
     return new Uint8Array(await res.arrayBuffer());
   }
 
-  // A session description as a URL-safe code: 'z' + deflated, or 'r' + raw where
-  // CompressionStream is missing.
+  // ---- short codes
+  // A data-channel-only offer or answer differs from any other in only a few values: the ICE
+  // username and password, the DTLS fingerprint and role, and the network addresses. 'k' codes
+  // carry just those, packed bit by bit, and the page rebuilds the rest; about 100 characters
+  // instead of about 800. Descriptions with audio or video still use 'z'.
+  const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const CAND_TYPES = ['host', 'srflx', 'prflx', 'relay'];
+  const SETUPS = ['actpass', 'active', 'passive'];
+  function bitWriter() {
+    const bytes = []; let acc = 0, n = 0;
+    return {
+      put(v, bits) { for (let i = bits - 1; i >= 0; i--) { acc = (acc << 1) | ((v >> i) & 1); if (++n === 8) { bytes.push(acc); acc = 0; n = 0; } } },
+      done() { if (n) bytes.push(acc << (8 - n)); return Uint8Array.from(bytes); },
+    };
+  }
+  function bitReader(b) {
+    let pos = 0;
+    return { get(bits) { let v = 0; for (let i = 0; i < bits; i++) { const byte = b[pos >> 3]; if (byte === undefined) throw new Error('short'); v = (v << 1) | ((byte >> (7 - (pos & 7))) & 1); pos++; } return v; } };
+  }
+  // address kinds: 0 IPv4, 1 IPv6, 2 an mDNS name (a uuid ending in .local)
+  function addrBytes(a) {
+    let m = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(a);
+    if (m) return [0, m.slice(1).map(Number)];
+    m = /^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})\.local$/i.exec(a);
+    if (m) return [2, m.slice(1).join('').match(/../g).map(h => parseInt(h, 16))];
+    if (a.includes(':')) {
+      const [head, tail = ''] = a.split('::');
+      const h = head ? head.split(':') : [], t = tail ? tail.split(':') : [];
+      const groups = a.includes('::') ? [...h, ...Array(Math.max(0, 8 - h.length - t.length)).fill('0'), ...t] : h;
+      if (groups.length !== 8 || groups.some(g => !/^[0-9a-f]{1,4}$/i.test(g))) return null;
+      return [1, groups.flatMap(g => { const v = parseInt(g, 16); return [v >> 8, v & 255]; })];
+    }
+    return null;
+  }
+  function addrText(kind, b) {
+    if (kind === 0) return b.join('.');
+    const hex = b.map(x => x.toString(16).padStart(2, '0')).join('');
+    if (kind === 2) return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-') + '.local';
+    return hex.match(/.{4}/g).map(g => g.replace(/^0+(?=.)/, '')).join(':');
+  }
+  // the addresses worth sending: the public one (for players on other networks) and one local
+  // one (for players on the same Wi-Fi). IPv6 addresses are long, so they only go when there's
+  // no IPv4 public address.
+  function pickCands(sdp) {
+    const all = [];
+    for (const m of sdp.matchAll(/^a=candidate:\S+ \d+ (\S+) (\d+) (\S+) (\d+) typ (\S+)/gim)) {
+      if (m[1].toLowerCase() !== 'udp' || !CAND_TYPES.includes(m[5])) continue;
+      const a = addrBytes(m[3]);
+      if (a) all.push({ type: m[5], kind: a[0], bytes: a[1], port: +m[4] });
+    }
+    const pick = [], add = c => { if (c && !pick.includes(c) && pick.length < 3) pick.push(c); };
+    const by = (type, kinds) => all.find(c => c.type === type && kinds.includes(c.kind));
+    add(by('srflx', [0])); add(by('host', [0, 2]));
+    if (!pick.some(c => c.type === 'srflx')) { add(by('srflx', [1])); add(by('host', [1])); }
+    if (pick.length < 2) add(by('relay', [0, 1]));
+    return pick;
+  }
+  // { type, sdp } -> 'k' code, or null when the description can't be carried this way
+  function packShort(desc) {
+    const sdp = desc.sdp || '';
+    if (/^m=(audio|video)/m.test(sdp)) return null;
+    const get = k => { const m = new RegExp('^a=' + k + ':(.+)$', 'm').exec(sdp); return m ? m[1].trim() : null; };
+    const ufrag = get('ice-ufrag'), pwd = get('ice-pwd'), fp = get('fingerprint'), setup = get('setup'), mid = get('mid') || '0';
+    const ok = s => s && /^[A-Za-z0-9+/]+$/.test(s);
+    if (!ok(ufrag) || !ok(pwd) || ufrag.length > 31 || pwd.length > 63 || !fp || !/^sha-256 ([0-9A-F]{2}:){31}[0-9A-F]{2}$/i.test(fp) || !/^[0-9]{1,3}$/.test(mid) || +mid > 255) return null;
+    const cands = pickCands(sdp);
+    if (!cands.length) return null;
+    const w = bitWriter();
+    w.put(1, 2);                                                   // format version
+    w.put(desc.type === 'answer' ? 1 : 0, 1);
+    w.put(Math.max(0, SETUPS.indexOf(setup)), 2);
+    if (mid === '0') w.put(0, 1); else { w.put(1, 1); w.put(+mid, 8); }   // almost always '0'
+    w.put(ufrag.length, 5); for (const c of ufrag) w.put(B64.indexOf(c), 6);
+    w.put(pwd.length, 6); for (const c of pwd) w.put(B64.indexOf(c), 6);
+    for (const h of fp.slice(8).split(':')) w.put(parseInt(h, 16), 8);
+    w.put(cands.length, 2);
+    for (const c of cands) {
+      w.put(CAND_TYPES.indexOf(c.type), 2); w.put(c.kind, 2);
+      for (const x of c.bytes) w.put(x, 8);
+      w.put(c.port, 16);
+    }
+    return 'k' + b64url(w.done());
+  }
+  function unpackShort(code) {
+    const r = bitReader(unb64url(code.slice(1)));
+    if (r.get(2) !== 1) throw new Error('unknown code version');
+    const type = r.get(1) ? 'answer' : 'offer', setup = SETUPS[r.get(2)] || 'actpass', mid = r.get(1) ? String(r.get(8)) : '0';
+    let ufrag = '', pwd = '';
+    for (let n = r.get(5); n > 0; n--) ufrag += B64[r.get(6)];
+    for (let n = r.get(6); n > 0; n--) pwd += B64[r.get(6)];
+    const fp = []; for (let i = 0; i < 32; i++) fp.push(r.get(8).toString(16).padStart(2, '0').toUpperCase());
+    const lines = [
+      'v=0', 'o=- ' + (1e15 + Math.floor(Math.random() * 8e15)) + ' 2 IN IP4 127.0.0.1', 's=-', 't=0 0',
+      'a=group:BUNDLE ' + mid, 'a=msid-semantic: WMS',
+      'm=application 9 UDP/DTLS/SCTP webrtc-datachannel', 'c=IN IP4 0.0.0.0',
+      'a=ice-ufrag:' + ufrag, 'a=ice-pwd:' + pwd, 'a=fingerprint:sha-256 ' + fp.join(':'),
+      'a=setup:' + setup, 'a=mid:' + mid, 'a=sctp-port:5000', 'a=max-message-size:262144',
+    ];
+    for (let i = 0, n = r.get(2); i < n; i++) {
+      const t = CAND_TYPES[r.get(2)], kind = r.get(2);
+      if (kind > 2) throw new Error('bad address');
+      const bytes = []; for (let j = 0; j < (kind === 0 ? 4 : 16); j++) bytes.push(r.get(8));
+      const port = r.get(16), addr = addrText(kind, bytes);
+      // priorities as the browser would give them: same-network addresses first, IPv4 a little ahead
+      const prio = ((t === 'host' ? 126 : t === 'srflx' ? 100 : 0) << 24) + ((kind === 0 ? 65535 : 65000 - i) << 8) + 255;
+      lines.push('a=candidate:' + (i + 1) + ' 1 udp ' + prio + ' ' + addr + ' ' + port + ' typ ' + t + (t === 'host' ? '' : ' raddr 0.0.0.0 rport 0') + ' generation 0');
+    }
+    lines.push('a=end-of-candidates');
+    return { type, sdp: lines.join('\r\n') + '\r\n' };
+  }
+
+  // A session description as a URL-safe code: a short 'k' code when it has only a data channel,
+  // otherwise 'z' + deflated, or 'r' + raw where CompressionStream is missing.
   async function pack(desc) {
+    const short = packShort(desc);
+    if (short) return short;
     const raw = new TextEncoder().encode(JSON.stringify({ type: desc.type, sdp: desc.sdp }));
     if (typeof CompressionStream === 'function') return 'z' + b64url(await streamBytes(raw, CompressionStream));
     return 'r' + b64url(raw);
   }
   async function unpack(code) {
+    if (code[0] === 'k') return unpackShort(code);
     const body = unb64url(code.slice(1));
     const raw = code[0] === 'z' ? await streamBytes(body, DecompressionStream) : body;
     return JSON.parse(new TextDecoder().decode(raw));
@@ -69,13 +183,13 @@ const LinkPlay = (() => {
 
   // '#offer=ID.CODE' or '#answer=ID.CODE' in the current URL, or null.
   function fromHash(hash = location.hash) {
-    const m = /^#(offer|answer)=([a-z0-9]{6})\.([zr][A-Za-z0-9_-]+)$/.exec(hash || '');
+    const m = /^#(offer|answer)=([a-z0-9]{6})\.([zrk][A-Za-z0-9_-]+)$/.exec(hash || '');
     return m ? { kind: m[1], id: m[2], code: m[3] } : null;
   }
 
   // Finds a reply in pasted text: a whole link, or just 'ID.CODE'.
   function parseReply(text) {
-    const m = /(?:answer=)?([a-z0-9]{6})\.([zr][A-Za-z0-9_-]+)/.exec(String(text).trim());
+    const m = /(?:answer=)?([a-z0-9]{6})\.([zrk][A-Za-z0-9_-]+)/.exec(String(text).trim());
     return m ? { id: m[1], code: m[2] } : null;
   }
 
@@ -195,5 +309,5 @@ const LinkPlay = (() => {
     try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
   }
 
-  return { host, join, forwardReply, fromHash, parseReply, pageLink, pack, unpack, share, route, ICE, hasRelay: () => RELAY.length > 0 };
+  return { host, join, forwardReply, fromHash, parseReply, pageLink, pack, unpack, packShort, unpackShort, share, route, ICE, hasRelay: () => RELAY.length > 0 };
 })();
