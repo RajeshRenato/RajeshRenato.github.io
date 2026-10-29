@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://rajeshrenato.github.io/sitemap.xml
+Sitemap: https://rajeshrenato.github.io/sitemap.txt

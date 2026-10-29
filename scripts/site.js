@@ -195,10 +195,21 @@ function update() {
     name: "Rajesh's Playground", url: BASE, description: hubDesc, author: AUTHOR }) + '</script>\n</head>');
   write('index.html', hub);
 
+  // each page's real last change, from git, so search engines can trust the dates; today for
+  // anything not committed yet, or when git isn't there
   const day = new Date().toISOString().slice(0, 10);
+  const changed = dir => {
+    try {
+      if (require('child_process').execSync('git status --porcelain -- ' + JSON.stringify(dir), { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()) return day;
+      return require('child_process').execSync('git log -1 --format=%cs -- ' + JSON.stringify(dir), { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || day;
+    } catch (e) { return day; }
+  };
+  const urls = [[BASE, changed('index.html')], ...ctx.order.map(s => [BASE + s + '/', changed(s)])];
   write('sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    [BASE, ...ctx.order.map(s => BASE + s + '/')].map(u => '  <url><loc>' + u + '</loc><lastmod>' + day + '</lastmod></url>\n').join('') + '</urlset>\n');
-  console.log('updated ' + ctx.order.length + ' pages, the hub, and sitemap.xml (' + n + ' projects)');
+    urls.map(([u, d]) => '  <url><loc>' + u + '</loc><lastmod>' + d + '</lastmod></url>\n').join('') + '</urlset>\n');
+  // the same list as plain text, one address per line, which search engines also accept
+  write('sitemap.txt', urls.map(([u]) => u).join('\n') + '\n');
+  console.log('updated ' + ctx.order.length + ' pages, the hub, sitemap.xml and sitemap.txt (' + n + ' projects)');
 }
 
 // --- adding a project
