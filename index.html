@@ -84,6 +84,9 @@
   }
   .list a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
   .list canvas { display: block; width: 100%; aspect-ratio: 16/9; background: #14141a; border-bottom: 1.5px solid var(--ink); }
+  .list.desktop .thumb { display: grid; place-items: center; width: 100%; aspect-ratio: 16/9; border-bottom: 1.5px solid var(--ink); background: color-mix(in srgb, var(--c) 22%, #14141a); position: relative; }
+  .list.desktop .thumb img { width: 88px; height: 88px; border-radius: 20px; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+  .list.desktop .badge { position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; background: var(--ink); color: var(--paper); padding: 3px 9px; border-radius: 999px; }
   .list .txt { padding: 10px 13px 13px; }
   .list strong { font-weight: 600; font-size: 16.5px; display: block; }
   .list span { color: var(--muted); font-size: 13.5px; line-height: 1.45; display: block; margin-top: 2px; }
@@ -189,6 +192,14 @@
 <div class="picks" data-title="Most useful" data-note="Tools that keep your files on your device. Nothing to install, nothing uploaded." data-slugs="phone-to-laptop pdf-toolkit file-send images-to-pdf pdf-sign passport-photo invoice-maker qr-studio"></div>
 <div class="picks" data-title="Play with friends" data-note="Send a link and play. No accounts, no app." data-slugs="highway-brawl couch-party ludo carrom"></div>
 <div class="picks" data-title="Worth a look" data-note="Play with your webcam, pour some sand, or watch a network learn." data-slugs="pitch-singer fruit-slicer air-drums falling-sand"></div>
+
+<h2 id="desktop">Desktop apps</h2>
+<p class="sec">Native apps you download and run. Your data stays on your own computer.</p>
+<ul class="list desktop">
+  <li><a href="https://rajeshrenato.github.io/open-sortlet/" target="_blank" rel="noopener" style="--c:#2f54eb" data-k="Sortlet AI email inbox sorter, mail triage desktop app for Mac Windows Linux, Gmail IMAP"><span class="thumb"><img src="desktop/sortlet.png" alt="Sortlet icon" width="88" height="88" loading="lazy"><span class="badge">Download</span></span><div class="txt"><strong>Sortlet</strong><span>Every inbox, sorted by AI and kept on your own computer. Flags what needs a reply. Mac, Windows, Linux.</span></div></a></li>
+  <li><a href="https://rajeshrenato.github.io/open-priority-matrix/" target="_blank" rel="noopener" style="--c:#6d55f7" data-k="Priority Matrix Eisenhower task manager, to-do app, do schedule delegate delete, desktop app"><span class="thumb"><img src="desktop/priority-matrix.png" alt="Priority Matrix icon" width="88" height="88" loading="lazy"><span class="badge">Download</span></span><div class="txt"><strong>Priority Matrix</strong><span>A calm Eisenhower matrix for your tasks: do, schedule, delegate, delete. Stored on your computer.</span></div></a></li>
+  <li><a href="https://rajeshrenato.github.io/open-perch/" target="_blank" rel="noopener" style="--c:#f59e0b" data-k="Perch clipboard manager, menu bar snippets, clipboard history, OCR text extraction, desktop app"><span class="thumb"><img src="desktop/perch.png" alt="Perch icon" width="88" height="88" loading="lazy"><span class="badge">Download</span></span><div class="txt"><strong>Perch</strong><span>A clipboard manager that perches in your menu bar: saved snippets, history, and OCR from screenshots.</span></div></a></li>
+</ul>
 
 <h2 id="today">Today</h2>
 <ul class="list wide">
